@@ -1,6 +1,7 @@
 для анализа какие  модели обработки изображений можно еще внедрить 
 https://habr.com/ru/articles/920440/
-https://www.krea.ai/pricing
+Ideogram меняет лицо, есть API
+https://developer.ideogram.ai/api-reference/api-reference/edit-v3
 
 
 **1. SDD MCP → формирование “источника истины”**
