@@ -284,18 +284,20 @@ PostgreSQL, выбирают задачи запросом `SELECT … FOR UPDAT
 ```json
 {
   "dslr_password": {
-    "value": "hunter2",
-    "updated_at": "2024-05-14T12:30:00Z"
+    "is_set": true,
+    "updated_at": "2024-05-14T12:30:00Z",
+    "updated_by": "serg"
   },
   "provider_keys": {
     "gemini": {
-      "api_key": "AIza...",
-      "project_id": "photochanger-prod",
-      "updated_at": "2024-05-10T08:00:00Z"
+      "is_configured": true,
+      "updated_at": "2024-05-10T08:00:00Z",
+      "updated_by": "serg"
     },
     "turbotext": {
-      "api_key": "tt_live_xxx",
-      "updated_at": "2024-05-11T09:12:00Z"
+      "is_configured": false,
+      "updated_at": null,
+      "updated_by": null
     }
   },
   "media_cache": {
@@ -306,11 +308,25 @@ PostgreSQL, выбирают задачи запросом `SELECT … FOR UPDAT
 }
 ```
 
-Если отдельные значения не заданы, соответствующие поля возвращаются со значением `null`. Клиент показывает значения в форме настроек; пароль DSLR может отображаться маской, но API возвращает расшифрованное значение, чтобы пользователь мог свериться перед сохранением.
+Если отдельные значения не заданы, соответствующие поля возвращаются со значением `null` или булевым `false`. API никогда не возвращает открытые секреты — UI отображает только факт наличия значения и метаданные об обновлении. Для провайдера, который требует дополнительных не секретных параметров (например, `project_id`), ответ может дополнительно содержать их в явном виде.
 
 ### PUT /api/settings
 
-Обновляет глобальные настройки. Требуется право `settings:write`. Запрос принимает JSON с той же структурой, что и ответ `GET /api/settings`. Необязательные поля можно опускать — сервер обновляет только переданные значения. Успешный ответ `200 OK` возвращает актуализированную настройку целиком. Валидация: `processed_media_ttl_hours` ∈ [1, 168], `public_link_default_ttl_sec` ∈ [60, 86400], `max_manual_ttl_sec` ≥ `public_link_default_ttl_sec`.
+Обновляет глобальные настройки. Требуется право `settings:write`. Запрос принимает JSON, в котором поля совпадают по структуре с ответом `GET /api/settings`, но для секретов передаётся вложенный объект `value`:
+
+```json
+{
+  "dslr_password": { "value": "new-password" },
+  "provider_keys": {
+    "gemini": { "api_key": "AIza...", "project_id": "photochanger-prod" }
+  },
+  "media_cache": {
+    "processed_media_ttl_hours": 72
+  }
+}
+```
+
+Необязательные поля можно опускать — сервер обновляет только переданные значения. Успешный ответ `200 OK` возвращает структуру, идентичную `GET /api/settings` (без раскрытия секретов). Валидация: `processed_media_ttl_hours` ∈ [1, 168], `public_link_default_ttl_sec` ∈ [60, 86400], `max_manual_ttl_sec` ≥ `public_link_default_ttl_sec`.
 
 ### Кнопка «Очистить мультимедиа кеш»
 
@@ -327,7 +343,7 @@ PostgreSQL, выбирают задачи запросом `SELECT … FOR UPDAT
 
 ### Требования к хранению и шифрованию глобальных настроек
 
-* DSLR-пароль хранится только в виде хэша `Argon2id` с индивидуальной солью. Колонка `dslr_password_hash` располагается в таблице `app_settings`. При сохранении нового пароля в `PUT /api/settings` сервер перехеширует значение и удалит исходный plaintext сразу после применения.
+* DSLR-пароль хранится только в виде хэша `Argon2id` с индивидуальной солью. Таблица `app_settings` дополнена колонками `dslr_password_hash` (BYTEA), `dslr_password_salt` (BYTEA), `dslr_password_updated_at` (TIMESTAMPTZ) и `dslr_password_updated_by` (INTEGER, FK → User). При сохранении нового пароля в `PUT /api/settings` сервер перехеширует значение и удалит исходный plaintext сразу после применения. Эти поля используются для формирования ответа `GET /api/settings` (`is_set = dslr_password_hash IS NOT NULL`).
 * API-ключи провайдеров сохраняются в таблице `provider_secret` и шифруются алгоритмом AES-256-GCM; мастер-ключ шифрования берётся из переменной окружения `SETTINGS_MASTER_KEY`. Структура таблицы:
   * `id` (SERIAL, PK)
   * `provider_id` (TEXT, уникальный)
@@ -336,7 +352,8 @@ PostgreSQL, выбирают задачи запросом `SELECT … FOR UPDAT
   * `version` (INTEGER, default 1)
   * `updated_at` (TIMESTAMPTZ)
   * `updated_by` (INTEGER, FK → User)
-* Значения TTL (`processed_media_ttl_hours`, `public_link_default_ttl_sec`, `max_manual_ttl_sec`) и другие не чувствительные параметры хранятся в таблице `app_settings` (`key` TEXT PK, `value_json` JSONB, `updated_at` TIMESTAMPTZ, `updated_by` FK → User). Миграции должны создавать уникальные ключи `media.processed_ttl_hours`, `media.public_default_ttl_sec`, `media.max_manual_ttl_sec` и обеспечить их начальные значения (72, 900 и 86400 соответственно).
+  * `has_secret` (BOOLEAN, default false) — признак наличия расшифровываемого ключа (используется в `GET /api/settings`)
+* Значения TTL (`processed_media_ttl_hours`, `public_link_default_ttl_sec`, `max_manual_ttl_sec`) и другие не чувствительные параметры хранятся в таблице `app_settings` (`key` TEXT PK, `value_json` JSONB, `updated_at` TIMESTAMPTZ, `updated_by` FK → User). Миграции должны создавать уникальные ключи `media.processed_ttl_hours`, `media.public_default_ttl_sec`, `media.max_manual_ttl_sec` и обеспечить их начальные значения (72, 900 и 86400 соответственно). Если для удобства UI требуется отображать метаданные провайдеров без расшифровки (`project_id`, `region` и т. п.), миграции должны добавить отдельные строки `provider.<id>.<field>` в `app_settings`.
 * Доступ к чтению и расшифровке секретов предоставляется только слоям с правами `settings:read`/`settings:write`. Логирование секретов запрещено, в логах допускается только информация о наличии/отсутствии значения и времени обновления.
 
 **Конфигурационные файлы**
