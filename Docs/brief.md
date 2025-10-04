@@ -18,9 +18,9 @@
 
 ### Провайдер Gemini (image generation & editing)
 
-- Поддерживаемые сценарии — генерация изображений, редактирование «edit-with-prompt», multi-image fusion и стилизация на модели `gemini-2.5-flash-image`. Масочное редактирование не поддерживается и должно выноситься в отдельного провайдера (например, Imagen в Vertex).
+- Поддерживаемые сценарии — генерация изображений, редактирование «edit-with-prompt», multi-image fusion и стилизация на модели `gemini-2.5-flash-image`.
 - Все запросы выполняются методом `models.generateContent` с передачей текста и изображений через `contents.parts` (`text`, `inline_data`, `file_data`). Для крупных файлов используется Files API (`file_uri`), который хранит до 2 ГБ на файл и 20 ГБ на проект в течение 48 часов.
-- Рекомендованные лимиты/квоты и примеры вызовов фиксируются в `Docs/providers/gemini.md`; UI должен строить форму параметров с учётом этих ограничений (без полей маски, с опцией выбора нескольких изображений).
+- Рекомендованные лимиты/квоты и примеры вызовов фиксируются в `Docs/providers/gemini.md`; UI должен строить форму параметров с учётом этих ограничений (с опцией выбора нескольких изображений).
 
 # Механизм работы платформы
 
@@ -239,7 +239,6 @@ vexpires_at (TIMESTAMPTZ)
           "base_media_id": { "type": "string", "format": "uuid" },
           "overlay_media_id": { "type": "string", "format": "uuid" },
           "blend_mode": { "type": "string", "enum": ["alpha", "seamless", "face_swap"], "default": "seamless" },
-          "mask_media_id": { "type": ["string", "null"], "format": "uuid" },
           "alignment": {
             "type": "object",
             "properties": {
@@ -265,15 +264,13 @@ vexpires_at (TIMESTAMPTZ)
         "gemini": {
           "endpoint": "/v1beta/models/gemini-image:edit",
           "media_parts": [
-            { "id": "ingest_media", "from": "ingest_request" },
-            { "id": "mask", "from": "settings.mask_media_id", "optional": true }
+            { "id": "ingest_media", "from": "ingest_request" }
           ]
         },
         "turbotext": {
           "endpoint": "/v1/image/change",
           "media_parts": [
-            { "id": "ingest_media", "from": "ingest_request" },
-            { "id": "mask", "from": "settings.mask_media_id", "optional": true }
+            { "id": "ingest_media", "from": "ingest_request" }
           ]
         }
       },
@@ -282,7 +279,6 @@ vexpires_at (TIMESTAMPTZ)
         "required": ["prompt"],
         "properties": {
           "prompt": { "type": "string", "maxLength": 2000 },
-          "mask_media_id": { "type": ["string", "null"], "format": "uuid" },
           "guidance_scale": { "type": "number", "minimum": 0, "maximum": 20, "default": 7.5 },
           "output": {
             "type": "object",
@@ -299,7 +295,7 @@ vexpires_at (TIMESTAMPTZ)
 }
 ```
 
-Ключи `provider_overrides` фиксируют различия в интеграции: URL конечной точки, допустимые параметры, ограничения таймаута. Для операций редактирования `media_parts` описывает, какие бинарные данные подставляются в запрос провайдера: для `change_image` базовый `ingest_media` приходит вместе с ingest‑POST и не хранится в слоте, а маска (`settings.mask_media_id`) передаётся только при наличии. Общие свойства `settings_schema` описывают обязательные поля, которые должны быть валидированы на бэкенде при сохранении слота.
+Ключи `provider_overrides` фиксируют различия в интеграции: URL конечной точки, допустимые параметры, ограничения таймаута. Для операций редактирования `media_parts` описывает, какие бинарные данные подставляются в запрос провайдера: для `change_image` базовый `ingest_media` приходит вместе с ingest‑POST и не хранится в слоте. Общие свойства `settings_schema` описывают обязательные поля, которые должны быть валидированы на бэкенде при сохранении слота.
 
 #### Маппинг `Slot`
 
@@ -320,12 +316,11 @@ vexpires_at (TIMESTAMPTZ)
 }
 ```
 
-Пример значения `settings_json` для слота Gemini c операцией `change_image` (исходное фото приходит во входящем ingest‑POST, в конфигурации остаются только дополнительные ресурсы и параметры генерации):
+Пример значения `settings_json` для слота Gemini c операцией `change_image` (исходное фото приходит во входящем ingest‑POST, в конфигурации остаются только параметры генерации):
 
 ```json
 {
   "prompt": "Осветлить лицо и пригладить фон",
-  "mask_media_id": "5d6ec774-3b18-4d2f-bf9f-46e6ff2a64ce",
   "guidance_scale": 6.5,
   "output": { "format": "png", "quality": 95 }
 }
@@ -334,7 +329,7 @@ vexpires_at (TIMESTAMPTZ)
 На UI параметры собираются на основании `needs` (промпт, первое/второе изображение) и валидируются против схемы операции. При сохранении:
 
 1. Файлы загружаются во временное хранилище (`media_object`), что возвращает `media_id`.
-2. Бэкенд формирует объект по схеме, подставляя `media_id` вместо бинарных данных (для `change_image` хранится только маска, а базовое изображение берётся из ingest‑запроса).
+2. Бэкенд формирует объект по схеме, подставляя `media_id` вместо бинарных данных.
 3. Получившийся JSON сериализуется и сохраняется в `Slot.settings_json`.
 
 ## Стек
