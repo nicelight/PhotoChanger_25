@@ -33,7 +33,7 @@ https://developer.ideogram.ai/api-reference/api-reference/edit-v3
 Первый промпт: 
 ```markdown
 Вот бриф. Сконструируй полный пакет SDD под стек FastAPI+HTMX+VanillaJS (без Redis/MinIO/WebSocket). Контракт-first: сгенерируй OpenAPI и JSON Schema первыми. Далее: NFR, Use-cases, Domain, Sequence, Acceptance Criteria, Test Plan. Разложи по папкам /spec, /contracts, /adr, дай короткий индекс артефактов.
-Используй SDD MCP
+Используй  spec-driven MCP
 ```
 Последующие промпты:
 ```
@@ -59,7 +59,7 @@ https://developer.ideogram.ai/api-reference/api-reference/edit-v3
 
 Первый промпт
 ```markdown
-«На основе /contracts и скелетов сгенерируй: API Reference, DevRunbook, CONTRIBUTING, тестовую матрицу, ADR черновики; собери diff между кодом и спецификацией; где расхождения — оформи отчёт /docs/diff.md.»
+«На основе /contracts и скелетов сгенерируй: API Reference, DevRunbook, CONTRIBUTING, тестовую матрицу, ADR черновики; собери diff между кодом и спецификацией; где расхождения — оформи отчёт /docs/diff.md. Используй code-doc MCP.
 ```
 Последующие промпты:
 ```

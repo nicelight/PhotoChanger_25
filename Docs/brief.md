@@ -31,7 +31,7 @@
    - Таймаут (AI > 48 c): API возвращает 504 Gateway Timeout. Worker продолжает и по завершении сохраняет результат в Result с expires_at (например, 3 дня), чтобы его можно было забрать из UI/по GET /api/results/{job_id} (если хранение включено).
 
 6. Ретраи и back‑pressure: ограничение параллелизма на провайдера/слот; экспоненциальные ретраи при сетевых сбоях (до N попыток); статус и счётчик попыток фиксируются в job/логах.
-
+Если результат от провайдера не пришёл в течение T_sync_response, ingest завершается 504. 
 ```mermaid
 sequenceDiagram
     participant DSLR as DSLR Remote Pro
@@ -40,22 +40,27 @@ sequenceDiagram
     participant Worker as AI Worker
     participant AI_Provider as AI Провайдер
 
-    DSLR->>+API: POST /ingest/{slotId} с фото
+    DSLR->>API: POST /ingest/{slotId} с фото
+    activate API
     API->>Queue: Поставить задачу в очередь
-    API->>API: Начать ожидание результата (таймаут ~48с)
-    Queue->>+Worker: Отправить задачу на обработку
-    Worker->>+AI_Provider: Запрос на обработку фото
-    AI_Provider-->>-Worker: Готовое изображение (или async_id)
+    API->>API: Начать ожидание результата (~48с)
+    Queue->>Worker: Отправить задачу на обработку
+    activate Worker
+    Worker->>AI_Provider: Запрос на обработку фото
+    activate AI_Provider
+    AI_Provider-->>Worker: Готовое изображение (или async_id)
+    deactivate AI_Provider
     Worker->>API: Уведомить о результате (при sync)
-    API-->>-DSLR: Отправить обработанное фото (HTTP 200 OK)
+    API-->>DSLR: Отправить обработанное фото (HTTP 200 OK)
+    deactivate API
+    deactivate Worker
 
     alt Таймаут
         API->>API: Ожидание превысило ~48с
-        API-->>-DSLR: Вернуть ошибку (HTTP 504)
-        Worker->>Queue: Доработка продолжается; сохранить Result с expires_at
+        API-->>DSLR: Вернуть ошибку 504
+        Worker->>Queue: Доработка продолжается, сохранить Result с expires_at
     end
 ```
-Если результат от провайдера не пришёл в течение T_sync_response, ingest завершается 504. 
 
 ## Временное публичное медиа-хранилище (для Turbotext)
 Назначение: выдавать временные публичные ссылки на изображения, чтобы передавать их в поля url_image_target и url Turbotext.
