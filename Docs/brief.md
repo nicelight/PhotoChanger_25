@@ -936,7 +936,6 @@ JWT, выдаваемый платформой, содержит claim `permissi
 * **Пагинация:** не применяется (результат ограничен диапазоном дат).
 * **Поля `summary`:**
   * `title` — текущее название слота, отдаётся для UI (если поле пустое, фронтенд отображает `slot_id`).
-  * `style_media_preview` — абсолютный URL миниатюры второго (шаблонного) изображения, либо `null`, если привязки нет.
   * `success` / `errors` — количество успешных и неуспешных задач в выбранном диапазоне.
   * `ingest_count` — общее число ingest-запросов (`success + errors`).
   * `avg_response_ms` и `p95_response_ms` — среднее и 95-й перцентиль времени ответа по успешным задачам.
@@ -950,7 +949,6 @@ JWT, выдаваемый платформой, содержит claim `permissi
     "range": { "from": "2024-04-01", "to": "2024-04-07", "group_by": "day" },
     "summary": {
       "title": "Fashion Portrait",
-      "style_media_preview": "https://cdn.example.com/previews/slot-001-thumb.jpg",
       "success": 42,
       "errors": 8,
       "ingest_count": 50,
@@ -1476,7 +1474,6 @@ When using a single image with text, place the text prompt after the image part 
 Отображает таблицу по всем слотам и служебный блок с глобальными агрегатами. Для каждой строки слота UI использует агрегированные значения из поля `summary` ответа [`GET /api/stats/{slot_id}`](#get-apistatsslot_id):
 
 * **Имя слота** — `summary.title` из ответа (если не передан, используется `slot_id`).
-* **Мини-превью шаблонного изображения №2** — URL превью, возвращаемый в `summary.style_media_preview` (может быть `null`).
 * **AI обработок (с последнего сброса)** — `summary.success` (количество успешных задач).
 * **Всего ingest-запросов** — `summary.ingest_count` (включает успешные и ошибочные вызовы).
 * **p95 времени ответа** — `summary.p95_response_ms` (миллисекунды по успешным задачам за выбранный диапазон).
