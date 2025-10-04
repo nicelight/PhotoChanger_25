@@ -228,15 +228,16 @@
           label: 'Gemini',
           operations: {
             style_transfer: { label: 'Style Transfer', needs: { prompt:true, second:true, first:false } },
-            combine_images: { label: 'Combine Images', needs: { prompt:true, second:true, first:true } },
-            change_image: { label: 'Change Image', needs: { prompt:true, second:false, first:true } }
+            identity_transfer: { label: 'Identity Transfer', needs: { prompt:true, second:true, first:true } },
+            image_edit: { label: 'Image Edit', needs: { prompt:true, second:false, first:true } }
           }
         },
         turbotext: {
           label: 'TurboText',
           operations: {
-            style_transfer: { label: 'Style Transfer', needs: { prompt:true, second:true, first:false } },
-            change_image: { label: 'Change Image', needs: { prompt:true, second:false, first:true } }
+            style_transfer: { label: 'Style Transfer', needs: { prompt:true, second:true, first:true } },
+            image_edit: { label: 'Image Edit', needs: { prompt:true, second:false, first:true } },
+            identity_transfer: { label: 'Identity Transfer', needs: { prompt:false, second:true, first:true } }
           }
         }
       };
