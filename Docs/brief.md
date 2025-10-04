@@ -101,6 +101,59 @@ sequenceDiagram
 - По завершении задачи файл остаётся доступным до expires_at.
 - Плановая очистка регулярно удаляет просроченные файлы и записи.
 
+## Turbotext: очередь, polling и webhook
+
+**Создание задачи**
+
+```http
+POST /api_ai/<method> HTTP/1.1
+Host: turbotext.ru
+Authorization: Bearer {APIKEY}
+Content-Type: application/x-www-form-urlencoded
+
+do=create_queue
+webhook=https://example.com/hook (опционально)
+<поля метода>
+```
+
+- Ответ без webhook: `{"success": true, "queueid": <ID>}`. Это значение должно сохраняться в `Job.external_ref` для последующего опроса.
+- Ответ с webhook: `{"success": true, "asyncid": <ID>}` — идентификатор совпадает с очередью, worker больше не опрашивает Turbotext и ждёт POST от провайдера.
+
+**Опрос результата**
+
+```http
+POST /api_ai/<method> HTTP/1.1
+Authorization: Bearer {APIKEY}
+Content-Type: application/x-www-form-urlencoded
+
+do=get_result
+queueid:<ID>
+```
+
+- Пока задача в работе, Turbotext возвращает `{"action": "reconnect"}` и не увеличивает счётчик попыток.
+- После завершения приходит JSON с полями `success`, `error`, `data`, `uploaded_image` и (иногда) `limits`.
+
+**Финальный JSON (для polling и webhook одинаковый):**
+
+```json
+{
+  "success": true,
+  "error": "",
+  "data": {
+    "image": ["image/<method>_id12_0.png"],
+    "prompt": "...",
+    "width": 768,
+    "height": 768,
+    "face_restore": "False"
+  },
+  "uploaded_image": "https://www.turbotext.ru/download.php?f=....png",
+  "limits": { "foto_limit": 123, "text_limit": 123 }
+}
+```
+
+- Параметр `uploaded_image` содержит прямую ссылку на результат — её нужно скачать и сохранить во временное хранилище результатов.
+- Turbotext присылает webhook в формате идентичном успешному ответу `do=get_result`; сервис обязан вернуть HTTP 200.
+
 # Архитектура и стек приложения
 ## Архитектура
 **1. Архитектура проекта ориентирована на безопасность изменений кода** при генерации кода LLM моделью: тонкие фасады + pure domain + контракт-first + Spec Driven Dev
@@ -207,8 +260,9 @@ sequenceDiagram
         "requires_public_media": true
       },
       "operations": [
-        "style_transfer",
-        "change_image"
+        "turbotext_image2image",
+        "turbotext_mix_photo",
+        "turbotext_face_swap"
       ]
     }
   ],
@@ -306,12 +360,101 @@ sequenceDiagram
         },
         "additionalProperties": false
       }
+    },
+    "turbotext_image2image": {
+      "title": "Turbotext — обработка фото",
+      "description": "Image-to-image модификация: промпт описывает правки, исходное фото берётся из медиа-хранилища.",
+      "required_settings": ["source_media_id", "prompt"],
+      "provider_overrides": {
+        "turbotext": {
+          "endpoint": "/api_ai/generate_image2image",
+          "field_map": {
+            "url": { "from": "media_object", "setting": "source_media_id" },
+            "content": { "from": "settings", "setting": "prompt" },
+            "strength": { "from": "settings", "setting": "strength" },
+            "seed": { "from": "settings", "setting": "seed" },
+            "scale": { "from": "settings", "setting": "scale" },
+            "negative_prompt": { "from": "settings", "setting": "negative_prompt" },
+            "original_language": { "from": "settings", "setting": "original_language" }
+          },
+          "queue_based": true,
+          "webhook_supported": true
+        }
+      },
+      "settings_schema": {
+        "type": "object",
+        "required": ["source_media_id", "prompt"],
+        "properties": {
+          "source_media_id": { "type": "string", "format": "uuid" },
+          "prompt": { "type": "string", "maxLength": 2000 },
+          "strength": { "type": "integer", "minimum": 0, "maximum": 80, "default": 40 },
+          "seed": { "type": "integer", "minimum": 1, "maximum": 10000000000 },
+          "scale": { "type": "number", "minimum": 0.1, "maximum": 20, "default": 7.5 },
+          "negative_prompt": { "type": "string", "maxLength": 1000 },
+          "original_language": { "type": "string", "default": "ru" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "turbotext_mix_photo": {
+      "title": "Turbotext — микс-фото",
+      "description": "Перенос стиля/смешение второго изображения с целевым.",
+      "required_settings": ["target_media_id", "style_media_id"],
+      "provider_overrides": {
+        "turbotext": {
+          "endpoint": "/api_ai/mix_images",
+          "field_map": {
+            "url_image_target": { "from": "media_object", "setting": "target_media_id" },
+            "url": { "from": "media_object", "setting": "style_media_id" },
+            "content": { "from": "settings", "setting": "prompt" }
+          },
+          "queue_based": true,
+          "webhook_supported": true
+        }
+      },
+      "settings_schema": {
+        "type": "object",
+        "required": ["target_media_id", "style_media_id"],
+        "properties": {
+          "target_media_id": { "type": "string", "format": "uuid" },
+          "style_media_id": { "type": "string", "format": "uuid" },
+          "prompt": { "type": "string", "maxLength": 2000 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "turbotext_face_swap": {
+      "title": "Turbotext — замена лица",
+      "description": "Подмена лица на фотографии с возможностью восстановления деталей.",
+      "required_settings": ["subject_media_id", "face_media_id"],
+      "provider_overrides": {
+        "turbotext": {
+          "endpoint": "/api_ai/deepfake_photo",
+          "field_map": {
+            "url": { "from": "media_object", "setting": "subject_media_id" },
+            "url_image_target": { "from": "media_object", "setting": "face_media_id" },
+            "face_restore": { "from": "settings", "setting": "face_restore" }
+          },
+          "queue_based": true,
+          "webhook_supported": true
+        }
+      },
+      "settings_schema": {
+        "type": "object",
+        "required": ["subject_media_id", "face_media_id"],
+        "properties": {
+          "subject_media_id": { "type": "string", "format": "uuid" },
+          "face_media_id": { "type": "string", "format": "uuid" },
+          "face_restore": { "type": "boolean", "default": false }
+        },
+        "additionalProperties": false
+      }
     }
   }
 }
 ```
 
-Ключи `provider_overrides` фиксируют различия в интеграции: URL конечной точки, допустимые параметры, ограничения таймаута. Для операций редактирования `media_parts` описывает, какие бинарные данные подставляются в запрос провайдера: для `change_image` базовый `ingest_media` приходит вместе с ingest‑POST и не хранится в слоте. Общие свойства `settings_schema` описывают обязательные поля, которые должны быть валидированы на бэкенде при сохранении слота.
+Ключи `provider_overrides` фиксируют различия в интеграции: URL конечной точки, допустимые параметры, ограничения таймаута. Для операций, требующих передачи локальных файлов, `media_parts` описывает, какие бинарные данные подставляются в запрос провайдера (например, `change_image` получает `ingest_media` прямо из входящего запроса). Для Turbotext `field_map` указывает соответствие полей формы (`url`, `url_image_target`, `content`, `face_restore` и т. д.) значениям из настроек слота или публичным ссылкам на `media_object`. Общие свойства `settings_schema` описывают обязательные поля, которые должны быть валидированы на бэкенде при сохранении слота.
 
 Для удобства клиентских интеграций обязательные поля операций дополнительно продублированы в массиве `required_settings`.
 
