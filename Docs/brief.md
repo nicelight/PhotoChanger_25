@@ -6,7 +6,7 @@
 
 **Процесс настройки слота:**
 1.  **Выбор Провайдера:** Пользователь выбирает из списка, какую AI-платформу использовать (например, `Gemini`, `Turbotext`).
-2.  **Выбор Операции:** В зависимости от выбранного провайдера, появляется второй список с доступными операциями (например, для `Gemini` это будут `Style Transfer`, `Combine Images`).
+2.  **Выбор Операции:** В зависимости от выбранного провайдера, появляется второй список с доступными операциями (например, для `Gemini` это будут `Style Transfer`, `Identity Transfer`, `Image Edit`).
 3.  **Настройка Параметров:** Интерфейс автоматически отображает поля, необходимые именно для этой операции (например, текстовый промпт, поле для загрузки стилевого изображения и т.д.).
 
 После настройки пользователь сохраняет слот. На главной странице в списке слотов теперь отображается имя этого слота и рядом отображена ingest-ссылка. Рядом с сылкой присутствует кнопка "Копировать" для копирования ссылки. Пользователь копирует ingest-ссылку слота и вставляет ее в DSLR Remote Pro. Теперь программа отправляет `POST` c файлом на этот адрес. В теле `POST` находится обрабатываемая фотография, пароль и некоторые другие поля.
@@ -245,8 +245,8 @@ queueid:<ID>
       },
       "operations": [
         "style_transfer",
-        "combine_images",
-        "change_image"
+        "image_edit",
+        "identity_transfer"
       ]
     },
     {
@@ -260,28 +260,44 @@ queueid:<ID>
         "requires_public_media": true
       },
       "operations": [
-        "turbotext_image2image",
-        "turbotext_mix_photo",
-        "turbotext_face_swap"
+        "style_transfer",
+        "image_edit",
+        "identity_transfer"
       ]
     }
   ],
   "operations": {
     "style_transfer": {
       "title": "Style Transfer",
-      "description": "Перенос художественного стиля с эталонного изображения на целевое.",
-      "required_settings": ["reference_media_id"],
+      "description": "Перенос художественного стиля между изображениями: Gemini использует эталонное фото, Turbotext — целевое + стилевое.",
+      "required_settings": {
+        "common": ["prompt"],
+        "per_provider": {
+          "gemini": ["reference_media_id"],
+          "turbotext": ["target_media_id", "style_media_id"]
+        }
+      },
       "provider_overrides": {
         "gemini": { "endpoint": "/v1beta/models/gemini-image:transferStyle" },
-        "turbotext": { "endpoint": "/v1/style-transfer" }
+        "turbotext": {
+          "endpoint": "/api_ai/mix_images",
+          "field_map": {
+            "url_image_target": { "from": "media_object", "setting": "target_media_id" },
+            "url": { "from": "media_object", "setting": "style_media_id" },
+            "content": { "from": "settings", "setting": "prompt" }
+          },
+          "queue_based": true,
+          "webhook_supported": true
+        }
       },
       "settings_schema": {
         "type": "object",
-        "required": ["reference_media_id"],
         "properties": {
           "prompt": { "type": "string", "maxLength": 2000 },
           "reference_media_id": { "type": "string", "format": "uuid" },
           "style_strength": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.65 },
+          "target_media_id": { "type": "string", "format": "uuid" },
+          "style_media_id": { "type": "string", "format": "uuid" },
           "output": {
             "type": "object",
             "properties": {
@@ -290,46 +306,23 @@ queueid:<ID>
             }
           }
         },
+        "required": ["prompt"],
+        "oneOf": [
+          { "required": ["reference_media_id"] },
+          { "required": ["target_media_id", "style_media_id"] }
+        ],
         "additionalProperties": false
       }
     },
-    "combine_images": {
-      "title": "Combine Images",
-      "description": "Композиция нескольких изображений: склейка, коллажи, face-swap.",
-      "required_settings": ["base_media_id", "overlay_media_id"],
-      "provider_overrides": {
-        "gemini": { "endpoint": "/v1beta/models/gemini-image:compose" }
+    "image_edit": {
+      "title": "Image Edit",
+      "description": "Локальное редактирование исходного изображения по текстовому описанию с поддержкой image-to-image.",
+      "required_settings": {
+        "common": ["prompt"],
+        "per_provider": {
+          "turbotext": ["source_media_id"]
+        }
       },
-      "settings_schema": {
-        "type": "object",
-        "required": ["base_media_id", "overlay_media_id"],
-        "properties": {
-          "prompt": { "type": "string", "maxLength": 2000 },
-          "base_media_id": { "type": "string", "format": "uuid" },
-          "overlay_media_id": { "type": "string", "format": "uuid" },
-          "blend_mode": { "type": "string", "enum": ["alpha", "seamless", "face_swap"], "default": "seamless" },
-          "alignment": {
-            "type": "object",
-            "properties": {
-              "face_landmarks": { "type": "boolean", "default": true },
-              "scale": { "type": "number", "minimum": 0.1, "maximum": 4, "default": 1 }
-            }
-          },
-          "output": {
-            "type": "object",
-            "properties": {
-              "format": { "type": "string", "enum": ["jpeg", "png"], "default": "jpeg" },
-              "quality": { "type": "integer", "minimum": 1, "maximum": 100, "default": 92 }
-            }
-          }
-        },
-        "additionalProperties": false
-      }
-    },
-    "change_image": {
-      "title": "Change Image",
-      "description": "Локальное редактирование исходного изображения по текстовому описанию.",
-      "required_settings": ["prompt"],
       "provider_overrides": {
         "gemini": {
           "endpoint": "/v1beta/models/gemini-image:edit",
@@ -337,35 +330,6 @@ queueid:<ID>
             { "id": "ingest_media", "from": "ingest_request" }
           ]
         },
-        "turbotext": {
-          "endpoint": "/v1/image/change",
-          "media_parts": [
-            { "id": "ingest_media", "from": "ingest_request" }
-          ]
-        }
-      },
-      "settings_schema": {
-        "type": "object",
-        "required": ["prompt"],
-        "properties": {
-          "prompt": { "type": "string", "maxLength": 2000 },
-          "guidance_scale": { "type": "number", "minimum": 0, "maximum": 20, "default": 7.5 },
-          "output": {
-            "type": "object",
-            "properties": {
-              "format": { "type": "string", "enum": ["jpeg", "png", "webp"], "default": "png" },
-              "quality": { "type": "integer", "minimum": 1, "maximum": 100, "default": 100 }
-            }
-          }
-        },
-        "additionalProperties": false
-      }
-    },
-    "turbotext_image2image": {
-      "title": "Turbotext — обработка фото",
-      "description": "Image-to-image модификация: промпт описывает правки, исходное фото берётся из медиа-хранилища.",
-      "required_settings": ["source_media_id", "prompt"],
-      "provider_overrides": {
         "turbotext": {
           "endpoint": "/api_ai/generate_image2image",
           "field_map": {
@@ -383,51 +347,40 @@ queueid:<ID>
       },
       "settings_schema": {
         "type": "object",
-        "required": ["source_media_id", "prompt"],
         "properties": {
-          "source_media_id": { "type": "string", "format": "uuid" },
           "prompt": { "type": "string", "maxLength": 2000 },
+          "guidance_scale": { "type": "number", "minimum": 0, "maximum": 20, "default": 7.5 },
+          "source_media_id": { "type": "string", "format": "uuid" },
           "strength": { "type": "integer", "minimum": 0, "maximum": 80, "default": 40 },
           "seed": { "type": "integer", "minimum": 1, "maximum": 10000000000 },
           "scale": { "type": "number", "minimum": 0.1, "maximum": 20, "default": 7.5 },
           "negative_prompt": { "type": "string", "maxLength": 1000 },
-          "original_language": { "type": "string", "default": "ru" }
+          "original_language": { "type": "string", "default": "ru" },
+          "output": {
+            "type": "object",
+            "properties": {
+              "format": { "type": "string", "enum": ["jpeg", "png", "webp"], "default": "png" },
+              "quality": { "type": "integer", "minimum": 1, "maximum": 100, "default": 100 }
+            }
+          }
         },
+        "required": ["prompt"],
         "additionalProperties": false
       }
     },
-    "turbotext_mix_photo": {
-      "title": "Turbotext — микс-фото",
-      "description": "Перенос стиля/смешение второго изображения с целевым.",
-      "required_settings": ["target_media_id", "style_media_id"],
-      "provider_overrides": {
-        "turbotext": {
-          "endpoint": "/api_ai/mix_images",
-          "field_map": {
-            "url_image_target": { "from": "media_object", "setting": "target_media_id" },
-            "url": { "from": "media_object", "setting": "style_media_id" },
-            "content": { "from": "settings", "setting": "prompt" }
-          },
-          "queue_based": true,
-          "webhook_supported": true
+    "identity_transfer": {
+      "title": "Identity Transfer",
+      "description": "Замена или совмещение лица между изображениями: Gemini работает через compose, Turbotext — через deepfake_photo.",
+      "required_settings": {
+        "per_provider": {
+          "gemini": ["base_media_id", "overlay_media_id"],
+          "turbotext": ["subject_media_id", "face_media_id"]
         }
       },
-      "settings_schema": {
-        "type": "object",
-        "required": ["target_media_id", "style_media_id"],
-        "properties": {
-          "target_media_id": { "type": "string", "format": "uuid" },
-          "style_media_id": { "type": "string", "format": "uuid" },
-          "prompt": { "type": "string", "maxLength": 2000 }
-        },
-        "additionalProperties": false
-      }
-    },
-    "turbotext_face_swap": {
-      "title": "Turbotext — замена лица",
-      "description": "Подмена лица на фотографии с возможностью восстановления деталей.",
-      "required_settings": ["subject_media_id", "face_media_id"],
       "provider_overrides": {
+        "gemini": {
+          "endpoint": "/v1beta/models/gemini-image:compose"
+        },
         "turbotext": {
           "endpoint": "/api_ai/deepfake_photo",
           "field_map": {
@@ -441,12 +394,33 @@ queueid:<ID>
       },
       "settings_schema": {
         "type": "object",
-        "required": ["subject_media_id", "face_media_id"],
         "properties": {
+          "prompt": { "type": "string", "maxLength": 2000 },
+          "base_media_id": { "type": "string", "format": "uuid" },
+          "overlay_media_id": { "type": "string", "format": "uuid" },
+          "blend_mode": { "type": "string", "enum": ["alpha", "seamless", "face_swap"], "default": "face_swap" },
+          "alignment": {
+            "type": "object",
+            "properties": {
+              "face_landmarks": { "type": "boolean", "default": true },
+              "scale": { "type": "number", "minimum": 0.1, "maximum": 4, "default": 1 }
+            }
+          },
           "subject_media_id": { "type": "string", "format": "uuid" },
           "face_media_id": { "type": "string", "format": "uuid" },
-          "face_restore": { "type": "boolean", "default": false }
+          "face_restore": { "type": "boolean", "default": false },
+          "output": {
+            "type": "object",
+            "properties": {
+              "format": { "type": "string", "enum": ["jpeg", "png"], "default": "jpeg" },
+              "quality": { "type": "integer", "minimum": 1, "maximum": 100, "default": 92 }
+            }
+          }
         },
+        "oneOf": [
+          { "required": ["base_media_id", "overlay_media_id"] },
+          { "required": ["subject_media_id", "face_media_id"] }
+        ],
         "additionalProperties": false
       }
     }
@@ -454,9 +428,7 @@ queueid:<ID>
 }
 ```
 
-Ключи `provider_overrides` фиксируют различия в интеграции: URL конечной точки, допустимые параметры, ограничения таймаута. Для операций, требующих передачи локальных файлов, `media_parts` описывает, какие бинарные данные подставляются в запрос провайдера (например, `change_image` получает `ingest_media` прямо из входящего запроса). Для Turbotext `field_map` указывает соответствие полей формы (`url`, `url_image_target`, `content`, `face_restore` и т. д.) значениям из настроек слота или публичным ссылкам на `media_object`. Общие свойства `settings_schema` описывают обязательные поля, которые должны быть валидированы на бэкенде при сохранении слота.
-
-Для удобства клиентских интеграций обязательные поля операций дополнительно продублированы в массиве `required_settings`.
+Ключи `provider_overrides` фиксируют различия в интеграции: URL конечной точки, допустимые параметры, ограничения таймаута. Для операций, требующих передачи локальных файлов, `media_parts` описывает, какие бинарные данные подставляются в запрос провайдера (например, `image_edit` для Gemini получает `ingest_media` прямо из входящего запроса). Для Turbotext `field_map` указывает соответствие полей формы (`url`, `url_image_target`, `content`, `face_restore` и т. д.) значениям из настроек слота или публичным ссылкам на `media_object`. Общие свойства `settings_schema` описывают обязательные поля, которые должны быть валидированы на бэкенде при сохранении слота, а `required_settings` теперь отражает как общие требования, так и провайдер-специфичные обязательные поля.
 
 #### Маппинг `Slot`
 
@@ -464,7 +436,7 @@ queueid:<ID>
 * `operation_id` — одно из значений `operations` (на уровне провайдера).
 * `settings_json` — JSON-объект, удовлетворяющий `settings_schema` соответствующей операции. На бэкенде хранится сериализованный JSON, в котором бинарные файлы заменены на идентификаторы медиа (`media_object.id`).
 
-Пример значения `settings_json` для слота Gemini c операцией `combine_images`:
+Пример значения `settings_json` для слота Gemini c операцией `identity_transfer`:
 
 ```json
 {
@@ -477,7 +449,7 @@ queueid:<ID>
 }
 ```
 
-Пример значения `settings_json` для слота Gemini c операцией `change_image` (исходное фото приходит во входящем ingest‑POST, в конфигурации остаются только параметры генерации):
+Пример значения `settings_json` для слота Gemini c операцией `image_edit` (исходное фото приходит во входящем ingest‑POST, в конфигурации остаются только параметры генерации):
 
 ```json
 {
@@ -639,7 +611,7 @@ API для взаимодействия с веб-интерфейсом пос�
   {
     "name": "Fashion Studio",
     "provider_id": "gemini",
-    "operation_id": "combine_images",
+    "operation_id": "identity_transfer",
     "settings_json": {
       "prompt": "Скомбинировать исходник со стилевым",
       "base_media_id": "b7a09f84-7560-4a7b-9303-2b41a6d359f3",
