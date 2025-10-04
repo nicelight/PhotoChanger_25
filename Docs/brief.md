@@ -150,8 +150,12 @@ sequenceDiagram
 * mime (TEXT)
 * size_bytes (INTEGER)
 * created_at (TIMESTAMPTZ)
-vexpires_at (TIMESTAMPTZ)
+* expires_at (TIMESTAMPTZ)
 * job_id (UUID, опционально) — связь с задачей обработки
+
+Поле `expires_at` задаёт срок жизни временной ссылки на медиа-файл: оно заполняется при вызове `POST /api/media/register`,
+используется проверкой доступа в `GET /public/media/{id}`, может продлеваться эндпоинтом `POST /api/media/extend`, а также
+определяет, когда воркер и плановая очистка должны удалить просроченные файлы.
 
 **Конфигурационные файлы**
 Данные о Провайдерах (`Providers`) и их Операциях (`Operations`) будут храниться в статических конфигурационных файлах (например, `providers.json`), чтобы избежать усложнения схемы БД.
