@@ -200,6 +200,53 @@ queueid:<ID>
 > пользователю.
 
 
+**Таблица `Job`**
+*   `id`: `UUID` (Primary Key)
+*   `slot_id`: `TEXT` (Foreign Key -> Slot)
+*   `status`: `TEXT` (enum: `pending`, `processing`, `completed`, `failed_timeout`, `failed_provider`, `cancelled`)
+*   `attempt`: `INTEGER` (номер текущей попытки, начинается с 1)
+*   `max_attempts`: `INTEGER` (лимит ретраев, вычисляется по политике провайдера/слота)
+*   `priority`: `INTEGER` (используется при выборке из очереди, чем меньше число — тем выше приоритет)
+*   `payload_path`: `TEXT` (путь к временно сохранённому ingest-файлу/метаданным)
+*   `external_queue_id`: `TEXT` (значение `queueid` для Turbotext и аналогов; nullable)
+*   `external_async_id`: `TEXT` (идентификатор async/webhook-потока провайдера; nullable)
+*   `external_metadata`: `JSONB` (дополнительные атрибуты ответа провайдера — лимиты, diagnostic codes)
+*   `locked_by`: `TEXT` (идентификатор воркера, удерживающего задачу)
+*   `locked_at`: `TIMESTAMP WITH TIME ZONE` (момент захвата задачи воркером)
+*   `last_attempt_at`: `TIMESTAMP WITH TIME ZONE` (время запуска текущей попытки)
+*   `next_retry_at`: `TIMESTAMP WITH TIME ZONE` (момент, после которого задача снова доступна для обработки)
+*   `created_at`: `TIMESTAMP WITH TIME ZONE`
+*   `updated_at`: `TIMESTAMP WITH TIME ZONE`
+
+`Job.status` фиксирует жизненный цикл задачи с учётом таймаутов и повторных попыток. При 504 от API статус переводится в
+`failed_timeout`, `locked_by` очищается, а `next_retry_at` заполняется с учётом политики ретраев. Воркеры, работающие через
+PostgreSQL, выбирают задачи запросом `SELECT … FOR UPDATE SKIP LOCKED`, обновляют `locked_by`/`locked_at`, увеличивают `attempt`
+и записывают `last_attempt_at`. Для in-process `asyncio.Queue` таблица используется для журналирования и восстановления после
+рестарта — запись создаётся синхронно с постановкой в очередь.
+
+**Таблица/реестр `Result`**
+*   `id`: `UUID` (Primary Key)
+*   `job_id`: `UUID` (Foreign Key -> Job, UNIQUE)
+*   `storage_path`: `TEXT` (путь к файлу в MEDIA_ROOT или S3-бакинге)
+*   `mime_type`: `TEXT` (MIME результирующего изображения)
+*   `size_bytes`: `INTEGER`
+*   `checksum`: `TEXT` (SHA-256 для дедупликации/проверки целостности)
+*   `expires_at`: `TIMESTAMP WITH TIME ZONE` (момент автоматического удаления)
+*   `created_at`: `TIMESTAMP WITH TIME ZONE`
+*   `metadata`: `JSONB` (дополнительные поля провайдера: prompt, applied_settings)
+
+`Result.expires_at` заполняется воркером исходя из глобальной настройки `media.processed_ttl_hours`. При успешном завершении
+обработки воркер атомарно обновляет `Job.status = 'completed'`, создаёт запись в `Result` и кладёт обработанный файл в
+`MEDIA_ROOT`. API `/results/{job_id}` использует этот реестр, чтобы вернуть ссылку/файл, а также проверяет актуальность TTL
+(`expires_at > now()`). Плановая очистка (GC) удаляет просроченные результаты и освобождает файлы, опираясь на `Result.expires_at`.
+
+`Job` и `Result` также связаны с `media_object`: если провайдер требует публичные ссылки, воркер регистрирует файлы через
+`media_object`, а поле `payload_path`/`storage_path` хранит относительный путь до итогового изображения. При таймауте API (шаг
+5 архитектуры) задача переводится в `failed_timeout`, воркер при получении такого статуса должен отменить активный запрос и
+удалить временные файлы (`payload_path`, записи в `media_object` без `Result`). Ретраи (`attempt < max_attempts`) планируются через
+`next_retry_at`; если лимит исчерпан, статус становится `failed_provider`, что отображается в статистике слота и в ответах API.
+
+
 
 **Таблица `ProcessingLog`**
 *   `id`: `INTEGER` (Primary Key)
