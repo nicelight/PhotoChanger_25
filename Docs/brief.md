@@ -253,15 +253,26 @@ vexpires_at (TIMESTAMPTZ)
       "title": "Change Image",
       "description": "Локальное редактирование исходного изображения по текстовому описанию.",
       "provider_overrides": {
-        "gemini": { "endpoint": "/v1beta/models/gemini-image:edit" },
-        "turbotext": { "endpoint": "/v1/image/change" }
+        "gemini": {
+          "endpoint": "/v1beta/models/gemini-image:edit",
+          "media_parts": [
+            { "id": "ingest_media", "from": "ingest_request" },
+            { "id": "mask", "from": "settings.mask_media_id", "optional": true }
+          ]
+        },
+        "turbotext": {
+          "endpoint": "/v1/image/change",
+          "media_parts": [
+            { "id": "ingest_media", "from": "ingest_request" },
+            { "id": "mask", "from": "settings.mask_media_id", "optional": true }
+          ]
+        }
       },
       "settings_schema": {
         "type": "object",
-        "required": ["source_media_id", "prompt"],
+        "required": ["prompt"],
         "properties": {
           "prompt": { "type": "string", "maxLength": 2000 },
-          "source_media_id": { "type": "string", "format": "uuid" },
           "mask_media_id": { "type": ["string", "null"], "format": "uuid" },
           "guidance_scale": { "type": "number", "minimum": 0, "maximum": 20, "default": 7.5 },
           "output": {
@@ -279,7 +290,7 @@ vexpires_at (TIMESTAMPTZ)
 }
 ```
 
-Ключи `provider_overrides` фиксируют различия в интеграции: URL конечной точки, допустимые параметры, ограничения таймаута. Общие свойства `settings_schema` описывают обязательные поля, которые должны быть валидированы на бэкенде при сохранении слота.
+Ключи `provider_overrides` фиксируют различия в интеграции: URL конечной точки, допустимые параметры, ограничения таймаута. Для операций редактирования `media_parts` описывает, какие бинарные данные подставляются в запрос провайдера: для `change_image` базовый `ingest_media` приходит вместе с ingest‑POST и не хранится в слоте, а маска (`settings.mask_media_id`) передаётся только при наличии. Общие свойства `settings_schema` описывают обязательные поля, которые должны быть валидированы на бэкенде при сохранении слота.
 
 #### Маппинг `Slot`
 
@@ -300,10 +311,21 @@ vexpires_at (TIMESTAMPTZ)
 }
 ```
 
+Пример значения `settings_json` для слота Gemini c операцией `change_image` (исходное фото приходит во входящем ingest‑POST, в конфигурации остаются только дополнительные ресурсы и параметры генерации):
+
+```json
+{
+  "prompt": "Осветлить лицо и пригладить фон",
+  "mask_media_id": "5d6ec774-3b18-4d2f-bf9f-46e6ff2a64ce",
+  "guidance_scale": 6.5,
+  "output": { "format": "png", "quality": 95 }
+}
+```
+
 На UI параметры собираются на основании `needs` (промпт, первое/второе изображение) и валидируются против схемы операции. При сохранении:
 
 1. Файлы загружаются во временное хранилище (`media_object`), что возвращает `media_id`.
-2. Бэкенд формирует объект по схеме, подставляя `media_id` вместо бинарных данных.
+2. Бэкенд формирует объект по схеме, подставляя `media_id` вместо бинарных данных (для `change_image` хранится только маска, а базовое изображение берётся из ingest‑запроса).
 3. Получившийся JSON сериализуется и сохраняется в `Slot.settings_json`.
 
 ## Стек
