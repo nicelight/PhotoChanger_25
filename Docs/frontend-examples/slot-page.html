@@ -36,6 +36,12 @@
     }
 
     .card{ border-radius:var(--glass); background:transparent; border:1px dashed color-mix(in oklab, white 75%, #0f172a 25% / 35%); padding:var(--pad) }
+    .slot-heading{ display:grid; gap:var(--gap) }
+    .slot-heading__meta{ display:grid; gap:8px }
+    .slot-heading__model{ margin:0; font-weight:700; color:#0f172acc; font-size:clamp(16px,2cqi,20px); display:flex; gap:.5em; flex-wrap:wrap; align-items:center }
+    .slot-heading__separator{ margin:0 .5em; opacity:.6 }
+    .slot-heading__slot{ margin:0 }
+    .slot-heading h1{ margin:0 }
 
     h1{ font-size:clamp(28px,4cqi,48px); margin:0 }
     label.title{ font-weight:700; display:block; margin-bottom:8px }
@@ -102,19 +108,26 @@
     #upload-form.-pulse { animation: pulseForm .4s ease }
   </style>
 </head>
-<body>
+<body data-slot-id="slot-001" data-provider="gemini" data-model-name="Gemini Ultra Portrait" data-operation="identity_transfer">
   <div class="bg">
     <main>
       <div class="shell">
-        <!-- 1. Заголовок -->
-        <div class="card"><h1>Слот — AI обработка</h1></div>
-
         <!-- Форма. Отправку на backend не выполняем здесь -->
         <form id="upload-form" onsubmit="return false;">
-          <!-- 2. Название слота -->
-          <div class="card">
-            <label class="title" for="title">Название слота</label>
-            <input id="title" name="title" type="text" placeholder="Например: Подстановка лица на шаблон" />
+          <!-- 1. Заголовок и название слота -->
+          <div class="card slot-heading">
+            <div class="slot-heading__meta">
+              <h1>Слот — AI обработка</h1>
+              <p class="slot-heading__model" id="slot-model-label" aria-live="polite">
+                <span id="slot-model-text">AI-модель: — выберите провайдера —</span>
+                <span class="slot-heading__separator" aria-hidden="true">•</span>
+                <span>Слот <span id="slot-id-value">slot-001</span></span>
+              </p>
+              <p class="slot-heading__slot muted-hint">Значение выдаётся бэкендом: ingest-ссылка привязана к слоту и выбранной модели.</p>
+            </div>
+            <label class="title" for="title">Название</label>
+            <input id="title" name="title" type="text" placeholder="Например: Корпоративный портрет для сайта" />
+            <p class="muted-hint">Название появится в списке слотов на главной странице.</p>
           </div>
 
           <!-- 3. Провайдер → Операция -->
@@ -200,13 +213,13 @@
               <div>
                 <label class="title" for="ingest-url">Ingest-ссылка слота</label>
                 <div class="inline">
-                  <input id="ingest-url" type="text" readonly placeholder="Появится после сохранения" />
+                  <input id="ingest-url" type="text" readonly placeholder="Появится после выбора модели" />
                   <button id="btn-copy" type="button" class="btn" disabled>Копировать</button>
                 </div>
-                <p class="muted-hint">Эту ссылку нужно вставить в DSLR Remote Pro для POST-загрузки.</p>
+                <p class="muted-hint">Ссылка совпадает с отображаемой на главной странице и используется DSLR Remote Pro.</p>
               </div>
               <div class="btns">
-                <button type="button" class="btn" id="btn-save1">Сохранить слот</button>
+                <button type="button" class="btn" id="btn-save1">Сохранить1</button>
               </div>
             </div>
             <p id="server-response" style="color:var(--muted);margin-top:8px"></p>
@@ -245,6 +258,21 @@
       // --- Helpers ---
       const $ = (id) => document.getElementById(id);
       const byId = $; // alias
+      const slotMeta = {
+        id: document.body.dataset.slotId || 'slot-001',
+        provider: document.body.dataset.provider || '',
+        operation: document.body.dataset.operation || '',
+        modelName: document.body.dataset.modelName || ''
+      };
+      const PRESET_PROVIDER = slotMeta.provider;
+      const PRESET_MODEL_NAME = slotMeta.modelName;
+      const PRESET_OPERATION = slotMeta.operation;
+      const slotModelLabel = byId('slot-model-label');
+      const slotModelText = byId('slot-model-text');
+      const slotIdValue = byId('slot-id-value');
+      const ingestInput = byId('ingest-url');
+      const copyBtn = byId('btn-copy');
+      if(slotIdValue){ slotIdValue.textContent = slotMeta.id; }
       const setStatus = (name, present) => { const el = $(`${name}_status`); if (el) el.value = present ? 'present' : 'removed'; };
       const isValid = (f) => {
         if (!f) return false;
@@ -407,7 +435,13 @@
       providerSel.addEventListener('change', ()=>{
         const prov = providerSel.value;
         resetOperation();
-        if(!prov || !CONFIG[prov]) return;
+        if(!prov || !CONFIG[prov]){
+          slotMeta.provider = '';
+          slotMeta.modelName = '';
+          slotMeta.operation = '';
+          updateSlotHeader('');
+          return;
+        }
         const ops = CONFIG[prov].operations;
         const frag = document.createDocumentFragment();
         Object.entries(ops).forEach(([key, meta])=>{
@@ -417,13 +451,33 @@
         });
         operationSel.appendChild(frag);
         operationSel.disabled = false;
+        slotMeta.provider = prov;
+        slotMeta.modelName = (prov === PRESET_PROVIDER && PRESET_MODEL_NAME) ? PRESET_MODEL_NAME : (CONFIG[prov].label || prov);
+        slotMeta.operation = '';
+        updateSlotHeader(prov);
       });
 
       operationSel.addEventListener('change', ()=>{
         const prov = providerSel.value; const op = operationSel.value;
         if(!prov || !op || !CONFIG[prov] || !CONFIG[prov].operations[op]) return;
         applyNeeds(CONFIG[prov].operations[op].needs);
+        slotMeta.operation = op;
       });
+
+      // --- Предзаполнение данными слота из атрибутов body ---
+      (function prefillSlotFromData(){
+        if(slotMeta.provider){
+          providerSel.value = slotMeta.provider;
+          providerSel.dispatchEvent(new Event('change'));
+          if(PRESET_OPERATION){
+            slotMeta.operation = PRESET_OPERATION;
+            operationSel.value = PRESET_OPERATION;
+            operationSel.dispatchEvent(new Event('change'));
+          }
+        } else {
+          updateSlotHeader('');
+        }
+      })();
 
       // --- Кнопка «Тест1» ---
       (function(){
@@ -440,27 +494,42 @@
       })();
 
       // --- Генерация ingest-ссылки (клиентская заглушка) ---
-      const GLOBAL_SLOT_IDS = Array.from({length: 15}, (_, i) => 'slot-' + String(i + 1).padStart(3, '0'));
-      let demoSlotIndex = 0;
-      function generateIngestURL(){
-        // Имитация backend-выдачи: сервер возвращает одну из 15 глобальных ingest-ссылок.
-        const base = 'https://api.example.com/ingest/';
-        const slug = GLOBAL_SLOT_IDS[demoSlotIndex % GLOBAL_SLOT_IDS.length];
-        demoSlotIndex += 1;
-        return base + slug;
+      const INGEST_BASE_URL = 'https://api.example.com/ingest/';
+      function generateIngestURL(slotId, providerSlug){
+        if(providerSlug){
+          return `${INGEST_BASE_URL}${providerSlug}/${slotId}`;
+        }
+        return '';
+      }
+
+      function updateSlotHeader(providerOverride){
+        const provider = providerOverride || slotMeta.provider || '';
+        const providerLabel = provider && CONFIG[provider]?.label ? CONFIG[provider].label : provider;
+        const displayName = slotMeta.modelName || providerLabel || '— выберите провайдера —';
+        if(slotModelText){
+          const slugPart = provider ? ` (${provider})` : '';
+          slotModelText.textContent = `AI-модель: ${displayName}${slugPart}`;
+        }
+        if(slotIdValue){ slotIdValue.textContent = slotMeta.id; }
+        if(ingestInput){
+          const url = generateIngestURL(slotMeta.id, provider);
+          ingestInput.value = url;
+          if(copyBtn){ copyBtn.disabled = !provider; }
+        }
       }
 
       // --- Кнопка «Копировать» ---
       (function(){
-        const btn = byId('btn-copy');
+        const btn = copyBtn;
+        if(!btn || !ingestInput) return;
         btn.addEventListener('click', async ()=>{
-          const inp = byId('ingest-url');
-          if(!inp.value){ return toast('Нет ссылки для копирования', 'error'); }
+          const value = (ingestInput.value || '').trim();
+          if(!value){ return toast('Нет ссылки для копирования', 'error'); }
           try{
-            await navigator.clipboard.writeText(inp.value);
+            await navigator.clipboard.writeText(value);
             toast('Ссылка скопирована', 'success');
           }catch(e){
-            inp.select(); document.execCommand('copy');
+            ingestInput.select(); document.execCommand('copy');
             toast('Ссылка скопирована', 'success');
           }
         });
@@ -491,19 +560,24 @@
             toast('Добавьте текстовый промпт для операции', 'error'); return pulse(form);
           }
 
-          // Имитация успешного сохранения слота и выдачи ingest URL от бэкенда
-          const url = generateIngestURL();
-          const ingestInp = byId('ingest-url');
-          const copyBtn = byId('btn-copy');
-          ingestInp.value = url; copyBtn.disabled = false;
+          // Имитация успешного сохранения слота и подтверждения ingest URL от бэкенда
+          slotMeta.provider = prov;
+          slotMeta.modelName = (prov === PRESET_PROVIDER && PRESET_MODEL_NAME) ? PRESET_MODEL_NAME : (CONFIG[prov]?.label || prov);
+          slotMeta.operation = op;
+          updateSlotHeader(prov);
+          if(copyBtn){ copyBtn.disabled = false; }
           pulse(form);
           toast('Слот сохранён. Ingest-ссылка готова.', 'success');
-          byId('server-response').textContent = 'Слот «' + title + '» сохранён локально (демо). В реальном режиме URL приходит с сервера.';
+          byId('server-response').textContent = 'Слот «' + title + '» сохранён локально (демо). Статическая ingest-ссылка: ' + (ingestInput ? ingestInput.value : '') + '.';
         });
       })();
 
       // --- Self tests ---
       try{
+        console.assert(document.body.dataset.slotId, 'slot id data attribute exists');
+        console.assert(byId('slot-model-label'), 'Slot model label exists');
+        console.assert(slotModelText, 'Slot model text exists');
+        console.assert(ingestInput, 'Ingest input exists');
         console.assert(byId('toggle-second') && byId('second-wrap'), 'Second toggle/panel exist');
         console.assert(byId('toggle-first') && byId('first-wrap'), 'First toggle/panel exist');
         console.assert(byId('Second_image_status').value === 'removed', 'Second_image_status default removed');
