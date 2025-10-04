@@ -1,0 +1,514 @@
+ <!-- (HTML + CSS + VanillaJS + HTMX) -->
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Слот — AI обработка — HTMX + VanillaJS</title>
+  <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+  <style>
+    :root{ --h-a:195; --h-b:8; --h-c:54; --s:100%; --l:93%; --text:#0f172a; --muted:#334155cc; --glass:18px; --gap:clamp(12px,2vw,18px); --pad:clamp(14px,1.8vw,22px); }
+    @property --l{syntax:'<percentage>';inherits:true;initial-value:93%}
+    *,*::before,*::after{box-sizing:border-box}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter;color:var(--text)}
+
+    .bg{ min-height:100dvh; overflow-x:hidden; background:
+      radial-gradient(120vmax 120vmax at 0% 0%,    hsl(var(--h-a) var(--s) var(--l) / .85) 0 40%, transparent 70%),
+      radial-gradient(130vmax 130vmax at 0% 100%,  hsl(var(--h-c) var(--s) var(--l) / .85) 0 40%, transparent 70%),
+      radial-gradient(140vmax 140vmax at 100% 50%, hsl(var(--h-b) var(--s) var(--l) / .85) 0 40%, transparent 70%),
+      linear-gradient(180deg, color-mix(in oklab, white 90%, hsl(var(--h-a) var(--s) var(--l)) 10%), white);
+      animation:breathe 3s ease-in-out infinite; }
+    @keyframes breathe{0%,100%{--l:92%}50%{--l:95%}}
+
+    main{ display:grid; place-items:center; padding:clamp(20px,5vmin,60px) }
+    .shell{ width:min(980px,96vw); display:grid; gap:var(--gap) }
+
+    /* ▲ Форме даём 8% непрозрачности и лёгкое стекло */
+    #upload-form{ 
+      background: rgba(255,255,255,0.08); /* 8% */
+      border:1px solid color-mix(in oklab, white 75%, #0f172a 25% / 30%);
+      border-radius: calc(var(--glass) + 6px);
+      box-shadow: 0 10px 30px rgba(2,6,23,.12);
+      backdrop-filter: blur(6px);
+      padding: var(--gap);
+      display:grid;
+      gap: var(--gap);
+    }
+
+    .card{ border-radius:var(--glass); background:transparent; border:1px dashed color-mix(in oklab, white 75%, #0f172a 25% / 35%); padding:var(--pad) }
+
+    h1{ font-size:clamp(28px,4cqi,48px); margin:0 }
+    label.title{ font-weight:700; display:block; margin-bottom:8px }
+    input[type="text"], input[type="password"], select, textarea{ width:100%; border-radius:14px; padding:12px 14px; border:1px solid color-mix(in oklab, white 75%, #0f172a 25% / 35%); background:transparent; outline:none }
+    textarea{ resize:vertical }
+
+    .muted-hint{ color:var(--muted); font-size:14px; margin-top:8px }
+
+    /* Switch */
+    .switch-row{ display:flex; align-items:center; gap:10px }
+    .switch{ appearance:none; width:32px; height:18px; border-radius:999px; position:relative; outline:none; cursor:pointer; background:rgba(15,23,42,.12); transition:background .18s ease }
+    .switch::after{ content:""; position:absolute; top:2px; left:2px; width:14px; height:14px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(2,6,23,.18); transition:transform .18s ease }
+    .switch:checked{ background:color-mix(in oklab, hsl(var(--h-a) var(--s) var(--l)), #0f172a 20%) }
+    .switch:checked::after{ transform:translateX(14px) }
+    .switch-label{ user-select:none; color:#0f172acc; font-weight:600 }
+
+    .uploads{ display:none; margin-top:10px; gap:var(--gap); }
+    .uploads.show{ display:grid }
+
+    /* Upload / drop-zone */
+    .drop{ position:relative; display:grid; place-items:center; gap:8px; padding:18px; text-align:center; border-radius:calc(var(--glass) - 2px);
+      outline:2px dashed color-mix(in oklab, hsl(var(--h-a) var(--s) var(--l)) 70%, #0f172a 30% / 40%);
+      outline-offset:-8px; cursor:pointer; min-height:160px }
+    .drop.large{ aspect-ratio:16/10; padding:0; border-radius:calc(var(--glass) - 6px); border:1px solid color-mix(in oklab, white 75%, #0f172a 25% / 35%); overflow:hidden; max-width: min(100%, 800px); margin-inline:auto; }
+    .drop:focus-visible{ outline:3px solid #fff; outline-offset:-6px; }
+    .drop.dragging{ outline-color:#fff; background:rgba(255,255,255,.08) }
+    .drop input[type=file]{ position:absolute; inset:0; opacity:0; cursor:pointer; z-index:1 }
+    .remove-btn{ position:absolute; top:10px; right:10px; z-index:2; border:none; border-radius:12px; padding:8px 10px; font-weight:600; cursor:pointer; background:color-mix(in oklab, white 85%, #000 15% / 20%); backdrop-filter:blur(6px); color:#0f172a; box-shadow:0 2px 10px rgba(2,6,23,.12); opacity:0; transition:opacity .18s ease,transform .18s ease }
+    .drop.has-image:hover .remove-btn, .drop.has-image:focus-within .remove-btn{ opacity:1 }
+
+    /* Превью: мягкое появление ~500 мс */
+    .drop .drop-preview{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:none; opacity:0; z-index:1; transition:opacity .5s ease }
+    .drop.has-image .drop-preview{ display:block }
+    .drop.has-image .placeholder{ position:relative; z-index:0; display:grid; gap:6px; place-items:center; padding:18px; color:var(--muted); outline:1px solid color-mix(in oklab, #0f172a 20%, white 80% / 45%); outline-offset:-6px; border-radius:calc(var(--glass) - 10px); }
+
+    .placeholder{ position:relative; z-index:0; display:grid; gap:6px; place-items:center; padding:18px; color:var(--muted) }
+    .error{ margin-top:8px; font-size:14px; color:#b91c1c }
+
+    .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:var(--gap) }
+
+    .btns{ display:flex; gap:12px; justify-content:flex-end; flex-wrap:wrap }
+    .btn{ border:1px solid color-mix(in oklab, white 75%, #0f172a 25% / 35%); background:transparent; border-radius:12px; padding:10px 16px; font-weight:700; cursor:pointer }
+    .btn:hover{ background:rgba(255,255,255,.35) }
+
+    .inline{ display:flex; gap:10px; align-items:center }
+    .inline input[type="text"]{ flex:1 }
+
+    /* Кнопки внутри выпадаемых секций */
+    .uploads-actions{ display:flex; justify-content:flex-start; }
+    .uploads-actions .btn{ margin-top:8px; }
+
+    /* Всплывающее сообщение (toast) для ошибок сервера */
+    .toast{ position:fixed; right:16px; top:16px; display:grid; gap:8px; z-index:9999 }
+    .toast-item{ min-width:260px; max-width:min(92vw,420px); padding:12px 14px; border-radius:12px; box-shadow:0 8px 28px rgba(2,6,23,.25); color:#0f172a; backdrop-filter:blur(6px); border:1px solid rgba(15,23,42,.12); background:rgba(255,255,255,.96); opacity:0; transform:translateY(-6px); transition:opacity .25s ease, transform .25s ease }
+    .toast-item.show{ opacity:1; transform:translateY(0) }
+    .toast-item.error{ border-color:#fecaca; background:rgba(254,226,226,.96) }
+    .toast-item.success{ border-color:#bbf7d0; background:rgba(220,252,231,.96) }
+
+    /* Только для скринридеров */
+    .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0 }
+
+    /* Минимальная универсальная анимация формы: лёгкий пульс */
+    @keyframes pulseForm { 0% { opacity: 1 } 50% { opacity: .08 } 100% { opacity: 1 } }
+    #upload-form.-pulse { animation: pulseForm .4s ease }
+  </style>
+</head>
+<body>
+  <div class="bg">
+    <main>
+      <div class="shell">
+        <!-- 1. Заголовок -->
+        <div class="card"><h1>Слот — AI обработка</h1></div>
+
+        <!-- Форма. Отправку на backend не выполняем здесь -->
+        <form id="upload-form" onsubmit="return false;">
+          <!-- 2. Название слота -->
+          <div class="card">
+            <label class="title" for="title">Название слота</label>
+            <input id="title" name="title" type="text" placeholder="Например: Подстановка лица на шаблон" />
+          </div>
+
+          <!-- 3. Провайдер → Операция -->
+          <div class="card">
+            <div class="grid-2">
+              <div>
+                <label class="title" for="provider">Провайдер</label>
+                <select id="provider" name="provider" aria-label="Выбор AI-провайдера">
+                  <option value="" selected disabled>— выберите —</option>
+                  <option value="gemini">Gemini</option>
+                  <option value="turbotext">Turbotext</option>
+                </select>
+              </div>
+              <div>
+                <label class="title" for="operation">Операция</label>
+                <select id="operation" name="operation" aria-label="Выбор операции" disabled>
+                  <option value="" selected disabled>— выберите провайдера —</option>
+                </select>
+              </div>
+            </div>
+            <p id="op-req" class="muted-hint" style="display:none"></p>
+          </div>
+
+          <!-- 4. Параметры операции (только промпт) -->
+          <div class="card" id="params-card">
+            <label class="title" for="long">Параметры операции</label>
+            <textarea id="long" name="long" rows="6" placeholder="Промпт к ИИ…"></textarea>
+            <p class="muted-hint">Опишите желаемую обработку. Если операция использует шаблонное изображение, называйте его как «Изображение №2».</p>
+          </div>
+
+          <!-- 5. Тумблер + Second_image -->
+          <div class="card" data-block="second-wrap-card">
+            <div class="switch-row">
+              <input id="toggle-second" class="switch" type="checkbox" />
+              <label class="switch-label" for="toggle-second">Добавить второе изображение</label>
+            </div>
+            <div id="second-wrap" class="uploads">
+              <label class="drop large" id="drop-second" tabindex="0" role="button" aria-label="Загрузка изображения-шаблона">
+                <span class="sr-only">Нажмите или перетащите файл (JPG/PNG) сюда</span>
+                <button type="button" class="remove-btn" data-action="remove" data-for="Second_image">Убрать</button>
+                <img id="preview-second" class="drop-preview" alt="Превью шаблона" loading="lazy" decoding="async" />
+                <div class="placeholder">
+                  <strong>Изображение — Шаблон стиля</strong>
+                  <small>Кликните или перетащите JPG/PNG</small>
+                </div>
+                <input id="input-second" name="Second_image" type="file" accept="image/jpeg,image/png" />
+                <input type="hidden" name="Second_image_status" id="Second_image_status" value="removed" />
+              </label>
+              <div id="error-second" class="error" style="display:none"></div>
+            </div>
+          </div>
+
+          <!-- 6. Тумблер + First_image -->
+          <div class="card" data-block="first-wrap-card">
+            <div class="switch-row">
+              <input id="toggle-first" class="switch" type="checkbox" />
+              <label class="switch-label" for="toggle-first">Протестировать AI обработку</label>
+            </div>
+            <p id="hint-first" class="muted-hint" style="display:none">Добавьте фотографию, которую нужно обработать</p>
+
+            <div id="first-wrap" class="uploads">
+              <label class="drop large" id="drop-first" tabindex="0" role="button" aria-label="Загрузка тестового изображения">
+                <span class="sr-only">Нажмите или перетащите файл (JPG/PNG) сюда</span>
+                <button type="button" class="remove-btn" data-action="remove" data-for="First_image">Убрать</button>
+                <img id="preview-first" class="drop-preview" alt="Превью фото" loading="lazy" decoding="async" />
+                <div class="placeholder">
+                  <strong>Фото для тестов</strong>
+                  <small>Кликните или перетащите JPG/PNG</small>
+                </div>
+                <input id="input-first" name="First_image" type="file" accept="image/jpeg,image/png" />
+                <input type="hidden" name="First_image_status" id="First_image_status" value="removed" />
+              </label>
+              <div id="error-first" class="error" style="display:none"></div>
+              <div class="uploads-actions">
+                <button id="btn-test1" type="button" class="btn">Тест1</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7. Кнопки + ingest-ссылка -->
+          <div class="card">
+            <div class="grid-2" style="align-items:end">
+              <div>
+                <label class="title" for="ingest-url">Ingest-ссылка слота</label>
+                <div class="inline">
+                  <input id="ingest-url" type="text" readonly placeholder="Появится после сохранения" />
+                  <button id="btn-copy" type="button" class="btn" disabled>Копировать</button>
+                </div>
+                <p class="muted-hint">Эту ссылку нужно вставить в DSLR Remote Pro для POST-загрузки.</p>
+              </div>
+              <div class="btns">
+                <button type="button" class="btn" id="btn-save1">Сохранить слот</button>
+              </div>
+            </div>
+            <p id="server-response" style="color:var(--muted);margin-top:8px"></p>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast контейнер -->
+  <div class="toast" id="toast" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+    (function(){
+      'use strict';
+      // --- Конфиг провайдеров/операций и требований к полям ---
+      const CONFIG = {
+        gemini: {
+          label: 'Gemini',
+          operations: {
+            style_transfer: { label: 'Style Transfer', needs: { prompt:true, second:true, first:false } },
+            combine_images: { label: 'Combine Images', needs: { prompt:true, second:true, first:true } },
+            change_image: { label: 'Change Image', needs: { prompt:true, second:false, first:true } }
+          }
+        },
+        turbotext: {
+          label: 'TurboText',
+          operations: {
+            style_transfer: { label: 'Style Transfer', needs: { prompt:true, second:true, first:false } },
+            change_image: { label: 'Change Image', needs: { prompt:true, second:false, first:true } }
+          }
+        }
+      };
+
+      // --- Helpers ---
+      const $ = (id) => document.getElementById(id);
+      const byId = $; // alias
+      const setStatus = (name, present) => { const el = $(`${name}_status`); if (el) el.value = present ? 'present' : 'removed'; };
+      const isValid = (f) => {
+        if (!f) return false;
+        const t = (f.type || '').toLowerCase();
+        if (t === 'image/jpeg' || t === 'image/png' || t === 'image/jpg') return true;
+        const name = (f.name || '').toLowerCase();
+        return /(\.jpe?g|\.png)$/.test(name);
+      };
+      const show = (el) => el && el.classList.add('show');
+      const hide = (el) => el && el.classList.remove('show');
+      const pulse = (el)=>{ if(!el) return; el.classList.remove('-pulse'); void el.offsetWidth; el.classList.add('-pulse'); };
+
+      // --- Toast ---
+      function toast(msg, type){
+        const box = byId('toast');
+        if(!box) return;
+        const item = document.createElement('div');
+        item.className = 'toast-item ' + (type || '');
+        item.textContent = msg;
+        box.appendChild(item);
+        requestAnimationFrame(() => item.classList.add('show'));
+        setTimeout(() => { item.classList.remove('show'); setTimeout(() => item.remove(), 300); }, 4200);
+      }
+      window.toast = toast;
+
+      // --- Toggles ---
+      function bindToggle(toggleId, panelId){
+        const t = byId(toggleId); const panel = byId(panelId);
+        if(!t || !panel) return;
+        const apply = () => t.checked ? show(panel) : hide(panel);
+        t.addEventListener('change', apply);
+        apply();
+      }
+      bindToggle('toggle-second','second-wrap');
+      bindToggle('toggle-first','first-wrap');
+
+      // Подсказка под тумблером «Протестировать AI обработку»
+      (function(){
+        const t = document.getElementById('toggle-first');
+        const hint = document.getElementById('hint-first');
+        if(!t || !hint) return;
+        const apply = () => { hint.style.display = t.checked ? '' : 'none'; };
+        t.addEventListener('change', apply);
+        apply();
+      })();
+
+      // --- Upload slots + drop-zone & fade-in ---
+      function bindSlot(prefix){
+        const input = byId(`input-${prefix}`);
+        const preview = byId(`preview-${prefix}`);
+        const drop = byId(`drop-${prefix}`);
+        const err = byId(`error-${prefix}`);
+        const panel = drop ? drop.closest('.uploads') : null;
+        const hiddenName = prefix === 'second' ? 'Second_image' : 'First_image';
+        let url = null;
+
+        function setErr(msg){ if(!err) return; err.textContent = msg || ''; err.style.display = msg ? 'block' : 'none'; }
+        function clear(){
+          if(url){ URL.revokeObjectURL(url); url = null; }
+          if(preview){
+            preview.style.opacity = '0';
+            preview.addEventListener('transitionend', function hideOnFade(e){
+              if(e.propertyName === 'opacity'){
+                preview.style.display = 'none';
+                preview.removeEventListener('transitionend', hideOnFade);
+              }
+            });
+          }
+          if(drop){ drop.classList.remove('has-image'); }
+          setStatus(hiddenName,false);
+        }
+        function onFile(file){
+          if(!file) return;
+          if(!isValid(file)){
+            setErr('Неверный формат. Разрешены только JPG и PNG.');
+            if(input) input.value='';
+            clear();
+            return;
+          }
+          setErr('');
+          if(url){ URL.revokeObjectURL(url); }
+          url = URL.createObjectURL(file);
+          if(panel) panel.classList.add('show');
+          drop.classList.add('has-image');
+          preview.src = url;
+          preview.style.display='block';
+          preview.style.opacity='0';
+          requestAnimationFrame(()=>{ preview.style.opacity='1'; });
+          setStatus(hiddenName,true);
+        }
+
+        if(input){ input.addEventListener('change', ()=> onFile(input.files && input.files[0])); }
+
+        if(drop){ drop.addEventListener('click', (e)=>{
+          const t = e.target;
+          if(t && t.getAttribute && t.getAttribute('data-action')==='remove'){
+            e.preventDefault(); e.stopPropagation();
+            if(input) input.value='';
+            clear();
+          }
+        }); }
+
+        if(drop){
+          const on = (ev,fn)=> drop.addEventListener(ev,fn);
+          on('dragover', (e)=>{ e.preventDefault(); drop.classList.add('dragging'); });
+          on('dragenter', (e)=>{ e.preventDefault(); drop.classList.add('dragging'); });
+          on('dragleave', ()=> drop.classList.remove('dragging'));
+          on('drop', (e)=>{
+            e.preventDefault(); drop.classList.remove('dragging');
+            const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+            if(file){
+              onFile(file);
+              if(input){
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                input.files = dt.files;
+              }
+            }
+          });
+        }
+      } // end bindSlot
+      bindSlot('second');
+      bindSlot('first');
+
+      // --- Provider → Operation → Required fields ---
+      const providerSel = byId('provider');
+      const operationSel = byId('operation');
+      const reqHint = byId('op-req');
+
+      function resetOperation(){
+        operationSel.innerHTML = '<option value="" disabled selected>— выберите операцию —</option>';
+        operationSel.disabled = true;
+        reqHint.style.display = 'none';
+      }
+
+      function applyNeeds(needs){
+        // needs: {prompt, second, first}
+        // Prompt field visibility
+        const promptArea = byId('long').closest('.card');
+        if(promptArea){
+          // оставляем карту, но если prompt не нужен — просто подсказкой укажем, что он опционален
+          const lbl = promptArea.querySelector('label.title');
+          if(lbl){ lbl.textContent = needs.prompt ? 'Параметры операции' : 'Параметры операции (промпт опционален)'; }
+        }
+        // Images toggles: автопоказ только если нужно — без блокировки ручного выключения
+        const tFirst = byId('toggle-first');
+        const tSecond = byId('toggle-second');
+        if(tFirst){ tFirst.checked = needs.first || tFirst.checked; tFirst.dispatchEvent(new Event('change')); }
+        if(tSecond){ tSecond.checked = needs.second || tSecond.checked; tSecond.dispatchEvent(new Event('change')); }
+
+        // Compose human-readable requirements
+        const req = [];
+        if(needs.first) req.push('нужно «Фото для тестов»');
+        if(needs.second) req.push('нужно «Изображение — Шаблон стиля»');
+        if(needs.prompt) req.push('нужен текстовый промпт');
+        reqHint.textContent = req.length ? ('Для выбранной операции: ' + req.join('; ') + '.') : 'Для выбранной операции специальных требований нет.';
+        reqHint.style.display = '';
+      }
+
+      providerSel.addEventListener('change', ()=>{
+        const prov = providerSel.value;
+        resetOperation();
+        if(!prov || !CONFIG[prov]) return;
+        const ops = CONFIG[prov].operations;
+        const frag = document.createDocumentFragment();
+        Object.entries(ops).forEach(([key, meta])=>{
+          const opt = document.createElement('option');
+          opt.value = key; opt.textContent = meta.label;
+          frag.appendChild(opt);
+        });
+        operationSel.appendChild(frag);
+        operationSel.disabled = false;
+      });
+
+      operationSel.addEventListener('change', ()=>{
+        const prov = providerSel.value; const op = operationSel.value;
+        if(!prov || !op || !CONFIG[prov] || !CONFIG[prov].operations[op]) return;
+        applyNeeds(CONFIG[prov].operations[op].needs);
+      });
+
+      // --- Кнопка «Тест1» ---
+      (function(){
+        const b = document.getElementById('btn-test1');
+        if(!b) return;
+        b.addEventListener('click', function(){
+          const st = document.getElementById('First_image_status');
+          if(!st || st.value !== 'present'){
+            return toast('Загрузите тестовое фото перед запуском «Тест1»', 'error');
+          }
+          pulse(document.getElementById('upload-form'));
+          toast('Нажата кнопка «Тест1»', 'success');
+        });
+      })();
+
+      // --- Генерация ingest-ссылки (клиентская заглушка) ---
+      function generateIngestURL(){
+        // Имитация backend-выдачи: обычно приходит от сервера.
+        const base = 'https://api.example.com/ingest/';
+        const slug = 'slot-' + Math.random().toString(36).slice(2, 10);
+        return base + slug;
+      }
+
+      // --- Кнопка «Копировать» ---
+      (function(){
+        const btn = byId('btn-copy');
+        btn.addEventListener('click', async ()=>{
+          const inp = byId('ingest-url');
+          if(!inp.value){ return toast('Нет ссылки для копирования', 'error'); }
+          try{
+            await navigator.clipboard.writeText(inp.value);
+            toast('Ссылка скопирована', 'success');
+          }catch(e){
+            inp.select(); document.execCommand('copy');
+            toast('Ссылка скопирована', 'success');
+          }
+        });
+      })();
+
+      // --- Кнопка «Сохранить слот» — валидация и выдача ingest URL ---
+      (function(){
+        const save = document.getElementById('btn-save1');
+        if(!save) return;
+        save.addEventListener('click', function(){
+          const form = document.getElementById('upload-form');
+          const title = (byId('title').value || '').trim();
+          const prov = byId('provider').value;
+          const op = byId('operation').value;
+          if(!title){ toast('Заполните название слота', 'error'); return pulse(form); }
+          if(!prov){ toast('Выберите провайдера', 'error'); return pulse(form); }
+          if(!op){ toast('Выберите операцию', 'error'); return pulse(form); }
+
+          // Проверка обязательных полей по needs
+          const needs = CONFIG[prov]?.operations?.[op]?.needs || { };
+          if(needs.first && byId('First_image_status').value !== 'present'){
+            toast('Для этой операции требуется «Фото для тестов»', 'error'); return pulse(form);
+          }
+          if(needs.second && byId('Second_image_status').value !== 'present'){
+            toast('Для этой операции требуется «Изображение — Шаблон стиля»', 'error'); return pulse(form);
+          }
+          if(needs.prompt && !(byId('long').value || '').trim()){
+            toast('Добавьте текстовый промпт для операции', 'error'); return pulse(form);
+          }
+
+          // Имитация успешного сохранения слота и выдачи ingest URL от бэкенда
+          const url = generateIngestURL();
+          const ingestInp = byId('ingest-url');
+          const copyBtn = byId('btn-copy');
+          ingestInp.value = url; copyBtn.disabled = false;
+          pulse(form);
+          toast('Слот сохранён. Ingest-ссылка готова.', 'success');
+          byId('server-response').textContent = 'Слот «' + title + '» сохранён локально (демо). В реальном режиме URL приходит с сервера.';
+        });
+      })();
+
+      // --- Self tests ---
+      try{
+        console.assert(byId('toggle-second') && byId('second-wrap'), 'Second toggle/panel exist');
+        console.assert(byId('toggle-first') && byId('first-wrap'), 'First toggle/panel exist');
+        console.assert(byId('Second_image_status').value === 'removed', 'Second_image_status default removed');
+        console.assert(byId('First_image_status').value === 'removed', 'First_image_status default removed');
+        console.assert(byId('input-second').getAttribute('accept').includes('image/jpeg'), 'input-second accepts jpeg');
+        console.assert(byId('input-second').getAttribute('accept').includes('image/png'), 'input-second accepts png');
+      }catch(e){ console.warn('[Self-test]', e); }
+
+    })();
+  </script>
+</body>
+</html>
