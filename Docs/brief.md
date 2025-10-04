@@ -162,20 +162,11 @@ vexpires_at (TIMESTAMPTZ)
     {
       "id": "gemini",
       "title": "Gemini",
-      "transport": {
-        "base_url": "https://generativelanguage.googleapis.com",
-        "model": "gemini-2.5-flash-image",
-        "method": "generateContent",
-        "endpoint": "/v1beta/models/gemini-2.5-flash-image:generateContent",
-        "auth": "api_key"
-      },
       "ingest": {
         "max_parallel_jobs": 4,
         "timeout_sec": 48,
         "allowed_mime": ["image/jpeg", "image/png"],
-        "max_file_size_mb": 20,
-        "media_inline_limit_mb": 20,
-        "files_api_base_url": "https://generativelanguage.googleapis.com/v1beta/files"
+        "max_file_size_mb": 20
       },
       "operations": [
         "style_transfer",
@@ -186,10 +177,6 @@ vexpires_at (TIMESTAMPTZ)
     {
       "id": "turbotext",
       "title": "TurboText",
-      "transport": {
-        "base_url": "https://api.turbotext.ai",
-        "auth": "api_key"
-      },
       "ingest": {
         "max_parallel_jobs": 2,
         "timeout_sec": 48,
@@ -208,15 +195,7 @@ vexpires_at (TIMESTAMPTZ)
       "title": "Style Transfer",
       "description": "Перенос художественного стиля с эталонного изображения на целевое.",
       "provider_overrides": {
-        "gemini": {
-          "model": "gemini-2.5-flash-image",
-          "method": "generateContent",
-          "prompt_template": "Наложи стиль эталона на снимок из DSLR",
-          "media_parts": [
-            { "source": "prompt", "type": "text" },
-            { "source": "reference_media_id", "type": "image" }
-          ]
-        },
+        "gemini": { "endpoint": "/v1beta/models/gemini-image:transferStyle" },
         "turbotext": { "endpoint": "/v1/style-transfer" }
       },
       "settings_schema": {
@@ -241,16 +220,7 @@ vexpires_at (TIMESTAMPTZ)
       "title": "Combine Images",
       "description": "Композиция нескольких изображений: склейка, коллажи, face-swap.",
       "provider_overrides": {
-        "gemini": {
-          "model": "gemini-2.5-flash-image",
-          "method": "generateContent",
-          "media_parts": [
-            { "source": "prompt", "type": "text" },
-            { "source": "base_media_id", "type": "image" },
-            { "source": "overlay_media_id", "type": "image" },
-            { "source": "mask_media_id", "type": "image", "optional": true }
-          ]
-        }
+        "gemini": { "endpoint": "/v1beta/models/gemini-image:compose" }
       },
       "settings_schema": {
         "type": "object",
@@ -283,15 +253,7 @@ vexpires_at (TIMESTAMPTZ)
       "title": "Change Image",
       "description": "Локальное редактирование исходного изображения по текстовому описанию.",
       "provider_overrides": {
-        "gemini": {
-          "model": "gemini-2.5-flash-image",
-          "method": "generateContent",
-          "media_parts": [
-            { "source": "prompt", "type": "text" },
-            { "source": "source_media_id", "type": "image" },
-            { "source": "mask_media_id", "type": "image", "optional": true }
-          ]
-        },
+        "gemini": { "endpoint": "/v1beta/models/gemini-image:edit" },
         "turbotext": { "endpoint": "/v1/image/change" }
       },
       "settings_schema": {
@@ -318,35 +280,6 @@ vexpires_at (TIMESTAMPTZ)
 ```
 
 Ключи `provider_overrides` фиксируют различия в интеграции: URL конечной точки, допустимые параметры, ограничения таймаута. Общие свойства `settings_schema` описывают обязательные поля, которые должны быть валидированы на бэкенде при сохранении слота.
-
-#### Gemini: формирование запроса `generateContent`
-
-* Все операции (`style_transfer`, `combine_images`, `change_image`) вызывают единственный метод `generateContent` модели `gemini-2.5-flash-image`.
-* Рабочий процесс подготовки запроса:
-  1. Собрать `contents` с ролью `user`, включив текстовый промпт и изображения в порядке, описанном в `media_parts`.
-  2. Для каждого `media_id` из `settings_json` извлечь файл из `media_object`.
-  3. Если размер файла ≤ 20 МБ, сериализовать его как `inline_data` (base64) внутри запроса.
-  4. Если размер > 20 МБ или изображение планируется переиспользовать, загрузить его через Files API (`POST /v1beta/files:upload`) и сохранить `file.uri` в контексте задачи; затем подставить `file_data` с `file_uri`.
-  5. Добавить изображение из ingest-запроса DSLR Remote Pro как дополнительную часть (например, целевое фото для стиля или редактирования).
-
-Пример тела запроса для операции `change_image` (исходное фото поступает из ingest, маска — из настроек слота):
-
-```json
-{
-  "contents": [
-    {
-      "role": "user",
-      "parts": [
-        { "text": "Убери блики с лица" },
-        { "inline_data": { "mime_type": "image/jpeg", "data": "<base64 исходного фото>" } },
-        { "file_data": { "file_uri": "files/ab12...", "mime_type": "image/png" } }
-      ]
-    }
-  ]
-}
-```
-
-Files API управляет жизненным циклом загруженных ассетов (`upload → get → delete`). Внутренний `media_object` хранит исходный файл и метаданные; при загрузке в Gemini в таблице или кеше задачи фиксируется соответствие `media_id → file_uri`, чтобы повторно не загружать файл при ретраях.
 
 #### Маппинг `Slot`
 
