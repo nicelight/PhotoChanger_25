@@ -203,6 +203,7 @@ vexpires_at (TIMESTAMPTZ)
     "style_transfer": {
       "title": "Style Transfer",
       "description": "Перенос художественного стиля с эталонного изображения на целевое.",
+      "required_settings": ["reference_media_id"],
       "provider_overrides": {
         "gemini": { "endpoint": "/v1beta/models/gemini-image:transferStyle" },
         "turbotext": { "endpoint": "/v1/style-transfer" }
@@ -228,6 +229,7 @@ vexpires_at (TIMESTAMPTZ)
     "combine_images": {
       "title": "Combine Images",
       "description": "Композиция нескольких изображений: склейка, коллажи, face-swap.",
+      "required_settings": ["base_media_id", "overlay_media_id"],
       "provider_overrides": {
         "gemini": { "endpoint": "/v1beta/models/gemini-image:compose" }
       },
@@ -261,6 +263,7 @@ vexpires_at (TIMESTAMPTZ)
     "change_image": {
       "title": "Change Image",
       "description": "Локальное редактирование исходного изображения по текстовому описанию.",
+      "required_settings": ["prompt"],
       "provider_overrides": {
         "gemini": {
           "endpoint": "/v1beta/models/gemini-image:edit",
@@ -300,6 +303,8 @@ vexpires_at (TIMESTAMPTZ)
 ```
 
 Ключи `provider_overrides` фиксируют различия в интеграции: URL конечной точки, допустимые параметры, ограничения таймаута. Для операций редактирования `media_parts` описывает, какие бинарные данные подставляются в запрос провайдера: для `change_image` базовый `ingest_media` приходит вместе с ingest‑POST и не хранится в слоте, а маска (`settings.mask_media_id`) передаётся только при наличии. Общие свойства `settings_schema` описывают обязательные поля, которые должны быть валидированы на бэкенде при сохранении слота.
+
+Для удобства клиентских интеграций обязательные поля операций дополнительно продублированы в массиве `required_settings`.
 
 #### Маппинг `Slot`
 
@@ -432,7 +437,14 @@ API для взаимодействия с веб-интерфейсом пос�
         "name": "Fashion Studio",
         "provider_id": "gemini",
         "operation_id": "style_transfer",
-        "settings_json": {"prompt": "..."},
+        "settings_json": {
+          "prompt": "Передай стиль глянцевого журнала",
+          "reference_media_id": "0a403f97-312f-4fc5-9f01-7de121c9a9d7",
+          "output": {
+            "format": "jpeg",
+            "max_side_px": 2048
+          }
+        },
         "last_reset_at": "2024-04-22T09:15:00Z"
       }
     ],
@@ -457,7 +469,9 @@ API для взаимодействия с веб-интерфейсом пос�
     "provider_id": "gemini",
     "operation_id": "style_transfer",
     "settings_json": {
-      "prompt": "Сделай портрет в стиле киноплёнки"
+      "prompt": "Сделай портрет в стиле киноплёнки",
+      "reference_media_id": "7b5f1f0d-5f06-4d0d-8d3e-6ba2f3c5d2af",
+      "style_strength": 0.6
     }
   }
   ```
@@ -482,7 +496,14 @@ API для взаимодействия с веб-интерфейсом пос�
     "name": "Fashion Studio",
     "provider_id": "gemini",
     "operation_id": "style_transfer",
-    "settings_json": {"prompt": "..."},
+    "settings_json": {
+      "prompt": "Передай стиль глянцевого журнала",
+      "reference_media_id": "0a403f97-312f-4fc5-9f01-7de121c9a9d7",
+      "output": {
+        "format": "jpeg",
+        "max_side_px": 2048
+      }
+    },
     "last_reset_at": "2024-04-22T09:15:00Z"
   }
   ```
@@ -499,7 +520,11 @@ API для взаимодействия с веб-интерфейсом пос�
     "provider_id": "gemini",
     "operation_id": "combine_images",
     "settings_json": {
-      "prompt": "Скомбинировать исходник со стилевым"
+      "prompt": "Скомбинировать исходник со стилевым",
+      "base_media_id": "b7a09f84-7560-4a7b-9303-2b41a6d359f3",
+      "overlay_media_id": "3ad89908-0df1-4f1e-b3e9-586eea730d21",
+      "alignment": {"face_landmarks": true},
+      "output": {"format": "jpeg", "quality": 92}
     }
   }
   ```
