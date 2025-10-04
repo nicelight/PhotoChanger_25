@@ -596,7 +596,13 @@ queueid:<ID>
       "ingest": {
         "max_parallel_jobs": 4,
         "timeout_sec": 48,
-        "allowed_mime": ["image/jpeg", "image/png"],
+        "allowed_mime": [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "image/heic",
+          "image/heif"
+        ],
         "max_file_size_mb": 20
       },
       "operations": [
@@ -611,7 +617,13 @@ queueid:<ID>
       "ingest": {
         "max_parallel_jobs": 2,
         "timeout_sec": 48,
-        "allowed_mime": ["image/jpeg", "image/png"],
+        "allowed_mime": [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "image/heic",
+          "image/heif"
+        ],
         "max_file_size_mb": 15,
         "requires_public_media": true
       },
@@ -783,6 +795,8 @@ queueid:<ID>
   }
 }
 ```
+
+`ingest.allowed_mime` для каждого провайдера обязан в точности повторять фактические ограничения входящего ingest-потока и лимиты соответствующего провайдера. Любые изменения списка допустимых форматов нужно синхронно вносить и в эту конфигурацию, и в разделы, описывающие ingest-валидацию и требования внешних API.
 
 Ключи `provider_overrides` фиксируют различия в интеграции: URL конечной точки, допустимые параметры, ограничения таймаута. Для операций,
 требующих передачи локальных файлов, `media_parts` описывает, какие бинарные данные подставляются в запрос провайдера (например,
