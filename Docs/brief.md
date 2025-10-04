@@ -147,6 +147,232 @@ vexpires_at (TIMESTAMPTZ)
 **Конфигурационные файлы**
 Данные о Провайдерах (`Providers`) и их Операциях (`Operations`) будут храниться в статических конфигурационных файлах (например, `providers.json`), чтобы избежать усложнения схемы БД.
 
+### Схема конфигурации провайдеров и параметров слота
+
+Конфигурация разделена на два слоя:
+
+1. **`configs/providers.json`** — статический каталог провайдеров и поддерживаемых операций.
+2. **`Slot.settings_json`** — сериализованное представление параметров операции, которые пользователь выбрал при настройке слота.
+
+#### Формат `configs/providers.json`
+
+```json
+{
+  "providers": [
+    {
+      "id": "gemini",
+      "title": "Gemini",
+      "transport": {
+        "base_url": "https://generativelanguage.googleapis.com",
+        "model": "gemini-2.5-flash-image",
+        "method": "generateContent",
+        "endpoint": "/v1beta/models/gemini-2.5-flash-image:generateContent",
+        "auth": "api_key"
+      },
+      "ingest": {
+        "max_parallel_jobs": 4,
+        "timeout_sec": 48,
+        "allowed_mime": ["image/jpeg", "image/png"],
+        "max_file_size_mb": 20,
+        "media_inline_limit_mb": 20,
+        "files_api_base_url": "https://generativelanguage.googleapis.com/v1beta/files"
+      },
+      "operations": [
+        "style_transfer",
+        "combine_images",
+        "change_image"
+      ]
+    },
+    {
+      "id": "turbotext",
+      "title": "TurboText",
+      "transport": {
+        "base_url": "https://api.turbotext.ai",
+        "auth": "api_key"
+      },
+      "ingest": {
+        "max_parallel_jobs": 2,
+        "timeout_sec": 48,
+        "allowed_mime": ["image/jpeg", "image/png"],
+        "max_file_size_mb": 15,
+        "requires_public_media": true
+      },
+      "operations": [
+        "style_transfer",
+        "change_image"
+      ]
+    }
+  ],
+  "operations": {
+    "style_transfer": {
+      "title": "Style Transfer",
+      "description": "Перенос художественного стиля с эталонного изображения на целевое.",
+      "provider_overrides": {
+        "gemini": {
+          "model": "gemini-2.5-flash-image",
+          "method": "generateContent",
+          "prompt_template": "Наложи стиль эталона на снимок из DSLR",
+          "media_parts": [
+            { "source": "prompt", "type": "text" },
+            { "source": "reference_media_id", "type": "image" }
+          ]
+        },
+        "turbotext": { "endpoint": "/v1/style-transfer" }
+      },
+      "settings_schema": {
+        "type": "object",
+        "required": ["reference_media_id"],
+        "properties": {
+          "prompt": { "type": "string", "maxLength": 2000 },
+          "reference_media_id": { "type": "string", "format": "uuid" },
+          "style_strength": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.65 },
+          "output": {
+            "type": "object",
+            "properties": {
+              "format": { "type": "string", "enum": ["jpeg", "png", "webp"], "default": "jpeg" },
+              "max_side_px": { "type": "integer", "minimum": 256, "maximum": 4096, "default": 2048 }
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "combine_images": {
+      "title": "Combine Images",
+      "description": "Композиция нескольких изображений: склейка, коллажи, face-swap.",
+      "provider_overrides": {
+        "gemini": {
+          "model": "gemini-2.5-flash-image",
+          "method": "generateContent",
+          "media_parts": [
+            { "source": "prompt", "type": "text" },
+            { "source": "base_media_id", "type": "image" },
+            { "source": "overlay_media_id", "type": "image" },
+            { "source": "mask_media_id", "type": "image", "optional": true }
+          ]
+        }
+      },
+      "settings_schema": {
+        "type": "object",
+        "required": ["base_media_id", "overlay_media_id"],
+        "properties": {
+          "prompt": { "type": "string", "maxLength": 2000 },
+          "base_media_id": { "type": "string", "format": "uuid" },
+          "overlay_media_id": { "type": "string", "format": "uuid" },
+          "blend_mode": { "type": "string", "enum": ["alpha", "seamless", "face_swap"], "default": "seamless" },
+          "mask_media_id": { "type": ["string", "null"], "format": "uuid" },
+          "alignment": {
+            "type": "object",
+            "properties": {
+              "face_landmarks": { "type": "boolean", "default": true },
+              "scale": { "type": "number", "minimum": 0.1, "maximum": 4, "default": 1 }
+            }
+          },
+          "output": {
+            "type": "object",
+            "properties": {
+              "format": { "type": "string", "enum": ["jpeg", "png"], "default": "jpeg" },
+              "quality": { "type": "integer", "minimum": 1, "maximum": 100, "default": 92 }
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "change_image": {
+      "title": "Change Image",
+      "description": "Локальное редактирование исходного изображения по текстовому описанию.",
+      "provider_overrides": {
+        "gemini": {
+          "model": "gemini-2.5-flash-image",
+          "method": "generateContent",
+          "media_parts": [
+            { "source": "prompt", "type": "text" },
+            { "source": "source_media_id", "type": "image" },
+            { "source": "mask_media_id", "type": "image", "optional": true }
+          ]
+        },
+        "turbotext": { "endpoint": "/v1/image/change" }
+      },
+      "settings_schema": {
+        "type": "object",
+        "required": ["source_media_id", "prompt"],
+        "properties": {
+          "prompt": { "type": "string", "maxLength": 2000 },
+          "source_media_id": { "type": "string", "format": "uuid" },
+          "mask_media_id": { "type": ["string", "null"], "format": "uuid" },
+          "guidance_scale": { "type": "number", "minimum": 0, "maximum": 20, "default": 7.5 },
+          "output": {
+            "type": "object",
+            "properties": {
+              "format": { "type": "string", "enum": ["jpeg", "png", "webp"], "default": "png" },
+              "quality": { "type": "integer", "minimum": 1, "maximum": 100, "default": 100 }
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}
+```
+
+Ключи `provider_overrides` фиксируют различия в интеграции: URL конечной точки, допустимые параметры, ограничения таймаута. Общие свойства `settings_schema` описывают обязательные поля, которые должны быть валидированы на бэкенде при сохранении слота.
+
+#### Gemini: формирование запроса `generateContent`
+
+* Все операции (`style_transfer`, `combine_images`, `change_image`) вызывают единственный метод `generateContent` модели `gemini-2.5-flash-image`.
+* Рабочий процесс подготовки запроса:
+  1. Собрать `contents` с ролью `user`, включив текстовый промпт и изображения в порядке, описанном в `media_parts`.
+  2. Для каждого `media_id` из `settings_json` извлечь файл из `media_object`.
+  3. Если размер файла ≤ 20 МБ, сериализовать его как `inline_data` (base64) внутри запроса.
+  4. Если размер > 20 МБ или изображение планируется переиспользовать, загрузить его через Files API (`POST /v1beta/files:upload`) и сохранить `file.uri` в контексте задачи; затем подставить `file_data` с `file_uri`.
+  5. Добавить изображение из ingest-запроса DSLR Remote Pro как дополнительную часть (например, целевое фото для стиля или редактирования).
+
+Пример тела запроса для операции `change_image` (исходное фото поступает из ingest, маска — из настроек слота):
+
+```json
+{
+  "contents": [
+    {
+      "role": "user",
+      "parts": [
+        { "text": "Убери блики с лица" },
+        { "inline_data": { "mime_type": "image/jpeg", "data": "<base64 исходного фото>" } },
+        { "file_data": { "file_uri": "files/ab12...", "mime_type": "image/png" } }
+      ]
+    }
+  ]
+}
+```
+
+Files API управляет жизненным циклом загруженных ассетов (`upload → get → delete`). Внутренний `media_object` хранит исходный файл и метаданные; при загрузке в Gemini в таблице или кеше задачи фиксируется соответствие `media_id → file_uri`, чтобы повторно не загружать файл при ретраях.
+
+#### Маппинг `Slot`
+
+* `provider_id` — значение поля `providers[].id`.
+* `operation_id` — одно из значений `operations` (на уровне провайдера).
+* `settings_json` — JSON-объект, удовлетворяющий `settings_schema` соответствующей операции. На бэкенде хранится сериализованный JSON, в котором бинарные файлы заменены на идентификаторы медиа (`media_object.id`).
+
+Пример значения `settings_json` для слота Gemini c операцией `combine_images`:
+
+```json
+{
+  "prompt": "Сменить фон на корпоративный стиль",
+  "base_media_id": "b7a09f84-7560-4a7b-9303-2b41a6d359f3",
+  "overlay_media_id": "3ad89908-0df1-4f1e-b3e9-586eea730d21",
+  "blend_mode": "face_swap",
+  "alignment": { "face_landmarks": true, "scale": 1.1 },
+  "output": { "format": "jpeg", "quality": 90 }
+}
+```
+
+На UI параметры собираются на основании `needs` (промпт, первое/второе изображение) и валидируются против схемы операции. При сохранении:
+
+1. Файлы загружаются во временное хранилище (`media_object`), что возвращает `media_id`.
+2. Бэкенд формирует объект по схеме, подставляя `media_id` вместо бинарных данных.
+3. Получившийся JSON сериализуется и сохраняется в `Slot.settings_json`.
+
 ## Стек
 *   **Бэкенд:** FastAPI
 *   **База данных:** PostgreSQL
@@ -1308,14 +1534,15 @@ Cтраницы-вкладки с настройками слота AI реда�
           label: 'Gemini',
           operations: {
             style_transfer: { label: 'Style Transfer', needs: { prompt:true, second:true, first:false } },
-            combine_images: { label: 'Combine Images', needs: { prompt:false, second:true, first:true } }
+            combine_images: { label: 'Combine Images', needs: { prompt:true, second:true, first:true } },
+            change_image: { label: 'Change Image', needs: { prompt:true, second:false, first:true } }
           }
         },
         turbotext: {
-          label: 'Turbotext',
+          label: 'TurboText',
           operations: {
-            enhance: { label: 'Enhance', needs: { prompt:true, second:false, first:true } },
-            background_remove: { label: 'Background Remove', needs: { prompt:false, second:false, first:true } }
+            style_transfer: { label: 'Style Transfer', needs: { prompt:true, second:true, first:false } },
+            change_image: { label: 'Change Image', needs: { prompt:true, second:false, first:true } }
           }
         }
       };
