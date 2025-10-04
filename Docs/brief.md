@@ -90,7 +90,7 @@ sequenceDiagram
 
 * MEDIA_ROOT — путь для временных файлов (например, /var/app/media/tmp)
 * PUBLIC_BASE_URL — базовый URL для раздачи (например, https://api.example.com/public/media)
-* MEDIA_DEFAULT_TTL_SEC — время жизни ссылок (например, 900)
+* MEDIA_PUBLIC_LINK_DEFAULT_TTL_SEC — время жизни ссылок (например, 900)
 * MEDIA_ALLOWED_MIME — список допустимых MIME
 * MEDIA_MAX_FILE_SIZE_MB — лимит размера
 
@@ -354,7 +354,7 @@ PostgreSQL, выбирают задачи запросом `SELECT … FOR UPDAT
   * `updated_at` (TIMESTAMPTZ)
   * `updated_by` (INTEGER, FK → User)
   * `has_secret` (BOOLEAN, default false) — признак наличия расшифровываемого ключа (используется в `GET /api/settings`)
-* Значения TTL (`processed_media_ttl_hours`, `public_link_default_ttl_sec`, `max_manual_ttl_sec`) и другие не чувствительные параметры хранятся в таблице `app_settings` (`key` TEXT PK, `value_json` JSONB, `updated_at` TIMESTAMPTZ, `updated_by` FK → User). Миграции должны создавать уникальные ключи `media.processed_ttl_hours`, `media.public_default_ttl_sec`, `media.max_manual_ttl_sec` и обеспечить их начальные значения (72, 900 и 86400 соответственно). Если для удобства UI требуется отображать метаданные провайдеров без расшифровки (`project_id`, `region` и т. п.), миграции должны добавить отдельные строки `provider.<id>.<field>` в `app_settings`.
+* Значения TTL (`processed_media_ttl_hours`, `public_link_default_ttl_sec`, `max_manual_ttl_sec`) и другие не чувствительные параметры хранятся в таблице `app_settings` (`key` TEXT PK, `value_json` JSONB, `updated_at` TIMESTAMPTZ, `updated_by` FK → User). Миграции должны создавать уникальные ключи `media.processed_ttl_hours`, `media.public_link_default_ttl_sec`, `media.max_manual_ttl_sec` и обеспечить их начальные значения (72, 900 и 86400 соответственно). Если для удобства UI требуется отображать метаданные провайдеров без расшифровки (`project_id`, `region` и т. п.), миграции должны добавить отдельные строки `provider.<id>.<field>` в `app_settings`.
 * Доступ к чтению и расшифровке секретов предоставляется только слоям с правами `settings:read`/`settings:write`. Логирование секретов запрещено, в логах допускается только информация о наличии/отсутствии значения и времени обновления.
 
 **Конфигурационные файлы**
