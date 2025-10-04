@@ -440,10 +440,13 @@
       })();
 
       // --- Генерация ingest-ссылки (клиентская заглушка) ---
+      const GLOBAL_SLOT_IDS = Array.from({length: 15}, (_, i) => 'slot-' + String(i + 1).padStart(3, '0'));
+      let demoSlotIndex = 0;
       function generateIngestURL(){
-        // Имитация backend-выдачи: обычно приходит от сервера.
+        // Имитация backend-выдачи: сервер возвращает одну из 15 глобальных ingest-ссылок.
         const base = 'https://api.example.com/ingest/';
-        const slug = 'slot-' + Math.random().toString(36).slice(2, 10);
+        const slug = GLOBAL_SLOT_IDS[demoSlotIndex % GLOBAL_SLOT_IDS.length];
+        demoSlotIndex += 1;
         return base + slug;
       }
 
