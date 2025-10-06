@@ -2,8 +2,38 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "SlotStatsResponse",
   "type": "object",
-  "required": ["summary", "metrics"],
+  "required": ["slot_id", "range", "summary", "metrics"],
   "properties": {
+    "slot_id": {
+      "type": "string",
+      "description": "Идентификатор слота, для которого рассчитана статистика"
+    },
+    "range": {
+      "type": "object",
+      "required": ["from", "to", "group_by"],
+      "properties": {
+        "from": {
+          "description": "Начало выбранного диапазона статистики",
+          "anyOf": [
+            { "type": "string", "format": "date-time" },
+            { "type": "string", "format": "date" }
+          ]
+        },
+        "to": {
+          "description": "Конец выбранного диапазона статистики",
+          "anyOf": [
+            { "type": "string", "format": "date-time" },
+            { "type": "string", "format": "date" }
+          ]
+        },
+        "group_by": {
+          "type": "string",
+          "enum": ["hour", "day", "week"],
+          "description": "Гранулярность агрегирования метрик"
+        }
+      },
+      "additionalProperties": false
+    },
     "summary": {
       "type": "object",
       "required": [
@@ -33,7 +63,7 @@
         "error_rate_percent": { "type": "number", "minimum": 0 },
         "last_cost": { "type": ["number", "null"] },
         "last_reset_at": {
-          "type": "string",
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "total_cost": { "type": "number", "minimum": 0 }

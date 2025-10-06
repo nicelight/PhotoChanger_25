@@ -17,12 +17,18 @@
   ],
   "properties": {
     "period_start": {
-      "type": "string",
-      "format": "date-time"
+      "description": "Начало агрегируемого интервала",
+      "anyOf": [
+        { "type": "string", "format": "date-time" },
+        { "type": "string", "format": "date" }
+      ]
     },
     "period_end": {
-      "type": "string",
-      "format": "date-time"
+      "description": "Конец агрегируемого интервала",
+      "anyOf": [
+        { "type": "string", "format": "date-time" },
+        { "type": "string", "format": "date" }
+      ]
     },
     "success": { "type": "integer", "minimum": 0 },
     "timeouts": { "type": "integer", "minimum": 0 },
