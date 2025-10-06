@@ -11,8 +11,9 @@
     },
     "ttl_sec": {
       "type": "integer",
-      "minimum": 1,
-      "description": "Запрошенный срок жизни ссылки в секундах"
+      "minimum": 50,
+      "maximum": 86400,
+      "description": "Запрошенный срок жизни ссылки в секундах (ограничен диапазоном MEDIA_PUBLIC_LINK_DEFAULT_TTL_SEC … media.max_manual_ttl_sec)"
     },
     "job_id": {
       "type": "string",
