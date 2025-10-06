@@ -138,6 +138,7 @@ paths:
         - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/SlotId'
+        - $ref: '#/components/parameters/SlotVersionIfMatch'
       requestBody:
         required: true
         content:
@@ -655,6 +656,15 @@ components:
       schema:
         type: string
       description: Идентификатор статического слота (`slot-001` … `slot-015`)
+    SlotVersionIfMatch:
+      name: If-Match
+      in: header
+      required: false
+      schema:
+        type: string
+      description: >-
+        Текущая версия слота в формате ETag. Обязателен, если метка версии не
+        передана в поле `updated_at` тела запроса.
   responses:
     BadRequest:
       description: Некорректный запрос
