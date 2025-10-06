@@ -202,7 +202,7 @@
               </label>
               <div id="error-first" class="error" style="display:none"></div>
               <div class="uploads-actions">
-                <button id="btn-test1" type="button" class="btn">Тест1</button>
+                <button id="btn-test" type="button" class="btn">Тест</button>
               </div>
             </div>
           </div>
@@ -219,7 +219,7 @@
                 <p class="muted-hint">Ссылка совпадает с отображаемой на главной странице и используется DSLR Remote Pro.</p>
               </div>
               <div class="btns">
-                <button type="button" class="btn" id="btn-save1">Сохранить1</button>
+                <button type="button" class="btn" id="btn-save">Сохранить</button>
               </div>
             </div>
             <p id="server-response" style="color:var(--muted);margin-top:8px"></p>
@@ -479,17 +479,17 @@
         }
       })();
 
-      // --- Кнопка «Тест1» ---
+      // --- Кнопка «Тест» ---
       (function(){
-        const b = document.getElementById('btn-test1');
+        const b = document.getElementById('btn-test');
         if(!b) return;
         b.addEventListener('click', function(){
           const st = document.getElementById('First_image_status');
           if(!st || st.value !== 'present'){
-            return toast('Загрузите тестовое фото перед запуском «Тест1»', 'error');
+            return toast('Загрузите тестовое фото перед запуском «Тест»', 'error');
           }
           pulse(document.getElementById('upload-form'));
-          toast('Нажата кнопка «Тест1»', 'success');
+          toast('Нажата кнопка «Тест»', 'success');
         });
       })();
 
@@ -537,7 +537,7 @@
 
       // --- Кнопка «Сохранить слот» — валидация и выдача ingest URL ---
       (function(){
-        const save = document.getElementById('btn-save1');
+        const save = document.getElementById('btn-save');
         if(!save) return;
         save.addEventListener('click', function(){
           const form = document.getElementById('upload-form');
