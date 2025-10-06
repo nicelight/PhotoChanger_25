@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SlotStatsResponse",
+  "type": "object",
+  "required": ["summary", "metrics"],
+  "properties": {
+    "summary": {
+      "type": "object",
+      "required": [
+        "title",
+        "success",
+        "timeouts",
+        "provider_errors",
+        "cancelled",
+        "errors",
+        "ingest_count",
+        "avg_response_ms",
+        "p95_response_ms",
+        "error_rate_percent",
+        "total_cost"
+      ],
+      "properties": {
+        "title": { "type": ["string", "null"] },
+        "success": { "type": "integer", "minimum": 0 },
+        "timeouts": { "type": "integer", "minimum": 0 },
+        "provider_errors": { "type": "integer", "minimum": 0 },
+        "cancelled": { "type": "integer", "minimum": 0 },
+        "errors": { "type": "integer", "minimum": 0 },
+        "ingest_count": { "type": "integer", "minimum": 0 },
+        "avg_response_ms": { "type": ["integer", "null"], "minimum": 0 },
+        "p95_response_ms": { "type": ["integer", "null"], "minimum": 0 },
+        "error_rate_percent": { "type": "number", "minimum": 0 },
+        "last_cost": { "type": ["number", "null"] },
+        "total_cost": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "metrics": {
+      "type": "array",
+      "items": {
+        "$ref": "./SlotStatsMetric.json"
+      }
+    }
+  },
+  "additionalProperties": false
+}

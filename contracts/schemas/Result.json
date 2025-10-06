@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Result",
+  "type": "object",
+  "required": [
+    "id",
+    "job_id",
+    "storage_path",
+    "mime_type",
+    "size_bytes",
+    "checksum",
+    "expires_at",
+    "created_at"
+  ],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "job_id": { "type": "string", "format": "uuid" },
+    "storage_path": { "type": "string" },
+    "mime_type": { "type": "string" },
+    "size_bytes": { "type": "integer", "minimum": 0 },
+    "checksum": { "type": "string" },
+    "expires_at": { "type": "string", "format": "date-time" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "metadata": {
+      "type": ["object", "null"],
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

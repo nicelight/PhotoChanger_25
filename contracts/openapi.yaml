@@ -1,0 +1,577 @@
+openapi: 3.1.0
+info:
+  title: PhotoChanger Platform API
+  version: 0.1.0
+  description: |
+    Контракт REST API платформы PhotoChanger, включающий ingest-эндпоинт для DSLR Remote Pro
+    и внутренние операции для UI управления слотами, медиа и статистикой. Основан на требованиях
+    из `/Docs/brief.md`. Все защищённые эндпоинты используют JWT-аутентификацию и проверку прав.
+servers:
+  - url: https://api.photochanger.local
+    description: Базовый URL платформы
+security:
+  - bearerAuth: []
+tags:
+  - name: Auth
+    description: Аутентификация и управление сессиями
+  - name: Providers
+    description: Справочник AI-провайдеров
+  - name: Slots
+    description: Управление статическими ingest-слотами
+  - name: Media
+    description: Временное и шаблонное медиа-хранилище
+  - name: Stats
+    description: Метрики и отчёты по слотам
+  - name: Ingest
+    description: Внешний ingest-эндпоинт для DSLR Remote Pro
+  - name: Public
+    description: Публичная раздача временных медиа-ссылок
+paths:
+  /api/login:
+    post:
+      tags: [Auth]
+      summary: Вход пользователя и выдача JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./schemas/LoginRequest.json
+      responses:
+        '200':
+          description: Успешная аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/LoginResponse.json
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+  /api/providers:
+    get:
+      tags: [Providers]
+      summary: Получить короткий справочник провайдеров
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Список провайдеров
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/ProviderList.json
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/slots:
+    get:
+      tags: [Slots]
+      summary: Получить список статических ingest-слотов
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: provider_id
+          schema:
+            type: string
+          description: Фильтр по провайдеру
+        - in: query
+          name: operation_id
+          schema:
+            type: string
+          description: Фильтр по операции провайдера
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Поиск по имени слота
+      responses:
+        '200':
+          description: Коллекция слотов
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/SlotListResponse.json
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/slots/{slot_id}:
+    get:
+      tags: [Slots]
+      summary: Получить данные конкретного слота
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SlotId'
+      responses:
+        '200':
+          description: Данные слота
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/Slot.json
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    put:
+      tags: [Slots]
+      summary: Обновить настройки слота
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SlotId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./schemas/SlotUpdateRequest.json
+      responses:
+        '200':
+          description: Настройки обновлены
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/SlotUpdateResponse.json
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/slots/{slot_id}/reset_stats:
+    post:
+      tags: [Slots]
+      summary: Сбросить статистику слота
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SlotId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Пустой объект для совместимости
+      responses:
+        '204':
+          description: Статистика сброшена
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/media/register:
+    post:
+      tags: [Media]
+      summary: Зарегистрировать временное медиа и получить публичную ссылку
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: ./schemas/MediaRegisterRequest.json
+      responses:
+        '201':
+          description: Временный файл зарегистрирован
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/MediaObject.json
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /api/media/extend:
+    post:
+      tags: [Media]
+      summary: Продлить срок жизни временного файла
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./schemas/MediaExtendRequest.json
+      responses:
+        '200':
+          description: TTL продлён
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/MediaObject.json
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /public/media/{id}:
+    get:
+      tags: [Public]
+      summary: Получить временный файл по публичной ссылке
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+          description: Идентификатор media_object
+      responses:
+        '200':
+          description: Бинарное содержимое изображения
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '410':
+          $ref: '#/components/responses/Gone'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /api/stats/{slot_id}:
+    get:
+      tags: [Stats]
+      summary: Получить статистику по слоту
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SlotId'
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date-time
+          description: Начало диапазона (UTC). Максимальная длительность — 31 день.
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date-time
+          description: Конец диапазона (UTC)
+        - in: query
+          name: group_by
+          schema:
+            type: string
+            enum: [hour, day, week]
+            default: day
+          description: Гранулярность агрегации
+      responses:
+        '200':
+          description: Детальная статистика по слоту
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/SlotStatsResponse.json
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/stats/global:
+    get:
+      tags: [Stats]
+      summary: Получить агрегированную статистику по слотам
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date
+          description: Начало диапазона (UTC). Максимум 90 дней.
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date
+          description: Конец диапазона (UTC)
+        - in: query
+          name: group_by
+          schema:
+            type: string
+            enum: [day, week, month]
+            default: week
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - in: query
+          name: page_size
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+        - in: query
+          name: sort_by
+          schema:
+            type: string
+            enum: [period_start, success, errors, ingest_count, avg_response_ms, p95_response_ms, total_cost]
+            default: period_start
+        - in: query
+          name: sort_order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - in: query
+          name: provider_id
+          schema:
+            type: string
+          description: Фильтр по провайдеру
+        - in: query
+          name: slot_id
+          schema:
+            type: string
+          description: Фильтр по конкретному слоту
+      responses:
+        '200':
+          description: Агрегированная статистика
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/GlobalStatsResponse.json
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /ingest/{slotId}:
+    post:
+      tags: [Ingest]
+      summary: Принять ingest-запрос от DSLR Remote Pro
+      description: >-
+        Эндпоинт принимает multipart/form-data с исходной фотографией и глобальным паролем.
+        Дополнительные текстовые поля не валидируются и сохраняются как метаданные. Ограничение
+        ожидания ответа — до 50 секунд.
+      security: []
+      parameters:
+        - in: path
+          name: slotId
+          required: true
+          schema:
+            type: string
+            description: Статический идентификатор ingest-слота (`slot-001` … `slot-015`).
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: ./schemas/IngestRequest.json
+      responses:
+        '200':
+          description: Успешная обработка изображения
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+            image/heic:
+              schema:
+                type: string
+                format: binary
+            image/heif:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    SlotId:
+      name: slot_id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Идентификатор статического слота (`slot-001` … `slot-015`)
+  responses:
+    BadRequest:
+      description: Некорректный запрос
+      content:
+        application/json:
+          schema:
+            $ref: ./schemas/Error.json
+    Unauthorized:
+      description: Ошибка аутентификации
+      content:
+        application/json:
+          schema:
+            $ref: ./schemas/Error.json
+    Forbidden:
+      description: Недостаточно прав
+      content:
+        application/json:
+          schema:
+            $ref: ./schemas/Error.json
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: ./schemas/Error.json
+    Conflict:
+      description: Конфликт состояния
+      content:
+        application/json:
+          schema:
+            $ref: ./schemas/Error.json
+    UnprocessableEntity:
+      description: Ошибка бизнес-валидации
+      content:
+        application/json:
+          schema:
+            $ref: ./schemas/Error.json
+    TooManyRequests:
+      description: Превышен лимит запросов
+      content:
+        application/json:
+          schema:
+            $ref: ./schemas/Error.json
+    PayloadTooLarge:
+      description: Размер файла превышает лимит
+      content:
+        application/json:
+          schema:
+            $ref: ./schemas/Error.json
+    UnsupportedMediaType:
+      description: MIME не поддерживается
+      content:
+        application/json:
+          schema:
+            $ref: ./schemas/Error.json
+    InternalError:
+      description: Внутренняя ошибка сервиса
+      content:
+        application/json:
+          schema:
+            $ref: ./schemas/Error.json
+    ServiceUnavailable:
+      description: Временная недоступность сервиса
+      content:
+        application/json:
+          schema:
+            $ref: ./schemas/Error.json
+    GatewayTimeout:
+      description: Истекло окно ожидания синхронного ответа
+      content:
+        application/json:
+          schema:
+            $ref: ./schemas/Error.json
+    Gone:
+      description: Ссылка истекла
+      content:
+        application/json:
+          schema:
+            $ref: ./schemas/Error.json

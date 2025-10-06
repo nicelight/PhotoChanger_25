@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MediaRegisterRequest",
+  "type": "object",
+  "required": ["file"],
+  "properties": {
+    "file": {
+      "type": "string",
+      "contentEncoding": "binary",
+      "description": "Изображение JPEG/PNG/WEBP, загружаемое во временное хранилище"
+    },
+    "ttl_sec": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Запрошенный срок жизни ссылки в секундах"
+    },
+    "job_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Идентификатор задачи обработки, к которой привязан файл"
+    }
+  },
+  "additionalProperties": false
+}

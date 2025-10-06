@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProviderListResponse",
+  "type": "object",
+  "required": ["providers"],
+  "properties": {
+    "providers": {
+      "type": "array",
+      "items": {
+        "$ref": "./ProviderSummary.json"
+      }
+    }
+  },
+  "additionalProperties": false
+}
