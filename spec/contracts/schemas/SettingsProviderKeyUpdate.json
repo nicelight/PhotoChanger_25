@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SettingsProviderKeyUpdate",
+  "type": "object",
+  "properties": {
+    "api_key": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Новый API-ключ провайдера"
+    }
+  },
+  "additionalProperties": {
+    "description": "Дополнительные параметры конфигурации провайдера (например, project_id)",
+    "anyOf": [
+      { "type": "string" },
+      { "type": "number" },
+      { "type": "boolean" }
+    ]
+  }
+}
