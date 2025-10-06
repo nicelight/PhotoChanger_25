@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TemplateMediaRegisterRequest",
+  "type": "object",
+  "required": ["file", "slot_id", "setting_key"],
+  "properties": {
+    "file": {
+      "type": "string",
+      "contentEncoding": "binary",
+      "description": "Файл шаблона (JPEG/PNG/WEBP/HEIC/HEIF) для постоянного хранения"
+    },
+    "slot_id": {
+      "type": "string",
+      "description": "Идентификатор слота, к которому привязывается шаблон"
+    },
+    "setting_key": {
+      "type": "string",
+      "description": "Ключ настройки в Slot.settings_json, который ссылается на шаблон"
+    },
+    "label": {
+      "type": "string",
+      "description": "Человекочитаемое название шаблона для UI"
+    },
+    "replace": {
+      "type": "boolean",
+      "description": "Флаг замены существующей привязки шаблона"
+    }
+  },
+  "additionalProperties": false
+}
