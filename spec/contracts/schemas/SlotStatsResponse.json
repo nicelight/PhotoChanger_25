@@ -17,6 +17,7 @@
         "avg_response_ms",
         "p95_response_ms",
         "error_rate_percent",
+        "last_reset_at",
         "total_cost"
       ],
       "properties": {
@@ -31,6 +32,10 @@
         "p95_response_ms": { "type": ["integer", "null"], "minimum": 0 },
         "error_rate_percent": { "type": "number", "minimum": 0 },
         "last_cost": { "type": ["number", "null"] },
+        "last_reset_at": {
+          "type": "string",
+          "format": "date-time"
+        },
         "total_cost": { "type": "number", "minimum": 0 }
       },
       "additionalProperties": false
