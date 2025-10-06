@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Слоты обработки — PhotoChanger 3x‑ui</title>
+  <style>
+    /* (html) Главная страница списка слотов */
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+      --bg: #f2fbf9;
+      --bg-accent: #e6f7f3;
+      --header: #ffffff;
+      --border: #d8ebe5;
+      --border-strong: #b0d6cb;
+      --text: #0f2f29;
+      --text-muted: #5b726c;
+      --accent: #0f866c;
+      --accent-hover: #0c6e59;
+      --accent-soft: rgba(15, 134, 108, 0.12);
+      --danger: #d25b68;
+      --slot-bg: #ffffff;
+      --shadow: 0 18px 32px rgba(16, 48, 42, 0.06);
+      --radius-lg: 20px;
+      --radius-pill: 999px;
+      --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: linear-gradient(180deg, var(--bg) 0%, #ffffff 55%);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(18px);
+      background: color-mix(in srgb, var(--header) 92%, transparent);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px clamp(20px, 4vw, 36px);
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .brand svg {
+      width: 28px;
+      height: 28px;
+      filter: drop-shadow(0 6px 12px rgba(15, 134, 108, 0.2));
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      transition: transform 0.12s ease, border-color 0.12s ease, background-color 0.12s ease;
+    }
+
+    .icon-btn:hover {
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--accent-soft) 40%, #fff);
+    }
+
+    .icon-btn:active {
+      transform: translateY(1px);
+    }
+
+    main {
+      flex: 1;
+      padding: clamp(20px, 5vw, 48px) clamp(20px, 4vw, 36px) 60px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .layout {
+      width: min(100%, 1080px);
+      display: grid;
+      gap: 26px;
+    }
+
+    .layout-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .layout-header h1 {
+      margin: 0;
+      font-size: clamp(24px, 4vw, 32px);
+      letter-spacing: -0.3px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      border-radius: var(--radius-pill);
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 10px 20px rgba(15, 134, 108, 0.22);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 14px 28px rgba(15, 134, 108, 0.25);
+    }
+
+    .btn-primary:active { transform: translateY(1px); }
+
+    .slots {
+      display: grid;
+      gap: 14px;
+    }
+
+    .slot-row {
+      background: var(--slot-bg);
+      border-radius: var(--radius-lg);
+      border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+      box-shadow: var(--shadow);
+      padding: clamp(18px, 3vw, 24px);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(220px, 1.1fr) auto;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .slot-row:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-1px);
+      transition: transform 0.18s ease, border-color 0.18s ease;
+    }
+
+    .slot-info {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .slot-title {
+      font-size: 18px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: var(--accent);
+    }
+
+    .slot-title svg { width: 18px; height: 18px; }
+
+    .slot-meta {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .ingest-field {
+      position: relative;
+      display: flex;
+      align-items: stretch;
+      width: 100%;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border);
+      background: var(--bg-accent);
+      overflow: hidden;
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .ingest-field input {
+      flex: 1;
+      border: none;
+      padding: 10px 16px;
+      font-size: 14px;
+      background: transparent;
+      color: var(--text);
+      min-width: 0;
+    }
+
+    .ingest-field input:focus { outline: none; }
+
+    .copy-btn {
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      padding: 0 18px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: background-color 0.12s ease;
+    }
+
+    .copy-btn:hover { background: var(--accent-hover); }
+    .copy-btn:active { transform: translateY(1px); }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: var(--radius-pill);
+      background: color-mix(in srgb, var(--accent-soft) 60%, #fff);
+      font-size: 13px;
+      color: var(--accent);
+    }
+
+    .slot-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    .slot-controls .icon-btn { width: 40px; height: 40px; }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 0 20px;
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    .empty-state svg {
+      width: 68px;
+      height: 68px;
+      margin-bottom: 18px;
+      filter: drop-shadow(0 16px 24px rgba(15, 134, 108, 0.18));
+    }
+
+    @media (max-width: 960px) {
+      .slot-row {
+        grid-template-columns: 1fr;
+      }
+
+      .slot-controls {
+        justify-content: flex-start;
+      }
+
+      .ingest-field {
+        border-radius: var(--radius-lg);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="top-bar">
+      <div class="brand" aria-label="PhotoChanger">
+        <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="2" y="6" width="28" height="20" rx="6" ry="6" fill="#0f866c" />
+          <rect x="6" y="10" width="20" height="12" rx="4" ry="4" fill="#ffffff" />
+          <path d="M10 20c2.5-3.5 6.5-3.5 9 0" stroke="#0f866c" stroke-width="2" stroke-linecap="round" fill="none" />
+        </svg>
+        PhotoChanger Slots
+      </div>
+      <nav class="toolbar" aria-label="Основные действия">
+        <button class="icon-btn" type="button" aria-label="Статистика">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 20V4" /><path d="M4 20h16" /><path d="M8 20v-8" /><path d="M12 20v-4" /><path d="M16 20v-12" /><path d="M20 20v-6" />
+          </svg>
+        </button>
+        <button class="icon-btn" type="button" aria-label="Настройки">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.82l.02.07a2 2 0 1 1-3.76 1.35l-.02-.07a1.65 1.65 0 0 0-1-.6 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.82-.33l-.07.02a2 2 0 1 1-1.35-3.76l.07-.02a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1.82l-.02-.07a2 2 0 1 1 3.76-1.35l.02.07a1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.6 1 1.65 1.65 0 0 0 .6 1l.06.06a2 2 0 1 1-1.4 3.4z" />
+          </svg>
+        </button>
+        <button class="icon-btn" type="button" aria-label="Выйти">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+            <polyline points="10 17 15 12 10 7" />
+            <line x1="15" y1="12" x2="3" y2="12" />
+          </svg>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="layout">
+      <div class="layout-header">
+        <h1>Слоты AI-обработки</h1>
+        <div class="actions">
+          <button class="btn-primary" type="button">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 5v14" />
+              <path d="M5 12h14" />
+            </svg>
+            Новый слот
+          </button>
+        </div>
+      </div>
+
+      <section class="slots" aria-label="Список слотов">
+        <article class="slot-row" data-slot-id="slot-001">
+          <div class="slot-info">
+            <a class="slot-title" href="#slot-001" aria-label="Открыть настройки слота slot-001">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M10 6H6a2 2 0 0 0-2 2v12" />
+                <path d="M18 6h-2" />
+                <path d="M14 6h-1" />
+                <path d="M12 4v2" />
+                <path d="M12 12h8" />
+                <path d="M20 12v6a2 2 0 0 1-2 2h-4" />
+              </svg>
+              Slot 001 — Gemini Flash Style
+            </a>
+            <div class="slot-meta">Последняя обработка: 12 минут назад · Провайдер: Gemini · Статус очереди: свободна</div>
+          </div>
+          <label class="ingest-field" aria-label="Ingest ссылка слота slot-001">
+            <span class="visually-hidden">Ingest ссылка</span>
+            <input type="text" value="https://api.photochanger.ai/ingest/slot-001" readonly />
+            <button class="copy-btn" type="button" data-copy="https://api.photochanger.ai/ingest/slot-001" aria-label="Скопировать ingest ссылку для slot-001">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              Копировать
+            </button>
+          </label>
+          <div class="slot-controls">
+            <span class="status-pill" role="status">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="6" /></svg>
+              Активен
+            </span>
+            <button class="icon-btn" type="button" aria-label="Сбросить статистику слота slot-001">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 12a9 9 0 1 1-9-9" />
+                <polyline points="21 3 21 12 12 12" />
+              </svg>
+            </button>
+          </div>
+        </article>
+
+        <article class="slot-row" data-slot-id="slot-002">
+          <div class="slot-info">
+            <a class="slot-title" href="#slot-002" aria-label="Открыть настройки слота slot-002">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20 8v8" />
+                <path d="M4 8v8" />
+                <rect x="8" y="4" width="8" height="16" rx="2" />
+              </svg>
+              Slot 002 — Turbotext Fusion
+            </a>
+            <div class="slot-meta">Очередь: 3 задачи · Провайдер: Turbotext · Последний статус: обработка</div>
+          </div>
+          <label class="ingest-field" aria-label="Ingest ссылка слота slot-002">
+            <input type="text" value="https://api.photochanger.ai/ingest/slot-002" readonly />
+            <button class="copy-btn" type="button" data-copy="https://api.photochanger.ai/ingest/slot-002" aria-label="Скопировать ingest ссылку для slot-002">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              Копировать
+            </button>
+          </label>
+          <div class="slot-controls">
+            <span class="status-pill" role="status" style="color: var(--danger); background: rgba(210,91,104,0.16);">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="6" /></svg>
+              Задержка
+            </span>
+            <button class="icon-btn" type="button" aria-label="Открыть лог слота slot-002">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15V5a2 2 0 0 0-2-2H7" />
+                <path d="M3 7v12a2 2 0 0 0 2 2h12" />
+                <path d="M3 7 7 3" />
+                <path d="M7 3h12" />
+              </svg>
+            </button>
+          </div>
+        </article>
+
+        <div class="empty-state" role="note">
+          <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="6" y="8" width="36" height="28" rx="6" fill="#c6efe2" />
+            <path d="M12 26h12l4 6h8" stroke="#0f866c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+            <circle cx="18" cy="19" r="3" fill="#0f866c" />
+          </svg>
+          Добавьте новый слот, чтобы начать обработку изображений.
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    // (js) Копирование ingest-ссылок с визуальной обратной связью
+    const copyButtons = document.querySelectorAll('[data-copy]');
+    copyButtons.forEach((button) => {
+      button.addEventListener('click', async () => {
+        const url = button.getAttribute('data-copy');
+        try {
+          await navigator.clipboard.writeText(url);
+          button.classList.add('copied');
+          button.textContent = 'Скопировано';
+          setTimeout(() => {
+            button.classList.remove('copied');
+            button.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>Копировать';
+          }, 1600);
+        } catch (error) {
+          button.textContent = 'Ошибка';
+          setTimeout(() => {
+            button.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>Копировать';
+          }, 1600);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
