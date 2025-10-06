@@ -5,7 +5,6 @@
   "required": [
     "id",
     "name",
-    "user_id",
     "provider_id",
     "operation_id",
     "settings_json",
@@ -24,7 +23,7 @@
     },
     "user_id": {
       "type": ["integer", "null"],
-      "description": "Идентификатор пользователя, за которым закреплён слот"
+      "description": "Идентификатор пользователя, за которым закреплён слот. Может отсутствовать, если слот свободен."
     },
     "provider_id": {
       "type": "string",
