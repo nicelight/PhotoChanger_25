@@ -11,6 +11,7 @@
 - **Contract**
   - Проверка соответствия API `POST /ingest/{slotId}`, `/api/media/register`, `/api/media/extend`, `/public/media/{id}` спецификациям (`spec/contracts`).
   - JSON Schema для `Slot`, `Job`, `Result`, `MediaObject`.
+  - Валидация `SlotStatsResponse` — `summary.last_reset_at` присутствует и соответствует формату `date-time`.
 - **Integration**
   - Интеракция API ↔ очередь ↔ воркеры с моками провайдеров.
   - Очистка медиа после финальных статусов; связь Job ↔ Result.
