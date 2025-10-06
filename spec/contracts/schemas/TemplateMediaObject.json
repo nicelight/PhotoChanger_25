@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "TemplateMediaObject",
+  "type": "object",
+  "required": ["id", "slot_id", "setting_key", "mime", "size_bytes", "created_at"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Идентификатор шаблонного медиа"
+    },
+    "slot_id": {
+      "type": "string",
+      "description": "Слот, с которым связана загрузка"
+    },
+    "setting_key": {
+      "type": "string",
+      "description": "Ключ настройки, к которому привязан шаблон"
+    },
+    "label": {
+      "type": ["string", "null"],
+      "description": "Необязательный человекочитаемый ярлык шаблона"
+    },
+    "mime": {
+      "type": "string",
+      "description": "MIME-тип сохранённого файла"
+    },
+    "size_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Размер файла в байтах"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Момент загрузки шаблона"
+    }
+  },
+  "additionalProperties": false
+}

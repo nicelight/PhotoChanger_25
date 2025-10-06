@@ -259,6 +259,84 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
+  /api/template-media/register:
+    post:
+      tags: [Media]
+      summary: Загрузить шаблон и привязать его к слоту
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: ./schemas/TemplateMediaRegisterRequest.json
+      responses:
+        '201':
+          description: Шаблон зарегистрирован и привязан
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/TemplateMediaObject.json
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/template-media/{id}:
+    delete:
+      tags: [Media]
+      summary: Удалить шаблонное медиа и отвязать от слота
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор шаблонного медиа
+          schema:
+            type: string
+            format: uuid
+        - name: slot_id
+          in: query
+          required: true
+          description: Слот, из которого удаляется привязка
+          schema:
+            type: string
+        - name: setting_key
+          in: query
+          required: true
+          description: Ключ настройки, который ссылался на шаблон
+          schema:
+            type: string
+        - name: force
+          in: query
+          required: false
+          description: Удалить файл даже при нескольких привязках
+          schema:
+            type: boolean
+      responses:
+        '204':
+          description: Шаблон удалён или отвязан
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
   /public/media/{id}:
