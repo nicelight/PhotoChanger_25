@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Job",
+  "type": "object",
+  "required": [
+    "id",
+    "slot_id",
+    "status",
+    "attempt",
+    "max_attempts",
+    "priority",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "slot_id": {
+      "type": "string",
+      "pattern": "^slot-[0-9]{3}$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "processing", "completed", "failed_timeout", "failed_provider", "cancelled"]
+    },
+    "attempt": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "max_attempts": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "priority": {
+      "type": "integer"
+    },
+    "payload_path": {
+      "type": ["string", "null"]
+    },
+    "external_queue_id": {
+      "type": ["string", "null"]
+    },
+    "external_async_id": {
+      "type": ["string", "null"]
+    },
+    "external_metadata": {
+      "type": ["object", "null"],
+      "additionalProperties": true
+    },
+    "locked_by": {
+      "type": ["string", "null"]
+    },
+    "locked_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "last_attempt_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "next_retry_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

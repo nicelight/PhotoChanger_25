@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GlobalStatsResponse",
+  "type": "object",
+  "required": ["summary", "data", "meta"],
+  "properties": {
+    "summary": {
+      "type": "object",
+      "required": [
+        "total_runs",
+        "timeouts",
+        "provider_errors",
+        "cancelled",
+        "errors",
+        "ingest_count",
+        "avg_response_ms",
+        "p95_response_ms",
+        "error_rate_percent",
+        "total_cost"
+      ],
+      "properties": {
+        "total_runs": { "type": "integer", "minimum": 0 },
+        "timeouts": { "type": "integer", "minimum": 0 },
+        "provider_errors": { "type": "integer", "minimum": 0 },
+        "cancelled": { "type": "integer", "minimum": 0 },
+        "errors": { "type": "integer", "minimum": 0 },
+        "ingest_count": { "type": "integer", "minimum": 0 },
+        "avg_response_ms": { "type": ["integer", "null"], "minimum": 0 },
+        "p95_response_ms": { "type": ["integer", "null"], "minimum": 0 },
+        "error_rate_percent": { "type": "number", "minimum": 0 },
+        "total_cost": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "data": {
+      "type": "array",
+      "items": {
+        "$ref": "./GlobalStatsMetric.json"
+      }
+    },
+    "meta": {
+      "type": "object",
+      "required": ["page", "page_size", "total"],
+      "properties": {
+        "page": { "type": "integer", "minimum": 1 },
+        "page_size": { "type": "integer", "minimum": 1 },
+        "total": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

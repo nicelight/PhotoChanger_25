@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MediaObject",
+  "type": "object",
+  "required": ["id", "public_url", "expires_at"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Идентификатор временного медиа"
+    },
+    "public_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Публичный URL для скачивания"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Момент истечения ссылки"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProviderOperation",
+  "type": "object",
+  "required": ["id", "name", "needs", "schema_ref"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Идентификатор операции"
+    },
+    "name": {
+      "type": "string",
+      "description": "Отображаемое имя операции"
+    },
+    "needs": {
+      "type": "array",
+      "description": "UI требования к полям (например, prompt, reference_image)",
+      "items": {
+        "type": "string"
+      }
+    },
+    "schema_ref": {
+      "type": "string",
+      "description": "Путь к JSON Schema параметров операции"
+    }
+  },
+  "additionalProperties": false
+}

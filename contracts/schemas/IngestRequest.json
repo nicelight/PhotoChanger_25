@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IngestMultipart",
+  "type": "object",
+  "required": ["password", "fileToUpload"],
+  "properties": {
+    "password": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Глобальный пароль ingest, проверяемый на сервере"
+    },
+    "fileToUpload": {
+      "type": "string",
+      "contentEncoding": "binary",
+      "description": "Основной файл изображения"
+    }
+  },
+  "unevaluatedProperties": true
+}
