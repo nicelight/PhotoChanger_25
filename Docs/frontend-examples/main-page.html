@@ -11,17 +11,18 @@
     }
 
     :root {
-      --bg-top: #f3faf8;
+      --bg-top: #f4fbf8;
       --bg-bottom: #ffffff;
-      --header-bg: rgba(255, 255, 255, 0.95);
-      --header-border: #d7ebe4;
+      --header-bg: rgba(255, 255, 255, 0.92);
+      --header-border: #d8ebe3;
       --border: #d9ebe5;
       --border-strong: #b5d7cd;
-      --text: #10302a;
+      --text: #0f312a;
       --text-muted: #5c736d;
       --accent: #0f866c;
       --accent-hover: #0c6e59;
       --accent-soft: rgba(15, 134, 108, 0.12);
+      --accent-contrast: #ffffff;
       --danger: #d25b68;
       --slot-bg: #ffffff;
       --shadow: 0 18px 32px rgba(16, 48, 42, 0.06);
@@ -48,7 +49,7 @@
       position: sticky;
       top: 0;
       z-index: 10;
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(14px);
       background: var(--header-bg);
       border-bottom: 1px solid var(--header-border);
       box-shadow: 0 12px 20px rgba(16, 48, 42, 0.04);
@@ -77,9 +78,9 @@
     }
 
     .brand svg {
-      width: 28px;
-      height: 28px;
-      filter: drop-shadow(0 6px 12px rgba(15, 134, 108, 0.2));
+      width: 30px;
+      height: 30px;
+      filter: drop-shadow(0 8px 14px rgba(15, 134, 108, 0.24));
     }
 
     .toolbar {
@@ -151,7 +152,7 @@
       padding: 12px 20px;
       border-radius: var(--radius-pill);
       background: var(--accent);
-      color: #fff;
+      color: var(--accent-contrast);
       border: none;
       font-weight: 600;
       cursor: pointer;
@@ -166,6 +167,21 @@
 
     .btn-primary:active {
       transform: translateY(1px);
+    }
+
+    .btn-primary .btn-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.16);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .btn-primary .btn-icon svg {
+      width: 18px;
+      height: 18px;
     }
 
     .slots {
@@ -208,8 +224,8 @@
     }
 
     .slot-title svg {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
     }
 
     .slot-meta {
@@ -257,7 +273,7 @@
     .copy-btn {
       border: none;
       background: var(--accent);
-      color: #fff;
+      color: var(--accent-contrast);
       padding: 0 18px;
       font-weight: 600;
       display: inline-flex;
@@ -276,11 +292,12 @@
     }
 
     .copy-btn svg {
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
       stroke: currentColor;
       fill: none;
       stroke-width: 1.8;
+      flex-shrink: 0;
     }
 
     .copy-btn.copied {
@@ -299,9 +316,10 @@
     }
 
     .status-pill svg {
-      width: 14px;
-      height: 14px;
+      width: 16px;
+      height: 16px;
       fill: currentColor;
+      flex-shrink: 0;
     }
 
     .slot-controls {
@@ -408,10 +426,13 @@
         <h1>Слоты AI-обработки</h1>
         <div class="actions">
           <button class="btn-primary" type="button">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 5v14" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-              <path d="M5 12h14" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
+            <span class="btn-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="8" stroke-opacity="0.9" />
+                <path d="M12 8v8" />
+                <path d="M8 12h8" />
+              </svg>
+            </span>
             Новый слот
           </button>
         </div>
@@ -441,12 +462,15 @@
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
               </svg>
-              Копировать
+              <span>Копировать</span>
             </button>
           </label>
           <div class="slot-controls">
             <span class="status-pill" role="status">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6" /></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 3a9 9 0 1 1-9 9 9 9 0 0 1 9-9z" fill="currentColor" fill-opacity="0.12" />
+                <path d="M8.5 12.5 11 15l4.5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
               Активен
             </span>
             <button class="icon-btn" type="button" aria-label="Сбросить статистику слота slot-001">
@@ -478,12 +502,15 @@
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
               </svg>
-              Копировать
+              <span>Копировать</span>
             </button>
           </label>
           <div class="slot-controls">
             <span class="status-pill" role="status" style="color: var(--danger); background: rgba(210, 91, 104, 0.16);">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6" /></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" fill="currentColor" fill-opacity="0.12" />
+                <path d="M12 8v4l2.5 2.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
               Задержка
             </span>
             <button class="icon-btn" type="button" aria-label="Открыть лог слота slot-002">
@@ -512,8 +539,35 @@
   <script>
     // (js) Копирование ingest-ссылок с визуальной обратной связью
     document.querySelectorAll('[data-copy]').forEach((button) => {
-      const defaultLabel = button.getAttribute('data-default-label') ?? button.textContent?.trim() ?? '';
-      button.dataset.defaultLabel = defaultLabel;
+      const defaultContent = button.innerHTML.trim();
+      if (!button.dataset.defaultContent) {
+        button.dataset.defaultContent = defaultContent;
+      }
+
+      const copyIcon = `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+      `;
+
+      const successIcon = `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+      `;
+
+      const errorIcon = `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></circle>
+          <path d="M9 9l6 6m0-6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+      `;
+
+      const restoreDefault = () => {
+        const fallback = button.dataset.defaultContent ?? copyIcon + '<span>Копировать</span>';
+        button.innerHTML = fallback;
+      };
 
       button.addEventListener('click', async () => {
         const url = button.getAttribute('data-copy');
@@ -524,22 +578,15 @@
         try {
           await navigator.clipboard.writeText(url);
           button.classList.add('copied');
-          button.textContent = 'Скопировано';
+          button.innerHTML = `${successIcon}<span>Скопировано</span>`;
         } catch (error) {
           button.classList.remove('copied');
-          button.textContent = 'Ошибка';
+          button.innerHTML = `${errorIcon}<span>Ошибка</span>`;
         }
 
         setTimeout(() => {
           button.classList.remove('copied');
-          const label = button.dataset.defaultLabel ?? 'Копировать';
-          button.innerHTML = `
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-            </svg>
-            ${label}
-          `;
+          restoreDefault();
         }, 1600);
       });
     });
