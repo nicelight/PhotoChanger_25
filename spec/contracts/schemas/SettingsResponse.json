@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SettingsResponse",
+  "type": "object",
+  "required": ["dslr_password", "provider_keys", "media_cache"],
+  "properties": {
+    "dslr_password": {
+      "$ref": "./SettingsDslrPasswordStatus.json"
+    },
+    "provider_keys": {
+      "type": "object",
+      "description": "Секреты и публичные параметры AI-провайдеров, индексированные по идентификатору",
+      "additionalProperties": {
+        "$ref": "./SettingsProviderKeyStatus.json"
+      }
+    },
+    "media_cache": {
+      "$ref": "./MediaCacheSettings.json"
+    }
+  },
+  "additionalProperties": false
+}

@@ -20,6 +20,8 @@ tags:
     description: Управление статическими ingest-слотами
   - name: Media
     description: Временное и шаблонное медиа-хранилище
+  - name: Settings
+    description: Глобальные настройки платформы и управление секретами
   - name: Stats
     description: Метрики и отчёты по слотам
   - name: Ingest
@@ -189,6 +191,85 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/settings:
+    get:
+      tags: [Settings]
+      summary: Получить глобальные настройки платформы
+      description: Требует право `settings:read`. Возвращает статус секретов и параметры TTL медиахранилища
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Текущие настройки платформы
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/SettingsResponse.json
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    put:
+      tags: [Settings]
+      summary: Обновить глобальные настройки и секреты
+      description: Требует право `settings:write`. Обновляет только переданные поля и возвращает актуальные значения
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./schemas/SettingsUpdateRequest.json
+      responses:
+        '200':
+          description: Настройки обновлены
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/SettingsResponse.json
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/media/cache/purge:
+    post:
+      tags: [Settings]
+      summary: Поставить задачу очистки медиа-кеша
+      description: Требует право `settings:write`. Планирует асинхронное удаление устаревших Result и media_object
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: ./schemas/MediaCachePurgeRequest.json
+      responses:
+        '202':
+          description: Очистка поставлена в очередь
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/MediaCachePurgeResponse.json
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
         '500':
           $ref: '#/components/responses/InternalError'
   /api/media/register:

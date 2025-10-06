@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SettingsUpdateRequest",
+  "type": "object",
+  "properties": {
+    "dslr_password": {
+      "type": "object",
+      "required": ["value"],
+      "properties": {
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Новый пароль, который будет захеширован и сохранён для DSLR Remote Pro"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Секция обновления DSLR-пароля. Передача значения перехеширует пароль"
+    },
+    "provider_keys": {
+      "type": "object",
+      "description": "Карточки провайдеров для обновления секретов и публичных параметров",
+      "additionalProperties": {
+        "$ref": "./SettingsProviderKeyUpdate.json"
+      }
+    },
+    "media_cache": {
+      "$ref": "./MediaCacheSettingsUpdate.json",
+      "description": "Новые значения TTL медиахранилища. Отсутствующие поля не изменяются"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MediaCacheSettings",
+  "type": "object",
+  "properties": {
+    "processed_media_ttl_hours": {
+      "type": ["integer", "null"],
+      "minimum": 1,
+      "maximum": 168,
+      "description": "Срок хранения итоговых Result в часах"
+    },
+    "public_link_default_ttl_sec": {
+      "type": ["integer", "null"],
+      "minimum": 50,
+      "maximum": 86400,
+      "description": "TTL публичных ссылок, выдаваемых по умолчанию, в секундах"
+    },
+    "max_manual_ttl_sec": {
+      "type": ["integer", "null"],
+      "minimum": 50,
+      "description": "Максимальный TTL, который оператор может выставить вручную для media_object"
+    }
+  },
+  "additionalProperties": false
+}
