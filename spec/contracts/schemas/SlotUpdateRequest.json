@@ -24,6 +24,10 @@
       "description": "Конфигурация операции",
       "additionalProperties": true
     },
+    "user_id": {
+      "type": ["integer", "null"],
+      "description": "Идентификатор пользователя, которому назначается слот"
+    },
     "updated_at": {
       "type": "string",
       "format": "date-time",

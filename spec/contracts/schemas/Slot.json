@@ -5,6 +5,7 @@
   "required": [
     "id",
     "name",
+    "user_id",
     "provider_id",
     "operation_id",
     "settings_json",
@@ -20,6 +21,10 @@
     "name": {
       "type": "string",
       "description": "Отображаемое имя слота"
+    },
+    "user_id": {
+      "type": ["integer", "null"],
+      "description": "Идентификатор пользователя, за которым закреплён слот"
     },
     "provider_id": {
       "type": "string",
