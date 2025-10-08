@@ -4,10 +4,10 @@
   "type": "object",
   "properties": {
     "processed_media_ttl_hours": {
-      "type": ["integer", "null"],
-      "minimum": 1,
-      "maximum": 168,
-      "description": "Срок хранения итоговых Result в часах"
+      "type": "integer",
+      "const": 72,
+      "readOnly": true,
+      "description": "Фиксированный срок хранения итоговых Result в часах"
     },
     "public_link_default_ttl_sec": {
       "type": ["integer", "null"],

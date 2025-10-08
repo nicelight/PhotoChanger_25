@@ -3,12 +3,6 @@
   "title": "MediaCacheSettingsUpdate",
   "type": "object",
   "properties": {
-    "processed_media_ttl_hours": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 168,
-      "description": "Новое значение TTL итоговых Result в часах"
-    },
     "public_link_default_ttl_sec": {
       "type": "integer",
       "minimum": 50,

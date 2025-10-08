@@ -25,7 +25,7 @@
     },
     "media_cache": {
       "$ref": "./MediaCacheSettingsUpdate.json",
-      "description": "Новые значения TTL медиахранилища. Отсутствующие поля не изменяются"
+      "description": "Настройки TTL для временных media_object. Итоговые Result всегда хранятся 72 часа"
     }
   },
   "additionalProperties": false
