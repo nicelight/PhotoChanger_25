@@ -1,6 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "MediaRegisterRequest",
+  "description": "Загрузка временного файла. TTL ссылки фиксирован 60 секунд и не передаётся в запросе",
   "type": "object",
   "required": ["file"],
   "properties": {
@@ -8,12 +9,6 @@
       "type": "string",
       "contentEncoding": "binary",
       "description": "Изображение JPEG/PNG/WEBP, загружаемое во временное хранилище"
-    },
-    "ttl_sec": {
-      "type": "integer",
-      "minimum": 50,
-      "maximum": 86400,
-      "description": "Запрошенный срок жизни ссылки в секундах (ограничен диапазоном MEDIA_PUBLIC_LINK_DEFAULT_TTL_SEC … media.max_manual_ttl_sec)"
     },
     "job_id": {
       "type": "string",
