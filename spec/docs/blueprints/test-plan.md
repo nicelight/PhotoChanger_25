@@ -9,13 +9,13 @@
   - Парсинг/генерация запросов к Gemini и Turbotext, преобразование ответов в доменные сущности.
   - Управление состояниями Job (переходы, дедлайны, отмена).
 - **Contract**
-  - Проверка соответствия API `POST /ingest/{slotId}`, `/api/media/register`, `/api/media/extend`, `/public/media/{id}` спецификациям (`spec/contracts`).
+  - Проверка соответствия API `POST /ingest/{slotId}`, `/api/media/register`, `/public/media/{id}` спецификациям (`spec/contracts`).
   - JSON Schema для `Slot`, `Job`, `Result`, `MediaObject`.
   - Валидация `SlotStatsResponse` — `summary.last_reset_at` присутствует и соответствует формату `date-time`.
-- **Integration**
-  - Интеракция API ↔ очередь ↔ воркеры с моками провайдеров.
-  - Очистка медиа после финальных статусов; связь Job ↔ Result.
-  - Продление `media_object` в статусах `pending/processing`.
+  - **Integration**
+    - Интеракция API ↔ очередь ↔ воркеры с моками провайдеров.
+    - Очистка медиа после финальных статусов; связь Job ↔ Result.
+    - Автоистечение `media_object` через 60 секунд и фиксация `failed_timeout` без ручного продления.
 - **E2E**
   - Полный ingest с успешным завершением в пределах 50 секунд.
   - Инжест с таймаутом: мок провайдера задерживает ответ, система отдаёт 504 и очищает данные.
@@ -43,7 +43,7 @@
 | UC1 Настройка слота | ✅ Валидаторы слотов | ✅ Admin API схемы | ✅ Сохранение + обновление слота | ⚪ (UI smoke в ручном режиме) |
 | UC2 Ingest успех | ✅ State machine Job | ✅ POST /ingest schema | ✅ Очередь ↔ провайдер | ✅ Полный поток Gemini |
 | UC3 Ingest 504 | ✅ Таймауты Job | ✅ POST /ingest 504 case | ✅ Отмена воркера | ✅ Полный поток с задержкой |
-| UC4 Продление медиа | ✅ Валидатор TTL | ✅ /api/media/extend | ✅ Обновление expires_at | ✅ Сценарий с Turbotext |
+| UC4 Истечение медиа | ✅ Таймер TTL (60с) | ✅ Регистрация `/api/media/register` | ✅ Автоудаление записи | ✅ Сценарий с Turbotext |
 | UC5 Шаблонные медиа | ✅ Проверка MIME/размера | ✅ Template media API | ✅ Привязка к слоту | ⚪ Ручной smoke |
 
 ## Выходные артефакты

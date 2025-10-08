@@ -308,39 +308,6 @@ paths:
           $ref: '#/components/responses/InternalError'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
-  /api/media/extend:
-    post:
-      tags: [Media]
-      summary: Продлить срок жизни временного файла
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: ./schemas/MediaExtendRequest.json
-      responses:
-        '200':
-          description: TTL продлён
-          content:
-            application/json:
-              schema:
-                $ref: ./schemas/MediaObject.json
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-        '500':
-          $ref: '#/components/responses/InternalError'
   /api/template-media/register:
     post:
       tags: [Media]

@@ -22,10 +22,6 @@
       "additionalProperties": {
         "$ref": "./SettingsProviderKeyUpdate.json"
       }
-    },
-    "media_cache": {
-      "$ref": "./MediaCacheSettingsUpdate.json",
-      "description": "Новые значения TTL медиахранилища. Отсутствующие поля не изменяются"
     }
   },
   "additionalProperties": false
