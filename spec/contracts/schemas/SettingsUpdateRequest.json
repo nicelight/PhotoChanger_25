@@ -22,10 +22,6 @@
       "additionalProperties": {
         "$ref": "./SettingsProviderKeyUpdate.json"
       }
-    },
-    "media_cache": {
-      "$ref": "./MediaCacheSettingsUpdate.json",
-      "description": "Настройки медиакеша, доступные для ручного обновления администратора"
     }
   },
   "additionalProperties": false
