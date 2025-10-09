@@ -217,7 +217,9 @@ paths:
     put:
       tags: [Settings]
       summary: Обновить глобальные настройки и секреты
-      description: Требует право `settings:write`. Обновляет только переданные поля и возвращает актуальные значения
+      description: >-
+        Требует право `settings:write`. Обновляет только переданные поля и возвращает актуальные значения.
+        В разделе `media_cache` допускается установка `max_manual_ttl_sec` в диапазоне от 60 до 86400 секунд
       security:
         - bearerAuth: []
       requestBody:
