@@ -22,7 +22,7 @@
   3. Job ставится в очередь и выбирается воркером, статус `processing`.
   4. Воркер вызывает провайдера Gemini (`models.generateContent`), передавая параметры слота и изображение.
   5. Провайдер возвращает обработанное изображение до наступления `T_sync_response`.
-  6. Воркер сохраняет `Result`, очищает исходный `media_object`, обновляет статус `completed`.
+  6. Воркер заполняет поля `Job.result_*`, очищает исходный `media_object`, выставляет `is_finalized = true`.
   7. Ingest API возвращает 200 OK с обработанным изображением, job закрывается.
 
 ### Диаграмма последовательности (успех)
@@ -42,15 +42,15 @@ sequenceDiagram
     Queue->>Worker: Забрать Job
     Worker->>Gemini: models.generateContent(...)
     Gemini-->>Worker: Обработанное изображение
-    Worker->>Storage: Сохранить Result (TTL 72 ч)
-    Worker->>API: Статус completed
+    Worker->>Job: Заполнить поля result_*
+    Worker->>API: Финализация (is_finalized = true)
     API-->>DSLR: HTTP 200 + изображение
 ```
 
 ## UC3. Ingest с таймаутом 504
 - **Различия с UC2:**
   - На шаге вызова провайдера ответ не приходит до `T_sync_response`.
-  - API завершает ожидание с 504 и помечает Job `failed_timeout`.
+  - API завершает ожидание с 504 и фиксирует у Job `failure_reason = 'timeout'`.
   - Воркер получает сигнал отмены, прекращает операции и удаляет временные файлы.
   - Провайдерские ответы, пришедшие позже, игнорируются.
 
@@ -59,15 +59,15 @@ sequenceDiagram
 stateDiagram-v2
     [*] --> pending
     pending --> processing: Worker забрал задачу
-    processing --> completed: Результат получен ≤ T_sync_response
-    processing --> failed_timeout: Истёк T_sync_response
-    processing --> failed_provider: Ошибка провайдера / исчерпаны ретраи
-    pending --> cancelled: Администратор отменил слот/задачу
-    processing --> cancelled: Ручная отмена до финала
-    completed --> [*]
-    failed_timeout --> [*]
-    failed_provider --> [*]
-    cancelled --> [*]
+    processing --> finalized_success: Результат получен ≤ T_sync_response
+    processing --> finalized_timeout: Истёк T_sync_response
+    processing --> finalized_provider_error: Ошибка провайдера / исчерпаны ретраи
+    pending --> finalized_cancelled: Администратор отменил слот/задачу
+    processing --> finalized_cancelled: Ручная отмена до финала
+    finalized_success --> [*]
+    finalized_timeout --> [*]
+    finalized_provider_error --> [*]
+    finalized_cancelled --> [*]
 ```
 
 ## UC4. Истечение временной ссылки
@@ -76,7 +76,7 @@ stateDiagram-v2
 - **Основной поток:**
   1. Администратор регистрирует файл через `POST /api/media/register` и получает `expires_at = now + 60s`.
   2. Провайдер не скачивает файл в течение минуты; TTL истекает автоматически.
-  3. Очиститель помечает запись `media_object` как удалённую и инициирует `failed_timeout` для связанного Job.
+  3. Очиститель помечает запись `media_object` как удалённую и ставит Job `failure_reason = 'timeout'`.
 - **Ошибки:**
   - Попытка обратиться к истекшей ссылке → `410 Gone`.
   - Попытка продлить TTL через несуществующий эндпоинт → `404 Not Found`.
