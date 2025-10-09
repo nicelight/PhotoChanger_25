@@ -3,14 +3,13 @@
 ## Основные сущности
 
 ### Slot
-- `id` (`UUID`/`string`) — идентификатор и часть ingest-URL.
+- `id` (`string`) — статический идентификатор слота (`slot-001` … `slot-015`), создаётся миграцией и не меняется.
 - `name` — отображается в UI, помогает операторам выбирать слот.
 - `provider` — ключ провайдера (`gemini`, `turbotext`, ...).
 - `operation` — выбранная операция провайдера (например, `style_transfer`).
 - `settings_json` — параметры операции, включая промпты, ссылки на `template_media` и конфигурацию ретраев.
-- `ingest_secret` — пароль для проверки DSLR Remote Pro.
-- `ingest_url` — полный URL `POST /ingest/{slotId}`.
 - `updated_at`, `created_at` — аудит изменений.
+- Глобальный ingest-пароль хранится отдельно в `app_settings` и не является полем Slot; ingest-URL вычисляется по шаблону `<BASE_URL>/ingest/{id}` без сохранения в таблице.
 
 ### Job
 - `id` (`UUID`).
