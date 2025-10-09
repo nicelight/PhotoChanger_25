@@ -14,13 +14,6 @@
       "const": 60,
       "readOnly": true,
       "description": "Фиксированный срок жизни временных публичных ссылок в секундах"
-    },
-    "max_manual_ttl_sec": {
-      "type": "integer",
-      "minimum": 60,
-      "maximum": 86400,
-      "readOnly": true,
-      "description": "Верхний предел TTL (в секундах), который оператор может задать вручную для очистки медиакеша"
     }
   },
   "additionalProperties": false
