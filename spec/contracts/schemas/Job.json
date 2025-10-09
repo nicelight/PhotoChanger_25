@@ -6,9 +6,7 @@
     "id",
     "slot_id",
     "status",
-    "attempt",
-    "max_attempts",
-    "priority",
+    "is_finalized",
     "created_at",
     "updated_at"
   ],
@@ -19,50 +17,60 @@
     },
     "slot_id": {
       "type": "string",
-      "pattern": "^slot-[0-9]{3}$"
+      "pattern": "^slot-[0-9]{3}$",
+      "description": "Идентификатор слота, из которого была создана задача."
     },
     "status": {
       "type": "string",
-      "enum": ["pending", "processing", "completed", "failed_timeout", "failed_provider", "cancelled"]
+      "enum": ["pending", "processing"],
+      "description": "Промежуточное состояние обработки до финализации."
     },
-    "attempt": {
-      "type": "integer",
-      "minimum": 1
+    "is_finalized": {
+      "type": "boolean",
+      "description": "Признак того, что задача завершена (успех или ошибка)."
     },
-    "max_attempts": {
-      "type": "integer",
-      "minimum": 1
+    "failure_reason": {
+      "description": "Причина неуспешного завершения. Присутствует только если is_finalized = true и обработка не удалась.",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": ["timeout", "provider_error", "cancelled"]
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
-    "priority": {
-      "type": "integer"
+    "provider_job_reference": {
+      "type": ["string", "null"],
+      "description": "Опциональный идентификатор задачи у внешнего провайдера (async/webhook)."
     },
     "payload_path": {
-      "type": ["string", "null"]
-    },
-    "external_queue_id": {
-      "type": ["string", "null"]
-    },
-    "external_async_id": {
-      "type": ["string", "null"]
-    },
-    "external_metadata": {
-      "type": ["object", "null"],
-      "additionalProperties": true
-    },
-    "locked_by": {
-      "type": ["string", "null"]
-    },
-    "locked_at": {
       "type": ["string", "null"],
-      "format": "date-time"
+      "description": "Путь к исходному ingest-файлу во временном хранилище."
     },
-    "last_attempt_at": {
+    "result_inline_base64": {
       "type": ["string", "null"],
-      "format": "date-time"
+      "contentEncoding": "base64",
+      "contentMediaType": "image/*",
+      "description": "Inline-данные последнего успешного результата (если не используется файловое хранение)."
     },
-    "next_retry_at": {
+    "result_file_path": {
       "type": ["string", "null"],
-      "format": "date-time"
+      "description": "Путь к итоговому файлу результата, если он сохранён на диск."
+    },
+    "result_mime_type": {
+      "type": ["string", "null"],
+      "description": "MIME-тип итогового изображения."
+    },
+    "result_size_bytes": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Размер результата в байтах."
+    },
+    "result_checksum": {
+      "type": ["string", "null"],
+      "description": "Контрольная сумма содержимого (например, SHA-256 в hex)."
     },
     "created_at": {
       "type": "string",
@@ -71,6 +79,11 @@
     "updated_at": {
       "type": "string",
       "format": "date-time"
+    },
+    "finalized_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Момент фиксации финального состояния."
     }
   },
   "additionalProperties": false

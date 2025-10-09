@@ -15,19 +15,12 @@
 ### Job
 - `id` (`UUID`).
 - `slot_id` — связь с `Slot`.
-- `status` — `pending` → `processing` → финальные (`completed`, `failed_timeout`, `failed_provider`, `cancelled`).
-- `attempt` — счётчик вызовов провайдера.
-- `payload_path` / `source_media_id` — ссылка на исходный файл во временном хранилище.
-- `result_id` — связь с `Result` (nullable до завершения).
-- `external_ref` — `queueid`/`asyncid` провайдера.
-- `expires_at` — дедлайн `T_sync_response`.
-
-### Result
-- `id` (`UUID`).
-- `job_id` — владелец результата.
-- `media_path` — путь к обработанному изображению.
-- `mime`, `size_bytes` — метаданные.
-- `available_until` — TTL результата (72 часа).
+- `status` — рабочие состояния `pending` → `processing`; финализация описывается отдельными полями `is_finalized` и `failure_reason`.
+- `result_inline_base64` / `result_file_path` — данные последнего успешного изображения (inline или путь на диске).
+- `result_mime_type`, `result_size_bytes`, `result_checksum` — метаданные результата.
+- `provider_job_reference` — единое опциональное поле для async/webhook идентификаторов провайдера.
+- `payload_path` — ссылка на исходный файл во временном хранилище (опционально).
+- `finalized_at`, `created_at`, `updated_at` — аудит жизненного цикла записи.
 
 ### MediaObject (временные ссылки)
 - `id` (`UUID`).
@@ -49,18 +42,18 @@
 
 ## Связи
 - `Slot 1 - N Job`: каждый запуск ingest создаёт новую `Job` по настройкам слота.
-- `Job 1 - 1 Result`: результат создаётся только для успешно завершившейся задачи.
+- `Job` хранит последний успешный результат в собственных полях `result_*`, отдельной таблицы нет.
 - `Job 1 - N MediaObject`: временные файлы (исходники, промежуточные) привязаны к задаче для очистки.
 - `Slot N - M TemplateMedia`: через `slot_template_binding` слот может ссылаться на несколько шаблонных файлов.
 - `Job 1 - 1 ProviderAdapter`: определяется `slot.provider` и выбирается при запуске задачи.
 
 ## Инварианты
-- Временный файл (`MediaObject`) не живёт дольше `T_sync_response` и автоматически удаляется после финального статуса Job.
-- `Job.status` не может вернуться из финального состояния в активное; повторная обработка требует нового ingest.
-- `Result.available_until` ≥ время ответа клиенту; результат не удаляется ранее 72 часов, если не было явной очистки политики.
+- Временный файл (`MediaObject`) не живёт дольше `T_sync_response` и автоматически удаляется после финализации Job.
+- После `is_finalized = true` задача не возвращается в активное состояние; повторная обработка требует нового ingest.
+- В Job хранится только последний успешный результат (`result_*`); при новом запуске поля перезаписываются.
 - `Slot` не может быть активирован без валидных параметров провайдера (минимально необходимые поля определяются провайдером).
-- `external_ref` сохраняется для всех асинхронных операций Turbotext до получения webhook/поллинга.
-- Временные ссылки не продлеваются: по истечении 60 секунд запись удаляется, а связанную `Job` переводят в `failed_timeout`.
+- `provider_job_reference` заполняется при асинхронных сценариях и может быть пустым для синхронных провайдеров.
+- Временные ссылки не продлеваются: по истечении 60 секунд запись удаляется, а связанную `Job` помечают `failure_reason = 'timeout'`.
 
 ## Диаграмма сущностей (Mermaid)
 ```mermaid
@@ -68,7 +61,6 @@ erDiagram
     Slot ||--o{ Job : creates
     Slot ||--o{ SlotTemplateBinding : uses
     TemplateMedia ||--o{ SlotTemplateBinding : provides
-    Job ||--o| Result : produces
     Job ||--o{ MediaObject : attaches
     Job }|--|| ProviderAdapter : handled_by
 ```
