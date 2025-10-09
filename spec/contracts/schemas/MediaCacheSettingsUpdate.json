@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MediaCacheSettingsUpdate",
+  "type": "object",
+  "properties": {
+    "max_manual_ttl_sec": {
+      "type": "integer",
+      "minimum": 60,
+      "maximum": 86400,
+      "description": "Желаемый верхний предел TTL (в секундах) для ручных операций очистки медиакеша"
+    }
+  },
+  "additionalProperties": false
+}
