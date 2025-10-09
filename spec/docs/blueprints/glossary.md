@@ -12,7 +12,7 @@
 | media_object | Запись временного публичного файла, доступного по `GET /public/media/{id}` до истечения TTL. | `/Docs/brief.md`, "Временное публичное медиа-хранилище" |
 | template_media | Постоянные шаблоны изображений, привязанные к слотам, очищаются только вручную. | `/Docs/brief.md`, "Постоянное хранилище шаблонов" |
 | DSLR Remote Pro | Клиент, отправляющий multipart POST с фото, паролем и метаданными. | `/Docs/brief.md`, "Пользовательский workflow" |
-| Async queue | Внутренняя очередь (`asyncio.Queue` или PostgreSQL), обеспечивающая back-pressure и дедлайны. | `/Docs/brief.md`, "Механизм работы платформы" |
+| Job queue | Персистентная очередь задач на PostgreSQL (`job` + `SELECT … FOR UPDATE SKIP LOCKED`), обеспечивающая back-pressure и дедлайны. | `/Docs/brief.md`, "Механизм работы платформы" |
 | failed_timeout | Финальный статус Job при превышении `T_sync_response`, вызывает немедленную отмену и очистку временных данных. | `/Docs/brief.md`, "Механизм работы платформы" |
 | media public link | Публичная ссылка на временный файл, предназначена для скачивания провайдерами (например, Turbotext). | `/Docs/brief.md`, "Временное публичное медиа-хранилище" |
 | webhook | Обратный вызов от Turbotext при асинхронной обработке, содержит `asyncid`/`queueid`. | `/Docs/brief.md`, раздел "Turbotext: очередь, polling и webhook" |
