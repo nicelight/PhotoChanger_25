@@ -15,6 +15,7 @@
 - `id` (`UUID`).
 - `slot_id` — связь с `Slot`.
 - `status` — рабочие состояния `pending` → `processing`; финализация описывается отдельными полями `is_finalized` и `failure_reason`.
+- `expires_at` — фиксированный дедлайн задачи (`created_at + T_sync_response`), используется API и воркерами как единая точка отмены.【F:Docs/brief.md†L33-L48】
 - `result_inline_base64` / `result_file_path` — данные последнего успешного изображения (inline или путь на диске).
 - `result_mime_type`, `result_size_bytes`, `result_checksum` — метаданные результата.
 - `provider_job_reference` — единое опциональное поле для async/webhook идентификаторов провайдера.
@@ -48,6 +49,8 @@
 
 ## Инварианты
 - Временный файл (`MediaObject`) не живёт дольше `T_sync_response` и автоматически удаляется после финализации Job.
+- Для каждого временного артефакта применяется единая формула TTL: `artifact_expires_at = min(job.expires_at, created_at + T_media_limit)` (где `T_media_limit` задаётся конкретным механизмом хранения: `T_ingest_ttl`, `MEDIA_PUBLIC_LINK_TTL_SEC` и т.д.).【F:Docs/brief.md†L56-L69】
+- `Job.expires_at` не меняется после создания записи и служит верхней границей для всех связанных TTL (`payload_path`, публичные ссылки, промежуточные файлы).【F:Docs/brief.md†L56-L69】
 - После `is_finalized = true` задача не возвращается в активное состояние; повторная обработка требует нового ingest.
 - В Job хранится только последний успешный результат (`result_*`); при новом запуске поля перезаписываются.
 - `Slot` не может быть активирован без валидных параметров провайдера (минимально необходимые поля определяются провайдером).
