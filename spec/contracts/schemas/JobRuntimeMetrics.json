@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "JobRuntimeMetrics",
+  "type": "object",
+  "required": ["queue_wait_ms", "processing_ms", "total_elapsed_ms"],
+  "properties": {
+    "queue_wait_ms": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Сколько миллисекунд задача провела в очереди до перехода в status=processing. null, если ещё не обрабатывалась."
+    },
+    "processing_ms": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Продолжительность активной обработки воркером в миллисекундах. null, если обработка ещё не начиналась."
+    },
+    "total_elapsed_ms": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Время от создания Job до текущего момента или финализации. null, если недоступно."
+    }
+  },
+  "additionalProperties": false
+}
