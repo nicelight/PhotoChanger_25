@@ -7,6 +7,7 @@
     "slot_id",
     "status",
     "is_finalized",
+    "expires_at",
     "created_at",
     "updated_at"
   ],
@@ -71,6 +72,11 @@
     "result_checksum": {
       "type": ["string", "null"],
       "description": "Контрольная сумма содержимого (например, SHA-256 в hex)."
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Единый дедлайн задачи: фиксируется при создании и используется API/воркерами для контроля таймаутов."
     },
     "created_at": {
       "type": "string",
