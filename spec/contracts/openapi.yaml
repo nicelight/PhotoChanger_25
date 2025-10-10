@@ -33,6 +33,7 @@ tags:
 paths:
   /api/login:
     post:
+      security: []
       tags: [Auth]
       summary: Вход пользователя и выдача JWT
       requestBody:
@@ -495,6 +496,7 @@ paths:
           $ref: '#/components/responses/ServiceUnavailable'
   /public/media/{id}:
     get:
+      security: []
       tags: [Public]
       summary: Получить временный файл по публичной ссылке
       parameters:
