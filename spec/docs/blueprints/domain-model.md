@@ -28,7 +28,6 @@
 - `mime`, `size_bytes`.
 - `expires_at` — фиксированный TTL 60 секунд (`MEDIA_PUBLIC_LINK_TTL_SEC`).
 - `job_id` — связь для автоматической очистки.
-- `download_quota` — лимиты на скачивания.
 
 ### TemplateMedia (постоянные шаблоны)
 - `id` (`UUID`).
