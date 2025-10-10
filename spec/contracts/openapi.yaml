@@ -20,8 +20,6 @@ tags:
     description: Управление статическими ingest-слотами
   - name: Media
     description: Временное и шаблонное медиа-хранилище
-  - name: Jobs
-    description: Административное управление задачами обработки
   - name: Settings
     description: Глобальные настройки платформы и управление секретами
   - name: Stats
@@ -275,108 +273,6 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '422':
           $ref: '#/components/responses/UnprocessableEntity'
-        '500':
-          $ref: '#/components/responses/InternalError'
-  /api/jobs:
-    get:
-      tags: [Jobs]
-      summary: Получить список задач ingest-очереди
-      description: >-
-        Возвращает административный список задач с агрегированными метриками ожидания и дедлайнами,
-        рассчитываемыми через DeadlineGuard (`job.expires_at`). Требует право `stats:read`.
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: query
-          name: status
-          schema:
-            type: string
-            enum: [pending, processing]
-          description: Фильтр по текущему промежуточному статусу задачи.
-        - in: query
-          name: is_finalized
-          schema:
-            type: boolean
-          description: Ограничить выборку финализированными (`true`) или активными (`false`) задачами.
-        - in: query
-          name: failure_reason
-          schema:
-            type: string
-            enum: [timeout, provider_error, cancelled]
-          description: Показать только задачи с указанной причиной неуспеха.
-        - in: query
-          name: slot_id
-          schema:
-            type: string
-          description: Фильтр по идентификатору слота (`slot-001` … `slot-015`).
-        - in: query
-          name: page
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          description: Номер страницы постраничного просмотра.
-        - in: query
-          name: page_size
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Количество записей на страницу.
-        - in: query
-          name: sort_by
-          schema:
-            type: string
-            enum: [created_at, expires_at]
-            default: expires_at
-          description: Поле сортировки списка задач.
-        - in: query
-          name: sort_order
-          schema:
-            type: string
-            enum: [asc, desc]
-            default: asc
-          description: Направление сортировки.
-      responses:
-        '200':
-          description: Список задач с дедлайнами и временными метриками
-          content:
-            application/json:
-              schema:
-                $ref: ./schemas/JobListResponse.json
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
-  /api/jobs/{job_id}:
-    get:
-      tags: [Jobs]
-      summary: Получить подробную информацию о задаче
-      description: >-
-        Возвращает полную запись задачи, её дедлайн `expires_at` и рассчитанные DeadlineGuard метрики
-        оставшегося времени. Требует право `stats:read`.
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/JobId'
-      responses:
-        '200':
-          description: Подробная информация о задаче
-          content:
-            application/json:
-              schema:
-                $ref: ./schemas/JobDetailResponse.json
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
   /api/media/register:
@@ -739,14 +635,6 @@ components:
       description: >-
         Текущая версия слота в формате ETag. Обязателен, если метка версии не
         передана в поле `updated_at` тела запроса.
-    JobId:
-      name: job_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-      description: Идентификатор задачи обработки (UUID записи Job).
   responses:
     BadRequest:
       description: Некорректный запрос

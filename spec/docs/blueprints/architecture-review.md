@@ -13,6 +13,7 @@
 ## Обнаруженные расхождения
 - JSON Schema `Job` в контрактах не содержала поля `expires_at`, хотя DeadlineGuard и бриф требуют хранить и публиковать единый дедлайн задачи для API, воркеров и очистки.【F:spec/contracts/schemas/Job.json†L1-L60】【F:spec/docs/blueprints/deadline-guard.md†L29-L65】
 - В NFR документе упоминалась возможность переключения между «in-process» и PostgreSQL очередью, что расходится с брифом, где очередь фиксирована в PostgreSQL как источник back-pressure.【F:spec/docs/blueprints/nfr.md†L9-L18】【F:Docs/brief.md†L31-L52】
+- В OpenAPI присутствовали административные эндпоинты `/api/jobs` и `/api/jobs/{job_id}`, хотя бриф не описывает публичный HTTP-контракт для очереди задач; спецификация обновлена и теперь включает только задокументированные в брифе маршруты, а связанные JSON Schema удалены как неиспользуемые.【F:spec/contracts/openapi.yaml†L15-L360】【F:Docs/brief.md†L780-L1140】
 
 ## Рекомендации
 1. Зафиксировать `Job.expires_at` в схемах и API-ответах как обязательное поле, чтобы клиенты и воркеры имели единый дедлайн (исправлено в текущем обновлении схемы).【F:spec/contracts/schemas/Job.json†L1-L64】
