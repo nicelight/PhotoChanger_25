@@ -15,7 +15,7 @@
 - `id` (`UUID`).
 - `slot_id` — связь с `Slot`.
 - `status` — рабочие состояния `pending` → `processing`; финализация описывается отдельными полями `is_finalized` и `failure_reason`.
-- `expires_at` — фиксированный дедлайн задачи (`created_at + T_job_deadline`, где `T_job_deadline = max(T_sync_response, T_media_limit_max)`), используется API и воркерами как единая точка отмены.【F:Docs/brief.md†L33-L69】
+- `expires_at` — фиксированный дедлайн задачи; вычисляется при создании записи как `created_at + T_job_deadline`, где `T_job_deadline = max(T_sync_response, T_media_limit_max)`. Это гарантирует, что даже при использовании публичных ссылок с TTL 60 секунд дедлайн не станет короче лимита хранилища и останется единым для API, воркеров и очистки.【F:Docs/brief.md†L33-L69】
 - `result_inline_base64` / `result_file_path` — данные последнего успешного изображения (inline или путь на диске).
 - `result_mime_type`, `result_size_bytes`, `result_checksum` — метаданные результата.
 - `provider_job_reference` — единое опциональное поле для async/webhook идентификаторов провайдера.
