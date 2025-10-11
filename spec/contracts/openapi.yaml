@@ -307,7 +307,7 @@ paths:
         - in: query
           name: slot_id
           schema:
-            type: string
+            $ref: '#/components/schemas/SlotId'
           description: Фильтр по идентификатору слота (`slot-001` … `slot-015`).
         - in: query
           name: page
@@ -466,7 +466,7 @@ paths:
           required: true
           description: Слот, из которого удаляется привязка
           schema:
-            type: string
+            $ref: '#/components/schemas/SlotId'
         - name: setting_key
           in: query
           required: true
@@ -637,7 +637,7 @@ paths:
         - in: query
           name: slot_id
           schema:
-            type: string
+            $ref: '#/components/schemas/SlotId'
           description: Фильтр по конкретному слоту
       responses:
         '200':
@@ -668,8 +668,8 @@ paths:
           name: slotId
           required: true
           schema:
-            type: string
-            description: Статический идентификатор ingest-слота (`slot-001` … `slot-015`).
+            $ref: '#/components/schemas/SlotId'
+          description: Статический идентификатор ingest-слота (`slot-001` … `slot-015`).
       requestBody:
         required: true
         content:
@@ -722,13 +722,33 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  schemas:
+    SlotId:
+      type: string
+      enum:
+        - slot-001
+        - slot-002
+        - slot-003
+        - slot-004
+        - slot-005
+        - slot-006
+        - slot-007
+        - slot-008
+        - slot-009
+        - slot-010
+        - slot-011
+        - slot-012
+        - slot-013
+        - slot-014
+        - slot-015
+      description: Допустимый статический идентификатор ingest-слота.
   parameters:
     SlotId:
       name: slot_id
       in: path
       required: true
       schema:
-        type: string
+        $ref: '#/components/schemas/SlotId'
       description: Идентификатор статического слота (`slot-001` … `slot-015`)
     SlotVersionIfMatch:
       name: If-Match
