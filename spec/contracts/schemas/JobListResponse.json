@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "JobListResponse",
+  "type": "object",
+  "required": ["data", "meta"],
+  "properties": {
+    "data": {
+      "type": "array",
+      "items": {
+        "$ref": "./JobAdminView.json"
+      }
+    },
+    "meta": {
+      "type": "object",
+      "required": ["page", "page_size", "total"],
+      "properties": {
+        "page": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Текущая страница выборки."
+        },
+        "page_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Количество элементов на странице."
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Общее количество задач, удовлетворяющих фильтрам."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
