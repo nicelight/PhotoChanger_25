@@ -590,13 +590,13 @@ paths:
           name: from
           schema:
             type: string
-            format: date
+            format: date-time
           description: Начало диапазона (UTC). Максимум 90 дней.
         - in: query
           name: to
           schema:
             type: string
-            format: date
+            format: date-time
           description: Конец диапазона (UTC)
         - in: query
           name: group_by
