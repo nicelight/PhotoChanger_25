@@ -15,7 +15,7 @@
 - `id` (`UUID`).
 - `slot_id` — связь с `Slot`.
 - `status` — рабочие состояния `pending` → `processing`; финализация описывается отдельными полями `is_finalized` и `failure_reason`.
-- `expires_at` — фиксированный дедлайн задачи; вычисляется при создании записи как `created_at + T_job_deadline`, где `T_job_deadline = max(T_sync_response, T_media_limit_max)`. Это гарантирует, что даже при использовании публичных ссылок с TTL `T_public_link_ttl = clamp(T_sync_response, 45, 60)` дедлайн не станет короче лимита хранилища и останется единым для API, воркеров и очистки.【F:Docs/brief.md†L33-L132】
+- `expires_at` — фиксированный дедлайн задачи; вычисляется при создании записи как `created_at + T_job_deadline`, где `T_job_deadline = max(T_sync_response, T_public_link_ttl)`. Это гарантирует, что даже при использовании публичных ссылок с TTL `T_public_link_ttl = clamp(T_sync_response, 45, 60)` дедлайн не станет короче лимита хранилища и останется единым для API, воркеров и очистки.【F:Docs/brief.md†L33-L132】
 - `result_file_path` — относительный путь к файлу последнего успешного изображения в `MEDIA_ROOT/results`.
 - `result_inline_base64` — временная base64-строка результата, доступна только пока ingest ждёт синхронный ответ.
 - `result_mime_type`, `result_size_bytes`, `result_checksum` — метаданные результата.

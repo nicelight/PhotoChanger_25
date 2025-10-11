@@ -284,7 +284,7 @@ paths:
       summary: Получить список задач ingest-очереди
       description: >-
         Возвращает административный список задач с агрегированными метриками ожидания и дедлайнами,
-        рассчитываемыми через DeadlineGuard (`job.expires_at`). Требует право `stats:read`.
+        вычисленными напрямую из `job.expires_at`. Требует право `stats:read`.
       security:
         - bearerAuth: []
       parameters:
@@ -359,7 +359,7 @@ paths:
       tags: [Jobs]
       summary: Получить подробную информацию о задаче
       description: >-
-        Возвращает полную запись задачи, её дедлайн `expires_at` и рассчитанные DeadlineGuard метрики
+        Возвращает полную запись задачи, её дедлайн `expires_at` и рассчитанные метрики
         оставшегося времени. Требует право `stats:read`.
       security:
         - bearerAuth: []
