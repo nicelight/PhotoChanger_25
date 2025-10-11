@@ -36,7 +36,7 @@ sequenceDiagram
     participant Storage as Media Storage
 
     DSLR->>API: POST /ingest/{slotId}
-    API->>Storage: Сохранить media_object (TTL = 60 c)
+    API->>Storage: Сохранить ingest payload (TTL = T_ingest_ttl ≤ 50 c)
     API->>Queue: Создать Job (pending)
     API->>API: Ожидание результата (≤ 50 c)
     Queue->>Worker: Забрать Job
