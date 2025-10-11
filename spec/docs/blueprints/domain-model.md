@@ -48,16 +48,37 @@
 - `Job 1 - 1 ProviderAdapter`: определяется `slot.provider` и выбирается при запуске задачи.
 
 ## Инварианты
-- Исходный ingest-пейлоад (`Job.payload_path`) очищается по формуле `min(job.expires_at, created_at + T_ingest_ttl)`; поскольку `T_ingest_ttl ≤ T_sync_response`, файл не живёт дольше синхронного окна ожидания и удаляется сразу после финализации задачи.【F:Docs/brief.md†L19-L44】【F:Docs/brief.md†L60-L66】
-- Для каждого временного артефакта применяется единая формула TTL: `artifact_expires_at = min(job.expires_at, created_at + T_media_limit)` (где `T_media_limit` задаётся конкретным механизмом хранения: `T_ingest_ttl`, `T_public_link_ttl` и т.д.).【F:Docs/brief.md†L60-L137】
+
+### Контур дедлайнов ingest-задач
+- Единый дедлайн задачи и все связанные TTL рассчитываются непосредственно в момент создания `Job`; централизованный «deadline service» не требуется — API, воркеры и очистка используют общий набор функций доменного слоя и читают значения прямо из записи задачи.【F:Docs/brief.md†L31-L133】
+- Источником правды выступают настройки приложения; параметры и их вычисления фиксированы:
+
+  | Параметр | Источник | Назначение |
+  |---|---|---|
+  | `T_sync_response` | `app_settings["ingest.sync_response_timeout_sec"]` (по умолчанию 48 с, диапазон 45–60 с) | Верхняя граница ожидания HTTP-ответа ingest API и минимальная составляющая `T_job_deadline`. |
+  | `T_public_link_ttl` | `app_settings["media.public_link_ttl_sec"] = clamp(T_sync_response, 45, 60)` | Жёсткий лимит жизни публичных ссылок и других внешних артефактов. |
+  | `T_ingest_ttl` | `app_settings["media.ingest_ttl_sec"] = min(T_sync_response, T_public_link_ttl)` | TTL исходных файлов во временном хранилище `payload`. |
+
+  Новые задачи автоматически используют актуальные конфигурационные значения; дополнительных миграций или вспомогательных таблиц не требуется.【F:Docs/brief.md†L19-L137】
+- Формула дедлайна фиксирована: `T_job_deadline = max(T_sync_response, T_public_link_ttl)` и `job.expires_at = job.created_at + T_job_deadline`. Значение хранится в БД, не изменяется и служит верхней границей для всех связанных TTL (`payload_path`, публичные ссылки, промежуточные файлы).【F:Docs/brief.md†L32-L133】
+- Для временных артефактов действует правило:
+
+  ```
+  artifact_expires_at = min(job.expires_at, created_at + T_media_limit)
+  ```
+
+  где `T_media_limit` — конкретный лимит артефакта (`T_ingest_ttl`, `T_public_link_ttl` и т.д.). Благодаря выбранному `T_job_deadline` публичные ссылки живут весь `T_public_link_ttl`, а ingest payload не выходит за пределы окна `T_sync_response`. Нарушение TTL ведёт к `failure_reason = 'timeout'` и немедленной очистке данных.【F:Docs/brief.md†L19-L137】
+- Доменные функции обеспечивают единый расчёт дедлайнов и TTL: `calculate_job_expires_at(created_at, sync_timeout, public_link_ttl)`, `calculate_deadline_info(expires_at, *, now)`, `calculate_artifact_expiry(created_at, job_expires_at, limit_seconds)`. Все компоненты обязаны использовать их напрямую вместо дублирования логики.
+- Интеграция компонентов подчиняется дедлайну: Ingest API фиксирует `expires_at` и завершает запрос по достижении `min(now, expires_at)`, воркер отменяет обращение к провайдеру при истечении окна, а механизмы очистки удаляют payload и публичные ссылки сразу после наступления соответствующего `artifact_expires_at`. Продление TTL не допускается; повторная обработка требует нового ingest.【F:Docs/brief.md†L19-L137】
+
+### Жизненный цикл данных задачи
+- Исходный ingest-пейлоад (`Job.payload_path`) очищается по формуле `min(job.expires_at, created_at + T_ingest_ttl)`; поскольку `T_ingest_ttl ≤ T_sync_response`, файл не живёт дольше синхронного окна ожидания и удаляется сразу после финализации задачи.【F:Docs/brief.md†L19-L66】
 - Временная публичная ссылка (`MediaObject`) живёт `min(job.expires_at, created_at + T_public_link_ttl)`; благодаря `T_job_deadline = max(T_sync_response, T_public_link_ttl)` фактический TTL совпадает с вычисленным `T_public_link_ttl`, после чего ссылка удаляется, а `Job` помечается `failure_reason = 'timeout'`.【F:Docs/brief.md†L19-L137】
-- `Job.expires_at` не меняется после создания записи и служит верхней границей для всех связанных TTL (`payload_path`, публичные ссылки, промежуточные файлы).【F:Docs/brief.md†L56-L69】
-- После `is_finalized = true` задача не возвращается в активное состояние; повторная обработка требует нового ingest.
-- В Job хранится только последний успешный результат (`result_*`); при новом запуске поля перезаписываются. `result_inline_base64`
-  очищается сразу после отправки HTTP 200/504 и не переживает финализацию.
-- `Slot` не может быть активирован без валидных параметров провайдера (минимально необходимые поля определяются провайдером).
-- `provider_job_reference` заполняется при асинхронных сценариях и может быть пустым для синхронных провайдеров.
-- Временные ссылки не продлеваются: по истечении `T_public_link_ttl` запись удаляется, а связанную `Job` помечают `failure_reason = 'timeout'`.
+- После `is_finalized = true` задача не возвращается в активное состояние; повторная обработка требует нового ingest.【F:Docs/brief.md†L90-L137】
+- В Job хранится только последний успешный результат (`result_*`); при новом запуске поля перезаписываются. `result_inline_base64` очищается сразу после отправки HTTP 200/504 и не переживает финализацию.【F:Docs/brief.md†L28-L132】
+- Временные ссылки не продлеваются: по истечении `T_public_link_ttl` запись удаляется, а связанную `Job` помечают `failure_reason = 'timeout'`.【F:Docs/brief.md†L19-L133】
+- `Slot` не может быть активирован без валидных параметров провайдера (минимально необходимые поля определяются провайдером).【F:Docs/brief.md†L1-L101】
+- `provider_job_reference` заполняется при асинхронных сценариях и может быть пустым для синхронных провайдеров.【F:Docs/brief.md†L52-L110】
 
 ## Диаграмма сущностей (Mermaid)
 ```mermaid
