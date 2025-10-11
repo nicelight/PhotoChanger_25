@@ -61,11 +61,6 @@
         "cancelled",
         "errors",
         "ingest_count",
-        "avg_response_ms",
-        "p95_response_ms",
-        "error_rate_percent",
-        "last_cost",
-        "total_cost",
         "last_reset_at"
       ],
       "properties": {
@@ -76,11 +71,6 @@
         "cancelled": { "type": "integer", "minimum": 0 },
         "errors": { "type": "integer", "minimum": 0 },
         "ingest_count": { "type": "integer", "minimum": 0 },
-        "avg_response_ms": { "type": ["integer", "null"], "minimum": 0 },
-        "p95_response_ms": { "type": ["integer", "null"], "minimum": 0 },
-        "error_rate_percent": { "type": "number", "minimum": 0 },
-        "last_cost": { "type": ["number", "null"] },
-        "total_cost": { "type": "number", "minimum": 0 },
         "last_reset_at": {
           "type": ["string", "null"],
           "format": "date-time"

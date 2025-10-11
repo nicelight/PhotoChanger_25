@@ -622,7 +622,7 @@ paths:
           name: sort_by
           schema:
             type: string
-            enum: [period_start, success, errors, ingest_count, avg_response_ms, p95_response_ms, total_cost]
+            enum: [period_start, success, errors, ingest_count]
             default: period_start
         - in: query
           name: sort_order
