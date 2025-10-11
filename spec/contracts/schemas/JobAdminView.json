@@ -2,16 +2,20 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "JobAdminView",
   "type": "object",
+  "description": "Агрегированное представление задачи для административного мониторинга.",
   "required": ["job", "deadline", "metrics"],
   "properties": {
     "job": {
-      "$ref": "./Job.json"
+      "$ref": "./Job.json",
+      "description": "Базовая запись очереди, совпадает с контрактом Job."
     },
     "deadline": {
-      "$ref": "./JobDeadline.json"
+      "$ref": "./JobDeadline.json",
+      "description": "Расчёт DeadlineGuard: единый дедлайн и остаток времени."
     },
     "metrics": {
-      "$ref": "./JobMetrics.json"
+      "$ref": "./JobMetrics.json",
+      "description": "Сводные тайминги ожидания и обработки."
     }
   },
   "additionalProperties": false
