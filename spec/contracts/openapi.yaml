@@ -24,6 +24,8 @@ tags:
     description: Глобальные настройки платформы и управление секретами
   - name: Stats
     description: Метрики и отчёты по слотам
+  - name: Jobs
+    description: Управление очередью задач обработки и их мониторинг
   - name: Ingest
     description: Внешний ingest-эндпоинт для DSLR Remote Pro
   - name: Public
