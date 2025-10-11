@@ -11,7 +11,24 @@
     },
     "slot_id": {
       "type": "string",
-      "description": "Идентификатор слота, к которому привязывается шаблон"
+      "description": "Идентификатор слота, к которому привязывается шаблон",
+      "enum": [
+        "slot-001",
+        "slot-002",
+        "slot-003",
+        "slot-004",
+        "slot-005",
+        "slot-006",
+        "slot-007",
+        "slot-008",
+        "slot-009",
+        "slot-010",
+        "slot-011",
+        "slot-012",
+        "slot-013",
+        "slot-014",
+        "slot-015"
+      ]
     },
     "setting_key": {
       "type": "string",
