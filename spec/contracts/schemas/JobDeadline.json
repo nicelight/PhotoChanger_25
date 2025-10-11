@@ -7,7 +7,7 @@
     "expires_at": {
       "type": "string",
       "format": "date-time",
-      "description": "Момент, когда задача обязана быть финализирована согласно DeadlineGuard."
+      "description": "Момент, когда задача обязана быть финализирована согласно расчёту `created_at + T_job_deadline`."
     },
     "remaining_ms": {
       "type": "integer",

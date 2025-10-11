@@ -11,7 +11,7 @@
     },
     "deadline": {
       "$ref": "./JobDeadline.json",
-      "description": "Расчёт DeadlineGuard: единый дедлайн и остаток времени."
+      "description": "Единый дедлайн и остаток времени, вычисленные на основе `job.expires_at`."
     },
     "metrics": {
       "$ref": "./JobMetrics.json",

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "JobListResponse",
   "type": "object",
-  "description": "Ответ административного списка задач. Содержит агрегированные представления задач и постраничную мета-информацию из DeadlineGuard.",
+  "description": "Ответ административного списка задач. Содержит агрегированные представления задач и постраничную мета-информацию, рассчитанные на основе `job.expires_at`.",
   "required": ["data", "meta"],
   "properties": {
     "data": {

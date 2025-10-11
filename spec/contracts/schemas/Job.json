@@ -91,7 +91,7 @@
     "expires_at": {
       "type": "string",
       "format": "date-time",
-      "description": "Единый дедлайн задачи: фиксируется при создании как created_at + max(T_sync_response, T_media_limit_max) и используется API/воркерами для контроля таймаутов."
+      "description": "Единый дедлайн задачи: фиксируется при создании как created_at + max(T_sync_response, T_public_link_ttl) и используется API/воркерами для контроля таймаутов."
     },
     "created_at": {
       "type": "string",
