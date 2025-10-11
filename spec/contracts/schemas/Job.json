@@ -66,15 +66,14 @@
       "type": ["string", "null"],
       "description": "Путь к исходному ingest-файлу во временном хранилище."
     },
+    "result_file_path": {
+      "type": ["string", "null"],
+      "description": "Относительный путь к итоговому файлу результата в MEDIA_ROOT/results."
+    },
     "result_inline_base64": {
       "type": ["string", "null"],
       "contentEncoding": "base64",
-      "contentMediaType": "image/*",
-      "description": "Inline-данные последнего успешного результата (если не используется файловое хранение)."
-    },
-    "result_file_path": {
-      "type": ["string", "null"],
-      "description": "Путь к итоговому файлу результата, если он сохранён на диск."
+      "description": "Временная base64-строка результата для синхронного ответа ingest; очищается сразу после отправки HTTP 200 или таймаута."
     },
     "result_mime_type": {
       "type": ["string", "null"],

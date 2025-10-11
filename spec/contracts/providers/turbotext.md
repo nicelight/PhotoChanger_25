@@ -28,7 +28,7 @@
 - Назначение: deepfake/face swap с использованием фотографий субъекта и лица; выполняется через очередь Turbotext.【F:Docs/brief.md†L791-L813】【F:Docs/brief.md†L300-L350】
 - Endpoint Turbotext: `/api_ai/deepfake_photo` с полями `url`, `url_image_target`, `face_restore` и поддержкой webhook.【F:Docs/brief.md†L805-L813】
 - Обязательные настройки: `subject_media_id`, `face_media_id`; опционально `face_restore`, `output`.【F:Docs/brief.md†L795-L845】
-- Маппинг: `subject_media_id` и `face_media_id` конвертируются в публичные ссылки из `template_media`; булевый `face_restore` передаётся напрямую. Финальный `uploaded_image` скачивается и сохраняется в полях `Job.result_*` (файл или inline-данные).【F:Docs/brief.md†L805-L810】【F:Docs/brief.md†L333-L350】
+- Маппинг: `subject_media_id` и `face_media_id` конвертируются в публичные ссылки из `template_media`; булевый `face_restore` передаётся напрямую. Финальный `uploaded_image` скачивается и сохраняется в полях `Job.result_*` как файл (`result_file_path` + метаданные).【F:Docs/brief.md†L805-L810】【F:Docs/brief.md†L333-L350】
 
 ## Лимиты и квоты провайдера
 - Turbotext потребляет публичные ссылки с TTL `T_public_link_ttl = clamp(T_sync_response, 45, 60)` и форматами JPEG/PNG/WEBP; воркер не продлевает ссылки автоматически, повторная регистрация выполняется заново по необходимости.【F:Docs/brief.md†L108-L137】

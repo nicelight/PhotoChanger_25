@@ -141,6 +141,10 @@ const prompt = {
 
 const result = await model.generateContent(prompt);
 const imageBase64 = result.response.candidates[0].content.parts[0].inline_data.data;
+// Платформа PhotoChanger декодирует base64 и сохраняет файл на диск под MEDIA_ROOT/results,
+// временно фиксируя исходную строку в Job.result_inline_base64, чтобы API могло отдать её DSLR,
+// и обновляя поля Job.result_* (result_file_path, MIME, размер, checksum). После отправки HTTP 200
+// поле result_inline_base64 очищается.
 ```
 
 ### Python (`google-generativeai`)
@@ -166,6 +170,9 @@ response = model.generate_content([
 
 image_base64 = response.candidates[0].content.parts[0].inline_data["data"]
 image_bytes = base64.b64decode(image_base64)
+# Платформа PhotoChanger записывает image_bytes в файл внутри MEDIA_ROOT/results,
+# проставляет Job.result_inline_base64 на время синхронного ответа ingest и
+# обновляет метаданные Job.result_* вместо долгосрочного хранения base64 в очереди.
 ```
 
 ### REST (inline изображение)
@@ -195,6 +202,9 @@ curl \
   ]
 }
 JSON
+# Ответ Gemini вернёт inline_data с base64: сервис сохраняет результат как файл,
+# держит строку в Job.result_inline_base64 до завершения ответа ingest и
+# фиксирует путь в Job.result_file_path, очищая base64 сразу после финализации.
 ```
 
 ## Ссылки

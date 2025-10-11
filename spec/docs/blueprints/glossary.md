@@ -5,7 +5,7 @@
 | Slot | Конфигурация обработки: выбранный провайдер, операция, параметры, шаблонные медиа и ingest-ссылка. | `/Docs/brief.md`, раздел "Процесс настройки слота" |
 | Ingest API | HTTP интерфейс `POST /ingest/{slotId}` для получения фото от DSLR Remote Pro и выдачи результата/504. | `/Docs/brief.md`, раздел "Механизм работы платформы" |
 | Job | Задача обработки, создаваемая при ingest; имеет промежуточные статусы `pending`/`processing`, а финализация фиксируется полями `is_finalized` и `failure_reason`. | `/Docs/brief.md`, описание очереди и статусов |
-| Job.result_* | Набор полей внутри Job (`result_inline_base64`, `result_file_path`, `result_mime_type`, `result_size_bytes`, `result_checksum`), хранящий последний успешный ответ без отдельной таблицы. | `/Docs/brief.md`, раздел "Цель платформы" |
+| Job.result_* | Набор полей внутри Job (`result_file_path`, `result_inline_base64`, `result_mime_type`, `result_size_bytes`, `result_checksum`), хранящий последний успешный ответ без отдельной таблицы. Base64-строка присутствует только до завершения синхронного ответа. | `/Docs/brief.md`, раздел "Цель платформы" |
 | ProviderAdapter | Компонент, инкапсулирующий вызовы внешнего AI-провайдера (Gemini, Turbotext) с учётом лимитов и форматов. | `/Docs/brief.md`, разделы о провайдерах |
 | T_sync_response | Максимальное время ожидания синхронного ответа ingest API, настраивается администратором в диапазоне 45–60 с (по умолчанию 48 с); по истечении возвращается 504 и задача отменяется. | `/Docs/brief.md`, "Механизм работы платформы" |
 | T_ingest_ttl | TTL исходной фотографии во временном хранилище: `min(T_sync_response, T_public_link_ttl)` и всегда ≤ `T_sync_response`. | `/Docs/brief.md`, "Цель платформы" |
