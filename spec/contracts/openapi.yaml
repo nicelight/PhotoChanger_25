@@ -275,6 +275,109 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '500':
           $ref: '#/components/responses/InternalError'
+
+  /api/jobs:
+    get:
+      tags: [Jobs]
+      summary: Получить список задач ingest-очереди
+      description: >-
+        Возвращает административный список задач с агрегированными метриками ожидания и дедлайнами,
+        рассчитываемыми через DeadlineGuard (`job.expires_at`). Требует право `stats:read`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, processing]
+          description: Фильтр по текущему промежуточному статусу задачи.
+        - in: query
+          name: is_finalized
+          schema:
+            type: boolean
+          description: Ограничить выборку финализированными (`true`) или активными (`false`) задачами.
+        - in: query
+          name: failure_reason
+          schema:
+            type: string
+            enum: [timeout, provider_error, cancelled]
+          description: Показать только задачи с указанной причиной неуспеха.
+        - in: query
+          name: slot_id
+          schema:
+            $ref: '#/components/schemas/SlotId'
+          description: Фильтр по идентификатору слота (`slot-001` … `slot-015`).
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Номер страницы постраничного просмотра.
+        - in: query
+          name: page_size
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Количество записей на страницу.
+        - in: query
+          name: sort_by
+          schema:
+            type: string
+            enum: [created_at, expires_at]
+            default: expires_at
+          description: Поле сортировки списка задач.
+        - in: query
+          name: sort_order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+          description: Направление сортировки.
+      responses:
+        '200':
+          description: Список задач с дедлайнами и временными метриками
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/JobListResponse.json
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/jobs/{job_id}:
+    get:
+      tags: [Jobs]
+      summary: Получить подробную информацию о задаче
+      description: >-
+        Возвращает полную запись задачи, её дедлайн `expires_at` и рассчитанные DeadlineGuard метрики
+        оставшегося времени. Требует право `stats:read`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: Подробная информация о задаче
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/JobDetailResponse.json
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
   /api/media/register:
     post:
       tags: [Media]
@@ -362,7 +465,7 @@ paths:
           required: true
           description: Слот, из которого удаляется привязка
           schema:
-            type: string
+            $ref: '#/components/schemas/SlotId'
         - name: setting_key
           in: query
           required: true
@@ -486,13 +589,13 @@ paths:
           name: from
           schema:
             type: string
-            format: date
+            format: date-time
           description: Начало диапазона (UTC). Максимум 90 дней.
         - in: query
           name: to
           schema:
             type: string
-            format: date
+            format: date-time
           description: Конец диапазона (UTC)
         - in: query
           name: group_by
@@ -533,7 +636,7 @@ paths:
         - in: query
           name: slot_id
           schema:
-            type: string
+            $ref: '#/components/schemas/SlotId'
           description: Фильтр по конкретному слоту
       responses:
         '200':
@@ -564,8 +667,8 @@ paths:
           name: slotId
           required: true
           schema:
-            type: string
-            description: Статический идентификатор ingest-слота (`slot-001` … `slot-015`).
+            $ref: '#/components/schemas/SlotId'
+          description: Статический идентификатор ingest-слота (`slot-001` … `slot-015`).
       requestBody:
         required: true
         content:
@@ -618,13 +721,33 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  schemas:
+    SlotId:
+      type: string
+      enum:
+        - slot-001
+        - slot-002
+        - slot-003
+        - slot-004
+        - slot-005
+        - slot-006
+        - slot-007
+        - slot-008
+        - slot-009
+        - slot-010
+        - slot-011
+        - slot-012
+        - slot-013
+        - slot-014
+        - slot-015
+      description: Допустимый статический идентификатор ingest-слота.
   parameters:
     SlotId:
       name: slot_id
       in: path
       required: true
       schema:
-        type: string
+        $ref: '#/components/schemas/SlotId'
       description: Идентификатор статического слота (`slot-001` … `slot-015`)
     SlotVersionIfMatch:
       name: If-Match

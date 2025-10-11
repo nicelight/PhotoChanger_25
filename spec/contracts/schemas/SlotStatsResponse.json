@@ -6,7 +6,24 @@
   "properties": {
     "slot_id": {
       "type": "string",
-      "description": "Идентификатор слота, для которого рассчитана статистика"
+      "description": "Идентификатор слота, для которого рассчитана статистика",
+      "enum": [
+        "slot-001",
+        "slot-002",
+        "slot-003",
+        "slot-004",
+        "slot-005",
+        "slot-006",
+        "slot-007",
+        "slot-008",
+        "slot-009",
+        "slot-010",
+        "slot-011",
+        "slot-012",
+        "slot-013",
+        "slot-014",
+        "slot-015"
+      ]
     },
     "range": {
       "type": "object",

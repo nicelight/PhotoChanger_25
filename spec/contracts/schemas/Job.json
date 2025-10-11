@@ -18,8 +18,24 @@
     },
     "slot_id": {
       "type": "string",
-      "pattern": "^slot-[0-9]{3}$",
-      "description": "Идентификатор слота, из которого была создана задача."
+      "description": "Идентификатор слота, из которого была создана задача.",
+      "enum": [
+        "slot-001",
+        "slot-002",
+        "slot-003",
+        "slot-004",
+        "slot-005",
+        "slot-006",
+        "slot-007",
+        "slot-008",
+        "slot-009",
+        "slot-010",
+        "slot-011",
+        "slot-012",
+        "slot-013",
+        "slot-014",
+        "slot-015"
+      ]
     },
     "status": {
       "type": "string",
@@ -76,7 +92,7 @@
     "expires_at": {
       "type": "string",
       "format": "date-time",
-      "description": "Единый дедлайн задачи: фиксируется при создании и используется API/воркерами для контроля таймаутов."
+      "description": "Единый дедлайн задачи: фиксируется при создании как created_at + max(T_sync_response, T_media_limit_max) и используется API/воркерами для контроля таймаутов."
     },
     "created_at": {
       "type": "string",
