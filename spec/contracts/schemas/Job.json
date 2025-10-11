@@ -60,7 +60,7 @@
     },
     "provider_job_reference": {
       "type": ["string", "null"],
-      "description": "Опциональный идентификатор задачи у внешнего провайдера (async/webhook)."
+      "description": "Опциональный идентификатор очереди внешнего провайдера (например, `queueid` Turbotext для polling)."
     },
     "payload_path": {
       "type": ["string", "null"],

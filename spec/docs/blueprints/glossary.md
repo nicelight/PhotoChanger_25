@@ -15,4 +15,4 @@
 | Job queue | Персистентная очередь задач на PostgreSQL (`job` + `SELECT … FOR UPDATE SKIP LOCKED`), обеспечивающая back-pressure и дедлайны. | `/Docs/brief.md`, "Механизм работы платформы" |
 | timeout failure_reason | Значение `failure_reason = 'timeout'` у Job при превышении `T_sync_response`; приводит к отмене и очистке временных данных. | `/Docs/brief.md`, "Механизм работы платформы" |
 | media public link | Публичная ссылка на временный файл, предназначена для скачивания провайдерами (например, Turbotext). | `/Docs/brief.md`, "Временное публичное медиа-хранилище" |
-| webhook | Обратный вызов от Turbotext при асинхронной обработке, содержит `asyncid`/`queueid`. | `/Docs/brief.md`, раздел "Turbotext: очередь, polling и webhook" |
+| queueid | Идентификатор задачи в очереди Turbotext, сохраняется в `Job.provider_job_reference` и используется воркером для polling `do=get_result` без webhook. | `/Docs/brief.md`, раздел "Turbotext"【F:Docs/brief.md†L37-L40】 |

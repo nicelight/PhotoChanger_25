@@ -5,7 +5,7 @@
 - Временные медиа (`media_object`) живут фиксированный TTL `T_public_link_ttl = clamp(T_sync_response, 45, 60)` и не продлеваются автоматически воркерами. (`/Docs/brief.md`)
 - Обработанные результаты хранятся в составе Job как последний ответ и автоматически очищаются по TTL 72 часов. (`/Docs/brief.md`)
 - Gemini Files API: размеры файлов ≤ 2 ГБ, типы MIME ограничены (JPEG, PNG, WEBP, HEIC/HEIF); квоты 500 req/min и 2 000 req/day. (`/Docs/brief.md`)
-- Turbotext: требует публичные ссылки и поддерживает режимы polling/webhook, идентификаторы `queueid`/`asyncid` сохраняются в `Job.external_ref`. (`/Docs/brief.md`)
+- Turbotext: требует публичные ссылки и использует только polling; идентификатор `queueid` сохраняется в `Job.external_ref` для фонового опроса. (`/Docs/brief.md`)
 - Очередь задач реализована исключительно на PostgreSQL (`job` + `SELECT … FOR UPDATE SKIP LOCKED`), поэтому требуется поддерживать индексы и мониторинг блокировок. (`/Docs/brief.md`)
 
 ## Организационные ограничения
