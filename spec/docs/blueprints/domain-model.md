@@ -15,7 +15,7 @@
 - `id` (`UUID`).
 - `slot_id` — связь с `Slot`.
 - `status` — рабочие состояния `pending` → `processing`; финализация описывается отдельными полями `is_finalized` и `failure_reason`.
-- `expires_at` — фиксированный дедлайн задачи; вычисляется при создании записи как `created_at + T_job_deadline`, где `T_job_deadline = max(T_sync_response, T_media_limit_max)`. Это гарантирует, что даже при использовании публичных ссылок с TTL 60 секунд дедлайн не станет короче лимита хранилища и останется единым для API, воркеров и очистки.【F:Docs/brief.md†L33-L69】
+- `expires_at` — фиксированный дедлайн задачи; вычисляется при создании записи как `created_at + T_job_deadline`, где `T_job_deadline = max(T_sync_response, T_media_limit_max)`. Это гарантирует, что даже при использовании публичных ссылок с TTL `T_public_link_ttl = clamp(T_sync_response, 45, 60)` дедлайн не станет короче лимита хранилища и останется единым для API, воркеров и очистки.【F:Docs/brief.md†L33-L132】
 - `result_inline_base64` / `result_file_path` — данные последнего успешного изображения (inline или путь на диске).
 - `result_mime_type`, `result_size_bytes`, `result_checksum` — метаданные результата.
 - `provider_job_reference` — единое опциональное поле для async/webhook идентификаторов провайдера.
@@ -26,7 +26,7 @@
 - `id` (`UUID`).
 - `path` — расположение файла в `MEDIA_ROOT`.
 - `mime`, `size_bytes`.
-- `expires_at` — фиксированный TTL 60 секунд (`MEDIA_PUBLIC_LINK_TTL_SEC`).
+- `expires_at` — фиксированный TTL `T_public_link_ttl = clamp(T_sync_response, 45, 60)` для публичных ссылок (`MEDIA_PUBLIC_LINK_TTL_SEC`).
 - `job_id` — связь для автоматической очистки.
 
 ### TemplateMedia (постоянные шаблоны)
@@ -48,14 +48,14 @@
 
 ## Инварианты
 - Исходный ingest-пейлоад (`Job.payload_path`) очищается по формуле `min(job.expires_at, created_at + T_ingest_ttl)`; поскольку `T_ingest_ttl ≤ T_sync_response`, файл не живёт дольше синхронного окна ожидания и удаляется сразу после финализации задачи.【F:Docs/brief.md†L19-L44】【F:Docs/brief.md†L60-L66】
-- Для каждого временного артефакта применяется единая формула TTL: `artifact_expires_at = min(job.expires_at, created_at + T_media_limit)` (где `T_media_limit` задаётся конкретным механизмом хранения: `T_ingest_ttl`, `MEDIA_PUBLIC_LINK_TTL_SEC` и т.д.).【F:Docs/brief.md†L60-L66】
-- Временная публичная ссылка (`MediaObject`) живёт `min(job.expires_at, created_at + MEDIA_PUBLIC_LINK_TTL_SEC)`; благодаря `T_job_deadline = max(T_sync_response, MEDIA_PUBLIC_LINK_TTL_SEC)` фактический TTL составляет 60 секунд даже при `T_sync_response < 60` секунд, после чего ссылка удаляется, а `Job` помечается `failure_reason = 'timeout'`.【F:Docs/brief.md†L19-L44】
+- Для каждого временного артефакта применяется единая формула TTL: `artifact_expires_at = min(job.expires_at, created_at + T_media_limit)` (где `T_media_limit` задаётся конкретным механизмом хранения: `T_ingest_ttl`, `T_public_link_ttl` и т.д.).【F:Docs/brief.md†L60-L137】
+- Временная публичная ссылка (`MediaObject`) живёт `min(job.expires_at, created_at + T_public_link_ttl)`; благодаря `T_job_deadline = max(T_sync_response, T_public_link_ttl)` фактический TTL совпадает с вычисленным `T_public_link_ttl`, после чего ссылка удаляется, а `Job` помечается `failure_reason = 'timeout'`.【F:Docs/brief.md†L19-L137】
 - `Job.expires_at` не меняется после создания записи и служит верхней границей для всех связанных TTL (`payload_path`, публичные ссылки, промежуточные файлы).【F:Docs/brief.md†L56-L69】
 - После `is_finalized = true` задача не возвращается в активное состояние; повторная обработка требует нового ingest.
 - В Job хранится только последний успешный результат (`result_*`); при новом запуске поля перезаписываются.
 - `Slot` не может быть активирован без валидных параметров провайдера (минимально необходимые поля определяются провайдером).
 - `provider_job_reference` заполняется при асинхронных сценариях и может быть пустым для синхронных провайдеров.
-- Временные ссылки не продлеваются: по истечении 60 секунд запись удаляется, а связанную `Job` помечают `failure_reason = 'timeout'`.
+- Временные ссылки не продлеваются: по истечении `T_public_link_ttl` запись удаляется, а связанную `Job` помечают `failure_reason = 'timeout'`.
 
 ## Диаграмма сущностей (Mermaid)
 ```mermaid

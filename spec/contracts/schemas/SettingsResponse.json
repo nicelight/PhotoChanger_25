@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "SettingsResponse",
   "type": "object",
-  "required": ["dslr_password", "provider_keys", "media_cache"],
+  "required": ["dslr_password", "provider_keys", "ingest", "media_cache"],
   "properties": {
     "dslr_password": {
       "$ref": "./SettingsDslrPasswordStatus.json"
@@ -13,6 +13,9 @@
       "additionalProperties": {
         "$ref": "./SettingsProviderKeyStatus.json"
       }
+    },
+    "ingest": {
+      "$ref": "./SettingsIngestConfig.json"
     },
     "media_cache": {
       "$ref": "./MediaCacheSettings.json"

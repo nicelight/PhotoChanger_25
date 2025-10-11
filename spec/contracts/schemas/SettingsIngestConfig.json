@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SettingsIngestConfig",
+  "type": "object",
+  "required": [
+    "sync_response_timeout_sec",
+    "ingest_ttl_sec"
+  ],
+  "properties": {
+    "sync_response_timeout_sec": {
+      "type": "integer",
+      "minimum": 45,
+      "maximum": 60,
+      "description": "Таймаут синхронного ожидания ingest в секундах. Настраивается администратором и распространяется на все связанные TTL"
+    },
+    "ingest_ttl_sec": {
+      "type": "integer",
+      "minimum": 45,
+      "maximum": 60,
+      "readOnly": true,
+      "description": "Вычисленный TTL исходных payload: min(T_sync_response, media.public_link_ttl_sec)"
+    }
+  },
+  "additionalProperties": false
+}

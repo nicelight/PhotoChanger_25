@@ -22,6 +22,20 @@
       "additionalProperties": {
         "$ref": "./SettingsProviderKeyUpdate.json"
       }
+    },
+    "ingest": {
+      "type": "object",
+      "description": "Настройка таймаута синхронного ожидания ingest и связанных TTL",
+      "required": ["sync_response_timeout_sec"],
+      "properties": {
+        "sync_response_timeout_sec": {
+          "type": "integer",
+          "minimum": 45,
+          "maximum": 60,
+          "description": "Новое значение `T_sync_response` в секундах"
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false
