@@ -1063,9 +1063,6 @@ JWT, выдаваемый платформой, содержит claim `permissi
   * `cancelled` — количество задач с `failure_reason = 'cancelled'` (ручная отмена, сброс очереди).
   * `errors` — суммарное количество неуспешных задач (`timeouts + provider_errors + cancelled`).
   * `ingest_count` — общее число ingest-запросов (`success + errors`).
-  * `avg_response_ms` и `p95_response_ms` — среднее и 95-й перцентиль времени ответа по успешным задачам.
-  * `error_rate_percent` — доля ошибок, выраженная в процентах, округление до двух знаков после запятой.
-  * `last_cost` — стоимость последней успешной задачи (может быть `null`), `total_cost` — суммарные расходы за период.
   * `last_reset_at` — момент последнего сброса статистики (ISO8601, `null`, если сбросов не было).
 * **Успешный ответ (`200 OK`):**
   ```json
@@ -1080,11 +1077,6 @@ JWT, выдаваемый платформой, содержит claim `permissi
       "cancelled": 1,
       "errors": 8,
       "ingest_count": 50,
-      "avg_response_ms": 2150,
-      "p95_response_ms": 3420,
-      "error_rate_percent": 16.0,
-      "last_cost": 0.48,
-      "total_cost": 18.76,
       "last_reset_at": "2024-03-20T12:00:00Z"
     },
     "metrics": [
@@ -1096,16 +1088,13 @@ JWT, выдаваемый платформой, содержит claim `permissi
         "provider_errors": 0,
         "cancelled": 0,
         "errors": 1,
-        "ingest_count": 13,
-        "avg_response_ms": 2100,
-        "p95_response_ms": 3300,
-        "total_cost": 4.35
+        "ingest_count": 13
       }
     ]
   }
   ```
-  * `summary` агрегирует показатели за период между `last_reset_at` (или `from`, если передан диапазон) и текущим моментом. `errors = timeouts + provider_errors + cancelled`, `ingest_count = success + errors`, `error_rate_percent` рассчитывается как `(errors / ingest_count) * 100` с округлением до двух знаков после запятой. `last_cost` указывает стоимость последнего успешного запуска (может быть `null`).
-  * Каждый элемент `metrics` описывает выбранный интервал (`group_by`) и повторяет те же правила расчёта; `errors = timeouts + provider_errors + cancelled`, `total_cost` — сумма расходов за период, `p95_response_ms` считается только по успешным задачам.
+  * `summary` агрегирует показатели за период между `last_reset_at` (или `from`, если передан диапазон) и текущим моментом. `errors = timeouts + provider_errors + cancelled`, `ingest_count = success + errors`.
+  * Каждый элемент `metrics` описывает выбранный интервал (`group_by`) и повторяет те же правила расчёта; `errors = timeouts + provider_errors + cancelled`.
 * **Ошибки:** `400` (некорректный диапазон), `404` (слот не найден), стандартные ошибки авторизации.
 
 **`GET /api/stats/global`**
@@ -1115,7 +1104,7 @@ JWT, выдаваемый платформой, содержит claim `permissi
 * **Параметры:**
   * Query: `from`/`to` (ISO8601, максимум 90 дней), `group_by` (`day`, `week`, `month`, дефолт `week`).
   * Пагинация списка записей: `page` (>=1, дефолт 1), `page_size` (1–50, дефолт 10).
-  * Сортировка: `sort_by` (`period_start`, `success`, `errors`, `ingest_count`, `avg_response_ms`, `p95_response_ms`, `total_cost`) и `sort_order` (`asc`/`desc`, дефолт `desc`).
+* Сортировка: `sort_by` (`period_start`, `success`, `errors`, `ingest_count`) и `sort_order` (`asc`/`desc`, дефолт `desc`).
   * Фильтры: `provider_id`, `slot_id` (опционально ограничивают агрегаты).
 * **Успешный ответ (`200 OK`):**
   ```json
@@ -1126,11 +1115,7 @@ JWT, выдаваемый платформой, содержит claim `permissi
       "provider_errors": 20,
       "cancelled": 8,
       "errors": 60,
-      "ingest_count": 480,
-      "avg_response_ms": 2050,
-      "p95_response_ms": 3350,
-      "error_rate_percent": 12.5,
-      "total_cost": 128.40
+      "ingest_count": 480
     },
     "data": [
       {
@@ -1141,10 +1126,7 @@ JWT, выдаваемый платформой, содержит claim `permissi
         "provider_errors": 2,
         "cancelled": 0,
         "errors": 6,
-        "ingest_count": 90,
-        "avg_response_ms": 1980,
-        "p95_response_ms": 3180,
-        "total_cost": 31.8
+        "ingest_count": 90
       }
     ],
     "meta": {
@@ -1154,7 +1136,7 @@ JWT, выдаваемый платформой, содержит claim `permissi
     }
   }
   ```
-  `summary` агрегирует показатели за весь диапазон (`from`/`to` или дефолтные 90 дней). `total_runs` — сумма успешных обработок, `errors = timeouts + provider_errors + cancelled`, `ingest_count = total_runs + errors`, `error_rate_percent` рассчитывается так же, как в `/api/stats/{slot_id}`. Значения `total_cost` и `p95_response_ms` считаются по всем слотам, учитывая фильтры.
+  `summary` агрегирует показатели за весь диапазон (`from`/`to` или дефолтные 90 дней). `total_runs` — сумма успешных обработок, `errors = timeouts + provider_errors + cancelled`, `ingest_count = total_runs + errors`.
 * **Ошибки:** `400` (некорректные параметры фильтров/пагинации), стандартные ошибки авторизации.
 
 ### Административный мониторинг очереди
@@ -1668,14 +1650,14 @@ When using a single image with text, place the text prompt after the image part 
 * **Имя слота** — `summary.title` из ответа (если не передан, используется `slot_id`).
 * **AI обработок (с последнего сброса)** — `summary.success` (количество успешных задач).
 * **Всего ingest-запросов** — `summary.ingest_count` (включает успешные и ошибочные вызовы).
-* **p95 времени ответа** — `summary.p95_response_ms` (миллисекунды по успешным задачам за выбранный диапазон).
-* **Процент ошибок** — `summary.error_rate_percent` (0–100, учитывает `ingest_count`).
-* **Цена последней AI обработки** — `summary.last_cost` (в валюте слота; `null`, если успешных запусков не было).
-* **Суммарная стоимость** — `summary.total_cost` (накопительно с момента `summary.last_reset_at`).
+* **Ошибки по таймаутам** — `summary.timeouts`.
+* **Ошибки провайдера** — `summary.provider_errors`.
+* **Ручные отмены** — `summary.cancelled`.
+* **Всего ошибок** — `summary.errors`.
 * **Дата последнего сброса** — `summary.last_reset_at` (ISO8601).
 * **Кнопка «Сброс статистики»** — вызывает `POST /api/slots/{slot_id}/reset_stats`.
 
-В правом верхнем углу страницы дополнительно выводится количество глобальных обработок и суммарная стоимость за выбранный период — значения `summary.total_runs` и `summary.total_cost` из ответа [`GET /api/stats/global`](#get-apistatsglobal). Визуально рамки таблицы рисовать не нужно.
+В правом верхнем углу страницы дополнительно выводится количество глобальных обработок за выбранный период — значение `summary.total_runs` из ответа [`GET /api/stats/global`](#get-apistatsglobal). Визуально рамки таблицы рисовать не нужно.
 
 ### Страница настроек
 Содержит:
