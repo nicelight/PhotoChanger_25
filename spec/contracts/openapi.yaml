@@ -20,8 +20,6 @@ tags:
     description: Управление статическими ingest-слотами
   - name: Media
     description: Временное и шаблонное медиа-хранилище
-  - name: Jobs
-    description: Административное управление задачами обработки
   - name: Settings
     description: Глобальные настройки платформы и управление секретами
   - name: Stats
@@ -277,6 +275,7 @@ paths:
           $ref: '#/components/responses/UnprocessableEntity'
         '500':
           $ref: '#/components/responses/InternalError'
+
   /api/jobs:
     get:
       tags: [Jobs]
@@ -759,14 +758,6 @@ components:
       description: >-
         Текущая версия слота в формате ETag. Обязателен, если метка версии не
         передана в поле `updated_at` тела запроса.
-    JobId:
-      name: job_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-      description: Идентификатор задачи обработки (UUID записи Job).
   responses:
     BadRequest:
       description: Некорректный запрос
