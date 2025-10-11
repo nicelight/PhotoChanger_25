@@ -1,6 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "JobDetailResponse",
+  "description": "Подробное агрегированное представление задачи: те же блоки job/deadline/metrics, что и в списке, но для одного идентификатора.",
   "allOf": [
     { "$ref": "./JobAdminView.json" }
   ]

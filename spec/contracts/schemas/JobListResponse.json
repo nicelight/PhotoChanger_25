@@ -2,16 +2,20 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "JobListResponse",
   "type": "object",
+  "description": "Ответ административного списка задач. Содержит агрегированные представления задач и постраничную мета-информацию из DeadlineGuard.",
   "required": ["data", "meta"],
   "properties": {
     "data": {
       "type": "array",
+      "description": "Список агрегированных представлений задач очереди.",
       "items": {
         "$ref": "./JobAdminView.json"
-      }
+      },
+      "minItems": 0
     },
     "meta": {
       "type": "object",
+      "description": "Параметры пагинации, совпадающие с контрактом административного UI.",
       "required": ["page", "page_size", "total"],
       "properties": {
         "page": {
