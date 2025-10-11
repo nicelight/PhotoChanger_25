@@ -11,9 +11,10 @@
     },
     "public_link_ttl_sec": {
       "type": "integer",
-      "const": 60,
+      "minimum": 45,
+      "maximum": 60,
       "readOnly": true,
-      "description": "Фиксированный срок жизни временных публичных ссылок в секундах"
+      "description": "Срок жизни временных публичных ссылок в секундах (clamp(T_sync_response, 45, 60))"
     }
   },
   "additionalProperties": false

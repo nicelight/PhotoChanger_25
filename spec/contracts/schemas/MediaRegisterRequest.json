@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "MediaRegisterRequest",
-  "description": "Загрузка временного файла. TTL ссылки фиксирован 60 секунд и не передаётся в запросе",
+  "description": "Загрузка временного файла. TTL ссылки вычисляется как clamp(T_sync_response, 45, 60) секунд и не передаётся в запросе",
   "type": "object",
   "required": ["file"],
   "properties": {
