@@ -2,7 +2,14 @@ name: Codex Auto-merge (by label, live)
 
 on:
   pull_request:
-    types: [labeled, opened, reopened, synchronize, ready_for_review, edited]
+    types:
+      - labeled
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+      - edited
+      - unlabeled
 
 permissions:
   contents: write
@@ -11,8 +18,11 @@ permissions:
 jobs:
   enable_auto_merge:
     runs-on: ubuntu-latest
+
+    # метка, по которой разрешаем авто-мердж
     env:
-      TARGET_LABEL: "label:codex:automerge"   # ← твоя метка с двоеточиями
+      TARGET_LABEL: "label:codex:automerge"
+
     steps:
       - name: Resolve PR/REPO
         id: ctx
@@ -24,29 +34,78 @@ jobs:
         id: check
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR: ${{ steps.ctx.outputs.PR }}
+          PR:  ${{ steps.ctx.outputs.PR }}
           REPO: ${{ steps.ctx.outputs.REPO }}
           TARGET_LABEL: ${{ env.TARGET_LABEL }}
         run: |
           set -euo pipefail
-          # Получаем актуальные метки PR и проверяем точное совпадение имени
+          echo "Target label: $TARGET_LABEL"
           gh pr view "$PR" --repo "$REPO" --json labels \
+            | tee labels.json \
             | jq -e --arg L "$TARGET_LABEL" '
                 [.labels[].name] | index($L) != null
               ' >/dev/null \
             && echo "has_label=true"  >> "$GITHUB_OUTPUT" \
             || echo  "has_label=false" >> "$GITHUB_OUTPUT"
+          echo "Labels now:"
+          cat labels.json | jq '.labels[].name'
 
-      - name: Checkout repository
-        if: steps.check.outputs.has_label == 'true'
-        uses: actions/checkout@v4
+      - name: Exit if label is missing
+        if: steps.check.outputs.has_label != 'true'
+        run: |
+          echo "No '${{ env.TARGET_LABEL }}' label on PR; skipping auto-merge."
+          exit 0
 
-      - name: Enable auto-merge
-        if: steps.check.outputs.has_label == 'true'
+      - name: Decide merge method (repo settings) & show PR state
+        id: decide
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR: ${{ steps.ctx.outputs.PR }}
           REPO: ${{ steps.ctx.outputs.REPO }}
+          PR:   ${{ steps.ctx.outputs.PR }}
         run: |
-          gh pr merge "$PR" --repo "$REPO" --merge --auto
-          echo "::notice::Auto-merge enabled for PR #$PR"
+          set -euo pipefail
+
+          # 1) Определяем разрешённые методы мержа в репозитории
+          SETTINGS=$(gh api repos/$REPO)
+          ALLOW_MERGE=$(echo "$SETTINGS"  | jq -r '.allow_merge_commit')
+          ALLOW_SQUASH=$(echo "$SETTINGS" | jq -r '.allow_squash_merge')
+          ALLOW_REBASE=$(echo "$SETTINGS" | jq -r '.allow_rebase_merge')
+
+          if [ "$ALLOW_SQUASH" = "true" ]; then METHOD="--squash"
+          elif [ "$ALLOW_MERGE" = "true" ]; then METHOD="--merge"
+          elif [ "$ALLOW_REBASE" = "true" ]; then METHOD="--rebase"
+          else
+            echo "::error::No merge methods are enabled in repo settings"
+            exit 1
+          fi
+          echo "method=$METHOD" >> "$GITHUB_OUTPUT"
+
+          # 2) Диагностика состояния PR
+          gh pr view "$PR" --repo "$REPO" --json \
+            isDraft,mergeable,mergeStateStatus,reviewDecision,autoMergeRequest,headRefOid,baseRefName,requiredReviewers,statusCheckRollup \
+            | tee pr_state.json | jq .
+
+          echo '--- summary ---'
+          jq -r '
+            "isDraft=\(.isDraft)  mergeable=\(.mergeable)  mergeStateStatus=\(.mergeStateStatus)  reviewDecision=\(.reviewDecision)  autoMergeRequest=\(.autoMergeRequest != null)"
+          ' pr_state.json
+
+      - name: Enable auto-merge (dynamic method) or merge immediately
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ steps.ctx.outputs.REPO }}
+          PR:   ${{ steps.ctx.outputs.PR }}
+          METHOD: ${{ steps.decide.outputs.method }}
+        run: |
+          set -euo pipefail
+          STATE=$(gh pr view "$PR" --repo "$REPO" --json mergeStateStatus -q .mergeStateStatus)
+          echo "mergeStateStatus=$STATE"
+          if [ "$STATE" = "CLEAN" ]; then
+            echo "State is CLEAN → merging now $METHOD"
+            # пробуем с --admin (если у токена есть право), затем обычный
+            gh pr merge "$PR" --repo "$REPO" $METHOD --admin || gh pr merge "$PR" --repo "$REPO" $METHOD
+          else
+            echo "State is $STATE → enabling auto-merge $METHOD"
+            gh pr merge "$PR" --repo "$REPO" $METHOD --auto
+          fi
+          echo "::notice::Done (method: $METHOD)"
