@@ -52,6 +52,14 @@
       "type": "string",
       "format": "date-time",
       "description": "Момент последнего обновления настроек"
+    },
+    "recent_results": {
+      "type": "array",
+      "description": "Последние успешные результаты этого слота (не более 10 элементов, сортировка по `completed_at` убыванию).",
+      "items": {
+        "$ref": "./SlotResultPreview.json"
+      },
+      "default": []
     }
   },
   "additionalProperties": false

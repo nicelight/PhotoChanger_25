@@ -83,7 +83,7 @@
     .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:var(--gap) }
 
     .btns{ display:flex; gap:12px; justify-content:flex-end; flex-wrap:wrap }
-    .btn{ border:1px solid color-mix(in oklab, white 75%, #0f172a 25% / 35%); background:transparent; border-radius:12px; padding:10px 16px; font-weight:700; cursor:pointer }
+    .btn{ border:1px solid color-mix(in oklab, white 75%, #0f172a 25% / 35%); background:transparent; border-radius:12px; padding:10px 16px; font-weight:700; cursor:pointer; color:inherit; text-decoration:none; display:inline-flex; align-items:center; gap:8px }
     .btn:hover{ background:rgba(255,255,255,.35) }
 
     .inline{ display:flex; gap:10px; align-items:center }
@@ -92,6 +92,23 @@
     /* Кнопки внутри выпадаемых секций */
     .uploads-actions{ display:flex; justify-content:flex-start; }
     .uploads-actions .btn{ margin-top:8px; }
+
+    /* Карточка результатов */
+    .slot-results{ display:grid; gap:var(--gap); }
+    .slot-results__header{ display:flex; justify-content:space-between; gap:var(--gap); flex-wrap:wrap; align-items:flex-start }
+    .slot-results__grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:var(--gap); transition:opacity .2s ease; }
+    .slot-results__grid.-loading{ opacity:.6; }
+    .slot-results__item{ display:grid; gap:8px; padding:12px; border-radius:calc(var(--glass) - 6px); border:1px solid color-mix(in oklab, white 75%, #0f172a 25% / 25%); background:rgba(255,255,255,.18); backdrop-filter:blur(4px); position:relative }
+    .slot-results__thumb-wrap{ position:relative; border-radius:12px; overflow:hidden; background:rgba(15,23,42,.08) }
+    .slot-results__thumb{ width:100%; aspect-ratio:4/3; object-fit:cover; display:block }
+    .slot-results__meta{ display:grid; gap:4px; font-size:13px; color:var(--muted) }
+    .slot-results__meta strong{ color:var(--text); font-size:14px }
+    .slot-results__empty{ padding:16px; border-radius:12px; border:1px dashed color-mix(in oklab, white 75%, #0f172a 25% / 35%); text-align:center }
+    .slot-results__actions{ display:flex; gap:8px; justify-content:flex-start; flex-wrap:wrap }
+    .btn.-ghost{ background:rgba(255,255,255,.16) }
+    .btn.-ghost:hover{ background:rgba(255,255,255,.3) }
+    .btn.is-disabled{ pointer-events:none; opacity:.6 }
+    .slot-results__error{ color:#b91c1c; font-size:14px }
 
     /* Всплывающее сообщение (toast) для ошибок сервера */
     .toast{ position:fixed; right:16px; top:16px; display:grid; gap:8px; z-index:9999 }
@@ -108,7 +125,7 @@
     #upload-form.-pulse { animation: pulseForm .4s ease }
   </style>
 </head>
-<body data-slot-id="slot-001" data-provider="gemini" data-model-name="Gemini Ultra Portrait" data-operation="identity_transfer">
+<body data-slot-id="slot-001" data-provider="gemini" data-model-name="Gemini Ultra Portrait" data-operation="identity_transfer" data-slot-api="/api/slots/slot-001">
   <div class="bg">
     <main>
       <div class="shell">
@@ -225,12 +242,50 @@
             <p id="server-response" style="color:var(--muted);margin-top:8px"></p>
           </div>
         </form>
+
+        <!-- 8. Галерея последних результатов слота -->
+        <section class="card slot-results" id="slot-results" aria-labelledby="slot-results-title">
+          <div class="slot-results__header">
+            <div>
+              <h2 id="slot-results-title">Последние результаты</h2>
+              <p class="muted-hint">Показываем превью успешно обработанных изображений. Ссылки на скачивание активны 72&nbsp;часа после готовности файла.</p>
+            </div>
+            <button type="button" class="btn -ghost" id="results-refresh">Обновить</button>
+          </div>
+          <p id="slot-results-error" class="slot-results__error" role="status" style="display:none"></p>
+          <div id="slot-results-empty" class="slot-results__empty muted-hint">Пока нет готовых изображений для этого слота.</div>
+          <div id="slot-results-grid" class="slot-results__grid" role="list"></div>
+        </section>
       </div>
     </main>
   </div>
 
   <!-- Toast контейнер -->
   <div class="toast" id="toast" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Демонстрационные данные recent_results (используются, если API недоступно) -->
+  <script id="slot-page-sample" type="application/json">
+  {
+    "recent_results": [
+      {
+        "job_id": "11111111-1111-4111-8111-111111111111",
+        "thumbnail_url": "https://picsum.photos/seed/slot1/360/270",
+        "download_url": "https://api.example.com/public/results/11111111-1111-4111-8111-111111111111",
+        "completed_at": "2024-06-17T09:24:00Z",
+        "result_expires_at": "2024-06-20T09:24:00Z",
+        "mime": "image/jpeg"
+      },
+      {
+        "job_id": "22222222-2222-4222-8222-222222222222",
+        "thumbnail_url": "https://picsum.photos/seed/slot2/360/270",
+        "download_url": "https://api.example.com/public/results/22222222-2222-4222-8222-222222222222",
+        "completed_at": "2024-06-16T20:52:00Z",
+        "result_expires_at": "2024-06-19T20:52:00Z",
+        "mime": "image/png"
+      }
+    ]
+  }
+  </script>
 
   <script>
     (function(){
@@ -267,6 +322,7 @@
       const PRESET_PROVIDER = slotMeta.provider;
       const PRESET_MODEL_NAME = slotMeta.modelName;
       const PRESET_OPERATION = slotMeta.operation;
+      const SLOT_DETAILS_ENDPOINT = document.body.dataset.slotApi || `/api/slots/${slotMeta.id}`;
       const slotModelLabel = byId('slot-model-label');
       const slotModelText = byId('slot-model-text');
       const slotIdValue = byId('slot-id-value');
@@ -284,6 +340,152 @@
       const show = (el) => el && el.classList.add('show');
       const hide = (el) => el && el.classList.remove('show');
       const pulse = (el)=>{ if(!el) return; el.classList.remove('-pulse'); void el.offsetWidth; el.classList.add('-pulse'); };
+
+      const resultsGrid = byId('slot-results-grid');
+      const resultsEmpty = byId('slot-results-empty');
+      const resultsError = byId('slot-results-error');
+      const resultsRefresh = byId('results-refresh');
+      const sampleNode = document.getElementById('slot-page-sample');
+      let cachedSample = null;
+      if(sampleNode){
+        try{
+          cachedSample = JSON.parse(sampleNode.textContent || '{}');
+        }catch(err){
+          console.warn('[Slot sample] parse error', err);
+        }
+      }
+
+      function formatDateTime(value){
+        if(!value) return '';
+        try{
+          const dt = new Date(value);
+          if(Number.isNaN(dt.getTime())) return value;
+          return new Intl.DateTimeFormat('ru-RU', { dateStyle:'medium', timeStyle:'short' }).format(dt);
+        }catch(err){ return value; }
+      }
+
+      function renderRecentResults(list){
+        if(!resultsGrid) return;
+        resultsGrid.innerHTML = '';
+        const items = Array.isArray(list) ? list : [];
+        if(!items.length){
+          if(resultsEmpty) resultsEmpty.style.display = '';
+          return;
+        }
+        if(resultsEmpty) resultsEmpty.style.display = 'none';
+
+        items.forEach((item)=>{
+          const node = document.createElement('article');
+          node.className = 'slot-results__item';
+          node.setAttribute('role','listitem');
+
+          const thumbWrap = document.createElement('div');
+          thumbWrap.className = 'slot-results__thumb-wrap';
+          const img = document.createElement('img');
+          img.className = 'slot-results__thumb';
+          img.loading = 'lazy';
+          img.decoding = 'async';
+          img.alt = 'Превью результата обработки';
+          img.src = item.thumbnail_url || item.download_url || '';
+          thumbWrap.appendChild(img);
+
+          const meta = document.createElement('div');
+          meta.className = 'slot-results__meta';
+          const completed = document.createElement('strong');
+          completed.textContent = `Завершено: ${formatDateTime(item.completed_at)}`;
+          const expires = document.createElement('span');
+          expires.textContent = `Ссылка активна до ${formatDateTime(item.result_expires_at)}`;
+          const mime = document.createElement('span');
+          mime.textContent = item.mime ? `Формат: ${item.mime}` : '';
+          meta.appendChild(completed);
+          meta.appendChild(expires);
+          if(item.mime){ meta.appendChild(mime); }
+
+          const actions = document.createElement('div');
+          actions.className = 'slot-results__actions';
+          const downloadBtn = document.createElement('a');
+          downloadBtn.className = 'btn -ghost';
+          downloadBtn.href = item.download_url || '#';
+          downloadBtn.target = '_blank';
+          downloadBtn.rel = 'noopener noreferrer';
+          downloadBtn.textContent = 'Скачать';
+          if(item.download_url){
+            downloadBtn.setAttribute('download','');
+          } else {
+            downloadBtn.setAttribute('aria-disabled','true');
+            downloadBtn.classList.add('is-disabled');
+          }
+          actions.appendChild(downloadBtn);
+
+          node.appendChild(thumbWrap);
+          node.appendChild(meta);
+          node.appendChild(actions);
+          resultsGrid.appendChild(node);
+        });
+      }
+
+      function setResultsError(message){
+        if(!resultsError) return;
+        if(message){
+          resultsError.textContent = message;
+          resultsError.style.display = '';
+        } else {
+          resultsError.textContent = '';
+          resultsError.style.display = 'none';
+        }
+      }
+
+      async function requestRecentResults(){
+        if(!SLOT_DETAILS_ENDPOINT) return { recent_results: [] };
+        try{
+          const response = await fetch(SLOT_DETAILS_ENDPOINT, { headers: { 'Accept': 'application/json' } });
+          if(!response.ok){
+            throw new Error(`API ответил статусом ${response.status}`);
+          }
+          const data = await response.json();
+          return data;
+        }catch(err){
+          throw err;
+        }
+      }
+
+      async function loadRecentResults(options){
+        if(!resultsGrid) return;
+        const silent = options && options.silent;
+        if(resultsEmpty){
+          resultsEmpty.style.display = 'none';
+        }
+        if(!silent){
+          resultsGrid.classList.add('-loading');
+        }
+        setResultsError('');
+        try{
+          let payload = null;
+          if(options && options.forceSample){
+            payload = cachedSample;
+          }
+          if(!payload){
+            payload = await requestRecentResults();
+          }
+          const list = payload?.recent_results || payload?.slot?.recent_results || [];
+          renderRecentResults(list);
+        }catch(err){
+          console.warn('[Recent results]', err);
+          setResultsError('Не удалось загрузить результаты. Используем демонстрационные данные.');
+          const fallback = cachedSample?.recent_results || [];
+          renderRecentResults(fallback);
+          if(!fallback.length && resultsEmpty){
+            resultsEmpty.style.display = '';
+          }
+        }finally{
+          resultsGrid.classList.remove('-loading');
+        }
+      }
+
+      if(resultsRefresh){
+        resultsRefresh.addEventListener('click', ()=> loadRecentResults({ silent:false }));
+      }
+
 
       // --- Toast ---
       function toast(msg, type){
@@ -572,6 +774,8 @@
         });
       })();
 
+      loadRecentResults({ silent:true });
+
       // --- Self tests ---
       try{
         console.assert(document.body.dataset.slotId, 'slot id data attribute exists');
@@ -584,6 +788,7 @@
         console.assert(byId('First_image_status').value === 'removed', 'First_image_status default removed');
         console.assert(byId('input-second').getAttribute('accept').includes('image/jpeg'), 'input-second accepts jpeg');
         console.assert(byId('input-second').getAttribute('accept').includes('image/png'), 'input-second accepts png');
+        console.assert(byId('slot-results-grid'), 'Results grid exists');
       }catch(e){ console.warn('[Self-test]', e); }
 
     })();

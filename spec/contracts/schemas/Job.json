@@ -88,6 +88,11 @@
       "type": ["string", "null"],
       "description": "Контрольная сумма содержимого (например, SHA-256 в hex)."
     },
+    "result_expires_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Момент автоочистки итогового файла (`finalized_at + T_result_retention`, по умолчанию 72 часа)."
+    },
     "expires_at": {
       "type": "string",
       "format": "date-time",
