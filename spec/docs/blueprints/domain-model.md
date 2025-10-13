@@ -57,12 +57,13 @@
 
   | Параметр | Источник | Назначение |
   |---|---|---|
-  | `T_sync_response` | `app_settings["ingest.sync_response_timeout_sec"]` (по умолчанию 48 с, диапазон 45–60 с) | Верхняя граница ожидания HTTP-ответа ingest API и минимальная составляющая `T_job_deadline`. |
+  | `T_sync_response` | `app_settings["ingest.sync_response_timeout_sec"]` (по умолчанию 48 с, диапазон 45–60 с) | Верхняя граница ожидания HTTP-ответа ingest API и базовое значение для расчёта `Job.expires_at = created_at + T_sync_response`. |
   | `T_public_link_ttl` | `app_settings["media.public_link_ttl_sec"] = T_sync_response` | Жёсткий лимит жизни публичных ссылок и других временных артефактов. |
   | `T_ingest_ttl` | `app_settings["media.ingest_ttl_sec"] = T_sync_response` | TTL исходных файлов во временном хранилище `payload`. |
   | `T_result_retention` | `app_settings["media.result_retention_sec"] = 72h` | TTL итоговых файлов (`Job.result_file_path`) до очистки и инвалидции публичной ссылки. |
 
   Новые задачи автоматически используют актуальные конфигурационные значения; дополнительных миграций или вспомогательных таблиц не требуется.
+- Исторический термин `T_job_deadline` более не используется: фактический дедлайн задачи напрямую определяется текущим значением `T_sync_response`.
 - Формула дедлайна фиксирована: `job.expires_at = job.created_at + T_sync_response`. Значение хранится в БД, не изменяется и служит верхней границей для всех связанных TTL артефактов, которые живут только до финализации (`payload_path`, публичные ссылки, промежуточные файлы).
 - Ingest API во время удержания HTTP-соединения опирается исключительно на запись `Job`: polling с шагом ≈1 с читает текущие значения `is_finalized`, `failure_reason` и `finalized_at`, что гарантирует доставку результата без дополнительных механизмов уведомлений.
 - Для таких временных артефактов действует правило:
