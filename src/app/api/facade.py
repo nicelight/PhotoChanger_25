@@ -1,7 +1,10 @@
-"""Тонкий HTTP-фасад, соответствующий спецификации ``spec/contracts/openapi.yaml``.
+"""HTTP-фасад, который должен соответствовать контракту из ``spec/contracts/openapi.yaml``.
 
-Фасад регистрирует маршруты поверх конкретного веб-фреймворка и делегирует
-реализацию доменным сервисам через ``ServiceRegistry``.
+Шаблон фиксирует структуру точек расширения для будущей реализации. Реальные
+обработчики обязаны учитывать доменную семантику, описанную в
+``spec/docs/blueprints`` (слоты, шаблонные медиа, ingest). Фасад остаётся
+тонким: он делегирует работу в доменные сервисы, которые извлекаются из
+``ServiceRegistry``.
 """
 
 from __future__ import annotations
@@ -26,12 +29,45 @@ class ApiFacade:
     registry: ServiceRegistry
 
     def bind(self, binder: RouteBinder) -> None:
-        """Привязывает обработчики из доменных сервисов к веб-фреймворку.
+        """Привязывает обработчики API к веб-фреймворку.
 
-        Конкретные обработчики должны соответствовать контрактам из
-        ``spec/contracts/openapi.yaml`` и использовать сериализацию,
-        описанную в схемах ``spec/contracts/schemas``.
+        Каждый вспомогательный метод отвечает за отдельный раздел OpenAPI:
+
+        * ``_bind_slot_routes`` — CRUD слотов и ingest (`#/paths/~1api~1slots`).
+        * ``_bind_template_media_routes`` — операции над шаблонными медиа
+          (`#/paths/~1api~1template-media`).
+        * ``_bind_public_routes`` — публичные загрузки и статические ресурсы
+          (`#/paths/~1public`).
+
+        Шаблонные методы ниже намеренно выбрасывают ``NotImplementedError``.
+        Это сигнал интеграторам, что необходимо сгенерировать реальные
+        обработчики по спецификациям.
         """
 
-        del binder  # пока нет реализации
-        # TODO: Реализовать после генерации стаба контроллеров.
+        self._bind_slot_routes(binder)
+        self._bind_template_media_routes(binder)
+        self._bind_public_routes(binder)
+
+    def _bind_slot_routes(self, binder: RouteBinder) -> None:  # noqa: D401
+        """Настроить маршруты управления слотами согласно OpenAPI."""
+
+        _ = binder  # placeholder to silence linters
+        raise NotImplementedError(
+            "Сгенерируйте обработчики слотов из spec/contracts/openapi.yaml"
+        )
+
+    def _bind_template_media_routes(self, binder: RouteBinder) -> None:  # noqa: D401
+        """Настроить маршруты управления шаблонными медиа."""
+
+        _ = binder
+        raise NotImplementedError(
+            "Сгенерируйте обработчики шаблонов из spec/contracts/openapi.yaml"
+        )
+
+    def _bind_public_routes(self, binder: RouteBinder) -> None:  # noqa: D401
+        """Настроить публичные маршруты скачивания медиа."""
+
+        _ = binder
+        raise NotImplementedError(
+            "Сгенерируйте публичные обработчики из spec/contracts/openapi.yaml"
+        )
