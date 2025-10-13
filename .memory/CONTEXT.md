@@ -1,41 +1,39 @@
 ---
 id: context
 version: 1
-updated: 2025-10-08
+updated: 2025-01-14
 owner: techlead
 ---
 
 # Устойчивый контекст
 
 ## Среды/URL
-- Prod: …
-- Staging: …
-- Local: …
+- **Prod:** не развёрнут (MVP в разработке); конечная цель — управляемый деплой на Kubernetes с публичным HTTPS-доменом для ingest и публичных ссылок. Требования к готовности описаны в roadmap Фазы 6–7 (обсервабилити, SLA 99 %).【F:Docs/implementation_roadmap.md】
+- **Staging:** планируется как основная интеграционная среда для проверки очереди, воркеров и моков провайдеров; до запуска продакшена используется для e2e/нагрузочных тестов и валидации OpenAPI-контрактов.【F:Docs/implementation_roadmap.md】【F:spec/docs/blueprints/test-plan.md】
+- **Local:** разработчики поднимают FastAPI-приложение и PostgreSQL (очередь) локально; медиа хранятся в файловой системе (`MEDIA_ROOT`), моки провайдеров подключаются через фикстуры. UI (HTMX) работает на том же сервере.【F:Docs/brief.md】【F:spec/docs/blueprints/test-plan.md】
 
 ## Стек/версии
-- Backend: FastAPI x.y (Python 3.12)
-- Front: HTMX + Vanilla JS
-- DB/Queue/Infra: …
+- **Backend:** Python 3.12 + FastAPI; доменный слой выделяет `JobService`, `SlotService`, `SettingsService`, `MediaService`, воркеры и адаптеры провайдеров. Очередь реализована на PostgreSQL с `SELECT … FOR UPDATE SKIP LOCKED` и встроенными воркерами.【F:spec/docs/blueprints/domain-model.md】【F:Docs/implementation_roadmap.md】
+- **Front:** Административный UI на HTMX/Vanilla JS, использует REST-контракты (`/api/slots`, `/api/settings`, `/public/results/{job_id}`) для настройки слотов и просмотра `recent_results`. Примеры макетов — в `Docs/frontend-examples`.【F:Docs/brief.md】【F:spec/docs/blueprints/use-cases.md】
+- **DB/Queue/Infra:** PostgreSQL (очередь `job`, TTL/lock-инварианты), файловое хранилище для `MEDIA_ROOT` (постоянные шаблоны и результаты 72 ч), временное публичное хранилище (`media_object`) с TTL = `T_sync_response`, интеграция с внешними AI API (Gemini, Turbotext).【F:spec/docs/blueprints/context.md】【F:spec/docs/blueprints/constraints-risks.md】
 
 ## Команды разработчика (pre-commit чек-лист)
-- Линт/формат: `ruff check . && ruff format .`
-- Type-check: `mypy src/`
-- Unit: `pytest -q -m unit`
-- Contract: `pytest -q -m contract`
-- Сборка локально: …
-- Быстрые e2e/снимки (опционально): …
+- Линт/формат: `ruff check . && ruff format .` — единый стиль Python модулей и сгенерированных стабов.【F:Docs/roadmap.md】
+- Type-check: `mypy src/` — контроль контрактов доменных сервисов и адаптеров.
+- Unit: `pytest -q -m unit` — покрытие валидации слотов, дедлайнов, расчёта TTL и state machine Job.【F:spec/docs/blueprints/test-plan.md】
+- Contract: `pytest -q -m contract` — валидация OpenAPI (`POST /ingest`, `/api/settings`, `/public/results/{job_id}`) и JSON Schema для сущностей.【F:spec/docs/blueprints/test-plan.md】
+- Сборка локально: `uvicorn src.app.main:app --reload` (или скрипт `scripts/dev.sh` после его добавления) с поднятой PostgreSQL и настройкой переменных `MEDIA_ROOT`, `DATABASE_URL`, ключей провайдеров (моки).【F:Docs/implementation_roadmap.md】【F:Docs/brief.md】
+- Быстрые e2e/снимки (опционально): `pytest -q -m e2e` с моками Gemini/Turbotext для сценариев «успех», «504», истечение публичных ссылок и скачивание из UI; проверяет соответствие TTL и расчёт `result_inline_base64`.【F:spec/docs/blueprints/test-plan.md】
 
 ## Политики качества
-- Coverage ≥ 80% (unit), ≥ 100% на критичных контрактах
-- Error budgets/latency цели: …
-- Security: no secrets in VCS, SAST/DAST при необходимости
-
+- Покрытие: ≥ 80 % unit-тестами (критичные доменные функции, расчёт TTL) и 100 % контрактами на публичные API, как закреплено в test-plan и NFR. Провалы фиксируются до merge.【F:spec/docs/blueprints/test-plan.md】【F:spec/docs/blueprints/nfr.md】
+- Error budgets/latency: ingest удерживает p95 в пределах `T_sync_response`, доля `failure_reason = 'timeout'` ≤ 5 %; превышение триггерит алерты и расследование (SLA ≥ 99 %).【F:spec/docs/blueprints/vision.md】【F:spec/docs/blueprints/nfr.md】
+- Security: запрещено логировать бинарные изображения и секреты; JWT выдаётся только статическим администраторам; ingest-пароль хранится в виде хэша, ротация требует права `settings:write`. Секреты провайдеров — только в секрет-хранилищах/окружении. Регулярные проверки лицензий зависимостей перед релизом.【F:spec/docs/blueprints/nfr.md】【F:spec/docs/blueprints/acceptance-criteria.md】
 
 ## Deprecation policy
-- SemVer: MAJOR — breaking; MINOR — новые фичи без ломаний; PATCH — фиксы/доки.
-- Любая устаревающая часть API получает notice (минимум один MINOR цикл).
-- Миграции и сроки снятия — фиксировать в `spec/contracts/VERSION.json` и ADR.
+- SemVer: MAJOR — breaking изменения контрактов; MINOR — новые возможности без поломок; PATCH — фиксы и документация.【F:agents.md】
+- Любой деприкейт API получает notice минимум на один MINOR; сроки и миграции документируются в `spec/contracts/VERSION.json` и ADR (см. roadmap Фаза 0/7 для Re-Sync).【F:agents.md】【F:Docs/implementation_roadmap.md】【F:spec/contracts/VERSION.json】
 
 ## Секреты/лицензии
-- DO NOT COMMIT: ключи/токены, приватные артефакты.
-- Проверка лицензий зависимостей перед PR.
+- Не коммитить API-ключи (Gemini, Turbotext), ingest-пароли, JWT-секреты, приватные медиа. Секреты хранятся в `secrets/runtime_credentials.json` и `app_settings`, доступ ограничен, ротация — через `/api/settings`.【F:spec/docs/blueprints/context.md】【F:spec/docs/blueprints/constraints-risks.md】
+- Перед PR проверять лицензии зависимостей и соответствие требованиям провайдеров; фиксировать нарушения в ADR/roadmap. При работе с внешними провайдерами соблюдать их SLA и rate limit (Gemini 500 rpm, Turbotext billing).【F:Docs/providers/gemini.md】【F:Docs/providers/turbotext.md】
