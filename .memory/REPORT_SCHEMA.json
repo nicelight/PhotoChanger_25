@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/memory/REPORT_SCHEMA.json",
+  "title": "Task Final Report",
+  "type": "object",
+  "required": [
+    "taskId",
+    "autonomyLevel",
+    "decisions",
+    "fileChanges",
+    "architectureChanges",
+    "risks",
+    "artifacts"
+  ],
+  "properties": {
+    "taskId": {
+      "type": "string"
+    },
+    "autonomyLevel": {
+      "type": "integer",
+      "enum": [
+        0,
+        1,
+        2
+      ]
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "isKey"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "isKey": {
+            "type": "boolean"
+          },
+          "adrRef": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "architectureChanges": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "fileChanges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "change"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "change": {
+            "type": "string",
+            "enum": [
+              "added",
+              "modified",
+              "removed"
+            ]
+          },
+          "summary": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "required": [
+        "contracts",
+        "tests",
+        "decisions",
+        "progress",
+        "tasks"
+      ],
+      "properties": {
+        "contracts": {
+          "type": "string"
+        },
+        "tests": {
+          "type": "string"
+        },
+        "decisions": {
+          "type": "string"
+        },
+        "progress": {
+          "type": "string"
+        },
+        "tasks": {
+          "type": "string"
+        }
+      }
+    },
+    "nextSteps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
