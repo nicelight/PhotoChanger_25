@@ -8,16 +8,12 @@ updated: 2025-02-14
 ## TODO
 
 ### Phase 0. Context & Requirements Alignment
-- [ ] MB-0.1 — Consolidate project context
-  - [ ] MB-0.1.1 — Collect baseline materials relevant to memory capture and retrieval.
-  - [ ] MB-0.1.2 — Extract Definition of Done, NFR, and security constraints for handling user memories, secrets, and media.
-- [ ] MB-0.2 — Define memory artifacts & taxonomy
-  - [ ] MB-0.2.1 — List memory types and their retention policies.
-  - [ ] MB-0.2.2 — Describe expected outputs of the memory bank.
-- [ ] MB-0.3 — Prompting playbooks
-  - [ ] MB-0.3.1 — Draft LLM prompting templates for memory workflows.
-  - [ ] MB-0.3.2 — Specify formatting rules for generated code.
-  - [ ] MB-0.3.3 — Review templates against SDD gates.
+- [x] MB-0.1 — Consolidate project context
+  - [x] MB-0.1.1 — Collect baseline materials relevant to memory capture and retrieval.
+  - [x] MB-0.1.2 — Extract Definition of Done, NFR, and security constraints for handling user memories, secrets, and media.
+- [x] MB-0.2 — Define memory artifacts & taxonomy
+  - [x] MB-0.2.1 — List memory types and their retention policies.
+  - [x] MB-0.2.2 — Describe expected outputs of the memory bank.
 
 ### Phase 1. Memory API & Infrastructure Scaffolding
 - [ ] MB-1.1 — Inventory existing stubs
