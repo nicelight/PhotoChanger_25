@@ -1,8 +1,8 @@
-name: Codex Auto-merge (by label)
+name: Codex Auto-merge (by label, live)
 
 on:
   pull_request:
-    types: [labeled, opened, reopened, synchronize, ready_for_review]
+    types: [labeled, opened, reopened, synchronize, ready_for_review, edited]
 
 permissions:
   contents: write
@@ -10,19 +10,43 @@ permissions:
 
 jobs:
   enable_auto_merge:
-    if: >
-      github.event.pull_request.draft == false &&
-      contains(join(github.event.pull_request.labels.*.name, ' '), 'codexautomerge')
     runs-on: ubuntu-latest
+    env:
+      TARGET_LABEL: "label:codex:automerge"   # ← твоя метка с двоеточиями
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Resolve PR/REPO
+        id: ctx
+        run: |
+          echo "PR=${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+          echo "REPO=${{ github.repository }}" >> "$GITHUB_OUTPUT"
 
-      - name: Enable auto-merge on this PR
+      - name: Check label via GitHub API (live)
+        id: check
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          PR: ${{ github.event.pull_request.number }}
+          PR: ${{ steps.ctx.outputs.PR }}
+          REPO: ${{ steps.ctx.outputs.REPO }}
+          TARGET_LABEL: ${{ env.TARGET_LABEL }}
+        run: |
+          set -euo pipefail
+          # Получаем актуальные метки PR и проверяем точное совпадение имени
+          gh pr view "$PR" --repo "$REPO" --json labels \
+            | jq -e --arg L "$TARGET_LABEL" '
+                [.labels[].name] | index($L) != null
+              ' >/dev/null \
+            && echo "has_label=true"  >> "$GITHUB_OUTPUT" \
+            || echo  "has_label=false" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout repository
+        if: steps.check.outputs.has_label == 'true'
+        uses: actions/checkout@v4
+
+      - name: Enable auto-merge
+        if: steps.check.outputs.has_label == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ steps.ctx.outputs.PR }}
+          REPO: ${{ steps.ctx.outputs.REPO }}
         run: |
           gh pr merge "$PR" --repo "$REPO" --merge --auto
           echo "::notice::Auto-merge enabled for PR #$PR"
