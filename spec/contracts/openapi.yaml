@@ -881,7 +881,7 @@ components:
           schema:
             $ref: ./schemas/Error.json
     GatewayTimeout:
-      description: Истекло окно ожидания синхронного ответа; задача остаётся в очереди и завершается в фоне после polling результата
+      description: Истекло окно ожидания синхронного ответа; Job финализирована с `failure_reason = 'timeout'`, polling провайдера остановлен, повторный запуск требует нового ingest-запроса
       content:
         application/json:
           schema:
