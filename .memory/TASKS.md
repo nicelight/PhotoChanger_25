@@ -130,7 +130,7 @@ updated: 2025-02-14
   - [ ] MB-7.3.3 — Audit template adoption and collect feedback for improvements.
 
 ## DOING
-- [ ] ID-120 | owner:serg | started:2025-10-08 | title:"Рефактор pipeline" | notes:"…"
+- *(пока пусто)*
 
 ## DONE
-- [x] ID-101 | owner:serg | done:2025-10-07 | title:"Поднять CI" | pr:"#45"
+- *(пока пусто)*
