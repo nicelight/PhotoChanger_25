@@ -9,14 +9,15 @@
   - Парсинг/генерация запросов к Gemini и Turbotext, преобразование ответов в доменные сущности.
   - Управление состояниями Job (переходы, дедлайны, отмена).
 - **Contract**
-  - Проверка соответствия API `POST /ingest/{slotId}`, `/api/media/register`, `/public/media/{id}` спецификациям (`spec/contracts`).
+  - Проверка соответствия API `POST /ingest/{slotId}`, `/api/media/register`, `/public/media/{id}`, `GET /public/results/{job_id}` спецификациям (`spec/contracts`).
   - JSON Schema для `Slot`, `Job`, `MediaObject`.
   - Валидация `SlotStatsResponse` — `summary.last_reset_at` присутствует и соответствует формату `date-time`.
   - Аутентификация: `POST /api/login` выдаёт JWT только для `serg`/`igor`, неверные пары получают `401`, повторные попытки ограничены `429`.
   - Управление настройками: `GET/PUT /api/settings` не раскрывают ingest-пароль в ответе, принимают только хэшируемое значение для ротации и позволяют обновить `ingest.sync_response_timeout_sec` в диапазоне 45–60 секунд с пересчётом TTL в ответе.
   - **Integration**
     - Интеракция API ↔ очередь ↔ воркеры с моками провайдеров.
-    - Очистка медиа после финализации Job; подтверждение заполнения полей `Job.result_*` и временного `result_inline_base64` с последующим обнулением.
+    - Очистка медиа после финализации Job; подтверждение заполнения полей `Job.result_*`, расчёта `result_expires_at` и временного `result_inline_base64` с последующим обнулением.
+    - Публикация итогового файла на диск, доступность по `GET /public/results/{job_id}` до истечения 72 часов и автоматическая очистка/ответ `410` после TTL.
     - Сценарий таймаута 504 удостоверяется, что `result_inline_base64` очищается сразу после ответа и не остаётся в записи Job.
     - При симуляции позднего ответа провайдера после отмены воркер игнорирует его, статус остаётся `finalized_timeout`, поля `result_*` не изменяются.
     - Автоистечение `media_object` через `T_public_link_ttl = T_sync_response` секунд и установка `failure_reason = 'timeout'` без ручного продления.
@@ -51,6 +52,7 @@
 | UC3 Ingest 504 | ✅ Таймауты Job (`failure_reason`) | ✅ POST /ingest 504 case | ✅ Отмена воркера + игнор позднего ответа | ✅ Полный поток с задержкой и проверкой отсутствия повторной доставки |
 | UC4 Истечение медиа | ✅ Таймер TTL (`T_sync_response` сек) | ✅ Регистрация `/api/media/register` | ✅ Автоудаление записи | ✅ Сценарий с Turbotext |
 | UC5 Шаблонные медиа | ✅ Проверка MIME/размера | ✅ Template media API | ✅ Привязка к слоту | ⚪ Ручной smoke |
+| UC6 Галерея результатов | ✅ Формирование `recent_results`, TTL `result_expires_at` | ✅ GET /api/slots/{slot_id}`, `GET /public/results/{job_id}` | ✅ Очистка файла и статус 410 | ✅ UI smoke (превью + скачивание) |
 
 ## Выходные артефакты
 - Отчёт о прогонах тестов (CI pipeline).

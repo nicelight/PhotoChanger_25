@@ -9,16 +9,17 @@
 - `operation` — выбранная операция провайдера (например, `style_transfer`).
 - `settings_json` — параметры операции, включая промпты, ссылки на `template_media` и конфигурацию ретраев.
 - `updated_at`, `created_at` — аудит изменений.
+- `recent_results` — виртуальное поле (не хранится в таблице), формируется API из последних финализированных `Job` со статусом успеха и содержит ссылки на итоговые файлы для UI галереи.
 - Глобальный ingest-пароль хранится отдельно в `app_settings` и не является полем Slot; ingest-URL вычисляется по шаблону `<BASE_URL>/ingest/{id}` без сохранения в таблице.
 
 ### Job
 - `id` (`UUID`).
 - `slot_id` — связь с `Slot`.
 - `status` — рабочие состояния `pending` → `processing`; финализация описывается отдельными полями `is_finalized` и `failure_reason`.
-- `expires_at` — фиксированный дедлайн задачи; вычисляется при создании записи как `created_at + T_sync_response`. Общее окно совпадает с TTL временных ссылок и служит единым ориентиром для API, воркеров и механизмов очистки.【F:Docs/brief.md†L20-L53】
-- `result_file_path` — относительный путь к файлу последнего успешного изображения в `MEDIA_ROOT/results`.
+- `expires_at` — фиксированный дедлайн задачи; вычисляется при создании записи как `created_at + T_sync_response`. Общее окно совпадает с TTL временных ссылок и служит единым ориентиром для API, воркеров и механизмов очистки. Для итоговых файлов дополнительно рассчитывается самостоятельный TTL `T_result_retention = 72h` и поле `result_expires_at`.【F:Docs/brief.md†L20-L53】
+- `result_file_path` — относительный путь к файлу последнего успешного изображения в `MEDIA_ROOT/results`, доступному по публичной ссылке до `result_expires_at`.
 - `result_inline_base64` — временная base64-строка результата, доступна только пока ingest ждёт синхронный ответ.
-- `result_mime_type`, `result_size_bytes`, `result_checksum` — метаданные результата.
+- `result_mime_type`, `result_size_bytes`, `result_checksum`, `result_expires_at` — метаданные результата и рассчитанный момент автоочистки файла.
 - `provider_job_reference` — опциональное поле для идентификаторов очередей провайдеров (например, `queueid` Turbotext, используемый для polling).
 - `payload_path` — ссылка на исходный файл во временном хранилище (опционально).
 - `finalized_at`, `created_at`, `updated_at` — аудит жизненного цикла записи.
@@ -58,17 +59,19 @@
   | `T_sync_response` | `app_settings["ingest.sync_response_timeout_sec"]` (по умолчанию 48 с, диапазон 45–60 с) | Верхняя граница ожидания HTTP-ответа ingest API и минимальная составляющая `T_job_deadline`. |
   | `T_public_link_ttl` | `app_settings["media.public_link_ttl_sec"] = T_sync_response` | Жёсткий лимит жизни публичных ссылок и других временных артефактов. |
   | `T_ingest_ttl` | `app_settings["media.ingest_ttl_sec"] = T_sync_response` | TTL исходных файлов во временном хранилище `payload`. |
+  | `T_result_retention` | `app_settings["media.result_retention_sec"] = 72h` | TTL итоговых файлов (`Job.result_file_path`) до очистки и инвалидции публичной ссылки. |
 
   Новые задачи автоматически используют актуальные конфигурационные значения; дополнительных миграций или вспомогательных таблиц не требуется.【F:Docs/brief.md†L20-L53】
-- Формула дедлайна фиксирована: `job.expires_at = job.created_at + T_sync_response`. Значение хранится в БД, не изменяется и служит верхней границей для всех связанных TTL (`payload_path`, публичные ссылки, промежуточные файлы).【F:Docs/brief.md†L20-L53】
-- Для временных артефактов действует правило:
+- Формула дедлайна фиксирована: `job.expires_at = job.created_at + T_sync_response`. Значение хранится в БД, не изменяется и служит верхней границей для всех связанных TTL артефактов, которые живут только до финализации (`payload_path`, публичные ссылки, промежуточные файлы).【F:Docs/brief.md†L20-L53】
+- Для таких временных артефактов действует правило:
 
   ```
   artifact_expires_at = min(job.expires_at, created_at + T_media_limit)
   ```
 
-  где `T_media_limit` — конкретный лимит артефакта (`T_ingest_ttl`, `T_public_link_ttl` и т.д.). Поскольку все лимиты равны `T_sync_response`, артефакты не живут дольше общего дедлайна. Нарушение TTL ведёт к `failure_reason = 'timeout'` и немедленной очистке данных.【F:Docs/brief.md†L20-L53】
-- Доменные функции обеспечивают единый расчёт дедлайнов и TTL: `calculate_job_expires_at(created_at, sync_timeout, public_link_ttl)`, `calculate_deadline_info(expires_at, *, now)`, `calculate_artifact_expiry(created_at, job_expires_at, limit_seconds)`. Все компоненты обязаны использовать их напрямую вместо дублирования логики.
+-  где `T_media_limit` — конкретный лимит временного артефакта (`T_ingest_ttl`, `T_public_link_ttl` и т.д.). Для ingest-файлов и публичных ссылок `T_media_limit = T_sync_response`, поэтому они не живут дольше общего дедлайна. Нарушение TTL ведёт к `failure_reason = 'timeout'` и немедленной очистке временных данных.【F:Docs/brief.md†L20-L53】
+- Итоговые файлы используют независимый лимит 72 часа (`T_result_retention`). После финализации `result_expires_at = finalized_at + T_result_retention`, независимо от величины `job.expires_at`; очиститель ориентируется на это значение и не сокращает TTL итогового файла. По наступлении срока файл удаляется, `result_file_path` очищается, а публичный endpoint начинает возвращать `410 Gone`.【F:Docs/brief.md†L41-L57】
+- Доменные функции обеспечивают единый расчёт дедлайнов и TTL: `calculate_job_expires_at(created_at, sync_timeout, public_link_ttl)`, `calculate_deadline_info(expires_at, *, now)`, `calculate_artifact_expiry(created_at, job_expires_at, limit_seconds)` для временных артефактов и `calculate_result_expires_at(finalized_at, result_retention)` для итоговых файлов. Все компоненты обязаны использовать их напрямую вместо дублирования логики.
 - Интеграция компонентов подчиняется дедлайну: Ingest API фиксирует `expires_at` и завершает запрос по достижении `min(now, expires_at)`, воркер отменяет обращение к провайдеру при истечении окна, а механизмы очистки удаляют payload и публичные ссылки сразу после наступления соответствующего `artifact_expires_at`. Продление TTL не допускается; повторная обработка требует нового ingest.【F:Docs/brief.md†L20-L78】
 
 ### Жизненный цикл данных задачи
@@ -76,6 +79,7 @@
 - Временная публичная ссылка (`MediaObject`) живёт `min(job.expires_at, created_at + T_public_link_ttl)`; поскольку `T_public_link_ttl = T_sync_response`, фактический TTL совпадает с общим дедлайном, после чего ссылка удаляется, а `Job` помечается `failure_reason = 'timeout'`.【F:Docs/brief.md†L45-L53】
 - После `is_finalized = true` задача не возвращается в активное состояние; повторная обработка требует нового ingest.【F:Docs/brief.md†L83-L96】
 - В Job хранится только последний успешный результат (`result_*`); при новом запуске поля перезаписываются. `result_inline_base64` очищается сразу после отправки HTTP 200/504 и не переживает финализацию.【F:Docs/brief.md†L20-L53】【F:Docs/brief.md†L83-L95】
+- Итоговый файл (`result_file_path`) доступен по публичной ссылке `GET /public/results/{job_id}` до `result_expires_at = finalized_at + T_result_retention`. Очиститель удаляет файл и обнуляет путь после наступления TTL, а endpoint возвращает `410 Gone`.【F:Docs/brief.md†L41-L57】
 - Временные ссылки не продлеваются: по истечении `T_public_link_ttl` запись удаляется, а связанную `Job` помечают `failure_reason = 'timeout'`.【F:Docs/brief.md†L45-L53】
 - `Slot` не может быть активирован без валидных параметров провайдера (минимально необходимые поля определяются провайдером).【F:Docs/brief.md†L9-L87】
 - При выдаче ingest 504 задача немедленно финализируется: воркер прекращает обращения к провайдеру, очищает ресурсы и фиксирует `failure_reason = 'timeout'`. Повторная обработка требует нового ingest.【F:Docs/brief.md†L20-L29】【F:Docs/brief.md†L91-L95】

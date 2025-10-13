@@ -115,13 +115,16 @@ paths:
     get:
       tags: [Slots]
       summary: Получить данные конкретного слота
+      description: >-
+        Возвращает полную конфигурацию слота вместе с массивом `recent_results`, содержащим
+        последние успешные задачи с публичными ссылками на скачивание итоговых изображений.
       security:
         - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/SlotId'
       responses:
         '200':
-          description: Данные слота
+          description: Данные слота и список последних результатов
           content:
             application/json:
               schema:
@@ -511,6 +514,55 @@ paths:
       responses:
         '200':
           description: Бинарное содержимое изображения
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '410':
+          $ref: '#/components/responses/Gone'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /public/results/{job_id}:
+    get:
+      security: []
+      tags: [Public]
+      summary: Скачать итоговый файл обработки
+      description: >-
+        Публичная ссылка на итоговое изображение Job. Доступна 72 часа (`T_result_retention`) после
+        финализации. После истечения срока возвращает `410 Gone`.
+      parameters:
+        - in: path
+          name: job_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор Job с успешным результатом.
+      responses:
+        '200':
+          description: Итоговое изображение обработки (кнопка «Скачать» в UI)
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              description: "attachment; filename=..."
           content:
             image/jpeg:
               schema:

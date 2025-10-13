@@ -35,8 +35,8 @@
   3. Job ставится в очередь и выбирается воркером, статус `processing`.
   4. Воркер вызывает провайдера Gemini (`models.generateContent`), передавая параметры слота и изображение.
   5. Провайдер возвращает обработанное изображение до наступления `T_sync_response`.
-  6. Воркер заполняет `Job.result_inline_base64` и метаданные `result_*`, очищает исходный `media_object`, выставляет `is_finalized = true`.
-  7. Ingest API возвращает 200 OK с обработанным изображением, после чего `result_inline_base64` обнуляется и job закрывается.
+    6. Воркер сохраняет итоговый файл в `MEDIA_ROOT/results`, обновляет `Job.result_file_path`, `result_mime_type`, `result_size_bytes`, `result_checksum`, рассчитывает `result_expires_at = finalized_at + 72h`, заполняет временный `result_inline_base64`, очищает исходный `media_object`, выставляет `is_finalized = true`.
+    7. Ingest API возвращает 200 OK с обработанным изображением, после чего `result_inline_base64` обнуляется, а файл остаётся доступным по `GET /public/results/{job_id}` до наступления `result_expires_at`.
 
 ### Диаграмма последовательности (успех)
 ```mermaid
@@ -55,8 +55,9 @@ sequenceDiagram
     Queue->>Worker: Забрать Job
     Worker->>Gemini: models.generateContent(...)
     Gemini-->>Worker: Обработанное изображение
-    Worker->>Job: Заполнить поля result_* и временный result_inline_base64
-    Worker->>API: Финализация (is_finalized = true)
+    Worker->>Storage: Сохранить итоговый файл (TTL = T_result_retention = 72h)
+    Worker->>Job: Обновить result_* и временный result_inline_base64
+    Worker->>API: Финализация (is_finalized = true, result_expires_at)
     API-->>DSLR: HTTP 200 + изображение
 ```
 
@@ -98,3 +99,16 @@ stateDiagram-v2
 - **Акторы:** Администратор, Admin API, Storage.
 - **Сценарий:** загрузка `template_media` через `POST /api/template-media/register`, привязка к слоту, удаление через `DELETE /api/template-media/{id}`.
 - **Особенности:** Файлы не имеют публичных ссылок, доступны только воркерам по идентификатору; удаление требует проверки, что слот обновлён.
+
+## UC6. Просмотр результатов слота и скачивание из UI
+- **Акторы:** Администратор/UI, Admin API, Public API.
+- **Предусловия:** Слот имеет завершённые `Job` с `result_file_path` и не истёкшим `result_expires_at`.
+- **Основной поток:**
+  1. Администратор открывает страницу слота; UI вызывает `GET /api/slots/{slot_id}`.
+  2. Admin API возвращает конфигурацию слота и массив `recent_results` (по умолчанию последние 10 записей) с полями `job_id`, `thumbnail_url`, `download_url`, `completed_at`, `result_expires_at`, `mime`.
+  3. UI отображает галерею превью, используя `thumbnail_url` (изображение оптимизируется клиентом до 160×160 px) и рядом размещает кнопку «Скачать», ссылающуюся на `download_url`.
+  4. При нажатии кнопки браузер инициирует `GET /public/results/{job_id}`. Public API проверяет `result_expires_at` и отдаёт файл с `Content-Disposition: attachment` при статусе 200.
+  5. UI отображает статус скачивания; по истечении TTL карточка помечается как недоступная при следующем опросе.
+- **Альтернативы/ошибки:**
+  - `GET /public/results/{job_id}` → `410 Gone`, если `result_expires_at` в прошлом; UI показывает подсказку «Срок действия ссылки истёк».
+  - Отсутствуют результаты — `recent_results` пуст; UI показывает состояние «Нет обработанных изображений».
