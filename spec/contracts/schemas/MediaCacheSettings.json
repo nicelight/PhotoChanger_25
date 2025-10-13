@@ -14,7 +14,7 @@
       "minimum": 45,
       "maximum": 60,
       "readOnly": true,
-      "description": "Срок жизни временных публичных ссылок в секундах (clamp(T_sync_response, 45, 60))"
+      "description": "Срок жизни временных публичных ссылок в секундах (равен T_sync_response)"
     }
   },
   "additionalProperties": false

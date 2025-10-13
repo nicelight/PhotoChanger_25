@@ -25,7 +25,7 @@
 - [ ] Поле `result_inline_base64`, если успело появиться до отмены, обнуляется и не сохраняется после ответа 504.
 
 ## AC4. Временные ссылки `media_object`
-- [ ] Регистрация `media_object` всегда выдаёт `expires_at = created_at + T_public_link_ttl` (`clamp(T_sync_response, 45, 60)`).
+- [ ] Регистрация `media_object` всегда выдаёт `expires_at = created_at + T_public_link_ttl` (`T_sync_response`).
 - [ ] Попытки запросить продление TTL отклоняются (`404/405`).
 - [ ] По истечении TTL связанная задача фиксирует `failure_reason = 'timeout'`, а файл удаляется.
 
