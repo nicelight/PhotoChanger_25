@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SlotResultPreview",
+  "type": "object",
+  "required": [
+    "job_id",
+    "thumbnail_url",
+    "download_url",
+    "completed_at",
+    "result_expires_at",
+    "mime"
+  ],
+  "properties": {
+    "job_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Идентификатор Job, по которому был получен результат. Используется в ссылках UI и журналах."
+    },
+    "thumbnail_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL небольшого превью изображения (используется в `<img>` галереи). Совпадает с download_url, если отдельный thumbnail не подготовлен."
+    },
+    "download_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Публичная ссылка на итоговый файл (`GET /public/results/{job_id}`). Возвращает файл с `Content-Disposition: attachment`."
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Метка времени финализации Job."
+    },
+    "result_expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Срок действия публичной ссылки результата (`finalized_at + T_result_retention`)."
+    },
+    "mime": {
+      "type": "string",
+      "description": "MIME-тип итогового изображения (например, `image/jpeg`).",
+      "pattern": "^image/"
+    },
+    "size_bytes": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Размер итогового файла в байтах, если известен."
+    }
+  },
+  "additionalProperties": false
+}
