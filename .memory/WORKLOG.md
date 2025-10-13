@@ -10,3 +10,8 @@ updated: 2025-10-08
 - 2025-10-08 10:18 — обновил схемы (draft), unit/contract тесты локально (зелёные)
 - 2025-10-08 10:24 — дельта LOC ≈ 90, files_changed = 3 (ниже порога)
 - 2025-10-08 10:30 — checkpoint пройден → синхронизация TASKS/PROGRESS/ADR
+
+## mb-2025-01-14
+- 2025-01-14 09:05 — изучил Docs/brief.md и vision/context/use-cases для заполнения мемори банка
+- 2025-01-14 09:18 — сверил NFR, acceptance criteria, ограничения и провайдеров (Gemini/Turbotext) для контекста и глоссария
+- 2025-01-14 09:26 — подготовил план обновления MISSION/CONTEXT/USECASES/GLOSSARY перед заполнением

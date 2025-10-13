@@ -1,10 +1,16 @@
 ---
 id: glossary
-updated: 2025-10-08
+updated: 2025-01-14
 ---
 
 # Глоссарий
-- Slot — …
-- NPU — …
-- Dataset — …
-- Worker — …
+- **Slot** — статическая конфигурация обработки (`slot-001`…`slot-015`), которая определяет провайдера (Gemini/Turbotext), операцию, параметры и связанные шаблонные медиа. Используется для построения ingest-ссылки `<BASE_URL>/ingest/{slot_id}` и не содержит индивидуальных секретов.【F:spec/docs/blueprints/glossary.md】【F:Docs/brief.md】
+- **Ingest API** — HTTP-эндпоинт `POST /ingest/{slotId}` для получения фотографий от DSLR Remote Pro, расчёта дедлайнов и выдачи результата либо 504 по истечении `T_sync_response` (45–60 с).【F:spec/docs/blueprints/glossary.md】【F:spec/docs/blueprints/use-cases.md】
+- **Job** — запись очереди обработки, создаваемая при ingest. Содержит статусы `pending/processing`, финализацию через `is_finalized`, `failure_reason`, дедлайн `expires_at`, ссылку на результат `result_file_path`, временный `result_inline_base64` и TTL `result_expires_at = finalized_at + 72h`.【F:spec/docs/blueprints/glossary.md】【F:spec/docs/blueprints/domain-model.md】
+- **Job.result_*** — набор полей в Job (`result_file_path`, `result_mime_type`, `result_size_bytes`, `result_checksum`, `result_inline_base64`, `result_expires_at`), фиксирующий последний успешный ответ и доступность итогового файла (72 ч). Base64 удаляется сразу после отправки ответа ingest.【F:spec/docs/blueprints/glossary.md】【F:spec/docs/blueprints/use-cases.md】
+- **T_sync_response** — максимальное окно ожидания синхронного ответа ingest API (по умолчанию 48 с, допустимый диапазон 45–60 с); определяет `job.expires_at`, TTL временных ссылок (`T_public_link_ttl`) и дедлайн очистки payload. Настраивается через `/api/settings`.【F:spec/docs/blueprints/glossary.md】【F:spec/docs/blueprints/domain-model.md】
+- **T_result_retention** — фиксированный TTL итоговых файлов (72 ч) и публичных ссылок `GET /public/results/{job_id}`; после истечения endpoint возвращает `410 Gone`, а файл удаляется очистителем. Не зависит от `job.expires_at`.【F:spec/docs/blueprints/glossary.md】【F:spec/docs/blueprints/use-cases.md】
+- **MediaObject** — временный публичный файл с TTL = `T_public_link_ttl = T_sync_response`, выдаваемый через `POST /api/media/register` для загрузок провайдера (например, Turbotext). По истечении срока запись удаляется, а Job получает `failure_reason = 'timeout'`.【F:spec/docs/blueprints/glossary.md】【F:spec/docs/blueprints/use-cases.md】
+- **TemplateMedia** — долговечные шаблонные изображения без публичных ссылок, привязываемые к слотам через UI/API. Удаляются вручную при обновлении слота. Проверяются на допустимый MIME/размер при загрузке. 【F:spec/docs/blueprints/glossary.md】【F:spec/docs/blueprints/use-cases.md】
+- **ProviderAdapter** — слой интеграции с внешним AI-провайдером (Gemini, Turbotext), учитывающий квоты, форматы и режимы (синхронный/очередь). Хранит `provider_job_reference` (например, `queueid`) для polling в пределах `T_sync_response`.【F:spec/docs/blueprints/glossary.md】【F:Docs/providers/turbotext.md】
+- **recent_results** — выборка последних успешных Job слота, возвращаемая `GET /api/slots/{slot_id}`. Содержит `thumbnail_url`, `download_url`, `completed_at`, `result_expires_at`, `mime` и используется UI для галереи превью. Недоступные по TTL результаты отмечаются как истёкшие (410).【F:spec/docs/blueprints/glossary.md】【F:spec/docs/blueprints/use-cases.md】
