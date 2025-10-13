@@ -1,4 +1,8 @@
-"""HTTP API facades bound to the OpenAPI контракт из ``spec/contracts/openapi.yaml``."""
+"""HTTP API facades bound to ``spec/contracts/openapi.yaml``.
+
+Фактические контроллеры должны генерироваться по контракту и учитывать
+описанные сценарии из ``spec/docs/blueprints/use-cases.md``.
+"""
 
 from .facade import ApiFacade
 
