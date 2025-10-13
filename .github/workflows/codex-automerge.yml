@@ -1,7 +1,7 @@
-name: Codex Auto-merge (by label, live)
+name: Codex Auto-merge (by label, live, target)
 
 on:
-  pull_request:
+  pull_request_target:
     types:
       - labeled
       - opened
@@ -15,12 +15,17 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: codex-automerge-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
 jobs:
   enable_auto_merge:
     runs-on: ubuntu-latest
 
+    # Поддерживаем оба названия метки: ваш текущий и альтернативный
     env:
-      TARGET_LABEL: "label:codex:automerge"
+      TARGET_LABELS_JSON: '["label:codex:automerge","codexautomerge"]'
 
     steps:
       - name: Resolve PR/REPO
@@ -35,27 +40,84 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR:  ${{ steps.ctx.outputs.PR }}
           REPO: ${{ steps.ctx.outputs.REPO }}
-          TARGET_LABEL: ${{ env.TARGET_LABEL }}
+          TARGET_LABELS_JSON: ${{ env.TARGET_LABELS_JSON }}
         run: |
           set -euo pipefail
-          echo "Target label: $TARGET_LABEL"
-          gh pr view "$PR" --repo "$REPO" --json labels \
-            | tee labels.json \
-            | jq -e --arg L "$TARGET_LABEL" '
-                [.labels[].name] | index($L) != null
-              ' >/dev/null \
-            && echo "has_label=true"  >> "$GITHUB_OUTPUT" \
-            || echo  "has_label=false" >> "$GITHUB_OUTPUT"
-          echo "Labels now:" && jq -r '.labels[].name' labels.json || true
+          gh pr view "$PR" --repo "$REPO" --json labels > labels.json
+          echo "Current labels:"
+          jq -r '.labels[].name' labels.json || true
 
-      - name: Exit if label is missing
+          # has_label=true если в PR есть хотя бы одна из целевых меток
+          if jq -e --argjson want "$TARGET_LABELS_JSON" \
+               ' [ .labels[].name ] as $have
+                 | any($want[]; . as $x | $have | index($x) != null) ' labels.json >/dev/null; then
+            echo "has_label=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_label=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Exit if label missing
         if: steps.check.outputs.has_label != 'true'
         run: |
-          echo "No '${{ env.TARGET_LABEL }}' label on PR; skipping auto-merge."
+          echo "No target label on PR; skipping auto-merge."
           exit 0
 
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Show PR state (diagnostics)
+        id: state
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR:  ${{ steps.ctx.outputs.PR }}
+          REPO: ${{ steps.ctx.outputs.REPO }}
+        run: |
+          set -euo pipefail
+          gh pr view "$PR" --repo "$REPO" --json \
+            isDraft,mergeable,mergeStateStatus,reviewDecision,autoMergeRequest,title,number,baseRefName,headRefName \
+            | tee pr_state.json | jq .
+          echo '--- summary ---'
+          jq -r '
+            "PR #\(.number)  \( .headRefName ) → \( .baseRefName )",
+            "isDraft=\(.isDraft)  mergeable=\(.mergeable)  mergeStateStatus=\(.mergeStateStatus)  reviewDecision=\(.reviewDecision)  autoMergeSet=\(.autoMergeRequest != null)"
+          ' pr_state.json
 
       - name: Merge now (if CLEAN) or enable auto-merge (try all methods)
-        en
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR:  ${{ steps.ctx.outputs.PR }}
+          REPO: ${{ steps.ctx.outputs.REPO }}
+        run: |
+          set -euo pipefail
+          STATE=$(gh pr view "$PR" --repo "$REPO" --json mergeStateStatus -q .mergeStateStatus || echo unknown)
+          echo "mergeStateStatus=$STATE"
+
+          try_merge_now () {
+            for m in --squash --merge --rebase; do
+              echo "Trying immediate merge with $m..."
+              if gh pr merge "$PR" --repo "$REPO" "$m" --admin 2>/dev/null \
+                 || gh pr merge "$PR" --repo "$REPO" "$m" 2>/dev/null; then
+                echo "::notice::Merged immediately ($m)"; return 0
+              fi
+            done
+            return 1
+          }
+
+          try_enable_auto () {
+            for m in --squash --merge --rebase; do
+              echo "Trying enable auto-merge with $m..."
+              if gh pr merge "$PR" --repo "$REPO" "$m" --auto 2>/dev/null; then
+                echo "::notice::Auto-merge enabled ($m)"; return 0
+              fi
+            done
+            return 1
+          }
+
+          if [ "$STATE" = "CLEAN" ]; then
+            if try_merge_now; then exit 0; fi
+            echo "::warning::Immediate merge failed for all methods; enabling auto-merge…"
+          fi
+
+          if try_enable_auto; then
+            exit 0
+          fi
+
+          echo "::error::All merge methods failed. Likely branch protection blocks (reviews/up-to-date)."
+          exit 1
