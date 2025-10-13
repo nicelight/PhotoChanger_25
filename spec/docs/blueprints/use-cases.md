@@ -33,10 +33,11 @@
   1. DSLR Remote Pro отправляет `POST /ingest/{slotId}` с фото и паролем.
   2. Ingest API валидирует вход, создаёт `Job` со статусом `pending`, сохраняет исходный файл (`media_object`).
   3. Job ставится в очередь и выбирается воркером, статус `processing`.
-  4. Воркер вызывает провайдера Gemini (`models.generateContent`), передавая параметры слота и изображение.
-  5. Провайдер возвращает обработанное изображение до наступления `T_sync_response`.
-    6. Воркер сохраняет итоговый файл в `MEDIA_ROOT/results`, обновляет `Job.result_file_path`, `result_mime_type`, `result_size_bytes`, `result_checksum`, рассчитывает `result_expires_at = finalized_at + 72h`, заполняет временный `result_inline_base64`, очищает исходный `media_object`, выставляет `is_finalized = true`.
-    7. Ingest API возвращает 200 OK с обработанным изображением, после чего `result_inline_base64` обнуляется, а файл остаётся доступным по `GET /public/results/{job_id}` до наступления `result_expires_at`.
+  4. Ingest API удерживает HTTP-соединение и раз в секунду читает запись `Job` из БД, ожидая появления `is_finalized = true` или наступления дедлайна `T_sync_response`; дополнительных уведомлений не используется.
+  5. Воркер вызывает провайдера Gemini (`models.generateContent`), передавая параметры слота и изображение.
+  6. Провайдер возвращает обработанное изображение до наступления `T_sync_response`.
+  7. Воркер сохраняет итоговый файл в `MEDIA_ROOT/results`, обновляет `Job.result_file_path`, `result_mime_type`, `result_size_bytes`, `result_checksum`, рассчитывает `result_expires_at = finalized_at + 72h`, заполняет временный `result_inline_base64`, очищает исходный `media_object`, выставляет `is_finalized = true`.
+  8. На ближайшей итерации polling Ingest API обнаруживает финализацию, собирает ответ и возвращает 200 OK с обработанным изображением. После отправки `result_inline_base64` обнуляется, а файл остаётся доступным по `GET /public/results/{job_id}` до наступления `result_expires_at`.
 
 ### Диаграмма последовательности (успех)
 ```mermaid
@@ -51,7 +52,7 @@ sequenceDiagram
     DSLR->>API: POST /ingest/{slotId}
     API->>Storage: Сохранить ingest payload (TTL = T_ingest_ttl = T_sync_response)
     API->>Queue: Создать Job (pending)
-    API->>API: Ожидание результата (≤ T_sync_response)
+    API->>API: Polling Job в БД (Δ≈1с, ≤ T_sync_response)
     Queue->>Worker: Забрать Job
     Worker->>Gemini: models.generateContent(...)
     Gemini-->>Worker: Обработанное изображение
@@ -63,9 +64,9 @@ sequenceDiagram
 
 ## UC3. Ingest с таймаутом 504
 - **Различия с UC2:**
-  - На шаге вызова провайдера ответ не приходит до `T_sync_response`.
-  - API завершает ожидание с 504 и фиксирует у Job `failure_reason = 'timeout'`.
-  - Воркер получает сигнал отмены, прекращает операции, очищает `result_inline_base64` (если поле было заполнено для синхронного ответа) и удаляет временные файлы.
+  - На шаге вызова провайдера ответ не приходит до `T_sync_response`; повторные проверки Ingest API (`SELECT` раз в секунду) не видят финализацию.
+  - По достижении дедлайна Ingest API завершает ожидание с 504, фиксирует у Job `failure_reason = 'timeout'`, выставляет `is_finalized = true` и записывает `finalized_at`.
+  - Воркер, обнаружив финализированную запись, прекращает операции, очищает `result_inline_base64` (если поле было заполнено для синхронного ответа) и удаляет временные файлы.
   - Провайдерские ответы, пришедшие позже, игнорируются: состояние остаётся `finalized_timeout`, поля `result_*` не перезаписываются, клиент должен инициировать новый ingest.
   - Ответ `GatewayTimeout` описан в OpenAPI (`components.responses.GatewayTimeout`) и информирует клиента, что задача финализирована и повторный запуск возможен только новым ingest-запросом.
 
