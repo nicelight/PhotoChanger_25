@@ -18,7 +18,7 @@
       "minimum": 45,
       "maximum": 60,
       "readOnly": true,
-      "description": "Вычисленный TTL исходных payload: min(T_sync_response, media.public_link_ttl_sec)"
+      "description": "Вычисленный TTL исходных payload: T_sync_response"
     }
   },
   "additionalProperties": false

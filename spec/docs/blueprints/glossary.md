@@ -8,11 +8,11 @@
 | Job.result_* | Набор полей внутри Job (`result_file_path`, `result_inline_base64`, `result_mime_type`, `result_size_bytes`, `result_checksum`), хранящий последний успешный ответ без отдельной таблицы. Base64-строка присутствует только до завершения синхронного ответа. | `/Docs/brief.md`, раздел "Цель платформы" |
 | ProviderAdapter | Компонент, инкапсулирующий вызовы внешнего AI-провайдера (Gemini, Turbotext) с учётом лимитов и форматов. | `/Docs/brief.md`, разделы о провайдерах |
 | T_sync_response | Максимальное время ожидания синхронного ответа ingest API, настраивается администратором в диапазоне 45–60 с (по умолчанию 48 с); по истечении возвращается 504 и задача отменяется. | `/Docs/brief.md`, "Механизм работы платформы" |
-| T_ingest_ttl | TTL исходной фотографии во временном хранилище: `min(T_sync_response, T_public_link_ttl)` и всегда ≤ `T_sync_response`. | `/Docs/brief.md`, "Цель платформы" |
+| T_ingest_ttl | TTL исходной фотографии во временном хранилище: `T_sync_response`; совпадает с общим дедлайном задачи. | `/Docs/brief.md`, "Цель платформы" |
 | media_object | Запись временного публичного файла, доступного по `GET /public/media/{id}` до истечения TTL. | `/Docs/brief.md`, "Временное публичное медиа-хранилище" |
 | template_media | Постоянные шаблоны изображений, привязанные к слотам, очищаются только вручную. | `/Docs/brief.md`, "Постоянное хранилище шаблонов" |
 | DSLR Remote Pro | Клиент, отправляющий multipart POST с фото, паролем и метаданными. | `/Docs/brief.md`, "Пользовательский workflow" |
 | Job queue | Персистентная очередь задач на PostgreSQL (`job` + `SELECT … FOR UPDATE SKIP LOCKED`), обеспечивающая back-pressure и дедлайны. | `/Docs/brief.md`, "Механизм работы платформы" |
 | timeout failure_reason | Значение `failure_reason = 'timeout'` у Job при превышении `T_sync_response`; приводит к отмене и очистке временных данных. | `/Docs/brief.md`, "Механизм работы платформы" |
 | media public link | Публичная ссылка на временный файл, предназначена для скачивания провайдерами (например, Turbotext). | `/Docs/brief.md`, "Временное публичное медиа-хранилище" |
-| queueid | Идентификатор задачи в очереди Turbotext, сохраняется в `Job.provider_job_reference` и используется воркером для polling `do=get_result` без webhook. | `/Docs/brief.md`, раздел "Turbotext"【F:Docs/brief.md†L37-L40】 |
+| queueid | Идентификатор задачи в очереди Turbotext, сохраняется в `Job.provider_job_reference` и используется воркером для polling `do=get_result` в пределах `T_sync_response` без webhook. | `/Docs/brief.md`, раздел "Turbotext"【F:Docs/brief.md†L37-L40】 |

@@ -49,7 +49,7 @@ sequenceDiagram
     participant Storage as Media Storage
 
     DSLR->>API: POST /ingest/{slotId}
-    API->>Storage: Сохранить ingest payload (TTL = T_ingest_ttl = min(T_sync_response, T_public_link_ttl))
+    API->>Storage: Сохранить ingest payload (TTL = T_ingest_ttl = T_sync_response)
     API->>Queue: Создать Job (pending)
     API->>API: Ожидание результата (≤ T_sync_response)
     Queue->>Worker: Забрать Job
@@ -87,7 +87,7 @@ stateDiagram-v2
 - **Акторы:** Администратор/UI, Admin API, Media Storage.
 - **Предусловия:** Существующий `media_object`, связанный с Job в статусе `pending`.
 - **Основной поток:**
-  1. Администратор регистрирует файл через `POST /api/media/register` и получает `expires_at = now + T_public_link_ttl` (`T_public_link_ttl = clamp(T_sync_response, 45, 60)`).
+  1. Администратор регистрирует файл через `POST /api/media/register` и получает `expires_at = now + T_public_link_ttl` (`T_public_link_ttl = T_sync_response`).
   2. Провайдер не скачивает файл в течение рассчитанного TTL; срок истекает автоматически.
   3. Очиститель помечает запись `media_object` как удалённую и ставит Job `failure_reason = 'timeout'`.
 - **Ошибки:**

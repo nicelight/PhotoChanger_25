@@ -2,7 +2,7 @@
 
 ## Общие сведения
 - Интеграция выполняется через HTTP API Turbotext с очередью: задачи регистрируются запросом `do=create_queue`, а результат читается polling-запросом `do=get_result`; webhook не используется.【F:Docs/brief.md†L20-L40】
-- Провайдер работает с публичными ссылками на изображения и не хранит файлы: воркер обязан выдавать URL, доступные не менее `T_public_link_ttl = clamp(T_sync_response, 45, 60)` секунд, опираясь на дедлайн `Job.expires_at = max(T_sync_response, T_public_link_ttl)` для синхронной очистки и отмены.【F:Docs/brief.md†L45-L53】
+- Провайдер работает с публичными ссылками на изображения и не хранит файлы: воркер обязан выдавать URL, доступные не менее `T_public_link_ttl = T_sync_response` секунд, опираясь на дедлайн `Job.expires_at = T_sync_response` для синхронной очистки и отмены.【F:Docs/brief.md†L45-L53】
 
 ## Ингест-ограничения
 - Допустимые MIME: `image/jpeg`, `image/png`, `image/webp`; остальные форматы отклоняются ещё на этапе ingest/UI.【F:Docs/brief.md†L674-L678】【F:Docs/brief.md†L102-L115】
@@ -31,7 +31,7 @@
 - Маппинг: `subject_media_id` и `face_media_id` конвертируются в публичные ссылки из `template_media`; булевый `face_restore` передаётся напрямую. Финальный `uploaded_image` скачивается и сохраняется в полях `Job.result_*` как файл (`result_file_path` + метаданные).【F:Docs/brief.md†L805-L810】【F:Docs/brief.md†L333-L350】
 
 ## Лимиты и квоты провайдера
-- Turbotext потребляет публичные ссылки с TTL `T_public_link_ttl = clamp(T_sync_response, 45, 60)` и форматами JPEG/PNG/WEBP; воркер не продлевает ссылки автоматически, повторная регистрация выполняется заново по необходимости.【F:Docs/brief.md†L45-L53】
+- Turbotext потребляет публичные ссылки с TTL `T_public_link_ttl = T_sync_response` и форматами JPEG/PNG/WEBP; воркер не продлевает ссылки автоматически, повторная регистрация выполняется заново по необходимости.【F:Docs/brief.md†L45-L53】
 - API работает по модели очереди: повторные попытки polling-а получают `{"action": "reconnect"}` без штрафа; нужно соблюдать собственные ограничения Turbotext по частоте опроса (не указаны в брифе) и обрабатывать `limits` в ответе для мониторинга квот.【F:Docs/brief.md†L328-L346】
 
 ## Обработка ошибок и SLA
