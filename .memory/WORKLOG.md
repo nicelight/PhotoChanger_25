@@ -15,3 +15,8 @@ updated: 2025-10-08
 - 2025-01-14 09:05 — изучил Docs/brief.md и vision/context/use-cases для заполнения мемори банка
 - 2025-01-14 09:18 — сверил NFR, acceptance criteria, ограничения и провайдеров (Gemini/Turbotext) для контекста и глоссария
 - 2025-01-14 09:26 — подготовил план обновления MISSION/CONTEXT/USECASES/GLOSSARY перед заполнением
+
+## roadmap-sync-2025-02-14
+- 2025-02-14 12:05 — изучил Docs/roadmap.md для переноса задач в .memory/TASKS.md
+- 2025-02-14 12:09 — проверил текущую структуру .memory/TASKS.md и требования к форматированию
+- 2025-02-14 12:18 — перенёс фазы, задачи и подзадачи из Docs/roadmap.md в .memory/TASKS.md
