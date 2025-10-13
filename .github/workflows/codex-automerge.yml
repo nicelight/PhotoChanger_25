@@ -2,7 +2,7 @@ name: Codex Auto-merge (by label)
 
 on:
   pull_request:
-    types: [labeled, unlabeled, opened, reopened, synchronize, ready_for_review, edited]
+    types: [labeled, opened, reopened, synchronize, ready_for_review, edited]
 
 permissions:
   contents: write
@@ -10,22 +10,26 @@ permissions:
 
 jobs:
   enable_auto_merge:
-    # ПРОСТОЕ и надёжное условие: PR не draft И список имен меток содержит "codexautomerge"
-    if: >
-      github.event.pull_request.draft == false &&
-      contains(github.event.pull_request.labels.*.name, 'codexautomerge')
     runs-on: ubuntu-latest
     steps:
-      - name: Debug labels & action (temporary)
+      - name: Debug labels
         run: |
-          echo "action=${{ github.event.action }}"
-          echo "draft=${{ github.event.pull_request.draft }}"
-          echo "labels=${{ toJson(github.event.pull_request.labels) }}"
+          echo "Labels JSON:"
+          echo '${{ toJson(github.event.pull_request.labels) }}'
+
+      - name: Check for codexautomerge label
+        id: check
+        run: |
+          echo '${{ toJson(github.event.pull_request.labels) }}' | grep -q '"name":"codexautomerge"' && \
+            echo "has_label=true" >> $GITHUB_OUTPUT || \
+            echo "has_label=false" >> $GITHUB_OUTPUT
 
       - name: Checkout repository
+        if: steps.check.outputs.has_label == 'true'
         uses: actions/checkout@v4
 
       - name: Enable auto-merge on this PR
+        if: steps.check.outputs.has_label == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
