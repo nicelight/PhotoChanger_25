@@ -1,5 +1,5 @@
 {
-  "version": "0.1.1",
+  "version": "0.1.2",
   "released_at": "2025-10-16",
   "changes": [
     {
@@ -16,6 +16,11 @@
       "scope": "providers",
       "type": "patch",
       "description": "Corrected provider specs to drop unsupported limits and sync cleanup cadence with SDD"
+    },
+    {
+      "scope": "api",
+      "type": "patch",
+      "description": "Added operationId metadata to key endpoints to unblock client generation"
     }
   ],
   "semver_policy": {
