@@ -1,4 +1,8 @@
-"""PostgreSQL queue scaffolding aligned with blueprint constraints."""
+"""PostgreSQL queue repository scaffolding using SKIP LOCKED semantics.
+
+The interface follows ``spec/docs/blueprints/domain-model.md`` expectations for
+deadline management and transactional behaviour during phase 2.
+"""
 
 from __future__ import annotations
 
@@ -6,7 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Iterable
 
-from ..domain.models import Job
+from ...domain.models import Job
 from ..job_repository import JobRepository
 
 

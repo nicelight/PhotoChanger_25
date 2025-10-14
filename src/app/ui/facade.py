@@ -1,4 +1,8 @@
-"""Facade for registering UI routers independently from the API layer."""
+"""Facade for mounting UI routes onto FastAPI or custom binders.
+
+The scaffolding shares the :class:`~src.app.services.registry.ServiceRegistry`
+with the API layer to keep dependency injection consistent across routers.
+"""
 
 from __future__ import annotations
 

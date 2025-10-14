@@ -1,4 +1,8 @@
-"""Public download router stubs."""
+"""Public download router stubs for temporary results and media.
+
+Placeholder endpoints align with the public section of
+``spec/contracts/openapi.yaml`` while real media streaming is deferred.
+"""
 
 from __future__ import annotations
 

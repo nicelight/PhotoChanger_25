@@ -1,4 +1,10 @@
-"""FastAPI application factory aligned with the SDD scaffolding."""
+"""FastAPI application factory adhering to PhotoChanger contracts.
+
+The app exposes routers generated from ``spec/contracts/openapi.yaml`` and
+stores the :class:`~src.app.services.registry.ServiceRegistry` on the
+application state for dependency resolution. Real dependency wiring is deferred
+to implementation phases as described in the blueprints.
+"""
 
 from __future__ import annotations
 

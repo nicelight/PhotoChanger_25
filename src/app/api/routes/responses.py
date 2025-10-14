@@ -1,4 +1,4 @@
-"""Utility helpers for stubbed HTTP responses."""
+"""Utility responses shared across API router scaffolding."""
 
 from __future__ import annotations
 

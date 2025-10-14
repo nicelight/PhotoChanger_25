@@ -1,4 +1,8 @@
-"""Settings management router stubs."""
+"""Settings management router stubs for administrative operations.
+
+Contracts align with ``spec/contracts/openapi.yaml`` to expose TTL configuration
+and provider credential management without executing business logic yet.
+"""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Authentication router stubs aligned with the OpenAPI contract."""
+"""Authentication router stubs defined by ``spec/contracts/openapi.yaml``."""
 
 from __future__ import annotations
 
