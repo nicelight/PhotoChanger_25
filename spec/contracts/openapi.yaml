@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: PhotoChanger Platform API
-  version: 0.1.0
+  version: 0.1.2
   description: |
     Контракт REST API платформы PhotoChanger, включающий ingest-эндпоинт для DSLR Remote Pro
     и внутренние операции для UI управления слотами, медиа и статистикой. Основан на утверждённых

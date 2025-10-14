@@ -1,0 +1,39 @@
+{
+  "taskId": "2.1",
+  "autonomyLevel": 2,
+  "decisions": [
+    {
+      "id": "D1",
+      "title": "OpenAPI info.version bumped to 0.1.2 and stubs regenerated",
+      "isKey": true
+    },
+    {
+      "id": "S1",
+      "title": "Aligned enum query parameters across routes and API client with contract",
+      "isKey": false
+    }
+  ],
+  "architectureChanges": [],
+  "fileChanges": [
+    {"path": "spec/contracts/openapi.yaml", "change": "modified", "summary": "info.version bumped to 0.1.2"},
+    {"path": "src/app/api/generated/stubs.py", "change": "modified", "summary": "Regenerated stubs for OpenAPI v0.1.2"},
+    {"path": "src/app/api/routes/jobs.py", "change": "modified", "summary": "Query parameters restricted to documented enums"},
+    {"path": "src/app/api/routes/stats.py", "change": "modified", "summary": "Stats endpoints enforce enum choices"},
+    {"path": "src/app/api/client.py", "change": "modified", "summary": "Client method signatures use enum literals"},
+    {"path": ".memory/TASKS.md", "change": "modified", "summary": "Marked subtask 2.1 as complete"},
+    {"path": ".memory/PROGRESS.md", "change": "modified", "summary": "Logged completion of subtask 2.1"},
+    {"path": ".memory/ASKS.md", "change": "modified", "summary": "Captured user request ASK-0004 as done"},
+    {"path": ".memory/WORKLOG.md", "change": "modified", "summary": "Recorded execution steps"}
+  ],
+  "risks": [],
+  "artifacts": {
+    "contracts": "spec/contracts/openapi.yaml updated to 0.1.2",
+    "tests": "pytest -q (no tests ran)",
+    "decisions": "No new ADR entries required",
+    "progress": ".memory/PROGRESS.md updated",
+    "tasks": ".memory/TASKS.md updated"
+  },
+  "nextSteps": [
+    "Подготовить аудит доменных сервисов по подпункту 2.2"
+  ]
+}
