@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Iterable
 
-from ..domain.models import Job
+from app.domain.models import Job
 from ..job_repository import JobRepository
 
 
