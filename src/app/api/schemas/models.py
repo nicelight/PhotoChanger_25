@@ -163,7 +163,7 @@ class IngestRequest(BaseModel):
         description="Глобальный пароль ingest, проверяемый на сервере",
         min_length=1,
     )
-    fileToUpload: str = Field(..., description="Основной файл изображения")
+    fileToUpload: bytes = Field(..., description="Основной файл изображения")
 
 
 class Job(BaseModel):
@@ -400,7 +400,7 @@ class MediaRegisterRequest(BaseModel):
     """Загрузка временного файла. TTL ссылки вычисляется как T_sync_response секунд и не передаётся в запросе"""
 
     model_config = ConfigDict(extra="forbid")
-    file: str = Field(
+    file: bytes = Field(
         ..., description="Изображение JPEG/PNG/WEBP, загружаемое во временное хранилище"
     )
     job_id: UUID | None = Field(
@@ -778,7 +778,7 @@ class TemplateMediaRegisterRequest(BaseModel):
     """Schema for TemplateMediaRegisterRequest"""
 
     model_config = ConfigDict(extra="forbid")
-    file: str = Field(
+    file: bytes = Field(
         ...,
         description="Файл шаблона (JPEG/PNG/WEBP/HEIC/HEIF) для постоянного хранения",
     )

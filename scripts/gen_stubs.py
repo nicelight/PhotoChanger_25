@@ -349,6 +349,9 @@ class SchemaGenerator:
         if type_value == "null":
             return TypeInfo(annotation="None")
         if type_value == "string":
+            encoding = schema.get("contentEncoding")
+            if encoding == "binary":
+                return TypeInfo(annotation="bytes")
             fmt = schema.get("format")
             if fmt == "date-time":
                 return TypeInfo(
