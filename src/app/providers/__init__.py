@@ -1,6 +1,11 @@
-"""Пакет для адаптеров AI-провайдеров, подключаемых как плагины.
+"""Пакет для адаптеров AI-провайдеров, подключаемых как плагины."""
 
-Конкретные адаптеры обязаны реализовывать контракты из
-``spec/contracts/providers`` и использовать фабрики, определённые в
-``src/app/plugins``. Пока что пакет выступает только шаблоном.
-"""
+from .base import ProviderAdapter
+from .gemini import GeminiProviderAdapter
+from .turbotext import TurbotextProviderAdapter
+
+__all__ = [
+    "ProviderAdapter",
+    "GeminiProviderAdapter",
+    "TurbotextProviderAdapter",
+]
