@@ -350,9 +350,17 @@ class SchemaGenerator:
             return TypeInfo(annotation="None")
         if type_value == "string":
             encoding = schema.get("contentEncoding")
-            if encoding == "binary":
+            if isinstance(encoding, str) and encoding.lower() == "binary":
+                return TypeInfo(annotation="bytes")
+            media_type = schema.get("contentMediaType")
+            if isinstance(media_type, str) and media_type.lower() in {
+                "application/octet-stream",
+                "application/binary",
+            }:
                 return TypeInfo(annotation="bytes")
             fmt = schema.get("format")
+            if isinstance(fmt, str) and fmt.lower() in {"binary", "byte"}:
+                return TypeInfo(annotation="bytes")
             if fmt == "date-time":
                 return TypeInfo(
                     annotation="datetime", imports={("datetime", "datetime")}
