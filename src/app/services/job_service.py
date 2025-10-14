@@ -10,7 +10,14 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Iterable
 
-from ..domain.models import Job, MediaObject, ProcessingLog, Settings, Slot
+from ..domain.models import (
+    Job,
+    JobFailureReason,
+    MediaObject,
+    ProcessingLog,
+    Settings,
+    Slot,
+)
 
 
 class JobService:
@@ -23,12 +30,18 @@ class JobService:
         payload: MediaObject | None,
         settings: Settings,
     ) -> Job:
-        """Create a new job for the provided slot and payload."""
+        """Create a new job for the provided slot and payload.
+
+        Implementations must calculate ``job.expires_at`` as
+        ``job.created_at + settings.ingest.sync_response_timeout_sec`` to follow
+        the contract from ``domain-model.md`` and persist the job via the queue
+        repository.
+        """
 
         raise NotImplementedError
 
     def acquire_next_job(self, *, now: datetime) -> Job | None:
-        """Pull the next job from the queue respecting ``expires_at`` deadlines."""
+        """Pull the next job respecting ``expires_at`` and SKIP LOCKED semantics."""
 
         raise NotImplementedError
 
@@ -40,7 +53,13 @@ class JobService:
         result_media: MediaObject | None,
         inline_preview: str | None,
     ) -> Job:
-        """Finalize a job and persist 72h retention metadata."""
+        """Finalize a job and persist 72h retention metadata.
+
+        ``result_media`` should represent the stored result artifact whose
+        ``expires_at`` equals ``finalized_at + T_result_retention`` (72h). The
+        method is also responsible for clearing inline previews once the HTTP
+        response is delivered.
+        """
 
         raise NotImplementedError
 
@@ -48,10 +67,15 @@ class JobService:
         self,
         job: Job,
         *,
-        failure_reason: str,
+        failure_reason: JobFailureReason,
         occurred_at: datetime,
     ) -> Job:
-        """Mark a job as failed and propagate timeout/cancellation reasons."""
+        """Mark a job as failed and propagate timeout/cancellation reasons.
+
+        ``failure_reason`` must match one of the values defined in
+        :class:`JobFailureReason` (``timeout``, ``provider_error`` or
+        ``cancelled``), aligning with ``spec/contracts/schemas/Job.json``.
+        """
 
         raise NotImplementedError
 
@@ -63,6 +87,11 @@ class JobService:
         raise NotImplementedError
 
     def refresh_recent_results(self, slot: Slot, *, limit: int = 10) -> Slot:
-        """Update slot.recent_results with the latest successful jobs."""
+        """Update ``slot.recent_results`` with recent finalized jobs.
+
+        The returned slot should include gallery metadata matching the
+        ``Result`` schema: ``thumbnail_url``/``download_url`` pairs and
+        ``result_expires_at`` calculated as ``finalized_at + T_result_retention``.
+        """
 
         raise NotImplementedError

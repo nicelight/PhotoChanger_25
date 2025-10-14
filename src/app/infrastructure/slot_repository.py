@@ -21,14 +21,23 @@ class SlotRepository:
         raise NotImplementedError
 
     def save_slot(self, slot: Slot) -> Slot:
-        """Persist slot updates, including operation settings JSON."""
+        """Persist slot updates, including provider/operation identifiers.
+
+        Stored rows must match ``spec/contracts/schemas/Slot.json`` so that the
+        admin API can emit the same structure without additional mapping.
+        """
 
         raise NotImplementedError
 
     def attach_templates(
         self, slot: Slot, templates: Iterable[TemplateMedia]
     ) -> Slot:
-        """Persist bindings between a slot and template media."""
+        """Persist bindings between a slot and template media keyed by ``setting_key``.
+
+        The persistence layer is responsible for maintaining
+        ``slot_template_binding`` records that reflect
+        ``TemplateMedia.setting_key``/``slot_id`` pairs.
+        """
 
         raise NotImplementedError
 

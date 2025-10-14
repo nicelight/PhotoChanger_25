@@ -30,7 +30,12 @@ class QueueWorker:
         raise NotImplementedError
 
     def process_job(self, job: Job, *, now: datetime) -> None:
-        """Execute provider-specific logic keeping ``job.expires_at`` in mind."""
+        """Execute provider-specific logic keeping ``job.expires_at`` in mind.
+
+        Implementations must finalize the job within ``T_sync_response`` and
+        persist ``result_expires_at = finalized_at + T_result_retention`` for
+        successful outcomes, coordinating with :class:`MediaService`.
+        """
 
         raise NotImplementedError
 
