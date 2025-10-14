@@ -15,10 +15,16 @@ from pydantic import Field
 
 try:  # pragma: no cover - optional dependency bridge
     from pydantic_settings import BaseSettings, SettingsConfigDict
-except (
-    ImportError
-):  # pragma: no cover - fallback for environments without pydantic-settings
-    from pydantic import BaseSettings  # type: ignore
+except ImportError:  # pragma: no cover - fallback for environments without pydantic-settings
+    try:
+        from pydantic import BaseSettings  # type: ignore[no-redef]
+    except ImportError:  # pragma: no cover - Pydantic v2 without settings extras
+        from pydantic import BaseModel
+
+        class BaseSettings(BaseModel):  # type: ignore[override]
+            """Fallback settings base when pydantic-settings is unavailable."""
+
+            model_config = {}
 
     SettingsConfigDict = dict  # type: ignore[assignment]
 
