@@ -1,25 +1,25 @@
 """HTTP-фасад, который должен соответствовать контракту из ``spec/contracts/openapi.yaml``.
 
-Шаблон фиксирует структуру точек расширения для будущей реализации. Реальные
-обработчики обязаны учитывать доменную семантику, описанную в
-``spec/docs/blueprints`` (слоты, шаблонные медиа, ingest). Фасад остаётся
-тонким: он делегирует работу в доменные сервисы, которые извлекаются из
-``ServiceRegistry``.
+Фасад объединяет сгенерированные стаб-роутеры и предоставляет удобные методы
+подключения к FastAPI-приложению либо внешнему биндеру. В фазе scaffolding
+обработчики отсутствуют — см. ``src/app/api/routes``.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Protocol
+from typing import Iterable, Protocol
+
+from fastapi import APIRouter, FastAPI
 
 from ..services.registry import ServiceRegistry
 
 
-class RouteBinder(Protocol):
-    """Интерфейс адаптера веб-фреймворка для регистрации маршрутов."""
+class RouterBinder(Protocol):
+    """Интерфейс адаптера веб-фреймворка для регистрации маршрутизаторов."""
 
-    def add_route(self, path: str, method: str, handler: Callable[..., object]) -> None:
-        """Регистрирует обработчик HTTP-метода для пути."""
+    def include_router(self, router: APIRouter) -> None:
+        """Регистрирует ``APIRouter`` в стороннем приложении."""
 
 
 @dataclass(slots=True)
@@ -28,46 +28,32 @@ class ApiFacade:
 
     registry: ServiceRegistry
 
-    def bind(self, binder: RouteBinder) -> None:
-        """Привязывает обработчики API к веб-фреймворку.
+    def mount(self, app: FastAPI) -> None:
+        """Подключает все маршрутизаторы к экземпляру FastAPI."""
 
-        Каждый вспомогательный метод отвечает за отдельный раздел OpenAPI:
+        for router in self._iter_routers():
+            app.include_router(router)
 
-        * ``_bind_slot_routes`` — CRUD слотов и ingest (`#/paths/~1api~1slots`).
-        * ``_bind_template_media_routes`` — операции над шаблонными медиа
-          (`#/paths/~1api~1template-media`).
-        * ``_bind_public_routes`` — публичные загрузки и статические ресурсы
-          (`#/paths/~1public`).
+    def include_routers(self, binder: RouterBinder) -> None:
+        """Регистрирует маршрутизаторы через абстрактный биндер."""
 
-        Шаблонные методы ниже намеренно выбрасывают ``NotImplementedError``.
-        Это сигнал интеграторам, что необходимо сгенерировать реальные
-        обработчики по спецификациям.
-        """
+        for router in self._iter_routers():
+            binder.include_router(router)
 
-        self._bind_slot_routes(binder)
-        self._bind_template_media_routes(binder)
-        self._bind_public_routes(binder)
+    @staticmethod
+    def _iter_routers() -> Iterable[APIRouter]:
+        """Возвращает стаб-роутеры, сгруппированные по разделам OpenAPI."""
 
-    def _bind_slot_routes(self, binder: RouteBinder) -> None:  # noqa: D401
-        """Настроить маршруты управления слотами согласно OpenAPI."""
+        from .routes import auth, ingest, jobs, media, providers, public, settings, slots, stats
 
-        _ = binder  # placeholder to silence linters
-        raise NotImplementedError(
-            "Сгенерируйте обработчики слотов из spec/contracts/openapi.yaml"
-        )
-
-    def _bind_template_media_routes(self, binder: RouteBinder) -> None:  # noqa: D401
-        """Настроить маршруты управления шаблонными медиа."""
-
-        _ = binder
-        raise NotImplementedError(
-            "Сгенерируйте обработчики шаблонов из spec/contracts/openapi.yaml"
-        )
-
-    def _bind_public_routes(self, binder: RouteBinder) -> None:  # noqa: D401
-        """Настроить публичные маршруты скачивания медиа."""
-
-        _ = binder
-        raise NotImplementedError(
-            "Сгенерируйте публичные обработчики из spec/contracts/openapi.yaml"
+        return (
+            auth.router,
+            providers.router,
+            slots.router,
+            settings.router,
+            media.router,
+            jobs.router,
+            stats.router,
+            ingest.router,
+            public.router,
         )

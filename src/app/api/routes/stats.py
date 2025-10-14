@@ -1,0 +1,100 @@
+"""Statistics router stubs for slots and global aggregates."""
+
+from __future__ import annotations
+
+from datetime import datetime
+from typing import Annotated, Optional
+
+from fastapi import APIRouter, Depends, Path, Query, status
+from fastapi.responses import JSONResponse
+
+from ..schemas import GlobalStatsResponse, SlotIdentifier, SlotStatsResponse
+from .dependencies import require_bearer_authentication
+from .responses import authentication_not_configured, endpoint_not_implemented
+
+router = APIRouter(prefix="/api", tags=["Stats"])
+
+
+@router.get(
+    "/stats/{slot_id}",
+    response_model=SlotStatsResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def get_slot_stats(
+    authenticated: Annotated[bool, Depends(require_bearer_authentication)],
+    slot_id: Annotated[SlotIdentifier, Path(description="Идентификатор слота")],
+    from_dt: Annotated[
+        Optional[datetime],
+        Query(alias="from", description="Начало диапазона (UTC). Максимальная длительность — 31 день."),
+    ] = None,
+    to_dt: Annotated[
+        Optional[datetime],
+        Query(alias="to", description="Конец диапазона (UTC)"),
+    ] = None,
+    group_by: Annotated[
+        str,
+        Query(description="Гранулярность агрегации", regex="^(hour|day|week)$"),
+    ] = "day",
+) -> JSONResponse:
+    """Получить статистику по слоту."""
+
+    _ = (slot_id, from_dt, to_dt, group_by)
+    if not authenticated:
+        return authentication_not_configured()
+    return endpoint_not_implemented("getSlotStats")
+
+
+@router.get(
+    "/stats/global",
+    response_model=GlobalStatsResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def get_global_stats(
+    authenticated: Annotated[bool, Depends(require_bearer_authentication)],
+    from_dt: Annotated[
+        Optional[datetime],
+        Query(alias="from", description="Начало диапазона (UTC). Максимум 90 дней."),
+    ] = None,
+    to_dt: Annotated[
+        Optional[datetime],
+        Query(alias="to", description="Конец диапазона (UTC)"),
+    ] = None,
+    group_by: Annotated[
+        str,
+        Query(description="Гранулярность агрегирования", regex="^(day|week|month)$"),
+    ] = "week",
+    page: Annotated[int, Query(ge=1, description="Номер страницы постраничного просмотра.")] = 1,
+    page_size: Annotated[
+        int,
+        Query(ge=1, le=50, description="Количество агрегатов на страницу."),
+    ] = 10,
+    sort_by: Annotated[
+        str,
+        Query(description="Поле сортировки агрегированной статистики."),
+    ] = "period_start",
+    sort_order: Annotated[
+        str,
+        Query(description="Направление сортировки агрегатов."),
+    ] = "desc",
+    provider_id: Annotated[Optional[str], Query(description="Фильтр по провайдеру")] = None,
+    slot_id: Annotated[Optional[SlotIdentifier], Query(description="Фильтр по конкретному слоту")] = None,
+) -> JSONResponse:
+    """Получить агрегированную статистику по слотам."""
+
+    _ = (
+        from_dt,
+        to_dt,
+        group_by,
+        page,
+        page_size,
+        sort_by,
+        sort_order,
+        provider_id,
+        slot_id,
+    )
+    if not authenticated:
+        return authentication_not_configured()
+    return endpoint_not_implemented("getGlobalStats")
+
+
+__all__ = ["router", "get_slot_stats", "get_global_stats"]
