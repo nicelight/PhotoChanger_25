@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 from uuid import UUID
 
 from httpx import AsyncClient
@@ -101,14 +101,14 @@ class ApiClient:
 
     async def list_jobs(
         self,
-        status_filter: Optional[str] = None,
+        status_filter: Optional[Literal["pending", "processing"]] = None,
         is_finalized: Optional[bool] = None,
-        failure_reason: Optional[str] = None,
+        failure_reason: Optional[Literal["timeout", "provider_error", "cancelled"]] = None,
         slot_id: Optional[SlotIdentifier] = None,
         page: int = 1,
         page_size: int = 20,
-        sort_by: str = "expires_at",
-        sort_order: str = "asc",
+        sort_by: Literal["created_at", "expires_at"] = "expires_at",
+        sort_order: Literal["asc", "desc"] = "asc",
     ) -> JobListResponse:
         """Получить список задач ingest-очереди."""
 
@@ -159,7 +159,7 @@ class ApiClient:
         slot_id: SlotIdentifier,
         from_dt: Optional[datetime] = None,
         to_dt: Optional[datetime] = None,
-        group_by: str = "day",
+        group_by: Literal["hour", "day", "week"] = "day",
     ) -> SlotStatsResponse:
         """Получить статистику по слоту."""
 
@@ -169,11 +169,11 @@ class ApiClient:
         self,
         from_dt: Optional[datetime] = None,
         to_dt: Optional[datetime] = None,
-        group_by: str = "week",
+        group_by: Literal["day", "week", "month"] = "week",
         page: int = 1,
         page_size: int = 10,
-        sort_by: str = "period_start",
-        sort_order: str = "desc",
+        sort_by: Literal["period_start", "success", "errors", "ingest_count"] = "period_start",
+        sort_order: Literal["asc", "desc"] = "desc",
         provider_id: Optional[str] = None,
         slot_id: Optional[SlotIdentifier] = None,
     ) -> GlobalStatsResponse:

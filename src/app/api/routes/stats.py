@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, Optional
+from typing import Annotated, Literal, Optional
 
 from fastapi import APIRouter, Depends, Path, Query, status
 from fastapi.responses import JSONResponse
@@ -32,8 +32,8 @@ async def get_slot_stats(
         Query(alias="to", description="Конец диапазона (UTC)"),
     ] = None,
     group_by: Annotated[
-        str,
-        Query(description="Гранулярность агрегации", regex="^(hour|day|week)$"),
+        Literal["hour", "day", "week"],
+        Query(description="Гранулярность агрегации"),
     ] = "day",
 ) -> JSONResponse:
     """Получить статистику по слоту."""
@@ -60,8 +60,8 @@ async def get_global_stats(
         Query(alias="to", description="Конец диапазона (UTC)"),
     ] = None,
     group_by: Annotated[
-        str,
-        Query(description="Гранулярность агрегирования", regex="^(day|week|month)$"),
+        Literal["day", "week", "month"],
+        Query(description="Гранулярность агрегирования"),
     ] = "week",
     page: Annotated[int, Query(ge=1, description="Номер страницы постраничного просмотра.")] = 1,
     page_size: Annotated[
@@ -69,11 +69,11 @@ async def get_global_stats(
         Query(ge=1, le=50, description="Количество агрегатов на страницу."),
     ] = 10,
     sort_by: Annotated[
-        str,
+        Literal["period_start", "success", "errors", "ingest_count"],
         Query(description="Поле сортировки агрегированной статистики."),
     ] = "period_start",
     sort_order: Annotated[
-        str,
+        Literal["asc", "desc"],
         Query(description="Направление сортировки агрегатов."),
     ] = "desc",
     provider_id: Annotated[Optional[str], Query(description="Фильтр по провайдеру")] = None,
