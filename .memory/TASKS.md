@@ -22,12 +22,12 @@ updated: 2025-10-16
 - [ ] **1. Фаза 1 — Контракты и схемы (SPEC REVIEW)**
   - *Цель:* подтвердить полноту и корректность HTTP/JSON контрактов до генерации стабов.
   - *Задачи:*
-    - [ ] 1.1 Провести ревью OpenAPI.
-      - [ ] 1.1.1 Проверить ingest-эндпоинты, админ-API (`/api/slots`, `/api/settings`, `/api/stats/*`) и публичную выдачу `GET /public/results/{job_id}`.
-      - [ ] 1.1.2 Убедиться в корректности статусов 200/400/401/403/410/504 и описаний ошибок.
-    - [ ] 1.2 Верифицировать JSON Schema сущностей.
-      - [ ] 1.2.1 Сопоставить определения `Slot`, `Job`, `MediaObject`, `TemplateMedia`, `Result`, `Settings`, `AuthToken`, `Error`.
-      - [ ] 1.2.2 Проверить согласованность TTL (`T_sync_response`, `T_public_link_ttl`, `T_result_retention`) между схемами и текстовыми описаниями.
+    - [x] 1.1 Провести ревью OpenAPI.
+      - [x] 1.1.1 Проверить ingest-эндпоинты, админ-API (`/api/slots`, `/api/settings`, `/api/stats/*`) и публичную выдачу `GET /public/results/{job_id}`.
+      - [x] 1.1.2 Убедиться в корректности статусов 200/400/401/403/410/504 и описаний ошибок.
+    - [x] 1.2 Верифицировать JSON Schema сущностей.
+      - [x] 1.2.1 Сопоставить определения `Slot`, `Job`, `MediaObject`, `TemplateMedia`, `Result`, `Settings`, `AuthToken`, `Error`.
+      - [x] 1.2.2 Проверить согласованность TTL (`T_sync_response`, `T_public_link_ttl`, `T_result_retention`) между схемами и текстовыми описаниями.
     - [ ] 1.3 Сверить спецификации провайдеров с контрактами.
       - [ ] 1.3.1 Сопоставить ограничения Gemini из `Docs/providers/gemini.md` с OpenAPI и доменной моделью.
       - [ ] 1.3.2 Сравнить лимиты Turbotext (`Docs/providers/turbotext.md`) и требования очереди.

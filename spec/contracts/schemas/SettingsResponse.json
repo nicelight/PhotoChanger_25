@@ -1,25 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "SettingsResponse",
-  "type": "object",
-  "required": ["dslr_password", "provider_keys", "ingest", "media_cache"],
-  "properties": {
-    "dslr_password": {
-      "$ref": "./SettingsDslrPasswordStatus.json"
-    },
-    "provider_keys": {
-      "type": "object",
-      "description": "Секреты и публичные параметры AI-провайдеров, индексированные по идентификатору",
-      "additionalProperties": {
-        "$ref": "./SettingsProviderKeyStatus.json"
-      }
-    },
-    "ingest": {
-      "$ref": "./SettingsIngestConfig.json"
-    },
-    "media_cache": {
-      "$ref": "./MediaCacheSettings.json"
-    }
-  },
-  "additionalProperties": false
+  "description": "Ответ администратора использует базовую схему Settings",
+  "allOf": [
+    { "$ref": "./Settings.json" }
+  ]
 }

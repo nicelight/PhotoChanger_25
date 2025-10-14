@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Result",
+  "type": "object",
+  "description": "Метаданные итогового файла обработки, возвращаемые административным API",
+  "required": [
+    "job_id",
+    "thumbnail_url",
+    "download_url",
+    "completed_at",
+    "result_expires_at",
+    "mime"
+  ],
+  "properties": {
+    "job_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Идентификатор Job, по которому получен результат"
+    },
+    "thumbnail_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL превью изображения для галереи UI"
+    },
+    "download_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Публичная ссылка на итоговый файл (`GET /public/results/{job_id}`)"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Метка времени финализации задачи"
+    },
+    "result_expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Момент истечения TTL итогового файла (`finalized_at + T_result_retention = 72h`)"
+    },
+    "mime": {
+      "type": "string",
+      "pattern": "^image/",
+      "description": "MIME-тип итогового изображения"
+    },
+    "size_bytes": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Размер итогового файла в байтах, если доступен"
+    }
+  },
+  "additionalProperties": false
+}

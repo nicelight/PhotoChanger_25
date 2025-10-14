@@ -1,11 +1,16 @@
 {
-  "version": "0.1.0",
-  "released_at": "2025-10-08",
+  "version": "0.1.1",
+  "released_at": "2025-10-16",
   "changes": [
     {
       "scope": "api",
       "type": "init",
       "description": "Initial API scaffold"
+    },
+    {
+      "scope": "api",
+      "type": "patch",
+      "description": "Clarified AuthToken/Settings/Result schemas and aligned TTL fields"
     }
   ],
   "semver_policy": {
