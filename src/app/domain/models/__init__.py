@@ -140,10 +140,10 @@ class TemplateMedia:
     path: str
     mime: str
     size_bytes: int
+    created_at: datetime
     checksum: str | None = None
     label: str | None = None
     uploaded_by: str | None = None
-    created_at: datetime
 
 
 @dataclass(slots=True)
