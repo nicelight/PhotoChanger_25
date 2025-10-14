@@ -53,7 +53,7 @@
       "type": "array",
       "description": "Последние успешные результаты этого слота (не более 10 элементов, сортировка по `completed_at` убыванию).",
       "items": {
-        "$ref": "./SlotResultPreview.json"
+        "$ref": "./Result.json"
       },
       "default": []
     }

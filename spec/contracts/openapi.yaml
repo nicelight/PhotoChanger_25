@@ -48,7 +48,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ./schemas/LoginResponse.json
+                $ref: ./schemas/AuthToken.json
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -213,7 +213,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ./schemas/SettingsResponse.json
+                $ref: ./schemas/Settings.json
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -239,7 +239,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ./schemas/SettingsResponse.json
+                $ref: ./schemas/Settings.json
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
