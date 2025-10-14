@@ -1,10 +1,22 @@
-"""Доменные сервисы PhotoChanger. Реализация подключается через плагины.
+"""Доменные сервисы PhotoChanger.
 
-Контракты сервисов определяются сценариями из ``spec/docs/blueprints`` и
-OpenAPI (`spec/contracts/openapi.yaml`). Пока пакет остаётся пустым
-шаблоном для будущих реализаций.
+На этой фазе определяются только интерфейсы без бизнес-логики. Реализации
+подключаются через плагины согласно ``spec/docs/blueprints`` и контрактам из
+``spec/contracts``.
 """
 
+from .job_service import JobService
+from .media_service import MediaService
 from .registry import ServiceRegistry
+from .settings_service import SettingsService
+from .slot_service import SlotService
+from .stats_service import StatsService
 
-__all__ = ["ServiceRegistry"]
+__all__ = [
+    "JobService",
+    "MediaService",
+    "ServiceRegistry",
+    "SettingsService",
+    "SlotService",
+    "StatsService",
+]
