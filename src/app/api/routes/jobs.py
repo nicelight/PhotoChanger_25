@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Optional
+from typing import Annotated, Literal, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Path, Query, status
@@ -23,7 +23,7 @@ router = APIRouter(prefix="/api", tags=["Jobs"])
 async def list_jobs(
     authenticated: Annotated[bool, Depends(require_bearer_authentication)],
     status_filter: Annotated[
-        Optional[str],
+        Optional[Literal["pending", "processing"]],
         Query(
             alias="status",
             description="Фильтр по текущему промежуточному статусу задачи.",
@@ -34,7 +34,7 @@ async def list_jobs(
         Query(description="Ограничить выборку финализированными или активными задачами."),
     ] = None,
     failure_reason: Annotated[
-        Optional[str],
+        Optional[Literal["timeout", "provider_error", "cancelled"]],
         Query(description="Показать только задачи с указанной причиной неуспеха."),
     ] = None,
     slot_id: Annotated[
@@ -47,11 +47,11 @@ async def list_jobs(
         Query(ge=1, le=100, description="Количество записей на страницу."),
     ] = 20,
     sort_by: Annotated[
-        str,
+        Literal["created_at", "expires_at"],
         Query(description="Поле сортировки списка задач."),
     ] = "expires_at",
     sort_order: Annotated[
-        str,
+        Literal["asc", "desc"],
         Query(description="Направление сортировки."),
     ] = "asc",
 ) -> JSONResponse:
