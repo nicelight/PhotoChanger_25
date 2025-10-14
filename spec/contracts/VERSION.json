@@ -8,9 +8,14 @@
       "description": "Initial API scaffold"
     },
     {
-      "scope": "api",
+      "scope": "providers",
       "type": "patch",
-      "description": "Clarified AuthToken/Settings/Result schemas and aligned TTL fields"
+      "description": "Aligned Gemini/Turbotext contracts with provider limits, queue TTL and cleanup requirements"
+    },
+    {
+      "scope": "providers",
+      "type": "patch",
+      "description": "Corrected provider specs to drop unsupported limits and sync cleanup cadence with SDD"
     }
   ],
   "semver_policy": {
