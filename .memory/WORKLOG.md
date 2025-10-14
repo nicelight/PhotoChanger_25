@@ -62,3 +62,7 @@ updated: 2025-10-18
 - 2025-10-18 10:32 — добавил каркас AppConfig и FastAPI-фабрику, задокументировал TODO по DI
 - 2025-10-18 10:45 — реализовал идемпотентный scripts/gen_stubs.py и описал запуск в README
 - 2025-10-18 10:57 — настроил scripts/check_scaffolding.sh для ruff/mypy/pytest и убедился, что команды проходят на текущей ревизии
+- 2025-10-18 11:20 — расширил доменную модель (JobDeadline, JobMetrics) и добавил модуль deadlines с NotImplemented функциями расчёта TTL
+- 2025-10-18 11:32 — создал PostgresJobQueue и конфигурацию очереди, обновил инфраструктурный __init__
+- 2025-10-18 11:44 — описал ProviderOperation/ProviderConfig в core.ui_config и подготовил configs/providers.json для UI scaffolding
+- 2025-10-18 11:55 — актуализировал backlog phase2-service-gaps.md и мемори-файлы (TASKS, PROGRESS, ASKS, INDEX)

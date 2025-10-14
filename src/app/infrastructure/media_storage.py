@@ -45,4 +45,3 @@ class MediaStorage:
         """Remove the object from storage immediately."""
 
         raise NotImplementedError
-

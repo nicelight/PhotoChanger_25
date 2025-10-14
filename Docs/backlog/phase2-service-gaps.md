@@ -8,6 +8,9 @@ implementations. Follow-up phases must address the following integration gaps:
   Queue operations have to honour `job.expires_at = created_at + T_sync_response`
   and use `SELECT ... FOR UPDATE SKIP LOCKED` with appropriate indexes to avoid
   head-of-line blocking.
+- **PostgresJobQueue implementation** — wire `PostgresJobQueue` with psycopg or
+  SQLAlchemy, inject `statement_timeout`, batching and retry policies matching
+  `T_sync_response`.
 - **Transaction management** — wire a concrete `UnitOfWork` (SQLAlchemy or
   psycopg-based) to coordinate `JobRepository`, `SlotRepository`,
   `SettingsRepository`, `StatsRepository` and media storage updates within
@@ -34,3 +37,10 @@ implementations. Follow-up phases must address the following integration gaps:
 - **Service wiring** — implement `services.container.build_service_registry()`
   to register repositories, storage backends, providers and the unit-of-work so
   that FastAPI endpoints and workers can resolve concrete implementations.
+- **Deadline helpers** — implement calculations in
+  `domain.deadlines` for `calculate_job_expires_at`, `calculate_deadline_info`,
+  `calculate_artifact_expiry` and `calculate_result_expires_at`, ensuring they
+  align with `T_sync_response`/`T_result_retention`.
+- **UI provider catalog** — implement JSON loader in `core.ui_config` and
+  validate that `configs/providers.json` stays in sync with
+  `ProviderConfig/ProviderOperation` contracts.

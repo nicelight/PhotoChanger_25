@@ -109,6 +109,34 @@ class Job:
 
 
 @dataclass(slots=True)
+class JobDeadline:
+    """Aggregated deadline info returned to admin and ingest clients.
+
+    The structure mirrors ``spec/contracts/schemas/JobDeadline.json`` and is
+    produced by the helper in :mod:`src.app.domain.deadlines`. Business logic
+    will calculate ``remaining_ms`` and ``is_expired`` based on
+    ``job.expires_at`` and the current time.
+    """
+
+    expires_at: datetime
+    remaining_ms: int
+    is_expired: bool
+
+
+@dataclass(slots=True)
+class JobMetrics:
+    """Timing breakdown associated with a job lifecycle.
+
+    Values correspond to ``JobMetrics`` in ``spec/contracts/schemas`` and will
+    be populated by queue/worker instrumentation once implemented.
+    """
+
+    queue_wait_ms: int | None
+    processing_ms: int | None
+    total_elapsed_ms: int | None
+
+
+@dataclass(slots=True)
 class MediaObject:
     """Represents a temporary public link with a strict TTL.
 
@@ -208,16 +236,16 @@ class Settings:
     """Application-wide configuration, including TTL definitions."""
 
     dslr_password: SettingsDslrPasswordStatus
-    provider_keys: Mapping[str, SettingsProviderKeyStatus] = field(
-        default_factory=dict
-    )
+    provider_keys: Mapping[str, SettingsProviderKeyStatus] = field(default_factory=dict)
     ingest: SettingsIngestConfig
     media_cache: MediaCacheSettings
 
 
 __all__ = [
     "Job",
+    "JobDeadline",
     "JobFailureReason",
+    "JobMetrics",
     "JobStatus",
     "MediaCacheSettings",
     "MediaObject",

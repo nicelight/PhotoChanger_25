@@ -9,9 +9,12 @@ from .slot_repository import SlotRepository
 from .stats_repository import StatsRepository
 from .template_storage import TemplateStorage
 from .unit_of_work import UnitOfWork
+from .queue import PostgresJobQueue, PostgresQueueConfig
 
 __all__ = [
     "JobRepository",
+    "PostgresJobQueue",
+    "PostgresQueueConfig",
     "MediaStorage",
     "SettingsRepository",
     "SlotRepository",
