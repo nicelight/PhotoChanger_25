@@ -30,9 +30,7 @@ class SlotService:
 
         raise NotImplementedError
 
-    def attach_templates(
-        self, slot: Slot, templates: Iterable[TemplateMedia]
-    ) -> Slot:
+    def attach_templates(self, slot: Slot, templates: Iterable[TemplateMedia]) -> Slot:
         """Bind template media (``setting_key`` scoped) to a slot.
 
         Each :class:`TemplateMedia` carries ``slot_id``/``setting_key`` metadata

@@ -462,9 +462,9 @@ def _collect_field_args(schema: Mapping[str, Any], alias: str | None) -> dict[st
     if "exclusiveMaximum" in schema:
         args["lt"] = schema["exclusiveMaximum"]
     if "minItems" in schema:
-        args["min_items"] = schema["minItems"]
+        args["min_length"] = schema["minItems"]
     if "maxItems" in schema:
-        args["max_items"] = schema["maxItems"]
+        args["max_length"] = schema["maxItems"]
     return args
 
 

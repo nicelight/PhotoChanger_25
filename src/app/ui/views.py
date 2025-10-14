@@ -11,7 +11,7 @@ from pathlib import Path
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from starlette.responses import TemplateResponse
+from starlette.responses import Response
 
 from . import mock_data
 
@@ -23,7 +23,7 @@ router = APIRouter(prefix="/ui", tags=["ui"])
 
 
 @router.get("/slots", name="ui:slots-index", response_class=HTMLResponse)
-def slots_index(request: Request) -> TemplateResponse:
+def slots_index(request: Request) -> Response:
     """Render the overview with static slot cards."""
 
     slots = mock_data.generate_slot_overview(count=6)
@@ -32,7 +32,7 @@ def slots_index(request: Request) -> TemplateResponse:
 
 
 @router.get("/slots/{slot_id}", name="ui:slot-detail", response_class=HTMLResponse)
-def slot_detail(slot_id: str, request: Request) -> TemplateResponse:
+def slot_detail(slot_id: str, request: Request) -> Response:
     """Show mock slot configuration and latest results."""
 
     slot = mock_data.generate_slot_detail(slot_id)
@@ -45,7 +45,7 @@ def slot_detail(slot_id: str, request: Request) -> TemplateResponse:
 
 
 @router.get("/stats", name="ui:stats-index", response_class=HTMLResponse)
-def stats_index(request: Request) -> TemplateResponse:
+def stats_index(request: Request) -> Response:
     """Display aggregated statistics with placeholder values."""
 
     summary, metrics = mock_data.generate_global_stats()
@@ -56,7 +56,7 @@ def stats_index(request: Request) -> TemplateResponse:
 @router.get(
     "/results/{slot_id}", name="ui:results-gallery", response_class=HTMLResponse
 )
-def results_gallery(slot_id: str, request: Request) -> TemplateResponse:
+def results_gallery(slot_id: str, request: Request) -> Response:
     """Render gallery view for a slot using mock results."""
 
     slot, results = mock_data.generate_gallery(slot_id)
@@ -65,7 +65,7 @@ def results_gallery(slot_id: str, request: Request) -> TemplateResponse:
 
 
 @router.get("/auth/login", name="ui:auth-login", response_class=HTMLResponse)
-def login(request: Request) -> TemplateResponse:
+def login(request: Request) -> Response:
     """Render login page stub without calling the Auth API."""
 
     context = {"request": request}

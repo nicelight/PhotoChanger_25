@@ -279,7 +279,7 @@ class JobListResponse(BaseModel):
     data: list[JobAdminView] = Field(
         ...,
         description="Список агрегированных представлений задач очереди.",
-        min_items=0,
+        min_length=0,
     )
     meta: JobListResponseMeta = Field(
         ...,

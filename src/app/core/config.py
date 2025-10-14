@@ -9,18 +9,23 @@ during scaffolding we keep deterministic placeholders.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict
+from typing import Any, Dict, cast
 
 from pydantic import Field
 
 try:  # pragma: no cover - optional dependency bridge
-    from pydantic_settings import BaseSettings, SettingsConfigDict
-except (
-    ImportError
-):  # pragma: no cover - fallback for environments without pydantic-settings
-    from pydantic import BaseSettings  # type: ignore
+    from pydantic_settings import BaseSettings as _BaseSettings
+except ImportError:  # pragma: no cover - fallback when pydantic-settings missing
+    from pydantic import BaseSettings as _BaseSettings  # type: ignore
 
-    SettingsConfigDict = dict  # type: ignore[assignment]
+
+def _settings_config(**config: Any) -> dict[str, Any]:
+    """Return a mapping compatible with ``BaseSettings.model_config``."""
+
+    return dict(config)
+
+
+BaseSettings = _BaseSettings
 
 
 def _default_media_root() -> Path:
@@ -32,7 +37,7 @@ def _default_media_root() -> Path:
 class AppConfig(BaseSettings):
     """Pydantic settings container for the service layer."""
 
-    model_config = SettingsConfigDict(env_prefix="PHOTOCHANGER_")
+    model_config = cast(Any, _settings_config(env_prefix="PHOTOCHANGER_"))
 
     database_url: str = Field(
         default="postgresql://localhost:5432/photochanger",

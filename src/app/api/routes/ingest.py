@@ -18,7 +18,10 @@ router = APIRouter(tags=["Ingest"])
     status_code=status.HTTP_200_OK,
 )
 async def ingest_slot(
-    slot_id: Annotated[SlotIdentifier, Path(alias="slotId", description="Статический идентификатор ingest-слота")],
+    slot_id: Annotated[
+        SlotIdentifier,
+        Path(alias="slotId", description="Статический идентификатор ingest-слота"),
+    ],
     payload: IngestRequest,
 ) -> JSONResponse:
     """Принять ingest-запрос от DSLR Remote Pro."""

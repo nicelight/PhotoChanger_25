@@ -31,7 +31,9 @@ async def list_jobs(
     ] = None,
     is_finalized: Annotated[
         Optional[bool],
-        Query(description="Ограничить выборку финализированными или активными задачами."),
+        Query(
+            description="Ограничить выборку финализированными или активными задачами."
+        ),
     ] = None,
     failure_reason: Annotated[
         Optional[Literal["timeout", "provider_error", "cancelled"]],
@@ -41,7 +43,9 @@ async def list_jobs(
         Optional[SlotIdentifier],
         Query(description="Фильтр по идентификатору слота (`slot-001` … `slot-015`)."),
     ] = None,
-    page: Annotated[int, Query(ge=1, description="Номер страницы постраничного просмотра.")] = 1,
+    page: Annotated[
+        int, Query(ge=1, description="Номер страницы постраничного просмотра.")
+    ] = 1,
     page_size: Annotated[
         int,
         Query(ge=1, le=100, description="Количество записей на страницу."),
