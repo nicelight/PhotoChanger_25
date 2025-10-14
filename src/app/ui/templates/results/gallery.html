@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Галерея результатов — PhotoChanger{% endblock %}
+{% block content %}
+  <div class="pc-shell">
+    <!-- NOTE: галерея отображает фиктивные элементы до интеграции с Public API. -->
+    <section class="pc-card pc-grid">
+      <h1 class="pc-heading">Галерея результатов слота {{ slot.id }}</h1>
+      <p class="pc-muted">
+        Карточки ниже демонстрируют размещение превью и кнопки скачивания. Ссылки будут подключены к Public API позже.
+      </p>
+      <div class="pc-grid -results">
+        {% for result in results %}
+          <article class="pc-card" style="padding: var(--pc-gap);">
+            <img
+              src="{{ result.thumbnail_url }}"
+              alt="Результат {{ result.job_id }}"
+              class="pc-gallery-thumb"
+              loading="lazy"
+            />
+            <div class="pc-muted" style="display: grid; gap: 4px;">
+              <strong style="color: var(--pc-text); font-size: 14px;">Job {{ result.job_id }}</strong>
+              <span>Формат: {{ result.mime }}</span>
+              <span>Готово: {{ result.completed_at.strftime('%d.%m.%Y %H:%M') if result.completed_at else '—' }}</span>
+              <span>Доступно до {{ result.result_expires_at.strftime('%d.%m.%Y %H:%M') if result.result_expires_at else '—' }}</span>
+            </div>
+            <a class="pc-button{% if result.is_expired %} is-disabled{% endif %}" href="{{ result.download_url }}">Скачать</a>
+          </article>
+        {% else %}
+          <div class="pc-empty-state">Здесь появятся финальные изображения из Public API.</div>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+{% endblock %}

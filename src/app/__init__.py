@@ -6,6 +6,7 @@
 """
 
 from .api.facade import ApiFacade
+from .ui import UiFacade
 from .services.registry import ServiceRegistry
 
-__all__ = ["ApiFacade", "ServiceRegistry"]
+__all__ = ["ApiFacade", "UiFacade", "ServiceRegistry"]
