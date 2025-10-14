@@ -30,9 +30,7 @@ class TemplateStorage:
 
         raise NotImplementedError
 
-    def bind_to_slot(
-        self, *, slot_id: str, templates: Iterable[TemplateMedia]
-    ) -> None:
+    def bind_to_slot(self, *, slot_id: str, templates: Iterable[TemplateMedia]) -> None:
         """Persist bindings between a slot and templates keyed by ``setting_key``.
 
         This mirrors the ``slot_template_binding`` relationship described in the

@@ -29,9 +29,7 @@ class SlotRepository:
 
         raise NotImplementedError
 
-    def attach_templates(
-        self, slot: Slot, templates: Iterable[TemplateMedia]
-    ) -> Slot:
+    def attach_templates(self, slot: Slot, templates: Iterable[TemplateMedia]) -> Slot:
         """Persist bindings between a slot and template media keyed by ``setting_key``.
 
         The persistence layer is responsible for maintaining
