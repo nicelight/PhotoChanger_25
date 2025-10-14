@@ -1,9 +1,15 @@
 # PhotoChanger_25
 AI платформа для генерации вкусных фотографий.
 
+## Development
+
+- `python3 scripts/gen_stubs.py` — регенерирует стаб-обработчики и DTO на
+  основе `spec/contracts/openapi.yaml` и `spec/contracts/schemas`.
+  Скрипт использует Jinja2 и PyYAML; установите их в окружении перед запуском.
+- `./scripts/check_scaffolding.sh` — прогоняет `ruff`, `mypy` и `pytest`
+  (если доступны), помогая убедиться, что scaffolding остаётся консистентным.
+
 ## Служебные скрипты
 
-- `./scripts/dev.sh` — единая точка для локальной проверки: компиляция модулей, линтеры и тесты (`pytest`, если доступен в окружении).
-- `python3 ./scripts/gen_stubs.py` — генерация стабов HTTP-обработчиков на основе `spec/contracts/openapi.yaml`. Скрипт обновляет `src/app/api/generated/stubs.py`, поэтому его нужно запускать после каждого изменения контракта (требуется пакет `PyYAML`).
-
-
+- `./scripts/dev.sh` — единая точка для локальной проверки: компиляция
+  модулей, линтеры и тесты (`pytest`, если доступен в окружении).

@@ -12,22 +12,17 @@ from typing import Any, Callable, Dict, Tuple
 __all__ = ["ROUTE_HANDLERS"]
 
 
-
 def get_api_jobs(*args: Any, **kwargs: Any) -> None:
-    """
-    Получить список задач ingest-очереди
+    """Получить список задач ingest-очереди
 
-    Возвращает административный список задач с агрегированными метриками ожидания и дедлайнами, вычисленными напрямую из `job.expires_at`. Требует право `stats:read`.
-    """
+    Возвращает административный список задач с агрегированными метриками ожидания и дедлайнами, вычисленными напрямую из `job.expires_at`. Требует право `stats:read`."""
     raise NotImplementedError("Implement handler for GET /api/jobs")
 
 
 def get_api_jobs_by_job_id(*args: Any, **kwargs: Any) -> None:
-    """
-    Получить подробную информацию о задаче
+    """Получить подробную информацию о задаче
 
-    Возвращает полную запись задачи, её дедлайн `expires_at` и рассчитанные метрики оставшегося времени. Требует право `stats:read`.
-    """
+    Возвращает полную запись задачи, её дедлайн `expires_at` и рассчитанные метрики оставшегося времени. Требует право `stats:read`."""
     raise NotImplementedError("Implement handler for GET /api/jobs/{job_id}")
 
 
@@ -37,11 +32,9 @@ def post_api_login(*args: Any, **kwargs: Any) -> None:
 
 
 def post_api_media_cache_purge(*args: Any, **kwargs: Any) -> None:
-    """
-    Поставить задачу очистки медиа-кеша
+    """Поставить задачу очистки медиа-кеша
 
-    Требует право `settings:write`. Планирует асинхронное удаление устаревших Result и media_object
-    """
+    Требует право `settings:write`. Планирует асинхронное удаление устаревших Result и media_object"""
     raise NotImplementedError("Implement handler for POST /api/media/cache/purge")
 
 
@@ -56,20 +49,16 @@ def get_api_providers(*args: Any, **kwargs: Any) -> None:
 
 
 def get_api_settings(*args: Any, **kwargs: Any) -> None:
-    """
-    Получить глобальные настройки платформы
+    """Получить глобальные настройки платформы
 
-    Требует право `settings:read`. Возвращает статус секретов, настройки таймаута ingest и связанные TTL медиахранилища
-    """
+    Требует право `settings:read`. Возвращает статус секретов, настройки таймаута ingest и связанные TTL медиахранилища"""
     raise NotImplementedError("Implement handler for GET /api/settings")
 
 
 def put_api_settings(*args: Any, **kwargs: Any) -> None:
-    """
-    Обновить глобальные настройки и секреты
+    """Обновить глобальные настройки и секреты
 
-    Требует право `settings:write`. Обновляет только переданные поля и возвращает актуальные значения, включая новое значение `T_sync_response`.
-    """
+    Требует право `settings:write`. Обновляет только переданные поля и возвращает актуальные значения, включая новое значение `T_sync_response`."""
     raise NotImplementedError("Implement handler for PUT /api/settings")
 
 
@@ -79,11 +68,9 @@ def get_api_slots(*args: Any, **kwargs: Any) -> None:
 
 
 def get_api_slots_by_slot_id(*args: Any, **kwargs: Any) -> None:
-    """
-    Получить данные конкретного слота
+    """Получить данные конкретного слота
 
-    Возвращает полную конфигурацию слота вместе с массивом `recent_results`, содержащим последние успешные задачи с публичными ссылками на скачивание итоговых изображений.
-    """
+    Возвращает полную конфигурацию слота вместе с массивом `recent_results`, содержащим последние успешные задачи с публичными ссылками на скачивание итоговых изображений."""
     raise NotImplementedError("Implement handler for GET /api/slots/{slot_id}")
 
 
@@ -94,7 +81,9 @@ def put_api_slots_by_slot_id(*args: Any, **kwargs: Any) -> None:
 
 def post_api_slots_by_slot_id_reset_stats(*args: Any, **kwargs: Any) -> None:
     """Сбросить статистику слота"""
-    raise NotImplementedError("Implement handler for POST /api/slots/{slot_id}/reset_stats")
+    raise NotImplementedError(
+        "Implement handler for POST /api/slots/{slot_id}/reset_stats"
+    )
 
 
 def get_api_stats_global(*args: Any, **kwargs: Any) -> None:
@@ -118,11 +107,9 @@ def delete_api_template_media_by_id(*args: Any, **kwargs: Any) -> None:
 
 
 def post_ingest_by_slotid(*args: Any, **kwargs: Any) -> None:
-    """
-    Принять ingest-запрос от DSLR Remote Pro
+    """Принять ingest-запрос от DSLR Remote Pro
 
-    Эндпоинт принимает multipart/form-data с исходной фотографией и глобальным паролем. Дополнительные текстовые поля не валидируются и сохраняются как метаданные. Ограничение ожидания ответа определяется `T_sync_response` (настраивается администратором в диапазоне 45–60 секунд); Ingest API удерживает соединение и раз в секунду читает запись `Job` из БД, ожидая финализации без дополнительных уведомлений. По истечении окна клиент получает 504, задача немедленно завершается и дальнейший polling провайдера по `provider_job_reference` не выполняется.
-    """
+    Эндпоинт принимает multipart/form-data с исходной фотографией и глобальным паролем. Дополнительные текстовые поля не валидируются и сохраняются как метаданные. Ограничение ожидания ответа определяется `T_sync_response` (настраивается администратором в диапазоне 45–60 секунд); Ingest API удерживает соединение и раз в секунду читает запись `Job` из БД, ожидая финализации без дополнительных уведомлений. По истечении окна клиент получает 504, задача немедленно завершается и дальнейший polling провайдера по `provider_job_reference` не выполняется."""
     raise NotImplementedError("Implement handler for POST /ingest/{slotId}")
 
 
@@ -132,11 +119,9 @@ def get_public_media_by_id(*args: Any, **kwargs: Any) -> None:
 
 
 def get_public_results_by_job_id(*args: Any, **kwargs: Any) -> None:
-    """
-    Скачать итоговый файл обработки
+    """Скачать итоговый файл обработки
 
-    Публичная ссылка на итоговое изображение Job. Доступна 72 часа (`T_result_retention`) после финализации. После истечения срока возвращает `410 Gone`.
-    """
+    Публичная ссылка на итоговое изображение Job. Доступна 72 часа (`T_result_retention`) после финализации. После истечения срока возвращает `410 Gone`."""
     raise NotImplementedError("Implement handler for GET /public/results/{job_id}")
 
 
@@ -161,4 +146,3 @@ ROUTE_HANDLERS: Dict[Tuple[str, str], Callable[..., Any]] = {
     ("GET", "/public/media/{id}"): get_public_media_by_id,
     ("GET", "/public/results/{job_id}"): get_public_results_by_job_id,
 }
-
