@@ -33,6 +33,7 @@ tags:
 paths:
   /api/login:
     post:
+      operationId: loginUser
       security: []
       tags: [Auth]
       summary: Вход пользователя и выдача JWT
@@ -57,6 +58,7 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
   /api/providers:
     get:
+      operationId: listProviders
       tags: [Providers]
       summary: Получить короткий справочник провайдеров
       security:
@@ -76,6 +78,7 @@ paths:
           $ref: '#/components/responses/InternalError'
   /api/slots:
     get:
+      operationId: listSlots
       tags: [Slots]
       summary: Получить список статических ingest-слотов
       security:
@@ -113,6 +116,7 @@ paths:
           $ref: '#/components/responses/InternalError'
   /api/slots/{slot_id}:
     get:
+      operationId: getSlot
       tags: [Slots]
       summary: Получить данные конкретного слота
       description: >-
@@ -138,6 +142,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
     put:
+      operationId: updateSlot
       tags: [Slots]
       summary: Обновить настройки слота
       security:
@@ -174,6 +179,7 @@ paths:
           $ref: '#/components/responses/InternalError'
   /api/slots/{slot_id}/reset_stats:
     post:
+      operationId: resetSlotStats
       tags: [Slots]
       summary: Сбросить статистику слота
       security:
@@ -202,6 +208,7 @@ paths:
           $ref: '#/components/responses/InternalError'
   /api/settings:
     get:
+      operationId: getPlatformSettings
       tags: [Settings]
       summary: Получить глобальные настройки платформы
       description: Требует право `settings:read`. Возвращает статус секретов, настройки таймаута ingest и связанные TTL медиахранилища
@@ -221,6 +228,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
     put:
+      operationId: updatePlatformSettings
       tags: [Settings]
       summary: Обновить глобальные настройки и секреты
       description: >-
@@ -252,6 +260,7 @@ paths:
           $ref: '#/components/responses/InternalError'
   /api/media/cache/purge:
     post:
+      operationId: enqueueMediaCachePurge
       tags: [Settings]
       summary: Поставить задачу очистки медиа-кеша
       description: Требует право `settings:write`. Планирует асинхронное удаление устаревших Result и media_object
@@ -283,6 +292,7 @@ paths:
 
   /api/jobs:
     get:
+      operationId: listJobs
       tags: [Jobs]
       summary: Получить список задач ingest-очереди
       description: >-
@@ -359,6 +369,7 @@ paths:
           $ref: '#/components/responses/InternalError'
   /api/jobs/{job_id}:
     get:
+      operationId: getJob
       tags: [Jobs]
       summary: Получить подробную информацию о задаче
       description: >-
@@ -385,6 +396,7 @@ paths:
           $ref: '#/components/responses/InternalError'
   /api/media/register:
     post:
+      operationId: registerMedia
       tags: [Media]
       summary: Зарегистрировать временное медиа и получить публичную ссылку
       security:
@@ -420,6 +432,7 @@ paths:
           $ref: '#/components/responses/ServiceUnavailable'
   /api/template-media/register:
     post:
+      operationId: registerTemplateMedia
       tags: [Media]
       summary: Загрузить шаблон и привязать его к слоту
       security:
@@ -453,6 +466,7 @@ paths:
           $ref: '#/components/responses/InternalError'
   /api/template-media/{id}:
     delete:
+      operationId: deleteTemplateMedia
       tags: [Media]
       summary: Удалить шаблонное медиа и отвязать от слота
       security:
@@ -500,6 +514,7 @@ paths:
           $ref: '#/components/responses/ServiceUnavailable'
   /public/media/{id}:
     get:
+      operationId: getPublicMedia
       security: []
       tags: [Public]
       summary: Получить временный файл по публичной ссылке
@@ -541,6 +556,7 @@ paths:
           $ref: '#/components/responses/ServiceUnavailable'
   /public/results/{job_id}:
     get:
+      operationId: downloadPublicResult
       security: []
       tags: [Public]
       summary: Скачать итоговый файл обработки
@@ -590,6 +606,7 @@ paths:
           $ref: '#/components/responses/ServiceUnavailable'
   /api/stats/{slot_id}:
     get:
+      operationId: getSlotStats
       tags: [Stats]
       summary: Получить статистику по слоту
       security:
@@ -634,6 +651,7 @@ paths:
           $ref: '#/components/responses/InternalError'
   /api/stats/global:
     get:
+      operationId: getGlobalStats
       tags: [Stats]
       summary: Получить агрегированную статистику по слотам
       security:
@@ -709,6 +727,7 @@ paths:
           $ref: '#/components/responses/InternalError'
   /ingest/{slotId}:
     post:
+      operationId: ingestSlot
       tags: [Ingest]
       summary: Принять ingest-запрос от DSLR Remote Pro
       description: >-
