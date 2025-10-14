@@ -31,6 +31,7 @@ class ServiceRegistry:
     MEDIA_STORAGE: ClassVar[PluginKey] = "storage.media"
     TEMPLATE_STORAGE: ClassVar[PluginKey] = "storage.template"
     STATS_REPOSITORY: ClassVar[PluginKey] = "repository.stats"
+    UNIT_OF_WORK: ClassVar[PluginKey] = "unit_of_work"
 
     plugins: Dict[PluginKey, PluginFactory] = field(default_factory=dict)
 
@@ -72,6 +73,11 @@ class ServiceRegistry:
     def register_stats_repository(self, factory: PluginFactory) -> None:
         self.register(self.STATS_REPOSITORY, factory)
 
+    def register_unit_of_work(self, factory: PluginFactory) -> None:
+        """Register a factory producing ``UnitOfWork`` implementations."""
+
+        self.register(self.UNIT_OF_WORK, factory)
+
     def resolve_job_service(self) -> PluginFactory:
         return self.resolve(self.JOB_SERVICE)
 
@@ -104,6 +110,9 @@ class ServiceRegistry:
 
     def resolve_stats_repository(self) -> PluginFactory:
         return self.resolve(self.STATS_REPOSITORY)
+
+    def resolve_unit_of_work(self) -> PluginFactory:
+        return self.resolve(self.UNIT_OF_WORK)
 
     def resolve(self, key: PluginKey) -> PluginFactory:
         """Возвращает фабрику сервиса, описанную плагином."""

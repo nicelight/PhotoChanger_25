@@ -48,3 +48,11 @@ updated: 2025-10-08
 - 2025-10-16 17:34 — поднял версию OpenAPI до 0.1.2 и пересобрал stubs.py из свежего контракта
 - 2025-10-16 17:42 — синхронизировал типы enum в routes/jobs.py, routes/stats.py и api/client.py с контрактом, запустил pytest -q
 - 2025-10-16 17:50 — оформил REPORT.json по шаблону и подтвердил валидность структуры
+
+## phase2-domain-2025-10-17
+- 2025-10-17 09:05 — перечитал spec/docs/blueprints/domain-model.md и контракты JSON Schema (Slot, Job, MediaObject, Settings)
+  для проверки расхождений после предыдущего PR
+- 2025-10-17 09:22 — скорректировал датаклассы домена (TTL docstring-и, типы provider keys, recent_results) в соответствии с
+  контрактами и TTL-формулами
+- 2025-10-17 09:35 — обновил docstring-и сервисов/репозиториев/воркеров, чтобы зафиксировать требования SDD и связь с очередью,
+  TemplateMedia и T_sync_response

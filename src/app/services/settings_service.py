@@ -11,7 +11,7 @@ class SettingsService:
     """Coordinates read/write operations for global application settings."""
 
     def read_settings(self) -> Settings:
-        """Return current configuration, including TTL definitions."""
+        """Return current configuration blocks for ingest and media cache."""
 
         raise NotImplementedError
 
@@ -21,8 +21,12 @@ class SettingsService:
         raise NotImplementedError
 
     def rotate_ingest_password(
-        self, *, rotated_at: datetime, new_password: str | None = None
+        self,
+        *,
+        rotated_at: datetime,
+        updated_by: str,
+        new_password: str | None = None,
     ) -> Settings:
-        """Rotate the ingest password hash and update audit timestamps."""
+        """Rotate the ingest password hash and update ``Settings.dslr_password``."""
 
         raise NotImplementedError

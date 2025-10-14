@@ -20,14 +20,24 @@ class MediaService:
         expires_at: datetime,
         job_id: UUID | None = None,
     ) -> MediaObject:
-        """Register a new media object stored in MEDIA_ROOT."""
+        """Register a new media object stored in MEDIA_ROOT.
+
+        Callers must calculate ``expires_at`` via
+        ``min(job.expires_at, now + T_public_link_ttl)`` where
+        ``T_public_link_ttl = T_sync_response`` as mandated by the SDD.
+        """
 
         raise NotImplementedError
 
     def refresh_public_link(
         self, media: MediaObject, settings: Settings
     ) -> MediaObject:
-        """Re-issue a public link with TTL = ``T_sync_response``."""
+        """Re-issue ``media.public_url`` with TTL = ``T_sync_response``.
+
+        Implementations must reuse settings from ``Settings.media_cache`` and
+        ensure the refreshed TTL never exceeds the associated job's
+        ``expires_at`` (when a job is linked to the media object).
+        """
 
         raise NotImplementedError
 

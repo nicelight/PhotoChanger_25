@@ -9,10 +9,15 @@ from ..domain.models import Job
 
 
 class JobRepository:
-    """Persistence gateway for queue operations."""
+    """Persistence gateway for queue operations.
+
+    Implementations use PostgreSQL with ``SELECT … FOR UPDATE SKIP LOCKED`` to
+    avoid head-of-line blocking and enforce the unified deadline
+    ``T_sync_response`` stored in ``Job.expires_at``.
+    """
 
     def enqueue(self, job: Job) -> Job:
-        """Persist a freshly created job."""
+        """Persist a freshly created job and its ``expires_at`` deadline."""
 
         raise NotImplementedError
 

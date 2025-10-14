@@ -21,8 +21,8 @@ class SettingsRepository:
         raise NotImplementedError
 
     def update_ingest_password(
-        self, *, rotated_at: datetime, password_hash: str
+        self, *, rotated_at: datetime, updated_by: str, password_hash: str
     ) -> Settings:
-        """Store a new ingest password hash with audit timestamp."""
+        """Store a new ingest password hash with audit metadata."""
 
         raise NotImplementedError

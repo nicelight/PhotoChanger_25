@@ -21,14 +21,23 @@ class SlotService:
         raise NotImplementedError
 
     def update_slot(self, slot: Slot) -> Slot:
-        """Persist slot settings, including provider operation parameters."""
+        """Persist slot settings, including ``provider_id``/``operation_id``.
+
+        Slot contracts are defined in ``spec/contracts/schemas/Slot.json``;
+        implementations should store ``settings_json`` exactly as provided so
+        that worker launches remain deterministic.
+        """
 
         raise NotImplementedError
 
     def attach_templates(
         self, slot: Slot, templates: Iterable[TemplateMedia]
     ) -> Slot:
-        """Bind template media to a slot for future jobs."""
+        """Bind template media (``setting_key`` scoped) to a slot.
+
+        Each :class:`TemplateMedia` carries ``slot_id``/``setting_key`` metadata
+        that mirrors ``TemplateMediaObject`` contracts.
+        """
 
         raise NotImplementedError
 
