@@ -38,6 +38,11 @@
       "type": ["string", "null"],
       "description": "Необязательный человекочитаемый ярлык шаблона"
     },
+    "checksum": {
+      "type": ["string", "null"],
+      "description": "Контрольная сумма файла (например, SHA-256 в hex)",
+      "pattern": "^[A-Fa-f0-9]{64}$"
+    },
     "mime": {
       "type": "string",
       "description": "MIME-тип сохранённого файла"
@@ -46,6 +51,10 @@
       "type": "integer",
       "minimum": 0,
       "description": "Размер файла в байтах"
+    },
+    "uploaded_by": {
+      "type": ["string", "null"],
+      "description": "Администратор, загрузивший шаблон"
     },
     "created_at": {
       "type": "string",

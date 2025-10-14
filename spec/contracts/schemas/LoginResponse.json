@@ -1,23 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "LoginResponse",
-  "type": "object",
-  "required": ["access_token", "token_type", "expires_in_sec"],
-  "properties": {
-    "access_token": {
-      "type": "string",
-      "description": "JWT токен доступа"
-    },
-    "token_type": {
-      "type": "string",
-      "const": "bearer",
-      "description": "Тип токена"
-    },
-    "expires_in_sec": {
-      "type": "integer",
-      "minimum": 1,
-      "description": "Время жизни токена в секундах"
-    }
-  },
-  "additionalProperties": false
+  "description": "Ответ авторизации повторно использует контракт AuthToken",
+  "allOf": [
+    { "$ref": "./AuthToken.json" }
+  ]
 }
