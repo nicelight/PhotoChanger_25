@@ -1,4 +1,8 @@
-"""Statistics router stubs for slots and global aggregates."""
+"""Statistics router stubs exposing monitoring endpoints.
+
+These placeholders reflect the analytics endpoints described in
+``spec/contracts/openapi.yaml`` for slot-scoped and global aggregates.
+"""
 
 from __future__ import annotations
 
@@ -25,7 +29,10 @@ async def get_slot_stats(
     slot_id: Annotated[SlotIdentifier, Path(description="Идентификатор слота")],
     from_dt: Annotated[
         Optional[datetime],
-        Query(alias="from", description="Начало диапазона (UTC). Максимальная длительность — 31 день."),
+        Query(
+            alias="from",
+            description="Начало диапазона (UTC). Максимальная длительность — 31 день.",
+        ),
     ] = None,
     to_dt: Annotated[
         Optional[datetime],
@@ -63,7 +70,9 @@ async def get_global_stats(
         Literal["day", "week", "month"],
         Query(description="Гранулярность агрегирования"),
     ] = "week",
-    page: Annotated[int, Query(ge=1, description="Номер страницы постраничного просмотра.")] = 1,
+    page: Annotated[
+        int, Query(ge=1, description="Номер страницы постраничного просмотра.")
+    ] = 1,
     page_size: Annotated[
         int,
         Query(ge=1, le=50, description="Количество агрегатов на страницу."),
@@ -76,8 +85,12 @@ async def get_global_stats(
         Literal["asc", "desc"],
         Query(description="Направление сортировки агрегатов."),
     ] = "desc",
-    provider_id: Annotated[Optional[str], Query(description="Фильтр по провайдеру")] = None,
-    slot_id: Annotated[Optional[SlotIdentifier], Query(description="Фильтр по конкретному слоту")] = None,
+    provider_id: Annotated[
+        Optional[str], Query(description="Фильтр по провайдеру")
+    ] = None,
+    slot_id: Annotated[
+        Optional[SlotIdentifier], Query(description="Фильтр по конкретному слоту")
+    ] = None,
 ) -> JSONResponse:
     """Получить агрегированную статистику по слотам."""
 

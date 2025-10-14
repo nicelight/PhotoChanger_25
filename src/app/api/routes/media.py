@@ -1,4 +1,9 @@
-"""Media management router stubs covering temporary and template uploads."""
+"""Media management router stubs covering temporary and template uploads.
+
+The endpoints mirror admin contracts for registering ingest payloads, template
+media and purging resources without performing any business logic in phase 2,
+keeping parity with ``spec/contracts/openapi.yaml``.
+"""
 
 from __future__ import annotations
 
@@ -66,7 +71,9 @@ async def delete_template_media(
         SlotIdentifier,
         Query(description="Слот, из которого удаляется привязка"),
     ],
-    setting_key: Annotated[str, Query(description="Ключ настройки, который ссылался на шаблон")],
+    setting_key: Annotated[
+        str, Query(description="Ключ настройки, который ссылался на шаблон")
+    ],
     force: Annotated[
         Optional[bool],
         Query(description="Удалить файл даже при нескольких привязках"),

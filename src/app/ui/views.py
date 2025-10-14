@@ -1,4 +1,8 @@
-"""FastAPI routes for the UI scaffolding layer."""
+"""FastAPI UI routes for the administrative scaffolding.
+
+Templates mirror layouts from ``Docs/frontend-examples`` and consume mock
+structures compatible with ``spec/contracts/schemas``.
+"""
 
 from __future__ import annotations
 

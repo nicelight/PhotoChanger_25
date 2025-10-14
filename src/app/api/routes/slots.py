@@ -1,4 +1,8 @@
-"""Slot management router stubs mirroring administrative operations."""
+"""Slot management router stubs aligned with admin API contracts.
+
+Endpoints mirror ``spec/contracts/openapi.yaml`` definitions for listing,
+retrieving and updating ingest slots while deferring persistence logic.
+"""
 
 from __future__ import annotations
 
@@ -7,7 +11,13 @@ from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, Header, Path, Query, status
 from fastapi.responses import JSONResponse
 
-from ..schemas import Slot, SlotIdentifier, SlotListResponse, SlotUpdateRequest, SlotUpdateResponse
+from ..schemas import (
+    Slot,
+    SlotIdentifier,
+    SlotListResponse,
+    SlotUpdateRequest,
+    SlotUpdateResponse,
+)
 from .dependencies import require_bearer_authentication
 from .responses import authentication_not_configured, endpoint_not_implemented
 
@@ -21,8 +31,12 @@ router = APIRouter(prefix="/api", tags=["Slots"])
 )
 async def list_slots(
     authenticated: Annotated[bool, Depends(require_bearer_authentication)],
-    provider_id: Annotated[Optional[str], Query(description="Фильтр по провайдеру")] = None,
-    operation_id: Annotated[Optional[str], Query(description="Фильтр по операции провайдера")] = None,
+    provider_id: Annotated[
+        Optional[str], Query(description="Фильтр по провайдеру")
+    ] = None,
+    operation_id: Annotated[
+        Optional[str], Query(description="Фильтр по операции провайдера")
+    ] = None,
     search: Annotated[Optional[str], Query(description="Поиск по имени слота")] = None,
 ) -> JSONResponse:
     """Получить список статических ingest-слотов."""
@@ -39,7 +53,9 @@ async def list_slots(
 )
 async def get_slot(
     authenticated: Annotated[bool, Depends(require_bearer_authentication)],
-    slot_id: Annotated[SlotIdentifier, Path(description="Идентификатор статического ingest-слота")],
+    slot_id: Annotated[
+        SlotIdentifier, Path(description="Идентификатор статического ingest-слота")
+    ],
 ) -> JSONResponse:
     """Получить данные конкретного слота вместе с последними результатами."""
 
@@ -55,7 +71,9 @@ async def get_slot(
 )
 async def update_slot(
     authenticated: Annotated[bool, Depends(require_bearer_authentication)],
-    slot_id: Annotated[SlotIdentifier, Path(description="Идентификатор статического ingest-слота")],
+    slot_id: Annotated[
+        SlotIdentifier, Path(description="Идентификатор статического ingest-слота")
+    ],
     payload: SlotUpdateRequest,
     if_match: Annotated[
         Optional[str],
@@ -76,7 +94,9 @@ async def update_slot(
 )
 async def reset_slot_stats(
     authenticated: Annotated[bool, Depends(require_bearer_authentication)],
-    slot_id: Annotated[SlotIdentifier, Path(description="Идентификатор статического ingest-слота")],
+    slot_id: Annotated[
+        SlotIdentifier, Path(description="Идентификатор статического ingest-слота")
+    ],
 ) -> JSONResponse:
     """Сбросить статистику указанного слота."""
 

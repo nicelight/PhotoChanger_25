@@ -1,4 +1,8 @@
-"""Unit-of-work protocol used to coordinate transactional operations."""
+"""Transactional boundary protocol shared by repositories and services.
+
+Concrete implementations will coordinate database transactions as outlined in
+``spec/docs/blueprints/domain-model.md``.
+"""
 
 from __future__ import annotations
 

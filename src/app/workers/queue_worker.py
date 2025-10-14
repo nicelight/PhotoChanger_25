@@ -1,4 +1,8 @@
-"""Worker skeleton that processes queue jobs."""
+"""Queue worker scaffolding coordinating job execution.
+
+Implements placeholders for the flow described in
+``spec/docs/blueprints/use-cases.md`` without contacting providers yet.
+"""
 
 from __future__ import annotations
 
