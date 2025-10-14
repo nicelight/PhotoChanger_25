@@ -1,19 +1,19 @@
 # Машиночитаемый индекс актуальности артефактов
-updated: 2025-10-08
+updated: 2025-10-16
 'spec/contracts':
-  version: "0.1.0"
-  released_at: "2025-10-08"
+  version: "0.1.2"
+  released_at: "2025-10-16"
 'spec/adr':
-  count: 1
-  last_id: "ADR-0001"
-  updated: "2025-10-08"
+  count: 2
+  last_id: "ADR-0002"
+  updated: "2025-10-16"
 memory:
   mission: { version: 1, updated: "2025-10-08" }
   context: { version: 1, updated: "2025-10-08" }
-  decisions: { index: ".memory/DECISIONS.md", updated: "2025-10-08" }
-  tasks: { updated: "2025-10-08" }
-  progress: { updated: "2025-10-08" }
-  asks: { updated: "2025-10-08" }
+  decisions: { index: ".memory/DECISIONS.md", updated: "2025-10-16" }
+  tasks: { updated: "2025-10-16" }
+  progress: { updated: "2025-10-16" }
+  asks: { updated: "2025-10-16" }
   glossary: { updated: "2025-10-08" }
   autonomy: { updated: "2025-10-08" }
   usecases: { updated: "2025-10-08", count: 2 }
