@@ -48,7 +48,9 @@ class ApiClient:
     async def list_providers(self) -> ProviderListResponse:
         """Получить короткий справочник провайдеров."""
 
-        raise NotImplementedError("API client provider listing stub is not implemented.")
+        raise NotImplementedError(
+            "API client provider listing stub is not implemented."
+        )
 
     async def list_slots(
         self,
@@ -83,7 +85,9 @@ class ApiClient:
     async def get_platform_settings(self) -> Settings:
         """Получить глобальные настройки платформы."""
 
-        raise NotImplementedError("API client settings retrieval stub is not implemented.")
+        raise NotImplementedError(
+            "API client settings retrieval stub is not implemented."
+        )
 
     async def update_platform_settings(
         self, payload: SettingsUpdateRequest
@@ -97,13 +101,17 @@ class ApiClient:
     ) -> MediaCachePurgeResponse:
         """Поставить задачу очистки медиа-кеша."""
 
-        raise NotImplementedError("API client media cache purge stub is not implemented.")
+        raise NotImplementedError(
+            "API client media cache purge stub is not implemented."
+        )
 
     async def list_jobs(
         self,
         status_filter: Optional[Literal["pending", "processing"]] = None,
         is_finalized: Optional[bool] = None,
-        failure_reason: Optional[Literal["timeout", "provider_error", "cancelled"]] = None,
+        failure_reason: Optional[
+            Literal["timeout", "provider_error", "cancelled"]
+        ] = None,
         slot_id: Optional[SlotIdentifier] = None,
         page: int = 1,
         page_size: int = 20,
@@ -122,7 +130,9 @@ class ApiClient:
     async def register_media(self, payload: MediaRegisterRequest) -> MediaObject:
         """Зарегистрировать временное медиа и получить публичную ссылку."""
 
-        raise NotImplementedError("API client media registration stub is not implemented.")
+        raise NotImplementedError(
+            "API client media registration stub is not implemented."
+        )
 
     async def register_template_media(
         self, payload: TemplateMediaRegisterRequest
@@ -142,17 +152,23 @@ class ApiClient:
     ) -> None:
         """Удалить шаблонное медиа и отвязать от слота."""
 
-        raise NotImplementedError("API client template media deletion stub is not implemented.")
+        raise NotImplementedError(
+            "API client template media deletion stub is not implemented."
+        )
 
     async def get_public_media(self, media_id: UUID) -> bytes:
         """Получить временный файл по публичной ссылке."""
 
-        raise NotImplementedError("API client public media download stub is not implemented.")
+        raise NotImplementedError(
+            "API client public media download stub is not implemented."
+        )
 
     async def download_public_result(self, job_id: UUID) -> bytes:
         """Скачать итоговый файл обработки."""
 
-        raise NotImplementedError("API client public result download stub is not implemented.")
+        raise NotImplementedError(
+            "API client public result download stub is not implemented."
+        )
 
     async def get_slot_stats(
         self,
@@ -172,7 +188,9 @@ class ApiClient:
         group_by: Literal["day", "week", "month"] = "week",
         page: int = 1,
         page_size: int = 10,
-        sort_by: Literal["period_start", "success", "errors", "ingest_count"] = "period_start",
+        sort_by: Literal[
+            "period_start", "success", "errors", "ingest_count"
+        ] = "period_start",
         sort_order: Literal["asc", "desc"] = "desc",
         provider_id: Optional[str] = None,
         slot_id: Optional[SlotIdentifier] = None,

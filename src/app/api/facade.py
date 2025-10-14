@@ -44,7 +44,17 @@ class ApiFacade:
     def _iter_routers() -> Iterable[APIRouter]:
         """Возвращает стаб-роутеры, сгруппированные по разделам OpenAPI."""
 
-        from .routes import auth, ingest, jobs, media, providers, public, settings, slots, stats
+        from .routes import (
+            auth,
+            ingest,
+            jobs,
+            media,
+            providers,
+            public,
+            settings,
+            slots,
+            stats,
+        )
 
         return (
             auth.router,

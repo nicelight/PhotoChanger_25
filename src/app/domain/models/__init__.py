@@ -79,9 +79,9 @@ class Slot:
     provider_id: str
     operation_id: str
     settings_json: Mapping[str, Any]
-    last_reset_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
+    last_reset_at: datetime | None = None
     recent_results: list[SlotRecentResult] = field(default_factory=list)
 
 
@@ -145,13 +145,13 @@ class MediaObject:
     """
 
     id: UUID
-    job_id: UUID | None = None
     path: str
     public_url: str
-    mime: str | None = None
-    size_bytes: int | None = None
     expires_at: datetime
     created_at: datetime
+    job_id: UUID | None = None
+    mime: str | None = None
+    size_bytes: int | None = None
 
 
 @dataclass(slots=True)
@@ -168,10 +168,10 @@ class TemplateMedia:
     path: str
     mime: str
     size_bytes: int
+    created_at: datetime
     checksum: str | None = None
     label: str | None = None
     uploaded_by: str | None = None
-    created_at: datetime
 
 
 @dataclass(slots=True)
@@ -182,9 +182,9 @@ class ProcessingLog:
     job_id: UUID
     slot_id: str
     status: ProcessingStatus
+    occurred_at: datetime
     message: str | None = None
     details: MutableMapping[str, Any] | None = None
-    occurred_at: datetime
     provider_latency_ms: int | None = None
 
 
@@ -193,8 +193,8 @@ class SettingsDslrPasswordStatus:
     """Tracks whether the DSLR ingest password is configured."""
 
     is_set: bool
-    updated_at: datetime | None
-    updated_by: str | None
+    updated_at: datetime | None = None
+    updated_by: str | None = None
 
 
 @dataclass(slots=True)
@@ -206,8 +206,8 @@ class SettingsProviderKeyStatus:
     """
 
     is_configured: bool
-    updated_at: datetime | None
-    updated_by: str | None
+    updated_at: datetime | None = None
+    updated_by: str | None = None
     extra: Mapping[str, str | int | float | bool] = field(default_factory=dict)
 
 
@@ -236,9 +236,9 @@ class Settings:
     """Application-wide configuration, including TTL definitions."""
 
     dslr_password: SettingsDslrPasswordStatus
-    provider_keys: Mapping[str, SettingsProviderKeyStatus] = field(default_factory=dict)
     ingest: SettingsIngestConfig
     media_cache: MediaCacheSettings
+    provider_keys: Mapping[str, SettingsProviderKeyStatus] = field(default_factory=dict)
 
 
 __all__ = [

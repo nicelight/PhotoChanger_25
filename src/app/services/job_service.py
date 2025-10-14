@@ -79,9 +79,7 @@ class JobService:
 
         raise NotImplementedError
 
-    def append_processing_logs(
-        self, job: Job, logs: Iterable[ProcessingLog]
-    ) -> None:
+    def append_processing_logs(self, job: Job, logs: Iterable[ProcessingLog]) -> None:
         """Persist processing logs describing provider interactions."""
 
         raise NotImplementedError
