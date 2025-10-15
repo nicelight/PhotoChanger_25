@@ -10,6 +10,7 @@ production code.
 
 from __future__ import annotations
 
+import base64
 import json
 import re
 import sys
@@ -284,6 +285,8 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency
 from src.app.core.app import create_app  # noqa: E402
 from src.app.core.config import AppConfig  # noqa: E402
 from src.app.domain.models import Job  # noqa: E402
+from src.app.services.job_service import QueueBusyError, QueueUnavailableError  # noqa: E402
+from src.app.services.registry import ServiceRegistry  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -297,6 +300,10 @@ class FakeJobQueue:
 
     jobs: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     domain_jobs: Dict[str, Job] = field(default_factory=dict)
+    raise_busy: bool = False
+    raise_unavailable: bool = False
+    auto_finalize_inline: bytes | None = None
+    auto_finalize_mime: str = "image/jpeg"
 
     def register(self, job: Dict[str, Any]) -> None:
         """Persist a Job payload so tests can reuse its deadline metadata."""
@@ -319,13 +326,9 @@ class FakeJobQueue:
             .replace("+00:00", "Z")
         )
 
-    def enqueue(self, job: Job) -> Job:
-        """Store an enqueued job for later inspection."""
-
-        job_id = str(job.id)
-        self.domain_jobs[job_id] = job
-        self.jobs[job_id] = {
-            "id": job_id,
+    def _snapshot(self, job: Job) -> Dict[str, Any]:
+        return {
+            "id": str(job.id),
             "slot_id": job.slot_id,
             "status": job.status.value,
             "is_finalized": job.is_finalized,
@@ -343,7 +346,42 @@ class FakeJobQueue:
             "updated_at": self._iso(job.updated_at),
             "finalized_at": self._iso(job.finalized_at),
         }
+
+    def _store(self, job: Job) -> None:
+        job_id = str(job.id)
+        self.domain_jobs[job_id] = job
+        self.jobs[job_id] = self._snapshot(job)
+
+    def enqueue(self, job: Job) -> Job:
+        """Store an enqueued job for later inspection."""
+
+        if self.raise_busy:
+            raise QueueBusyError("queue saturated")
+        if self.raise_unavailable:
+            raise QueueUnavailableError("queue unavailable")
+
+        self._store(job)
+        job_id = str(job.id)
+        if self.auto_finalize_inline is not None:
+            self.finalize_inline(
+                job_id, self.auto_finalize_inline, mime=self.auto_finalize_mime
+            )
         return job
+
+    def finalize_inline(
+        self, job_id: str, payload: bytes, *, mime: str = "image/jpeg"
+    ) -> None:
+        """Mark a job as finalized with an inline base64 payload."""
+
+        job = self.domain_jobs[job_id]
+        job.is_finalized = True
+        job.failure_reason = None
+        job.result_inline_base64 = base64.b64encode(payload).decode("ascii")
+        job.result_mime_type = mime
+        job.result_size_bytes = len(payload)
+        job.updated_at = datetime.now(timezone.utc)
+        job.finalized_at = job.updated_at
+        self._store(job)
 
 
 @dataclass
@@ -425,6 +463,14 @@ def contract_app(
         "app_config": app_config,
     }
     app = create_app(extra_state=extra_state)
+
+    # Reduce the synchronous response timeout to keep tests fast.
+    registry: ServiceRegistry = app.state.service_registry  # type: ignore[attr-defined]
+    settings_service = registry.resolve_settings_service()(config=app.state.config)
+    settings = settings_service.read_settings()
+    settings.ingest.sync_response_timeout_sec = 1
+    settings.ingest.ingest_ttl_sec = 1
+    settings.media_cache.public_link_ttl_sec = 1
 
     # Ensure static stats routes have priority over dynamic slot routes for tests.
     routes = app.router.routes

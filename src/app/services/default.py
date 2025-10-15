@@ -23,7 +23,7 @@ from ..domain.models import (
 )
 from ..infrastructure.queue.postgres import PostgresJobQueue
 from ..security.passwords import verify_password
-from .job_service import JobService
+from .job_service import JobService, QueueBusyError, QueueUnavailableError
 from .media_service import MediaService
 from .settings_service import SettingsService
 from .slot_service import SlotService
@@ -116,6 +116,7 @@ class DefaultJobService(JobService):
     """Creates jobs and enqueues them using :class:`PostgresJobQueue`."""
 
     queue: PostgresJobQueue
+    jobs: Dict[UUID, Job] = field(default_factory=dict)
 
     def create_job(  # type: ignore[override]
         self,
@@ -146,8 +147,19 @@ class DefaultJobService(JobService):
         )
         if payload is not None:
             payload.job_id = identifier
-        self.queue.enqueue(job)
+        self.jobs[identifier] = job
+        try:
+            self.queue.enqueue(job)
+        except QueueBusyError:
+            self.jobs.pop(identifier, None)
+            raise
+        except QueueUnavailableError:
+            self.jobs.pop(identifier, None)
+            raise
         return job
+
+    def get_job(self, job_id: UUID) -> Job | None:  # type: ignore[override]
+        return self.jobs.get(job_id)
 
     def acquire_next_job(self, *, now: datetime) -> Job | None:  # type: ignore[override]
         raise NotImplementedError
@@ -169,13 +181,27 @@ class DefaultJobService(JobService):
         failure_reason: JobFailureReason,
         occurred_at: datetime,
     ) -> Job:  # type: ignore[override]
-        raise NotImplementedError
+        job.is_finalized = True
+        job.failure_reason = failure_reason
+        job.updated_at = occurred_at
+        job.finalized_at = occurred_at
+        self.jobs[job.id] = job
+        return job
 
     def append_processing_logs(self, job: Job, logs: Iterable) -> None:  # type: ignore[override]
         raise NotImplementedError
 
     def refresh_recent_results(self, slot: Slot, *, limit: int = 10) -> Slot:  # type: ignore[override]
         raise NotImplementedError
+
+    def clear_inline_preview(self, job: Job) -> Job:  # type: ignore[override]
+        job.result_inline_base64 = None
+        job.result_mime_type = None
+        job.result_size_bytes = None
+        job.result_checksum = None
+        job.updated_at = _utcnow()
+        self.jobs[job.id] = job
+        return job
 
 
 def bootstrap_settings(config: AppConfig, *, password_hash: str) -> Settings:

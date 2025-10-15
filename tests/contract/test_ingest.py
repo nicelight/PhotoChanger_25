@@ -10,13 +10,16 @@ from fastapi import status
 
 
 @pytest.mark.contract
-def test_ingest_enqueues_job_and_persists_payload(
+def test_ingest_returns_inline_result(
     contract_app,
     contract_client,
     ingest_payload,
     fake_job_queue,
 ):
-    """Valid ingest request must store payload and enqueue a job."""
+    """Successful ingest must stream inline binary data back to the client."""
+
+    fake_job_queue.auto_finalize_inline = ingest_payload["image_bytes"]
+    fake_job_queue.auto_finalize_mime = "image/jpeg"
 
     response = contract_client.post(
         "/ingest/slot-001",
@@ -24,19 +27,23 @@ def test_ingest_enqueues_job_and_persists_payload(
         files=ingest_payload["files"],
     )
 
-    assert response.status_code == status.HTTP_202_ACCEPTED
-    assert "x-job-id" in response.headers
+    assert response.status_code == status.HTTP_200_OK
     job_id = response.headers["x-job-id"]
     UUID(job_id)
+    assert response.headers["content-type"] == "image/jpeg"
+    assert response.headers["content-length"] == str(len(ingest_payload["image_bytes"]))
+    assert response.content == ingest_payload["image_bytes"]
 
     stored_job = fake_job_queue.domain_jobs[job_id]
-    assert stored_job.slot_id == "slot-001"
-    assert stored_job.payload_path is not None
+    assert stored_job.is_finalized is True
+    assert stored_job.failure_reason is None
+    assert stored_job.result_inline_base64 is None
 
     media_root: Path = contract_app.state.config.media_root
+    assert stored_job.payload_path is not None
     payload_path = media_root / stored_job.payload_path
-    assert payload_path.exists()
-    assert payload_path.read_bytes() == ingest_payload["image_bytes"]
+    assert not payload_path.exists()
+    fake_job_queue.auto_finalize_inline = None
 
 
 @pytest.mark.contract
@@ -150,3 +157,56 @@ def test_ingest_enforces_payload_size_limit(
     payload_json = response.json()
     validate_with_schema(payload_json, "Error.json")
     assert payload_json["error"]["code"] == "payload_too_large"
+
+
+@pytest.mark.contract
+def test_ingest_returns_queue_busy_error(
+    contract_client,
+    ingest_payload,
+    validate_with_schema,
+    fake_job_queue,
+):
+    """429 is returned when the queue reports saturation."""
+
+    fake_job_queue.raise_busy = True
+    try:
+        response = contract_client.post(
+            "/ingest/slot-001",
+            data=ingest_payload["data"],
+            files=ingest_payload["files"],
+        )
+    finally:
+        fake_job_queue.raise_busy = False
+
+    assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
+    payload_json = response.json()
+    validate_with_schema(payload_json, "Error.json")
+    assert payload_json["error"]["code"] == "queue_busy"
+
+
+@pytest.mark.contract
+def test_ingest_times_out_when_worker_unavailable(
+    contract_client,
+    ingest_payload,
+    validate_with_schema,
+    fake_job_queue,
+):
+    """504 is returned when no worker finalises the job within the timeout window."""
+
+    fake_job_queue.auto_finalize_inline = None
+
+    response = contract_client.post(
+        "/ingest/slot-001",
+        data=ingest_payload["data"],
+        files=ingest_payload["files"],
+    )
+
+    assert response.status_code == status.HTTP_504_GATEWAY_TIMEOUT
+    payload_json = response.json()
+    validate_with_schema(payload_json, "Error.json")
+    assert payload_json["error"]["code"] == "sync_timeout"
+    assert "job_id" in payload_json["error"]["details"]
+    job_id = payload_json["error"]["details"]["job_id"]
+    stored_job = fake_job_queue.domain_jobs[job_id]
+    assert stored_job.failure_reason is not None
+    assert stored_job.failure_reason.value == "timeout"

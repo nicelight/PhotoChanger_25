@@ -1,6 +1,6 @@
 ---
 id: asks
-updated: 2025-10-24
+updated: 2025-10-25
 ---
 
 # Asks (запросы пользователей)
@@ -20,3 +20,4 @@ updated: 2025-10-24
 | 2025-10-22 | ASK-0010  | user     | Устранить DI-провайдеров и реализовать QueueWorker.dispatch_to_provider | done   | Расширен ServiceRegistry, реализован полный цикл QueueWorker, добавлены интеграционные проверки успех/timeout/error. |
 | 2025-10-23 | ASK-0011  | user     | Выполнить сабтаски 4.1.1–4.1.5 (ingest core)                           | done   | Реализованы DI, ingest endpoint, валидация multipart, сохранение payload, постановка Job и тесты. |
 | 2025-10-24 | ASK-0012  | user     | Проверить соответствие изменений ingest спецификациям и брифу           | done   | Обновлён DI (AppConfig), прогнаны ruff/mypy/pytest -m "unit or contract", отклонений нет. |
+| 2025-10-25 | ASK-0013  | user     | Закрыть сабтаски 4.1.6–4.1.10 (синхронный ingest, 429/504, документация) | done   | Реализован polling/cleanup, добавлены тесты и ingest_runbook, ruff/mypy/pytest unit/contract зелёные. |
