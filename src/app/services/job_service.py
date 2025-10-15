@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Iterable
+from uuid import UUID
 
 from ..domain.models import (
     Job,
@@ -29,6 +30,8 @@ class JobService:
         *,
         payload: MediaObject | None,
         settings: Settings,
+        job_id: UUID | None = None,
+        created_at: datetime | None = None,
     ) -> Job:
         """Create a new job for the provided slot and payload.
 

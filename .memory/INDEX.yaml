@@ -1,5 +1,5 @@
 # Машиночитаемый индекс актуальности артефактов
-updated: 2025-10-22
+updated: 2025-10-24
 'spec/contracts':
   version: "0.1.2"
   released_at: "2025-10-16"
@@ -11,9 +11,9 @@ memory:
   mission: { version: 1, updated: "2025-10-08" }
   context: { version: 1, updated: "2025-10-08" }
   decisions: { index: ".memory/DECISIONS.md", updated: "2025-10-16" }
-  tasks: { updated: "2025-10-22" }
-  progress: { updated: "2025-10-22" }
-  asks: { updated: "2025-10-22" }
+  tasks: { updated: "2025-10-23" }
+  progress: { updated: "2025-10-24" }
+  asks: { updated: "2025-10-24" }
   glossary: { updated: "2025-10-08" }
   autonomy: { updated: "2025-10-08" }
   usecases: { updated: "2025-10-08", count: 2 }

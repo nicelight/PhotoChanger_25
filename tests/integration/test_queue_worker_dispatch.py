@@ -5,7 +5,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Deque, Iterable, Mapping
+from typing import Deque, Iterable
 from uuid import UUID, uuid4
 
 import pytest
@@ -25,7 +25,13 @@ from src.app.domain.models import (
     SettingsProviderKeyStatus,
     Slot,
 )
-from src.app.services import JobService, MediaService, SettingsService, SlotService, StatsService
+from src.app.services import (
+    JobService,
+    MediaService,
+    SettingsService,
+    SlotService,
+    StatsService,
+)
 from src.app.workers.queue_worker import QueueWorker
 from tests.mocks.providers import (
     MockGeminiProvider,
@@ -65,6 +71,9 @@ class StubSettingsService(SettingsService):
 
     def read_settings(self) -> Settings:  # type: ignore[override]
         return self._settings
+
+    def verify_ingest_password(self, password: str) -> bool:  # type: ignore[override]
+        return True
 
 
 class StubMediaService(MediaService):
@@ -165,9 +174,7 @@ class StubJobService(JobService):
         self.failed_jobs.append(job)
         return job
 
-    def append_processing_logs(
-        self, job: Job, logs: Iterable[ProcessingLog]
-    ) -> None:  # type: ignore[override]
+    def append_processing_logs(self, job: Job, logs: Iterable[ProcessingLog]) -> None:  # type: ignore[override]
         self.logs.extend(logs)
 
 
@@ -195,7 +202,9 @@ def settings() -> Settings:
     return Settings(
         dslr_password=SettingsDslrPasswordStatus(is_set=False),
         ingest=SettingsIngestConfig(sync_response_timeout_sec=180, ingest_ttl_sec=180),
-        media_cache=MediaCacheSettings(processed_media_ttl_hours=72, public_link_ttl_sec=60),
+        media_cache=MediaCacheSettings(
+            processed_media_ttl_hours=72, public_link_ttl_sec=60
+        ),
         provider_keys={
             "gemini": SettingsProviderKeyStatus(
                 is_configured=True,

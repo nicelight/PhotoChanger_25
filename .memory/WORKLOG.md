@@ -1,6 +1,6 @@
 ---
 id: worklog
-updated: 2025-10-22
+updated: 2025-10-24
 ---
 
 # Черновой журнал до checkpoint
@@ -132,3 +132,23 @@ updated: 2025-10-22
 - 2025-10-22 16:35 — запустил `pytest -m "unit or integration"`, получил ошибку отсутствия fastapi; установил fastapi/httpx/pydantic-settings/jinja2 через pip.
 - 2025-10-22 16:45 — повторно выполнил `pytest -m "unit or integration"` (зелёный) и `pytest -m contract` (зелёный), сохранил логи для отчёта.
 - 2025-10-22 16:55 — подготовил обновления .memory (WORKLOG/TASKS/PROGRESS/ASKS/INDEX) и сформировал план фиксации изменений.
+
+## phase4-ingest-core-2025-10-23
+- 2025-10-23 09:05 — перечитал .memory/MISSION.md, CONTEXT.md, TASKS.md, USECASES.md для уточнения ценности ingest и TTL ограничений.
+- 2025-10-23 09:25 — изучил .memory/DECISIONS.md и ADR-0002 по TTL/очистке, убедился в требованиях к Job.expires_at и media_object TTL.
+- 2025-10-23 09:40 — сверился с .memory/ASKS.md и PROGRESS.md, подтвердил текущий scope (фаза 4.1.1–4.1.5) без дополнительных запросов.
+- 2025-10-23 10:00 — проанализировал spec/contracts/openapi.yaml и схемы IngestRequest/Job/Settings на обязательные поля, статусы и TTL расчёты.
+- 2025-10-23 10:20 — прошёлся по blueprints (domain-model, use-cases, constraints-risks, nfr, test-plan) и сделал заметки по дедлайнам, лимитам payload и требованиям логирования.
+- 2025-10-23 10:45 — изучил реализацию scaffolding src/app/api/routes/ingest.py, core/app.py, services, инфраструктуру и тесты contract/test_ingest.py для планирования реализации.
+- 2025-10-23 11:15 — реализовал DefaultSettings/Slot/Media/JobService и привязал их в create_app, настроил PostgresJobQueue хранить Job in-memory.
+- 2025-10-23 12:00 — доработал ingest_slot: проверка пароля/слота, валидация multipart, сохранение файла в MEDIA_ROOT/payloads, регистрация MediaObject и создание Job.
+- 2025-10-23 13:10 — переписал contract/unit тесты ingest, добавил unit тесты для password helper, адаптировал FakeJobQueue и фикстуры.
+- 2025-10-23 14:00 — починил зависимые модули (schemas model_rebuild, default settings stubs), прогнал ruff/mypy/pytest unit+contract (зелёные).
+
+## phase4-ingest-followup-2025-10-24
+- 2025-10-24 09:05 — перечитал .memory/MISSION.md, CONTEXT.md, TASKS.md, USECASES.md перед продолжением работ по ingest.
+- 2025-10-24 09:20 — ознакомился с .memory/DECISIONS.md, ADR-0002, ASKS.md, PROGRESS.md для подтверждения статуса сабтасков 4.1.1–4.1.5.
+- 2025-10-24 09:35 — сверился с spec/contracts/openapi.yaml и схемами IngestRequest/Job/Settings, а также blueprints (domain-model, use-cases, constraints-risks, nfr, test-plan) для требований по фазе 4.1.
+- 2025-10-24 12:05 — сопоставил текущую реализацию ingest с Docs/brief.md и OpenAPI (проверка пароля, TTL, лимит payload, коды ошибок).
+- 2025-10-24 12:20 — обновил DI: сервисные фабрики получают AppConfig из FastAPI state, перепроверил MEDIA_ROOT и регистрацию ServiceRegistry.
+- 2025-10-24 12:35 — установил недостающие зависимости (fastapi, httpx, python-multipart, jinja2, pydantic-settings), прогнал ruff format/check, mypy и pytest -q -m "unit or contract" (зелёные).
