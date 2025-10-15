@@ -12,3 +12,4 @@ updated: 2025-10-18
 - 2025-10-16 | id:ASK-0004 | source:user | summary:"Закрыть сабтаск 2.1 и синхронизировать стаб-код со спецификацией" | status:done | notes:"OpenAPI поднят до 0.1.2, стабы пересобраны, enum-параметры и клиент обновлены"
 - 2025-10-18 | id:ASK-0005 | source:user | summary:"Фаза 2: провести аудит сервисов и подготовить инфраструктурные заглушки" | status:done | notes:"Обновлены стабы домена/очереди, добавлен providers.json и backlog"
 - 2025-10-18 | id:ASK-0006 | source:user | summary:"Зафиксировать завершение фазы 2 в мемори-банке" | status:done | notes:"Обновлены TASKS, PROGRESS, ASKS и INDEX"
+- 2025-10-18 | id:ASK-0007 | source:user | summary:"Реализовать контрактные тесты ingest/админ-API/публичных ссылок (фаза 3.1)" | status:done | notes:"Добавлены фикстуры, позитивные и негативные сценарии, pytest -m contract зелёный"
