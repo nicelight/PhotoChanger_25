@@ -504,16 +504,17 @@ class QueueWorker:
             if isinstance(data, Mapping):
                 uploaded_image = data.get("uploaded_image")
                 if uploaded_image:
-                    expires_at = deadlines.calculate_artifact_expiry(
-                        artifact_created_at=finalized_at,
-                        job_expires_at=job.expires_at,
-                        ttl_seconds=settings.media_cache.public_link_ttl_sec,
+                    result_expires_at = deadlines.calculate_result_expires_at(
+                        finalized_at,
+                        result_retention_hours=
+                            settings.media_cache.processed_media_ttl_hours,
                     )
+                    job.result_expires_at = result_expires_at
                     media_object = self.media_service.register_media(
                         path=str(uploaded_image),
                         mime=str(data.get("mime", job.result_mime_type or "image/png")),
                         size_bytes=int(data.get("size_bytes", 0)),
-                        expires_at=expires_at,
+                        expires_at=result_expires_at,
                         job_id=job.id,
                     )
 
