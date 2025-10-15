@@ -1,6 +1,6 @@
 ---
 id: worklog
-updated: 2025-10-18
+updated: 2025-10-21
 ---
 
 # Черновой журнал до checkpoint
@@ -94,3 +94,16 @@ updated: 2025-10-18
 - 2025-10-19 12:05 — добавил фикстуры mock_gemini_provider/mock_turbotext_provider в tests/conftest.py, обновил contract/test_queue_worker на новые моки
 - 2025-10-19 12:25 — написал tests/contract/test_provider_mocks.py для проверки сценариев, base64 PNG, timeout и ошибок, задействовал schema validator
 - 2025-10-19 12:45 — прогнал ruff format/check; mypy и pytest завернулись на отсутствующих fastapi/pydantic (зафиксировано в логах)
+
+## phase3-unit-ttl-2025-10-20
+- 2025-10-20 09:05 — проверил чек-лист Фазы 3: требования к структуре tests/unit и наличию TTL unit-тестов
+- 2025-10-20 09:18 — перенёс smoke-тесты scaffolding и imports в tests/unit/, зарегистрировал маркер unit в pytest.ini
+- 2025-10-20 09:32 — реализовал calculate_* в src/app/domain/deadlines.py с проверками TTL и дедлайнов, написал unit/test_deadlines.py
+- 2025-10-20 09:45 — установил fastapi/httpx/pydantic-settings/jinja2 для запуска тестов, подготовил tests/TEST_REPORT_PHASE3.md с логами
+- 2025-10-20 10:00 — прогнал pytest -m unit и pytest -m contract (зелёные), зафиксировал артефакты и готовность Фазы 3
+
+## phase3-validation-2025-10-21
+- 2025-10-21 09:05 — пересмотрел запрос пользователя на повторную проверку Фазы 3 и инструкции agents.md по обновлению мемори.
+- 2025-10-21 09:12 — установил отсутствующие зависимости fastapi/httpx/pydantic-settings/jinja2 для запуска pytest в окружении контейнера.
+- 2025-10-21 09:25 — прогнал `pytest -m unit` и `pytest -m contract`, убедился в зелёном статусе обеих матриц и зафиксировал предупреждения httpx.
+- 2025-10-21 09:40 — обновил tests/TEST_REPORT_PHASE3.md логами текущего прогона и подготовил изменения в .memory (WORKLOG/PROGRESS/ASKS).

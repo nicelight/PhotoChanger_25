@@ -10,6 +10,8 @@ from typing import Iterable, Tuple
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 try:  # pragma: no cover - optional dependency for scaffolding tests
     from fastapi import FastAPI
 except ModuleNotFoundError:  # pragma: no cover - guard for environments without FastAPI
