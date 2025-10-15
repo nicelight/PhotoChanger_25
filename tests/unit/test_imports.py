@@ -12,6 +12,8 @@ from types import ModuleType
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 MODULES_AND_SYMBOLS = [
     ("src.app.core.app", "create_app"),
     ("src.app.core.config", "AppConfig"),
