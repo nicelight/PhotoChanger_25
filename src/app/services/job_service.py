@@ -21,6 +21,14 @@ from ..domain.models import (
 )
 
 
+class QueueBusyError(RuntimeError):
+    """Raised when the ingest queue is saturated and cannot accept jobs."""
+
+
+class QueueUnavailableError(RuntimeError):
+    """Raised when the queue backend is unavailable due to infrastructure issues."""
+
+
 class JobService:
     """High-level API for ingest job lifecycle management."""
 
@@ -40,6 +48,11 @@ class JobService:
         the contract from ``domain-model.md`` and persist the job via the queue
         repository.
         """
+
+        raise NotImplementedError
+
+    def get_job(self, job_id: UUID) -> Job | None:
+        """Return the latest representation of a job if it exists."""
 
         raise NotImplementedError
 
@@ -96,3 +109,15 @@ class JobService:
         """
 
         raise NotImplementedError
+
+    def clear_inline_preview(self, job: Job) -> Job:
+        """Remove inline preview data after it has been delivered to the client."""
+
+        raise NotImplementedError
+
+
+__all__ = [
+    "JobService",
+    "QueueBusyError",
+    "QueueUnavailableError",
+]

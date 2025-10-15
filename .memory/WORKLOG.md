@@ -152,3 +152,11 @@ updated: 2025-10-24
 - 2025-10-24 12:05 — сопоставил текущую реализацию ingest с Docs/brief.md и OpenAPI (проверка пароля, TTL, лимит payload, коды ошибок).
 - 2025-10-24 12:20 — обновил DI: сервисные фабрики получают AppConfig из FastAPI state, перепроверил MEDIA_ROOT и регистрацию ServiceRegistry.
 - 2025-10-24 12:35 — установил недостающие зависимости (fastapi, httpx, python-multipart, jinja2, pydantic-settings), прогнал ruff format/check, mypy и pytest -q -m "unit or contract" (зелёные).
+
+## phase4-ingest-sync-2025-10-25
+- 2025-10-25 09:10 — изучил пользовательский запрос ASK-0013 (фаза 4.1.6–4.1.10), перечитал .memory/MISSION/CONTEXT/TASKS/ASKS/DECISIONS/USECASES и ingest спецификацию в OpenAPI/JSON Schema.
+- 2025-10-25 09:35 — осмотрел текущий код ingest маршрута, DefaultJobService, PostgresJobQueue и тестовые фикстуры, набросал план реализации polling, очистки, ошибок очереди и обновления тестов.
+- 2025-10-25 10:20 — реализовал синхронный ingest (polling по job, декодирование inline результата, маппинг 429/503/504) и очистку payload/inline данных, добавил queue exceptions.
+- 2025-10-25 10:55 — обновил FakeJobQueue и contract/unit тесты (успех, неверный пароль, 415, 429, 504), добавил unit проверки `_decode_inline_result` и DefaultJobService cleanup.
+- 2025-10-25 11:20 — создал Docs/operations/ingest_runbook.md и ссылку в README, синхронизировал .memory/TASKS/PROGRESS/ASKS/INDEX.
+- 2025-10-25 11:35 — прогнал `ruff format`, `ruff check`, `mypy src/`, `pytest -m unit`, `pytest -m contract` (после установки fastapi/httpx/pydantic и python-multipart).
