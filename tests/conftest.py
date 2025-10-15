@@ -91,6 +91,32 @@ class SimpleSchemaValidator:
                 raise AssertionError(f"{pointer}: value {value!r} does not match anyOf ({joined})")
             schema = {k: v for k, v in schema.items() if k != "anyOf"}
 
+        if "oneOf" in schema:
+            matches: list[int] = []
+            errors = []
+            for index, sub_schema in enumerate(schema["oneOf"]):
+                try:
+                    merged, sub_path = self._dereference(dict(sub_schema), path)
+                    self._validate(value, merged, sub_path, pointer)
+                except AssertionError as exc:  # pragma: no cover - informative branch
+                    errors.append(str(exc))
+                else:
+                    matches.append(index)
+
+            if not matches:
+                joined = "; ".join(errors) if errors else "no matching schema"
+                raise AssertionError(
+                    f"{pointer}: value {value!r} does not match exactly one schema in oneOf ({joined})"
+                )
+
+            if len(matches) > 1:
+                indices = ", ".join(str(idx) for idx in matches)
+                raise AssertionError(
+                    f"{pointer}: value {value!r} matches multiple oneOf schemas (indices {indices})"
+                )
+
+            schema = {k: v for k, v in schema.items() if k != "oneOf"}
+
         schema_type = schema.get("type")
         if schema_type is not None:
             self._assert_type(value, schema_type, pointer)
