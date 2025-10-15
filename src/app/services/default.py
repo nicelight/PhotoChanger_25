@@ -196,9 +196,6 @@ class DefaultJobService(JobService):
 
     def clear_inline_preview(self, job: Job) -> Job:  # type: ignore[override]
         job.result_inline_base64 = None
-        job.result_mime_type = None
-        job.result_size_bytes = None
-        job.result_checksum = None
         job.updated_at = _utcnow()
         self.jobs[job.id] = job
         return job
