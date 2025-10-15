@@ -10,7 +10,6 @@ production code.
 
 from __future__ import annotations
 
-import base64
 import json
 import re
 import sys
@@ -283,6 +282,8 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency
     pytest.skip("FastAPI is required for contract tests", allow_module_level=True)
 
 from src.app.core.app import create_app  # noqa: E402
+from src.app.core.config import AppConfig  # noqa: E402
+from src.app.domain.models import Job  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -295,6 +296,7 @@ class FakeJobQueue:
     """In-memory collection that stores Job records for contract tests."""
 
     jobs: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    domain_jobs: Dict[str, Job] = field(default_factory=dict)
 
     def register(self, job: Dict[str, Any]) -> None:
         """Persist a Job payload so tests can reuse its deadline metadata."""
@@ -305,6 +307,43 @@ class FakeJobQueue:
         """Return a previously registered Job by identifier."""
 
         return self.jobs[job_id]
+
+    @staticmethod
+    def _iso(dt: datetime | None) -> str | None:
+        if dt is None:
+            return None
+        return (
+            dt.astimezone(timezone.utc)
+            .replace(microsecond=0)
+            .isoformat()
+            .replace("+00:00", "Z")
+        )
+
+    def enqueue(self, job: Job) -> Job:
+        """Store an enqueued job for later inspection."""
+
+        job_id = str(job.id)
+        self.domain_jobs[job_id] = job
+        self.jobs[job_id] = {
+            "id": job_id,
+            "slot_id": job.slot_id,
+            "status": job.status.value,
+            "is_finalized": job.is_finalized,
+            "failure_reason": job.failure_reason.value if job.failure_reason else None,
+            "provider_job_reference": job.provider_job_reference,
+            "payload_path": job.payload_path,
+            "result_file_path": job.result_file_path,
+            "result_inline_base64": job.result_inline_base64,
+            "result_mime_type": job.result_mime_type,
+            "result_size_bytes": job.result_size_bytes,
+            "result_checksum": job.result_checksum,
+            "result_expires_at": self._iso(job.result_expires_at),
+            "expires_at": self._iso(job.expires_at),
+            "created_at": self._iso(job.created_at),
+            "updated_at": self._iso(job.updated_at),
+            "finalized_at": self._iso(job.finalized_at),
+        }
+        return job
 
 
 @dataclass
@@ -372,10 +411,19 @@ def fake_result_store() -> FakeResultStore:
 
 
 @pytest.fixture
-def contract_app(fake_job_queue: FakeJobQueue, fake_result_store: FakeResultStore):
+def contract_app(
+    fake_job_queue: FakeJobQueue,
+    fake_result_store: FakeResultStore,
+    tmp_path,
+):
     """Instantiate the FastAPI application with fake infrastructure state."""
 
-    extra_state = {"job_queue": fake_job_queue, "result_store": fake_result_store}
+    app_config = AppConfig(media_root=tmp_path / "media")
+    extra_state = {
+        "job_queue": fake_job_queue,
+        "result_store": fake_result_store,
+        "app_config": app_config,
+    }
     app = create_app(extra_state=extra_state)
 
     # Ensure static stats routes have priority over dynamic slot routes for tests.
@@ -753,12 +801,11 @@ def ingest_payload() -> Dict[str, Any]:
     """Provide form-encoded ingest payload compatible with the stub schema."""
 
     image_bytes = b"\xff\xd8contract-image\xff\xd9"
-    image_b64 = base64.b64encode(image_bytes).decode("ascii")
+    filename = "contract-test.jpg"
     return {
-        "form": {
-            "password": "correct-horse-battery",
-            "fileToUpload": image_b64,
-        },
+        "data": {"password": "correct-horse-battery"},
+        "files": {"fileToUpload": (filename, image_bytes, "image/jpeg")},
         "image_bytes": image_bytes,
-        "image_base64": image_b64,
+        "filename": filename,
+        "mime": "image/jpeg",
     }

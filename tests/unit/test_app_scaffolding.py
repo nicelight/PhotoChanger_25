@@ -19,8 +19,8 @@ except ModuleNotFoundError:  # pragma: no cover - guard for environments without
         "FastAPI is not installed for scaffolding tests", allow_module_level=True
     )
 
-from src.app.core.app import create_app
-from src.app.services.registry import ServiceRegistry
+from src.app.core.app import create_app  # noqa: E402
+from src.app.services.registry import ServiceRegistry  # noqa: E402
 
 
 def _collect_route_signatures(app: FastAPI) -> set[Tuple[str, str]]:

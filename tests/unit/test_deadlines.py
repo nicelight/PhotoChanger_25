@@ -136,4 +136,3 @@ def test_calculate_result_expires_at_requires_positive_retention() -> None:
             finalized_at,
             result_retention_hours=0,
         )
-

@@ -1,120 +1,152 @@
-"""Contract tests for the ingest endpoint (``POST /ingest/{slotId}``).
-
-The module focuses on validating happy-path binary responses along with
-timeout/error branches defined in ``spec/contracts/openapi.yaml``. Tests rely on
-helpers from ``tests.conftest`` to reuse JSON Schemas and to override scaffolded
-routers without modifying production code.
-"""
+"""Contract tests covering ingest endpoint behaviour."""
 
 from __future__ import annotations
 
+from pathlib import Path
+from uuid import UUID
+
 import pytest
 from fastapi import status
-from fastapi.responses import JSONResponse, Response
 
 
 @pytest.mark.contract
-def test_ingest_returns_processed_image(
+def test_ingest_enqueues_job_and_persists_payload(
+    contract_app,
     contract_client,
     ingest_payload,
-    patch_endpoint_response,
-    sample_job,
+    fake_job_queue,
 ):
-    """Ingest returns an inline image when processing finishes synchronously."""
-
-    def _response() -> Response:
-        return Response(
-            content=ingest_payload["image_bytes"],
-            media_type="image/jpeg",
-            headers={"X-Job-Id": sample_job["id"]},
-        )
-
-    patch_endpoint_response(
-        "src.app.api.routes.ingest", "ingestSlot", _response
-    )
+    """Valid ingest request must store payload and enqueue a job."""
 
     response = contract_client.post(
         "/ingest/slot-001",
-        json=ingest_payload["form"],
+        data=ingest_payload["data"],
+        files=ingest_payload["files"],
     )
 
-    assert response.status_code == status.HTTP_200_OK
-    assert response.headers["content-type"] == "image/jpeg"
-    assert response.headers["x-job-id"] == sample_job["id"]
-    assert response.content == ingest_payload["image_bytes"]
+    assert response.status_code == status.HTTP_202_ACCEPTED
+    assert "x-job-id" in response.headers
+    job_id = response.headers["x-job-id"]
+    UUID(job_id)
+
+    stored_job = fake_job_queue.domain_jobs[job_id]
+    assert stored_job.slot_id == "slot-001"
+    assert stored_job.payload_path is not None
+
+    media_root: Path = contract_app.state.config.media_root
+    payload_path = media_root / stored_job.payload_path
+    assert payload_path.exists()
+    assert payload_path.read_bytes() == ingest_payload["image_bytes"]
 
 
 @pytest.mark.contract
-def test_ingest_rejects_invalid_payload(
+def test_ingest_rejects_invalid_password(
     contract_client,
     ingest_payload,
-    patch_endpoint_response,
     validate_with_schema,
 ):
-    """Invalid ingest payloads must return a structured ``400`` error."""
+    """401 is returned when ingest password is invalid."""
 
-    def _response() -> JSONResponse:
-        return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content={
-                "error": {
-                    "code": "invalid_payload",
-                    "message": "image field is missing",
-                    "details": {"field": "fileToUpload"},
-                }
-            },
-        )
-
-    patch_endpoint_response(
-        "src.app.api.routes.ingest", "ingestSlot", _response
-    )
+    request_data = {
+        "data": {"password": "wrong-password"},
+        "files": ingest_payload["files"],
+    }
 
     response = contract_client.post(
         "/ingest/slot-001",
-        json=ingest_payload["form"],
+        data=request_data["data"],
+        files=request_data["files"],
+    )
+
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    payload_json = response.json()
+    validate_with_schema(payload_json, "Error.json")
+    assert payload_json["error"]["code"] == "invalid_credentials"
+
+
+@pytest.mark.contract
+def test_ingest_rejects_unknown_slot(
+    contract_client,
+    ingest_payload,
+    validate_with_schema,
+):
+    """404 is returned when slot is not found."""
+
+    response = contract_client.post(
+        "/ingest/slot-015",
+        data=ingest_payload["data"],
+        files=ingest_payload["files"],
+    )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    payload_json = response.json()
+    validate_with_schema(payload_json, "Error.json")
+    assert payload_json["error"]["code"] == "slot_not_found"
+
+
+@pytest.mark.contract
+def test_ingest_rejects_unsupported_mime(
+    contract_client,
+    ingest_payload,
+    validate_with_schema,
+):
+    """Unsupported MIME types must return 415."""
+
+    files = {"fileToUpload": ("test.txt", ingest_payload["image_bytes"], "text/plain")}
+    response = contract_client.post(
+        "/ingest/slot-001",
+        data=ingest_payload["data"],
+        files=files,
+    )
+
+    assert response.status_code == status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+    payload_json = response.json()
+    validate_with_schema(payload_json, "Error.json")
+    assert payload_json["error"]["code"] == "unsupported_media_type"
+
+
+@pytest.mark.contract
+def test_ingest_rejects_empty_payload(
+    contract_client,
+    ingest_payload,
+    validate_with_schema,
+):
+    """Zero-byte files must trigger a 400 validation error."""
+
+    files = {"fileToUpload": ("empty.jpg", b"", "image/jpeg")}
+    response = contract_client.post(
+        "/ingest/slot-001",
+        data=ingest_payload["data"],
+        files=files,
     )
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    payload = response.json()
-    validate_with_schema(payload, "Error.json")
-    assert payload["error"]["details"]["field"] == "fileToUpload"
+    payload_json = response.json()
+    validate_with_schema(payload_json, "Error.json")
+    assert payload_json["error"]["code"] == "invalid_payload"
 
 
 @pytest.mark.contract
-def test_ingest_timeout_returns_gateway_timeout(
+def test_ingest_enforces_payload_size_limit(
     contract_client,
     ingest_payload,
-    expired_job,
-    patch_endpoint_response,
+    monkeypatch,
     validate_with_schema,
 ):
-    """Expired jobs must trigger ``504 Gateway Timeout`` with deadline details."""
+    """Payloads exceeding limit produce 413 errors."""
 
-    def _response() -> JSONResponse:
-        return JSONResponse(
-            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-            content={
-                "error": {
-                    "code": "sync_timeout",
-                    "message": "Job timed out before completion",
-                    "details": {
-                        "job_id": expired_job["id"],
-                        "expires_at": expired_job["expires_at"],
-                    },
-                }
-            },
-        )
-
-    patch_endpoint_response(
-        "src.app.api.routes.ingest", "ingestSlot", _response
+    monkeypatch.setattr(
+        "src.app.api.routes.ingest.MAX_PAYLOAD_BYTES",
+        1,
     )
 
     response = contract_client.post(
         "/ingest/slot-001",
-        json=ingest_payload["form"],
+        data=ingest_payload["data"],
+        files=ingest_payload["files"],
     )
 
-    assert response.status_code == status.HTTP_504_GATEWAY_TIMEOUT
-    payload = response.json()
-    validate_with_schema(payload, "Error.json")
-    assert payload["error"]["details"]["expires_at"] == expired_job["expires_at"]
+    assert response.status_code == status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+    payload_json = response.json()
+    validate_with_schema(payload_json, "Error.json")
+    assert payload_json["error"]["code"] == "payload_too_large"

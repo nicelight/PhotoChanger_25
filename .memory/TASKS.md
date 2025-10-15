@@ -10,11 +10,11 @@ updated: 2025-10-22
   - *Цель:* реализовать основную бизнес-логику ingest/очереди/воркеров/админ-API.
   - *Задачи:*
     - [ ] 4.1 Завершить Ingest API.
-      - [ ] 4.1.1 Подключить `ingest_slot` к контейнеру сервисов и внедрить зависимости `JobService`/`SlotService`/`MediaService`/`SettingsService`.
-      - [ ] 4.1.2 Реализовать проверку ingest-пароля, выбор валидного слота и возврат 401/404 с журналированием попыток.
-      - [ ] 4.1.3 Валидировать multipart payload (MIME, размер, обязательные поля) и маппить ошибки в 400/413/415.
-      - [ ] 4.1.4 Сохранить входной файл в `MEDIA_ROOT/payloads`, зарегистрировать `MediaObject` c TTL = `min(job.expires_at, now + T_sync_response)`.
-      - [ ] 4.1.5 Создать `Job` через `JobService.create_job`, выставив `expires_at` и поставив задачу в очередь Postgres.
+      - [x] 4.1.1 Подключить `ingest_slot` к контейнеру сервисов и внедрить зависимости `JobService`/`SlotService`/`MediaService`/`SettingsService`.
+      - [x] 4.1.2 Реализовать проверку ingest-пароля, выбор валидного слота и возврат 401/404 с журналированием попыток.
+      - [x] 4.1.3 Валидировать multipart payload (MIME, размер, обязательные поля) и маппить ошибки в 400/413/415.
+      - [x] 4.1.4 Сохранить входной файл в `MEDIA_ROOT/payloads`, зарегистрировать `MediaObject` c TTL = `min(job.expires_at, now + T_sync_response)`.
+      - [x] 4.1.5 Создать `Job` через `JobService.create_job`, выставив `expires_at` и поставив задачу в очередь Postgres.
       - [ ] 4.1.6 Настроить polling цикла в пределах `T_sync_response`, декодировать `result_inline_base64` и формировать ответ 200/504.
       - [ ] 4.1.7 Очистить `result_inline_base64`, временные payload и `MediaObject` после завершения HTTP-ответа либо таймаута.
       - [ ] 4.1.8 Обработать ошибки очереди и back-pressure (429/503), унифицировать обработку исключений ingest.

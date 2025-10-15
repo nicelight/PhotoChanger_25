@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Iterable
+from uuid import UUID
 
 from ...domain.models import Job
 from ..job_repository import JobRepository
@@ -35,11 +36,13 @@ class PostgresJobQueue(JobRepository):
 
     def __init__(self, *, config: PostgresQueueConfig) -> None:
         self.config = config
+        self._jobs: dict[UUID, Job] = {}
 
     def enqueue(self, job: Job) -> Job:  # type: ignore[override]
         """Persist a new job into the PostgreSQL queue."""
 
-        raise NotImplementedError
+        self._jobs[job.id] = job
+        return job
 
     def acquire_for_processing(self, *, now: datetime) -> Job | None:  # type: ignore[override]
         """Select the next job using ``FOR UPDATE SKIP LOCKED`` semantics."""

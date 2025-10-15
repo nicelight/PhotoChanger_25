@@ -1,6 +1,6 @@
 ---
 id: asks
-updated: 2025-10-22
+updated: 2025-10-24
 ---
 
 # Asks (запросы пользователей)
@@ -18,3 +18,5 @@ updated: 2025-10-22
 | 2025-10-19 | ASK-0008  | user     | Сабтаск 3.3 — разработать моки провайдеров Gemini/Turbotext           | done   | Созданы deterministic mocks, pytest фикстуры и контрактные тесты provider_mocks. |
 | 2025-10-21 | ASK-0009  | user     | Повторно подтвердить готовность Фазы 3, обновить тестовый отчёт       | done   | Перезапущены pytest unit/contract, установлены зависимости, tests/TEST_REPORT_PHASE3.md и .memory синхронизированы. |
 | 2025-10-22 | ASK-0010  | user     | Устранить DI-провайдеров и реализовать QueueWorker.dispatch_to_provider | done   | Расширен ServiceRegistry, реализован полный цикл QueueWorker, добавлены интеграционные проверки успех/timeout/error. |
+| 2025-10-23 | ASK-0011  | user     | Выполнить сабтаски 4.1.1–4.1.5 (ingest core)                           | done   | Реализованы DI, ingest endpoint, валидация multipart, сохранение payload, постановка Job и тесты. |
+| 2025-10-24 | ASK-0012  | user     | Проверить соответствие изменений ingest спецификациям и брифу           | done   | Обновлён DI (AppConfig), прогнаны ruff/mypy/pytest -m "unit or contract", отклонений нет. |

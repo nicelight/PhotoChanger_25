@@ -15,6 +15,11 @@ class SettingsService:
 
         raise NotImplementedError
 
+    def verify_ingest_password(self, password: str) -> bool:
+        """Validate DSLR ingest credentials without exposing the hash."""
+
+        raise NotImplementedError
+
     def update_settings(self, settings: Settings) -> Settings:
         """Persist configuration changes coming from the admin UI."""
 
