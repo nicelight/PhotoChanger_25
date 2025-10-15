@@ -69,6 +69,12 @@ def calculate_artifact_expiry(
         raise ValueError("ttl_seconds must be positive")
 
     artifact_deadline = artifact_created_at + timedelta(seconds=ttl_seconds)
+
+    if artifact_deadline.tzinfo is not None and job_expires_at.tzinfo is None:
+        job_expires_at = job_expires_at.replace(tzinfo=artifact_deadline.tzinfo)
+    elif artifact_deadline.tzinfo is None and job_expires_at.tzinfo is not None:
+        artifact_deadline = artifact_deadline.replace(tzinfo=job_expires_at.tzinfo)
+
     return min(artifact_deadline, job_expires_at)
 
 
