@@ -1,6 +1,6 @@
 ---
 id: worklog
-updated: 2025-10-21
+updated: 2025-10-22
 ---
 
 # Черновой журнал до checkpoint
@@ -107,3 +107,9 @@ updated: 2025-10-21
 - 2025-10-21 09:12 — установил отсутствующие зависимости fastapi/httpx/pydantic-settings/jinja2 для запуска pytest в окружении контейнера.
 - 2025-10-21 09:25 — прогнал `pytest -m unit` и `pytest -m contract`, убедился в зелёном статусе обеих матриц и зафиксировал предупреждения httpx.
 - 2025-10-21 09:40 — обновил tests/TEST_REPORT_PHASE3.md логами текущего прогона и подготовил изменения в .memory (WORKLOG/PROGRESS/ASKS).
+
+## phase4-decomposition-2025-10-22
+- 2025-10-22 09:05 — перечитал .memory/MISSION.md, CONTEXT.md, USECASES.md и спецификации OpenAPI/blueprints для напоминания ограничений Фазы 4.
+- 2025-10-22 09:25 — проанализировал текущие пункты Фазы 4 в .memory/TASKS.md, отметил крупные области (ingest, очередь, воркеры, admin, security, observability).
+- 2025-10-22 09:45 — сопоставил требования TTL/очереди/провайдеров/безопасности из Docs/implementation_roadmap.md и ADR-0002 с существующими каркасами src/ (JobService, QueueWorker, MediaService).
+- 2025-10-22 10:05 — сформировал детальную декомпозицию подпунктов 4.1–4.7, учёл тесты/документацию/очистку, обновил .memory/TASKS.md и проверил структуру чекбоксов.
