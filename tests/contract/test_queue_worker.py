@@ -179,9 +179,11 @@ class InstrumentedWorker(QueueWorker):
     ) -> None:
         super().__init__(
             job_service=job_service,
+            slot_service=Mock(name="slot_service"),
             media_service=media_service,
             settings_service=settings_service,
             stats_service=stats_service,
+            provider_factories={},
         )
         self.provider = provider
 

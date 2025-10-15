@@ -13,7 +13,7 @@ memory:
   decisions: { index: ".memory/DECISIONS.md", updated: "2025-10-16" }
   tasks: { updated: "2025-10-22" }
   progress: { updated: "2025-10-22" }
-  asks: { updated: "2025-10-18" }
+  asks: { updated: "2025-10-22" }
   glossary: { updated: "2025-10-08" }
   autonomy: { updated: "2025-10-08" }
   usecases: { updated: "2025-10-08", count: 2 }
