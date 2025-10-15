@@ -1,10 +1,684 @@
-"""Pytest configuration for adjusting import paths during scaffolding tests."""
+"""Common pytest fixtures for PhotoChanger contract testing.
+
+The module keeps ``sys.path`` configured for the scaffolding tests and provides
+stubbed infrastructure objects (ingest queue, media storage) together with
+helpers for patching FastAPI routers that are still represented by 501
+responses.  Contract tests rely on these fixtures to build deterministic
+payloads that align with ``spec/contracts`` schemas without touching the
+production code.
+"""
 
 from __future__ import annotations
 
+import base64
+import json
+import re
 import sys
+import uuid
+from dataclasses import dataclass, field
+from datetime import date, datetime, timedelta, timezone
+from importlib import import_module
 from pathlib import Path
+from typing import Any, Callable, Dict, Iterable
+from urllib.parse import urlparse
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+
+SCHEMAS_ROOT = PROJECT_ROOT / "spec" / "contracts" / "schemas"
+
+
+class SchemaLoader:
+    """Utility that loads JSON Schemas and resolves local references."""
+
+    def __init__(self, root: Path) -> None:
+        self._root = root
+        self._cache: Dict[Path, Dict[str, Any]] = {}
+
+    def load(self, schema_name: str) -> tuple[Dict[str, Any], Path]:
+        """Return a schema dictionary together with its absolute path."""
+
+        path = (self._root / schema_name).resolve()
+        return self._load_from_path(path)
+
+    def resolve_ref(self, ref: str, base_path: Path) -> tuple[Dict[str, Any], Path]:
+        """Resolve a ``$ref`` relative to ``base_path``."""
+
+        if ref.startswith("#"):
+            raise AssertionError("In-document references are not supported in tests")
+        path = (base_path.parent / ref).resolve()
+        return self._load_from_path(path)
+
+    def _load_from_path(self, path: Path) -> tuple[Dict[str, Any], Path]:
+        if path not in self._cache:
+            self._cache[path] = json.loads(path.read_text(encoding="utf-8"))
+        return dict(self._cache[path]), path
+
+
+class SimpleSchemaValidator:
+    """Minimal JSON Schema validator tailored for the contract fixtures."""
+
+    def __init__(self, loader: SchemaLoader) -> None:
+        self._loader = loader
+
+    def __call__(self, payload: Any, schema_name: str) -> None:
+        """Validate ``payload`` against ``schema_name`` or raise ``AssertionError``."""
+
+        schema, path = self._loader.load(schema_name)
+        self._validate(payload, schema, path, pointer="$")
+
+    def _validate(self, value: Any, schema: Dict[str, Any], path: Path, pointer: str) -> None:
+        schema, path = self._dereference(schema, path)
+
+        if "allOf" in schema:
+            for index, sub_schema in enumerate(schema["allOf"]):
+                merged, sub_path = self._dereference(dict(sub_schema), path)
+                self._validate(value, merged, sub_path, pointer)
+
+        if "anyOf" in schema:
+            errors = []
+            for sub_schema in schema["anyOf"]:
+                try:
+                    merged, sub_path = self._dereference(dict(sub_schema), path)
+                    self._validate(value, merged, sub_path, pointer)
+                except AssertionError as exc:  # pragma: no cover - informative branch
+                    errors.append(str(exc))
+                else:
+                    break
+            else:
+                joined = "; ".join(errors) if errors else "no matching schema"
+                raise AssertionError(f"{pointer}: value {value!r} does not match anyOf ({joined})")
+            schema = {k: v for k, v in schema.items() if k != "anyOf"}
+
+        schema_type = schema.get("type")
+        if schema_type is not None:
+            self._assert_type(value, schema_type, pointer)
+
+        if "enum" in schema and value not in schema["enum"]:
+            raise AssertionError(f"{pointer}: {value!r} not in enum {schema['enum']!r}")
+
+        if "const" in schema and value != schema["const"]:
+            raise AssertionError(f"{pointer}: {value!r} != const {schema['const']!r}")
+
+        if "pattern" in schema:
+            if not isinstance(value, str) or re.search(schema["pattern"], value) is None:
+                raise AssertionError(
+                    f"{pointer}: {value!r} does not satisfy pattern {schema['pattern']!r}"
+                )
+
+        if "minimum" in schema:
+            if not isinstance(value, (int, float)) or isinstance(value, bool) or value < schema["minimum"]:
+                raise AssertionError(
+                    f"{pointer}: {value!r} is below minimum {schema['minimum']!r}"
+                )
+
+        if "format" in schema:
+            self._validate_format(value, schema["format"], pointer)
+
+        if isinstance(schema.get("type"), (list, tuple)) and "null" in schema["type"] and value is None:
+            return
+
+        if schema.get("type") == "null" and value is None:
+            return
+
+        if schema.get("type") == "object" or (
+            isinstance(schema.get("type"), list) and "object" in schema["type"]
+        ) or ("properties" in schema and isinstance(value, dict)):
+            self._validate_object(value, schema, path, pointer)
+        elif schema.get("type") == "array" or (
+            isinstance(schema.get("type"), list) and "array" in schema["type"]
+        ):
+            self._validate_array(value, schema, path, pointer)
+
+    def _validate_object(
+        self, value: Any, schema: Dict[str, Any], path: Path, pointer: str
+    ) -> None:
+        if not isinstance(value, dict):
+            raise AssertionError(f"{pointer}: expected object, got {type(value).__name__}")
+
+        required = schema.get("required", [])
+        for key in required:
+            if key not in value:
+                raise AssertionError(f"{pointer}: missing required property {key!r}")
+
+        properties = schema.get("properties", {})
+        additional = schema.get("additionalProperties", True)
+
+        for key, item in value.items():
+            if key in properties:
+                merged, sub_path = self._dereference(dict(properties[key]), path)
+                self._validate(item, merged, sub_path, f"{pointer}/{key}")
+            else:
+                if additional is False:
+                    raise AssertionError(f"{pointer}: additional property {key!r} is not allowed")
+                if isinstance(additional, dict):
+                    merged, sub_path = self._dereference(dict(additional), path)
+                    self._validate(item, merged, sub_path, f"{pointer}/{key}")
+
+    def _validate_array(
+        self, value: Any, schema: Dict[str, Any], path: Path, pointer: str
+    ) -> None:
+        if not isinstance(value, list):
+            raise AssertionError(f"{pointer}: expected array, got {type(value).__name__}")
+
+        if "minItems" in schema and len(value) < schema["minItems"]:
+            raise AssertionError(
+                f"{pointer}: expected at least {schema['minItems']} items, got {len(value)}"
+            )
+
+        if "maxItems" in schema and len(value) > schema["maxItems"]:
+            raise AssertionError(
+                f"{pointer}: expected at most {schema['maxItems']} items, got {len(value)}"
+            )
+
+        items_schema = schema.get("items")
+        if isinstance(items_schema, dict):
+            for index, item in enumerate(value):
+                merged, sub_path = self._dereference(dict(items_schema), path)
+                self._validate(item, merged, sub_path, f"{pointer}/{index}")
+
+    def _assert_type(self, value: Any, declared: Any, pointer: str) -> None:
+        allowed = declared if isinstance(declared, (list, tuple)) else [declared]
+        for entry in allowed:
+            if self._matches_type(value, entry):
+                return
+        raise AssertionError(f"{pointer}: {value!r} does not satisfy type {allowed!r}")
+
+    def _matches_type(self, value: Any, entry: str) -> bool:
+        if entry == "object":
+            return isinstance(value, dict)
+        if entry == "array":
+            return isinstance(value, list)
+        if entry == "string":
+            return isinstance(value, str)
+        if entry == "integer":
+            return isinstance(value, int) and not isinstance(value, bool)
+        if entry == "number":
+            return (isinstance(value, (int, float)) and not isinstance(value, bool))
+        if entry == "boolean":
+            return isinstance(value, bool)
+        if entry == "null":
+            return value is None
+        return False
+
+    def _validate_format(self, value: Any, fmt: str, pointer: str) -> None:
+        if fmt == "date-time":
+            if not isinstance(value, str):
+                raise AssertionError(f"{pointer}: expected string for date-time format")
+            candidate = value.replace("Z", "+00:00")
+            try:
+                datetime.fromisoformat(candidate)
+            except ValueError as exc:
+                raise AssertionError(f"{pointer}: invalid date-time {value!r}") from exc
+        elif fmt == "date":
+            if not isinstance(value, str):
+                raise AssertionError(f"{pointer}: expected string for date format")
+            try:
+                date.fromisoformat(value)
+            except ValueError as exc:
+                raise AssertionError(f"{pointer}: invalid date {value!r}") from exc
+        elif fmt == "uuid":
+            if not isinstance(value, str):
+                raise AssertionError(f"{pointer}: expected string for uuid format")
+            try:
+                uuid.UUID(value)
+            except (ValueError, AttributeError) as exc:
+                raise AssertionError(f"{pointer}: invalid uuid {value!r}") from exc
+        elif fmt == "uri":
+            if not isinstance(value, str):
+                raise AssertionError(f"{pointer}: expected string for uri format")
+            parsed = urlparse(value)
+            if not (parsed.scheme and parsed.netloc):
+                raise AssertionError(f"{pointer}: invalid uri {value!r}")
+
+    def _dereference(self, schema: Dict[str, Any], path: Path) -> tuple[Dict[str, Any], Path]:
+        if "$ref" not in schema:
+            return schema, path
+        ref = schema["$ref"]
+        ref_schema, ref_path = self._loader.resolve_ref(ref, path)
+        merged = dict(ref_schema)
+        merged.update({k: v for k, v in schema.items() if k != "$ref"})
+        return self._dereference(merged, ref_path)
+
+import pytest
+
+try:  # pragma: no cover - guard for environments without FastAPI
+    from fastapi import Response
+    from fastapi.testclient import TestClient
+except ModuleNotFoundError:  # pragma: no cover - optional dependency
+    pytest.skip("FastAPI is required for contract tests", allow_module_level=True)
+
+from src.app.core.app import create_app
+
+
+# ---------------------------------------------------------------------------
+# In-memory infrastructure doubles
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class FakeJobQueue:
+    """In-memory collection that stores Job records for contract tests."""
+
+    jobs: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+
+    def register(self, job: Dict[str, Any]) -> None:
+        """Persist a Job payload so tests can reuse its deadline metadata."""
+
+        self.jobs[job["id"]] = job
+
+    def get(self, job_id: str) -> Dict[str, Any]:
+        """Return a previously registered Job by identifier."""
+
+        return self.jobs[job_id]
+
+
+@dataclass
+class FakeResultStore:
+    """Simple map of Job identifiers to public result descriptors."""
+
+    results: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+
+    def store(self, job_id: str, result: Dict[str, Any]) -> None:
+        """Associate Job results with a job id for reuse across tests."""
+
+        self.results[job_id] = result
+
+    def get(self, job_id: str) -> Dict[str, Any]:
+        """Return stored result metadata for the given job id."""
+
+        return self.results[job_id]
+
+
+# ---------------------------------------------------------------------------
+# Core fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def fake_job_queue() -> FakeJobQueue:
+    """Provide a fake ingest queue used to capture job deadlines."""
+
+    return FakeJobQueue()
+
+
+@pytest.fixture
+def fake_result_store() -> FakeResultStore:
+    """Provide an in-memory result storage with TTL-aware metadata."""
+
+    return FakeResultStore()
+
+
+@pytest.fixture
+def contract_app(fake_job_queue: FakeJobQueue, fake_result_store: FakeResultStore):
+    """Instantiate the FastAPI application with fake infrastructure state."""
+
+    extra_state = {"job_queue": fake_job_queue, "result_store": fake_result_store}
+    app = create_app(extra_state=extra_state)
+
+    # Ensure static stats routes have priority over dynamic slot routes for tests.
+    routes = app.router.routes
+    global_route = next(
+        (route for route in routes if getattr(route, "path", None) == "/api/stats/global"),
+        None,
+    )
+    slot_route = next(
+        (route for route in routes if getattr(route, "path", None) == "/api/stats/{slot_id}"),
+        None,
+    )
+    if global_route and slot_route:
+        global_index = routes.index(global_route)
+        slot_index = routes.index(slot_route)
+        if global_index > slot_index:
+            routes.insert(slot_index, routes.pop(global_index))
+
+    return app
+
+
+@pytest.fixture
+def contract_client(contract_app):
+    """Return a ``TestClient`` bound to the contract-testing FastAPI app."""
+
+    with TestClient(contract_app) as client:
+        yield client
+
+
+# ---------------------------------------------------------------------------
+# Sample data fixtures aligned with JSON Schemas
+# ---------------------------------------------------------------------------
+
+
+def _isoformat(dt: datetime) -> str:
+    """Serialize a timezone-aware ``datetime`` to RFC 3339 format."""
+
+    return dt.astimezone(timezone.utc).replace(microsecond=0).isoformat().replace(
+        "+00:00", "Z"
+    )
+
+
+@pytest.fixture
+def sample_job(fake_job_queue: FakeJobQueue) -> Dict[str, Any]:
+    """Return a Job record with consistent ingest and result deadlines."""
+
+    created = datetime(2025, 10, 18, 10, 0, 0, tzinfo=timezone.utc)
+    expires = created + timedelta(seconds=55)
+    result_expires = created + timedelta(hours=72)
+    job = {
+        "id": "11111111-2222-3333-4444-555555555555",
+        "slot_id": "slot-001",
+        "status": "processing",
+        "is_finalized": False,
+        "failure_reason": None,
+        "provider_job_reference": "provider-ref-001",
+        "payload_path": "/tmp/payloads/job-1",
+        "result_file_path": None,
+        "result_inline_base64": None,
+        "result_mime_type": None,
+        "result_size_bytes": None,
+        "result_checksum": None,
+        "result_expires_at": _isoformat(result_expires),
+        "expires_at": _isoformat(expires),
+        "created_at": _isoformat(created),
+        "updated_at": _isoformat(created + timedelta(seconds=1)),
+        "finalized_at": None,
+    }
+    fake_job_queue.register(job)
+    return job
+
+
+@pytest.fixture
+def expired_job(fake_job_queue: FakeJobQueue) -> Dict[str, Any]:
+    """Return a Job payload representing an already expired ingest deadline."""
+
+    created = datetime(2025, 10, 18, 9, 0, 0, tzinfo=timezone.utc)
+    expires = created + timedelta(seconds=50)
+    job = {
+        "id": "99999999-8888-7777-6666-555555555555",
+        "slot_id": "slot-001",
+        "status": "processing",
+        "is_finalized": False,
+        "failure_reason": "timeout",
+        "provider_job_reference": "provider-ref-expired",
+        "payload_path": "/tmp/payloads/job-expired",
+        "result_file_path": None,
+        "result_inline_base64": None,
+        "result_mime_type": None,
+        "result_size_bytes": None,
+        "result_checksum": None,
+        "result_expires_at": None,
+        "expires_at": _isoformat(expires),
+        "created_at": _isoformat(created),
+        "updated_at": _isoformat(created + timedelta(seconds=50)),
+        "finalized_at": _isoformat(created + timedelta(seconds=50)),
+    }
+    fake_job_queue.register(job)
+    return job
+
+
+@pytest.fixture
+def sample_result(sample_job: Dict[str, Any], fake_result_store: FakeResultStore) -> Dict[str, Any]:
+    """Return result metadata pointing to the sample job's public link."""
+
+    result = {
+        "job_id": sample_job["id"],
+        "thumbnail_url": "https://cdn.photochanger.local/thumbs/sample.jpg",
+        "download_url": f"https://cdn.photochanger.local/results/{sample_job['id']}",
+        "completed_at": sample_job["created_at"],
+        "result_expires_at": sample_job["result_expires_at"],
+        "mime": "image/jpeg",
+        "size_bytes": 1024,
+    }
+    fake_result_store.store(sample_job["id"], result)
+    return result
+
+
+@pytest.fixture
+def expired_result(fake_result_store: FakeResultStore) -> Dict[str, Any]:
+    """Provide metadata for a public result whose TTL already elapsed."""
+
+    job_id = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+    result = {
+        "job_id": job_id,
+        "thumbnail_url": "https://cdn.photochanger.local/thumbs/expired.jpg",
+        "download_url": f"https://cdn.photochanger.local/results/{job_id}",
+        "completed_at": "2025-10-10T10:00:00Z",
+        "result_expires_at": "2025-10-13T10:00:00Z",
+        "mime": "image/png",
+        "size_bytes": 2048,
+    }
+    fake_result_store.store(job_id, result)
+    return result
+
+
+@pytest.fixture
+def sample_slot(sample_result: Dict[str, Any]) -> Dict[str, Any]:
+    """Return slot metadata enriched with the sample recent result list."""
+
+    return {
+        "id": "slot-001",
+        "name": "Portrait Enhancer",
+        "provider_id": "gemini-pro",
+        "operation_id": "portrait-v2",
+        "settings_json": {"prompt": "enhance portrait lighting"},
+        "last_reset_at": "2025-10-17T12:00:00Z",
+        "created_at": "2025-10-01T09:00:00Z",
+        "updated_at": "2025-10-18T08:00:00Z",
+        "recent_results": [sample_result],
+    }
+
+
+@pytest.fixture
+def sample_slot_list(sample_slot: Dict[str, Any]) -> Dict[str, Any]:
+    """Return a list response for ``GET /api/slots`` with metadata total=1."""
+
+    return {"data": [sample_slot], "meta": {"total": 1}}
+
+
+@pytest.fixture
+def sample_settings(sample_job: Dict[str, Any]) -> Dict[str, Any]:
+    """Return platform settings with TTL parameters derived from the job."""
+
+    sync_timeout = 55
+    return {
+        "dslr_password": {
+            "is_set": True,
+            "updated_at": "2025-10-15T12:00:00Z",
+            "updated_by": "admin",
+        },
+        "provider_keys": {
+            "gemini-pro": {
+                "is_configured": True,
+                "updated_at": "2025-10-15T12:30:00Z",
+                "updated_by": "admin",
+                "project_id": "photochanger-lab",
+            }
+        },
+        "ingest": {
+            "sync_response_timeout_sec": sync_timeout,
+            "ingest_ttl_sec": sync_timeout,
+        },
+        "media_cache": {
+            "processed_media_ttl_hours": 72,
+            "public_link_ttl_sec": sync_timeout,
+        },
+    }
+
+
+@pytest.fixture
+def sample_slot_stats() -> Dict[str, Any]:
+    """Return slot-scoped statistics for the default slot."""
+
+    return {
+        "slot_id": "slot-001",
+        "range": {"from": "2025-10-10", "to": "2025-10-17", "group_by": "day"},
+        "summary": {
+            "title": "Portrait Enhancer",
+            "success": 42,
+            "timeouts": 1,
+            "provider_errors": 2,
+            "cancelled": 0,
+            "errors": 3,
+            "ingest_count": 45,
+            "last_reset_at": "2025-10-17T12:00:00Z",
+        },
+        "metrics": [
+            {
+                "period_start": "2025-10-16",
+                "period_end": "2025-10-16",
+                "success": 6,
+                "timeouts": 0,
+                "provider_errors": 1,
+                "cancelled": 0,
+                "errors": 1,
+                "ingest_count": 7,
+            }
+        ],
+    }
+
+
+@pytest.fixture
+def sample_global_stats() -> Dict[str, Any]:
+    """Return aggregated statistics payload for ``/api/stats/global``."""
+
+    return {
+        "summary": {
+            "total_runs": 120,
+            "timeouts": 3,
+            "provider_errors": 5,
+            "cancelled": 1,
+            "errors": 6,
+            "ingest_count": 120,
+        },
+        "data": [
+            {
+                "period_start": "2025-10-10",
+                "period_end": "2025-10-16",
+                "success": 80,
+                "timeouts": 2,
+                "provider_errors": 3,
+                "cancelled": 1,
+                "errors": 4,
+                "ingest_count": 90,
+            }
+        ],
+        "meta": {"page": 1, "page_size": 10, "total": 1},
+    }
+
+
+# ---------------------------------------------------------------------------
+# Schema helpers and router patching utilities
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="session")
+def schema_loader() -> SchemaLoader:
+    """Expose a shared schema loader for contract tests."""
+
+    return SchemaLoader(SCHEMAS_ROOT)
+
+
+@pytest.fixture
+def load_contract_schema(schema_loader: SchemaLoader) -> Callable[[str], Dict[str, Any]]:
+    """Return a loader that reads JSON Schemas from ``spec/contracts``."""
+
+    def _load(schema_name: str) -> Dict[str, Any]:
+        schema, _ = schema_loader.load(schema_name)
+        return schema
+
+    return _load
+
+
+@pytest.fixture
+def validate_with_schema(
+    schema_loader: SchemaLoader,
+) -> Callable[[Dict[str, Any], str], None]:
+    """Return a helper that validates payloads against JSON Schemas."""
+
+    validator = SimpleSchemaValidator(schema_loader)
+
+    def _validate(payload: Dict[str, Any], schema_name: str) -> None:
+        validator(payload, schema_name)
+
+    return _validate
+
+
+@pytest.fixture
+def patch_endpoint_response(monkeypatch) -> Callable[[str, str, Callable[[], Response] | Response], None]:
+    """Patch ``endpoint_not_implemented`` for a router module with a stub."""
+
+    def _patch(
+        module_path: str,
+        operation: str,
+        response_factory: Callable[[], Response] | Response,
+    ) -> None:
+        module = import_module(module_path)
+
+        def _stub(received_operation: str) -> Response:
+            assert (
+                received_operation == operation
+            ), f"unexpected operation {received_operation!r} requested"
+            if callable(response_factory):
+                return response_factory()
+            return response_factory
+
+        monkeypatch.setattr(module, "endpoint_not_implemented", _stub)
+
+    return _patch
+
+
+@pytest.fixture
+def patch_authentication_response(monkeypatch) -> Callable[[str, Callable[[], Response] | Response], None]:
+    """Override ``authentication_not_configured`` to emit contract errors."""
+
+    def _patch(
+        module_path: str,
+        response_factory: Callable[[], Response] | Response,
+    ) -> None:
+        module = import_module(module_path)
+
+        def _stub() -> Response:
+            if callable(response_factory):
+                return response_factory()
+            return response_factory
+
+        monkeypatch.setattr(module, "authentication_not_configured", _stub)
+
+    return _patch
+
+
+@pytest.fixture
+def allow_bearer_auth(contract_app) -> Callable[[Iterable[str]], None]:
+    """Override bearer auth dependencies to return ``True`` for tests."""
+
+    async def _allow() -> bool:
+        return True
+
+    def _apply(modules: Iterable[str]) -> None:
+        from src.app.api.routes import dependencies as base_dependencies
+
+        contract_app.dependency_overrides[
+            base_dependencies.require_bearer_authentication
+        ] = _allow
+        for module_path in modules:
+            module = import_module(module_path)
+            dependency = getattr(module, "require_bearer_authentication")
+            contract_app.dependency_overrides[dependency] = _allow
+
+    return _apply
+
+
+@pytest.fixture
+def ingest_payload() -> Dict[str, Any]:
+    """Provide form-encoded ingest payload compatible with the stub schema."""
+
+    image_bytes = b"\xff\xd8contract-image\xff\xd9"
+    image_b64 = base64.b64encode(image_bytes).decode("ascii")
+    return {
+        "form": {
+            "password": "correct-horse-battery",
+            "fileToUpload": image_b64,
+        },
+        "image_bytes": image_bytes,
+        "image_base64": image_b64,
+    }
