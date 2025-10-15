@@ -34,6 +34,8 @@ class ServiceRegistry:
     UNIT_OF_WORK: ClassVar[PluginKey] = "unit_of_work"
 
     plugins: Dict[PluginKey, PluginFactory] = field(default_factory=dict)
+    provider_factories: Dict[str, PluginFactory] = field(default_factory=dict)
+    provider_configs: Dict[str, Mapping[str, object]] = field(default_factory=dict)
 
     def register(self, key: PluginKey, factory: PluginFactory) -> None:
         """Регистрирует фабрику сервиса или адаптера."""
@@ -78,6 +80,20 @@ class ServiceRegistry:
 
         self.register(self.UNIT_OF_WORK, factory)
 
+    def register_provider_adapter(
+        self, provider_id: str, factory: PluginFactory
+    ) -> None:
+        """Register a provider adapter factory keyed by ``provider_id``."""
+
+        self.provider_factories[provider_id] = factory
+
+    def register_provider_config(
+        self, provider_id: str, config: Mapping[str, object]
+    ) -> None:
+        """Store provider metadata loaded from configuration files."""
+
+        self.provider_configs[provider_id] = dict(config)
+
     def resolve_job_service(self) -> PluginFactory:
         return self.resolve(self.JOB_SERVICE)
 
@@ -119,7 +135,22 @@ class ServiceRegistry:
 
         return self.plugins[key]
 
+    def resolve_provider_adapter(self, provider_id: str) -> PluginFactory:
+        """Return the factory registered for ``provider_id``."""
+
+        return self.provider_factories[provider_id]
+
+    def resolve_provider_config(self, provider_id: str) -> Mapping[str, object]:
+        """Return metadata associated with ``provider_id``."""
+
+        return self.provider_configs.get(provider_id, {})
+
     def snapshot(self) -> Mapping[PluginKey, PluginFactory]:
         """Иммутабельный снимок зарегистрированных плагинов."""
 
         return dict(self.plugins)
+
+    def provider_snapshot(self) -> Mapping[str, PluginFactory]:
+        """Immutable snapshot of registered provider factories."""
+
+        return dict(self.provider_factories)

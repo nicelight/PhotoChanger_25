@@ -121,3 +121,10 @@ updated: 2025-10-22
 
 ## phase4-worker-di-2025-10-22
 - 2025-10-22 15:10 — сформировал расширенный промпт для Codex Agent по устранению пробелов DI и доработке `QueueWorker`/`ServiceRegistry`, сохранил в Docs/prompts/phase4-worker-provider-di.md.
+
+## phase4-worker-dispatch-2025-10-22
+- 2025-10-22 16:05 — изучил замечания пользователя, пересмотрел текущие изменения `QueueWorker`/`ServiceRegistry` и тесты, сверил требования с blueprints и providers docs.
+- 2025-10-22 16:20 — проверил DI-поток: убедился в регистрации фабрик провайдеров и конфигов, проанализировал `dispatch_to_provider`, обработку логов и TTL.
+- 2025-10-22 16:35 — запустил `pytest -m "unit or integration"`, получил ошибку отсутствия fastapi; установил fastapi/httpx/pydantic-settings/jinja2 через pip.
+- 2025-10-22 16:45 — повторно выполнил `pytest -m "unit or integration"` (зелёный) и `pytest -m contract` (зелёный), сохранил логи для отчёта.
+- 2025-10-22 16:55 — подготовил обновления .memory (WORKLOG/TASKS/PROGRESS/ASKS/INDEX) и сформировал план фиксации изменений.
