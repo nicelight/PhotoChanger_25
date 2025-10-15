@@ -13,3 +13,4 @@ updated: 2025-10-18
 - 2025-10-18 | id:ASK-0005 | source:user | summary:"Фаза 2: провести аудит сервисов и подготовить инфраструктурные заглушки" | status:done | notes:"Обновлены стабы домена/очереди, добавлен providers.json и backlog"
 - 2025-10-18 | id:ASK-0006 | source:user | summary:"Зафиксировать завершение фазы 2 в мемори-банке" | status:done | notes:"Обновлены TASKS, PROGRESS, ASKS и INDEX"
 - 2025-10-18 | id:ASK-0007 | source:user | summary:"Реализовать контрактные тесты ingest/админ-API/публичных ссылок (фаза 3.1)" | status:done | notes:"Добавлены фикстуры, позитивные и негативные сценарии, pytest -m contract зелёный"
+- 2025-10-19 | id:ASK-0008 | source:user | summary:"Сабтаск 3.3 — разработать моки провайдеров Gemini/Turbotext" | status:done | notes:"Созданы deterministic mocks, pytest фикстуры и контрактные тесты provider_mocks"

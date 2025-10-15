@@ -26,14 +26,20 @@ from typing import Deque, Dict, Iterable, Iterator
 from uuid import UUID, uuid4
 
 import pytest
-from unittest.mock import AsyncMock, Mock, create_autospec
+from unittest.mock import Mock
 
 from src.app.domain import deadlines
-from src.app.domain.models import Job, JobFailureReason, JobStatus, MediaObject
+from src.app.domain.models import Job, JobFailureReason, JobStatus, MediaObject, Slot
 from src.app.infrastructure.queue.postgres import PostgresJobQueue, PostgresQueueConfig
 from src.app.providers.base import ProviderAdapter
 from src.app.services.job_service import JobService
 from src.app.workers.queue_worker import QueueWorker
+
+from tests.mocks.providers import (
+    MockGeminiProvider,
+    MockProviderConfig,
+    MockProviderScenario,
+)
 
 
 class TimeController:
@@ -100,7 +106,9 @@ class InMemoryQueueDouble(PostgresJobQueue):
 class InMemoryJobService(JobService):
     """Job service double that updates :class:`Job` records synchronously."""
 
-    def __init__(self, queue: InMemoryQueueDouble, *, result_retention_hours: int) -> None:
+    def __init__(
+        self, queue: InMemoryQueueDouble, *, result_retention_hours: int
+    ) -> None:
         self._queue = queue
         self._result_retention_hours = result_retention_hours
         self.finalized_jobs: list[Job] = []
@@ -263,15 +271,20 @@ def job_service(queue_double: InMemoryQueueDouble) -> InMemoryJobService:
 
 
 @pytest.fixture
-def provider() -> ProviderAdapter:
-    provider_mock = create_autospec(ProviderAdapter, instance=True)
-    provider_mock.cancel = AsyncMock(name="cancel")
-    provider_mock.provider_id = "mock-provider"
-    return provider_mock
+def provider() -> MockGeminiProvider:
+    config = MockProviderConfig(
+        scenario=MockProviderScenario.SUCCESS,
+        timeout_polls=2,
+        error_code="RESOURCE_EXHAUSTED",
+        error_message="Quota exceeded for mock Gemini project",
+    )
+    return MockGeminiProvider(config)
 
 
 @pytest.fixture
-def worker(job_service: InMemoryJobService, provider: ProviderAdapter) -> InstrumentedWorker:
+def worker(
+    job_service: InMemoryJobService, provider: ProviderAdapter
+) -> InstrumentedWorker:
     return InstrumentedWorker(
         job_service=job_service,
         media_service=Mock(name="media_service"),
@@ -320,6 +333,20 @@ def make_job(time_controller: TimeController):
     return _factory
 
 
+@pytest.fixture
+def slot(time_controller: TimeController) -> Slot:
+    now = time_controller.now
+    return Slot(
+        id="slot-001",
+        name="Primary Slot",
+        provider_id="gemini",
+        operation_id="models.generateContent",
+        settings_json={},
+        created_at=now,
+        updated_at=now,
+    )
+
+
 @pytest.mark.contract
 @pytest.mark.integration
 def test_worker_finalizes_job_within_sync_window(
@@ -354,21 +381,31 @@ def test_worker_finalizes_job_within_sync_window(
 def test_manual_cancel_invokes_provider_and_marks_failure(
     queue_double: InMemoryQueueDouble,
     worker: InstrumentedWorker,
-    provider: ProviderAdapter,
+    provider: MockGeminiProvider,
     job_service: InMemoryJobService,
     make_job,
     time_controller: TimeController,
+    slot: Slot,
 ) -> None:
     """Manual cancellation calls ``ProviderAdapter.cancel`` and flags the job."""
 
     job = make_job()
-    job.provider_job_reference = "provider-001"
+    payload = provider.prepare_payload(
+        job=job,
+        slot=slot,
+        settings={},
+        context={"prompt": "Cancel scenario"},
+    )
+    reference = asyncio.run(provider.submit_job(payload))
+    job.provider_job_reference = reference
     queue_double.enqueue(job)
 
     cancel_at = time_controller.advance(seconds=10)
     worker.cancel_job(job, now=cancel_at)
 
-    provider.cancel.assert_awaited_once_with("provider-001")
+    assert provider.events[-1] == f"cancel:{reference}"
+    with pytest.raises(RuntimeError, match="cancelled"):
+        asyncio.run(provider.poll_status(reference))
     assert job.is_finalized is True
     assert job.failure_reason == JobFailureReason.CANCELLED
     assert job.finalized_at == cancel_at
@@ -388,7 +425,11 @@ def test_release_expired_jobs_trigger_timeout_processing(
 ) -> None:
     """Expired jobs are released for timeout handling and cleaned up."""
 
-    job = make_job(sync_timeout_sec=30, result_file_path="results/pending.bin", result_inline_base64="cHJldmlldyI=")
+    job = make_job(
+        sync_timeout_sec=30,
+        result_file_path="results/pending.bin",
+        result_inline_base64="cHJldmlldyI=",
+    )
     queue_double.enqueue(job)
 
     expired_now = time_controller.advance(seconds=45)
