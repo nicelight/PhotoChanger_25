@@ -139,8 +139,8 @@ class TemplateMedia:
     setting_key: str
     path: str
     mime: str
-    size_bytes: int
     created_at: datetime
+    size_bytes: int
     checksum: str | None = None
     label: str | None = None
     uploaded_by: str | None = None
