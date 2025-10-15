@@ -86,3 +86,11 @@ updated: 2025-10-18
 - 2025-10-19 09:55 — ускорил `now` через TimeController, замокал функции deadlines.calculate_* для детерминизма
 - 2025-10-19 10:05 — установил fastapi/httpx/pydantic-settings для запуска полного набора contract/integration
 - 2025-10-19 10:18 — прогнал pytest -m "contract and integration" и pytest -m contract (зелёные)
+
+## phase3-provider-mocks-2025-10-19
+- 2025-10-19 11:05 — перечитал Docs/providers/gemini.md, Docs/providers/turbotext.md, tests/HOWTO.md и интерфейс ProviderAdapter для уточнения ожиданий по мокам
+- 2025-10-19 11:25 — спроектировал единый модуль tests/mocks/providers.py (enum сценариев, конфиг, event log, CDN/base64 утилиты)
+- 2025-10-19 11:40 — реализовал MockGeminiProvider/MockTurbotextProvider с режимами success/timeout/error, идемпотентным cancel и журналированием
+- 2025-10-19 12:05 — добавил фикстуры mock_gemini_provider/mock_turbotext_provider в tests/conftest.py, обновил contract/test_queue_worker на новые моки
+- 2025-10-19 12:25 — написал tests/contract/test_provider_mocks.py для проверки сценариев, base64 PNG, timeout и ошибок, задействовал schema validator
+- 2025-10-19 12:45 — прогнал ruff format/check; mypy и pytest завернулись на отсутствующих fastapi/pydantic (зафиксировано в логах)

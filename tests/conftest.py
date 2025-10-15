@@ -28,6 +28,13 @@ if str(PROJECT_ROOT) not in sys.path:
 
 SCHEMAS_ROOT = PROJECT_ROOT / "spec" / "contracts" / "schemas"
 
+from tests.mocks.providers import (  # noqa: E402  (import after sys.path update)
+    MockGeminiProvider,
+    MockProviderScenario,
+    MockTurbotextProvider,
+    MockProviderConfig,
+)
+
 
 class SchemaLoader:
     """Utility that loads JSON Schemas and resolves local references."""
@@ -68,7 +75,9 @@ class SimpleSchemaValidator:
         schema, path = self._loader.load(schema_name)
         self._validate(payload, schema, path, pointer="$")
 
-    def _validate(self, value: Any, schema: Dict[str, Any], path: Path, pointer: str) -> None:
+    def _validate(
+        self, value: Any, schema: Dict[str, Any], path: Path, pointer: str
+    ) -> None:
         schema, path = self._dereference(schema, path)
 
         if "allOf" in schema:
@@ -88,7 +97,9 @@ class SimpleSchemaValidator:
                     break
             else:
                 joined = "; ".join(errors) if errors else "no matching schema"
-                raise AssertionError(f"{pointer}: value {value!r} does not match anyOf ({joined})")
+                raise AssertionError(
+                    f"{pointer}: value {value!r} does not match anyOf ({joined})"
+                )
             schema = {k: v for k, v in schema.items() if k != "anyOf"}
 
         schema_type = schema.get("type")
@@ -102,13 +113,20 @@ class SimpleSchemaValidator:
             raise AssertionError(f"{pointer}: {value!r} != const {schema['const']!r}")
 
         if "pattern" in schema:
-            if not isinstance(value, str) or re.search(schema["pattern"], value) is None:
+            if (
+                not isinstance(value, str)
+                or re.search(schema["pattern"], value) is None
+            ):
                 raise AssertionError(
                     f"{pointer}: {value!r} does not satisfy pattern {schema['pattern']!r}"
                 )
 
         if "minimum" in schema:
-            if not isinstance(value, (int, float)) or isinstance(value, bool) or value < schema["minimum"]:
+            if (
+                not isinstance(value, (int, float))
+                or isinstance(value, bool)
+                or value < schema["minimum"]
+            ):
                 raise AssertionError(
                     f"{pointer}: {value!r} is below minimum {schema['minimum']!r}"
                 )
@@ -116,15 +134,21 @@ class SimpleSchemaValidator:
         if "format" in schema:
             self._validate_format(value, schema["format"], pointer)
 
-        if isinstance(schema.get("type"), (list, tuple)) and "null" in schema["type"] and value is None:
+        if (
+            isinstance(schema.get("type"), (list, tuple))
+            and "null" in schema["type"]
+            and value is None
+        ):
             return
 
         if schema.get("type") == "null" and value is None:
             return
 
-        if schema.get("type") == "object" or (
-            isinstance(schema.get("type"), list) and "object" in schema["type"]
-        ) or ("properties" in schema and isinstance(value, dict)):
+        if (
+            schema.get("type") == "object"
+            or (isinstance(schema.get("type"), list) and "object" in schema["type"])
+            or ("properties" in schema and isinstance(value, dict))
+        ):
             self._validate_object(value, schema, path, pointer)
         elif schema.get("type") == "array" or (
             isinstance(schema.get("type"), list) and "array" in schema["type"]
@@ -135,7 +159,9 @@ class SimpleSchemaValidator:
         self, value: Any, schema: Dict[str, Any], path: Path, pointer: str
     ) -> None:
         if not isinstance(value, dict):
-            raise AssertionError(f"{pointer}: expected object, got {type(value).__name__}")
+            raise AssertionError(
+                f"{pointer}: expected object, got {type(value).__name__}"
+            )
 
         required = schema.get("required", [])
         for key in required:
@@ -151,7 +177,9 @@ class SimpleSchemaValidator:
                 self._validate(item, merged, sub_path, f"{pointer}/{key}")
             else:
                 if additional is False:
-                    raise AssertionError(f"{pointer}: additional property {key!r} is not allowed")
+                    raise AssertionError(
+                        f"{pointer}: additional property {key!r} is not allowed"
+                    )
                 if isinstance(additional, dict):
                     merged, sub_path = self._dereference(dict(additional), path)
                     self._validate(item, merged, sub_path, f"{pointer}/{key}")
@@ -160,7 +188,9 @@ class SimpleSchemaValidator:
         self, value: Any, schema: Dict[str, Any], path: Path, pointer: str
     ) -> None:
         if not isinstance(value, list):
-            raise AssertionError(f"{pointer}: expected array, got {type(value).__name__}")
+            raise AssertionError(
+                f"{pointer}: expected array, got {type(value).__name__}"
+            )
 
         if "minItems" in schema and len(value) < schema["minItems"]:
             raise AssertionError(
@@ -195,7 +225,7 @@ class SimpleSchemaValidator:
         if entry == "integer":
             return isinstance(value, int) and not isinstance(value, bool)
         if entry == "number":
-            return (isinstance(value, (int, float)) and not isinstance(value, bool))
+            return isinstance(value, (int, float)) and not isinstance(value, bool)
         if entry == "boolean":
             return isinstance(value, bool)
         if entry == "null":
@@ -232,7 +262,9 @@ class SimpleSchemaValidator:
             if not (parsed.scheme and parsed.netloc):
                 raise AssertionError(f"{pointer}: invalid uri {value!r}")
 
-    def _dereference(self, schema: Dict[str, Any], path: Path) -> tuple[Dict[str, Any], Path]:
+    def _dereference(
+        self, schema: Dict[str, Any], path: Path
+    ) -> tuple[Dict[str, Any], Path]:
         if "$ref" not in schema:
             return schema, path
         ref = schema["$ref"]
@@ -241,7 +273,8 @@ class SimpleSchemaValidator:
         merged.update({k: v for k, v in schema.items() if k != "$ref"})
         return self._dereference(merged, ref_path)
 
-import pytest
+
+import pytest  # noqa: E402  (import after helper definitions)
 
 try:  # pragma: no cover - guard for environments without FastAPI
     from fastapi import Response
@@ -249,7 +282,7 @@ try:  # pragma: no cover - guard for environments without FastAPI
 except ModuleNotFoundError:  # pragma: no cover - optional dependency
     pytest.skip("FastAPI is required for contract tests", allow_module_level=True)
 
-from src.app.core.app import create_app
+from src.app.core.app import create_app  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -291,6 +324,34 @@ class FakeResultStore:
         return self.results[job_id]
 
 
+@pytest.fixture(params=list(MockProviderScenario), ids=lambda scenario: scenario.value)
+def mock_gemini_provider(request) -> MockGeminiProvider:
+    """Return a configured Gemini mock for the requested scenario."""
+
+    scenario: MockProviderScenario = request.param
+    config = MockProviderConfig(
+        scenario=scenario,
+        timeout_polls=2,
+        error_code="RESOURCE_EXHAUSTED",
+        error_message="Quota exceeded for mock Gemini project",
+    )
+    return MockGeminiProvider(config)
+
+
+@pytest.fixture(params=list(MockProviderScenario), ids=lambda scenario: scenario.value)
+def mock_turbotext_provider(request) -> MockTurbotextProvider:
+    """Return a configured Turbotext mock for the requested scenario."""
+
+    scenario: MockProviderScenario = request.param
+    config = MockProviderConfig(
+        scenario=scenario,
+        timeout_polls=2,
+        error_code="INVALID_IMAGE_FORMAT",
+        error_message="Unsupported image format supplied to mock Turbotext",
+    )
+    return MockTurbotextProvider(config)
+
+
 # ---------------------------------------------------------------------------
 # Core fixtures
 # ---------------------------------------------------------------------------
@@ -320,11 +381,19 @@ def contract_app(fake_job_queue: FakeJobQueue, fake_result_store: FakeResultStor
     # Ensure static stats routes have priority over dynamic slot routes for tests.
     routes = app.router.routes
     global_route = next(
-        (route for route in routes if getattr(route, "path", None) == "/api/stats/global"),
+        (
+            route
+            for route in routes
+            if getattr(route, "path", None) == "/api/stats/global"
+        ),
         None,
     )
     slot_route = next(
-        (route for route in routes if getattr(route, "path", None) == "/api/stats/{slot_id}"),
+        (
+            route
+            for route in routes
+            if getattr(route, "path", None) == "/api/stats/{slot_id}"
+        ),
         None,
     )
     if global_route and slot_route:
@@ -352,8 +421,11 @@ def contract_client(contract_app):
 def _isoformat(dt: datetime) -> str:
     """Serialize a timezone-aware ``datetime`` to RFC 3339 format."""
 
-    return dt.astimezone(timezone.utc).replace(microsecond=0).isoformat().replace(
-        "+00:00", "Z"
+    return (
+        dt.astimezone(timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
     )
 
 
@@ -417,7 +489,9 @@ def expired_job(fake_job_queue: FakeJobQueue) -> Dict[str, Any]:
 
 
 @pytest.fixture
-def sample_result(sample_job: Dict[str, Any], fake_result_store: FakeResultStore) -> Dict[str, Any]:
+def sample_result(
+    sample_job: Dict[str, Any], fake_result_store: FakeResultStore
+) -> Dict[str, Any]:
     """Return result metadata pointing to the sample job's public link."""
 
     result = {
@@ -579,7 +653,9 @@ def schema_loader() -> SchemaLoader:
 
 
 @pytest.fixture
-def load_contract_schema(schema_loader: SchemaLoader) -> Callable[[str], Dict[str, Any]]:
+def load_contract_schema(
+    schema_loader: SchemaLoader,
+) -> Callable[[str], Dict[str, Any]]:
     """Return a loader that reads JSON Schemas from ``spec/contracts``."""
 
     def _load(schema_name: str) -> Dict[str, Any]:
@@ -604,7 +680,9 @@ def validate_with_schema(
 
 
 @pytest.fixture
-def patch_endpoint_response(monkeypatch) -> Callable[[str, str, Callable[[], Response] | Response], None]:
+def patch_endpoint_response(
+    monkeypatch,
+) -> Callable[[str, str, Callable[[], Response] | Response], None]:
     """Patch ``endpoint_not_implemented`` for a router module with a stub."""
 
     def _patch(
@@ -615,9 +693,9 @@ def patch_endpoint_response(monkeypatch) -> Callable[[str, str, Callable[[], Res
         module = import_module(module_path)
 
         def _stub(received_operation: str) -> Response:
-            assert (
-                received_operation == operation
-            ), f"unexpected operation {received_operation!r} requested"
+            assert received_operation == operation, (
+                f"unexpected operation {received_operation!r} requested"
+            )
             if callable(response_factory):
                 return response_factory()
             return response_factory
@@ -628,7 +706,9 @@ def patch_endpoint_response(monkeypatch) -> Callable[[str, str, Callable[[], Res
 
 
 @pytest.fixture
-def patch_authentication_response(monkeypatch) -> Callable[[str, Callable[[], Response] | Response], None]:
+def patch_authentication_response(
+    monkeypatch,
+) -> Callable[[str, Callable[[], Response] | Response], None]:
     """Override ``authentication_not_configured`` to emit contract errors."""
 
     def _patch(
