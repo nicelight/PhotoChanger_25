@@ -113,6 +113,32 @@ def test_calculate_artifact_expiry_requires_positive_ttl() -> None:
         )
 
 
+def test_calculate_artifact_expiry_aligns_timezone_awareness() -> None:
+    """Mixed aware/naive timestamps should be normalized before comparison."""
+
+    naive_created_at = datetime(2025, 1, 1, 12, 0, 0)
+    aware_job_expires_at = datetime(2025, 1, 1, 12, 0, 45, tzinfo=timezone.utc)
+
+    normalized = deadlines.calculate_artifact_expiry(
+        artifact_created_at=naive_created_at,
+        job_expires_at=aware_job_expires_at,
+        ttl_seconds=20,
+    )
+
+    assert normalized == datetime(2025, 1, 1, 12, 0, 20, tzinfo=timezone.utc)
+
+    aware_created_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    naive_job_expires_at = datetime(2025, 1, 1, 12, 1, 0)
+
+    normalized_job_deadline = deadlines.calculate_artifact_expiry(
+        artifact_created_at=aware_created_at,
+        job_expires_at=naive_job_expires_at,
+        ttl_seconds=120,
+    )
+
+    assert normalized_job_deadline == datetime(2025, 1, 1, 12, 1, 0, tzinfo=timezone.utc)
+
+
 def test_calculate_result_expires_at_respects_retention_window() -> None:
     """Result retention extends finalized timestamp by configured hours."""
 
