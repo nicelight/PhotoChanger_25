@@ -147,7 +147,10 @@ class MockGeminiProvider(ProviderAdapter):
             "finish_reason": "STOP",
             "content": {
                 "role": "model",
-                "parts": [inline_data, {"text": f"mock-result:{reference}"}],
+                "parts": [
+                    {"inline_data": inline_data},
+                    {"text": f"mock-result:{reference}"},
+                ],
             },
         }
         return {
