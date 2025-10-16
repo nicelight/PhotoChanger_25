@@ -19,12 +19,12 @@ def test_ingest_returns_inline_result(
     """Successful ingest must stream inline binary data back to the client."""
 
     fake_job_queue.auto_finalize_inline = ingest_payload["image_bytes"]
-    fake_job_queue.auto_finalize_mime = "image/jpeg"
+    fake_job_queue.auto_finalize_mime = ingest_payload["mime"]
 
     response = contract_client.post(
         "/ingest/slot-001",
         data=ingest_payload["data"],
-        files=ingest_payload["files"],
+        files=ingest_payload["files_with_unsafe_name"],
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -32,15 +32,17 @@ def test_ingest_returns_inline_result(
     UUID(job_id)
     assert response.headers["content-type"] == "image/jpeg"
     assert response.headers["content-length"] == str(len(ingest_payload["image_bytes"]))
+    assert response.headers["cache-control"] == "no-store"
     assert response.content == ingest_payload["image_bytes"]
 
     stored_job = fake_job_queue.domain_jobs[job_id]
     assert stored_job.is_finalized is True
     assert stored_job.failure_reason is None
     assert stored_job.result_inline_base64 is None
+    assert stored_job.payload_path is not None
+    assert Path(stored_job.payload_path).name == ingest_payload["sanitized_filename"]
 
     media_root: Path = contract_app.state.config.media_root
-    assert stored_job.payload_path is not None
     payload_path = media_root / stored_job.payload_path
     assert not payload_path.exists()
     fake_job_queue.auto_finalize_inline = None
@@ -165,6 +167,7 @@ def test_ingest_returns_queue_busy_error(
     ingest_payload,
     validate_with_schema,
     fake_job_queue,
+    contract_app,
 ):
     """429 is returned when the queue reports saturation."""
 
@@ -182,6 +185,11 @@ def test_ingest_returns_queue_busy_error(
     payload_json = response.json()
     validate_with_schema(payload_json, "Error.json")
     assert payload_json["error"]["code"] == "queue_busy"
+    assert response.headers["cache-control"] == "no-store"
+
+    media_root: Path = contract_app.state.config.media_root
+    payload_dir = media_root / "payloads"
+    assert not any(path.is_file() for path in payload_dir.rglob("*"))
 
 
 @pytest.mark.contract
@@ -190,6 +198,7 @@ def test_ingest_times_out_when_worker_unavailable(
     ingest_payload,
     validate_with_schema,
     fake_job_queue,
+    contract_app,
 ):
     """504 is returned when no worker finalises the job within the timeout window."""
 
@@ -206,7 +215,13 @@ def test_ingest_times_out_when_worker_unavailable(
     validate_with_schema(payload_json, "Error.json")
     assert payload_json["error"]["code"] == "sync_timeout"
     assert "job_id" in payload_json["error"]["details"]
+    assert "expires_at" in payload_json["error"]["details"]
+    assert response.headers["cache-control"] == "no-store"
     job_id = payload_json["error"]["details"]["job_id"]
     stored_job = fake_job_queue.domain_jobs[job_id]
     assert stored_job.failure_reason is not None
     assert stored_job.failure_reason.value == "timeout"
+
+    media_root: Path = contract_app.state.config.media_root
+    payload_dir = media_root / "payloads" / job_id
+    assert not any(path.is_file() for path in payload_dir.rglob("*"))

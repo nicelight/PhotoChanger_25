@@ -160,3 +160,12 @@ updated: 2025-10-24
 - 2025-10-25 10:55 — обновил FakeJobQueue и contract/unit тесты (успех, неверный пароль, 415, 429, 504), добавил unit проверки `_decode_inline_result` и DefaultJobService cleanup.
 - 2025-10-25 11:20 — создал Docs/operations/ingest_runbook.md и ссылку в README, синхронизировал .memory/TASKS/PROGRESS/ASKS/INDEX.
 - 2025-10-25 11:35 — прогнал `ruff format`, `ruff check`, `mypy src/`, `pytest -m unit`, `pytest -m contract` (после установки fastapi/httpx/pydantic и python-multipart).
+
+## phase4-ingest-tests-2025-10-27
+- 2025-10-27 09:15 — перечитал .memory/TASKS.md (сабтаски 4.1.9–4.1.10) и Docs/operations/ingest_runbook.md для уточнения требований к тестам и документации.
+- 2025-10-27 09:45 — обновил фикстуры ingest (небезопасное имя файла, предвычисленный TTL) и проверил FakeJobQueue на очистку payload после ошибок.
+- 2025-10-27 10:10 — расширил unit-тесты ingest helper-ов (`_store_payload`, `_sanitize_filename`, `_error_response`), адаптировал вызовы через `asyncio.run`.
+- 2025-10-27 10:35 — актуализировал контрактные тесты ingest (Cache-Control, очищенные payload, `expires_at` в ответе 504).
+- 2025-10-27 10:50 — дополнил Docs/operations/ingest_runbook.md примерами curl, TTL-политикой и описанием заголовков.
+- 2025-10-27 11:05 — прогнал `pytest tests/unit/test_ingest_helpers.py` и `pytest tests/contract/test_ingest.py` (зелёные).
+- 2025-10-27 12:30 — отметил тесты ingest helper-ов маркером `unit`, чтобы они входили в матрицу `pytest -m unit`.
