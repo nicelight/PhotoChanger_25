@@ -13,7 +13,7 @@
 | --- | --- |
 | `PHOTOCHANGER_MEDIA_ROOT` | Каталог для временных payload и результатов. Должен быть доступен для API и воркеров. |
 | `PHOTOCHANGER_DATABASE_URL` | DSN PostgreSQL-очереди. В локальном режиме можно использовать `postgresql://localhost:5432/photochanger`. |
-| `PHOTOCHANGER_T_SYNC_RESPONSE_SECONDS` | Значение `T_sync_response` (45–60 секунд). Оно же используется как TTL для inline-результатов и временных ссылок. |
+| `PHOTOCHANGER_T_SYNC_RESPONSE_SECONDS` | Значение `T_sync_response` (45–60 секунд). Используется для расчёта дедлайна job, TTL inline-результатов и лимита хранения payload. |
 | `PHOTOCHANGER_JWT_SECRET` | Секрет для административных JWT (используется для остальных API). |
 
 Инициализация требует заранее записанного хэша ingest-пароля (см. `SettingsDslrPasswordStatus`). В
@@ -30,28 +30,60 @@
 
 ## Curl Example
 ```
-curl -X POST "http://localhost:8000/ingest/slot-001" \
+curl -i -X POST "http://localhost:8000/ingest/slot-001" \
   -F "password=<dslr-password>" \
   -F "fileToUpload=@sample.jpg;type=image/jpeg"
 ```
 Успешный ответ содержит бинарный поток (`Content-Type` совпадает с результатом провайдера) и
-заголовок `X-Job-Id`. При таймауте клиент получит JSON-ошибку со статусом 504 и полем
-`error.details.job_id` для корреляции.
+заголовки:
+
+```
+HTTP/1.1 200 OK
+Cache-Control: no-store
+Content-Type: image/jpeg
+X-Job-Id: <uuid>
+Content-Length: <bytes>
+```
+
+При таймауте клиент получит JSON-ошибку со статусом 504 и полями `error.details.job_id` и
+`error.details.expires_at`, которые позволяют сопоставить запрос с записью очереди и понять,
+когда истечёт TTL задачи:
+
+```
+HTTP/1.1 504 Gateway Timeout
+Cache-Control: no-store
+Content-Type: application/json
+
+{
+  "error": {
+    "code": "sync_timeout",
+    "message": "Ingest processing exceeded the synchronous response window",
+    "details": {
+      "job_id": "...",
+      "expires_at": "2025-10-27T12:00:00Z"
+    }
+  }
+}
+```
 
 ## TTL & Cleanup
 - Payload сохраняются в `MEDIA_ROOT/payloads/{job_id}` и регистрируются через `MediaService` с TTL
-  `min(job.expires_at, now + T_sync_response)`. После завершения ответа API вызывает
+  `min(job.expires_at, now + T_sync_response)` (при этом имя файла очищается от небезопасных символов
+  и приводится к безопасному виду). После завершения ответа API вызывает
   `MediaService.revoke_media`, чтобы удалить файлы и запись `MediaObject`.
 - Inline-результаты хранятся в поле `Job.result_inline_base64` и очищаются сразу после отдачи
   ответа (`JobService.clear_inline_preview`).
 - При истечении `T_sync_response` API помечает задачу как `failure_reason = timeout`, воркеры больше
   не будут опрашивать провайдера, а клиент получает 504.
+- Все синхронные ответы (успех/ошибка) выставляют `Cache-Control: no-store`, чтобы предотвратить
+  кеширование временных артефактов промежуточными прокси и клиентами.
 - Итоговые файлы с retention 72 часа будут сохраняться воркерами (см. фазу 4.4); текущий поток
   ожидает inline-результат.
 
 ## Back-pressure & Errors
-- Если очередь не принимает задачи, API возвращает 429 (`queue_busy`). Мониторингу следует
-  отслеживать долю 429 и инициировать масштабирование воркеров/очереди.
+- Если очередь не принимает задачи, API возвращает 429 (`queue_busy`). Мониторинг должен
+  отслеживать долю 429 и инициировать масштабирование воркеров/очереди. Payload при этом
+  очищаются сразу после ответа.
 - При недоступности базы очереди возвращается 503 (`queue_unavailable`). Проверьте состояние
   PostgreSQL и сетевые соединения.
 - Неверный пароль → 401; неизвестный слот → 404; неподдерживаемый MIME → 415;

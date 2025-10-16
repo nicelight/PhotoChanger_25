@@ -848,10 +848,19 @@ def ingest_payload() -> Dict[str, Any]:
 
     image_bytes = b"\xff\xd8contract-image\xff\xd9"
     filename = "contract-test.jpg"
+    unsafe_filename = "contract test/../payload?.jpg"
+    sanitized_filename = (
+        re.sub(r"[^A-Za-z0-9_.-]", "_", Path(unsafe_filename).name) or "upload.bin"
+    )
     return {
         "data": {"password": "correct-horse-battery"},
         "files": {"fileToUpload": (filename, image_bytes, "image/jpeg")},
+        "files_with_unsafe_name": {
+            "fileToUpload": (unsafe_filename, image_bytes, "image/jpeg")
+        },
         "image_bytes": image_bytes,
         "filename": filename,
         "mime": "image/jpeg",
+        "unsafe_filename": unsafe_filename,
+        "sanitized_filename": sanitized_filename,
     }
