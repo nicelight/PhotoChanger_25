@@ -49,7 +49,7 @@ def test_fail_job_sets_failure_metadata() -> None:
     assert service.get_job(job.id) is updated
 
 
-def test_clear_inline_preview_resets_inline_fields() -> None:
+def test_clear_inline_preview_only_resets_inline_payload() -> None:
     service = _create_service()
     job = _build_job()
     job.result_inline_base64 = "Zm9v"
@@ -61,7 +61,7 @@ def test_clear_inline_preview_resets_inline_fields() -> None:
     cleared = service.clear_inline_preview(job)
 
     assert cleared.result_inline_base64 is None
-    assert cleared.result_mime_type is None
-    assert cleared.result_size_bytes is None
-    assert cleared.result_checksum is None
+    assert cleared.result_mime_type == "image/png"
+    assert cleared.result_size_bytes == 42
+    assert cleared.result_checksum == "deadbeef"
     assert service.get_job(job.id) is cleared

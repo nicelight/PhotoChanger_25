@@ -195,6 +195,9 @@ class DefaultJobService(JobService):
         raise NotImplementedError
 
     def clear_inline_preview(self, job: Job) -> Job:  # type: ignore[override]
+        # Blueprint contract requires keeping the inline file metadata so that
+        # download endpoints can continue referencing the finalized artifact.
+        # Only the base64 payload is ephemeral.
         job.result_inline_base64 = None
         job.updated_at = _utcnow()
         self.jobs[job.id] = job
