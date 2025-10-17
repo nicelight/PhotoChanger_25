@@ -169,3 +169,8 @@ updated: 2025-10-24
 - 2025-10-27 10:50 — дополнил Docs/operations/ingest_runbook.md примерами curl, TTL-политикой и описанием заголовков.
 - 2025-10-27 11:05 — прогнал `pytest tests/unit/test_ingest_helpers.py` и `pytest tests/contract/test_ingest.py` (зелёные).
 - 2025-10-27 12:30 — отметил тесты ingest helper-ов маркером `unit`, чтобы они входили в матрицу `pytest -m unit`.
+
+## phase4-open-tasks-review-2025-10-27
+- 2025-10-27 13:25 — перечитал .memory/TASKS.md (подфазы 4.2–4.9) и требования roadmap для уточнения ожидаемых артефактов реализации.
+- 2025-10-27 13:40 — осмотрел текущие заготовки очереди, воркера и сервисов (`src/app/infrastructure/queue/postgres.py`, `src/app/workers/queue_worker.py`, `src/app/services/default.py`) на предмет пробелов.
+- 2025-10-27 14:05 — зафиксировал анализ незавершённых тасков фазы 4 и рекомендации по декомпозиции/дополнительным пунктам в `.memory/notes/phase4_open_tasks_analysis.md`.
