@@ -13,6 +13,9 @@ from src.app.infrastructure.queue.postgres import PostgresJobQueue, PostgresQueu
 from src.app.services.job_service import QueueBusyError
 
 
+TEST_QUEUE_DSN = "postgresql://tests"
+
+
 class InMemoryQueueBackend:
     """Lightweight backend used in tests instead of the real Postgres backend."""
 
@@ -100,7 +103,7 @@ def build_test_queue(*, max_in_flight_jobs: int | None = None) -> PostgresJobQue
     """Create :class:`PostgresJobQueue` wired to the in-memory backend."""
 
     config = PostgresQueueConfig(
-        dsn="postgresql://tests", max_in_flight_jobs=max_in_flight_jobs
+        dsn=TEST_QUEUE_DSN, max_in_flight_jobs=max_in_flight_jobs
     )
     backend = InMemoryQueueBackend(config)
     return PostgresJobQueue(config=config, backend=backend)
@@ -112,4 +115,4 @@ def _ensure_timezone(value: datetime) -> datetime:
     return value.astimezone(timezone.utc)
 
 
-__all__ = ["InMemoryQueueBackend", "build_test_queue"]
+__all__ = ["InMemoryQueueBackend", "build_test_queue", "TEST_QUEUE_DSN"]

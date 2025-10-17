@@ -39,7 +39,7 @@ from tests.mocks.providers import (
     MockProviderConfig,
     MockProviderScenario,
 )
-from tests.mocks.queue import InMemoryQueueBackend
+from tests.mocks.queue import InMemoryQueueBackend, TEST_QUEUE_DSN
 
 
 class TimeController:
@@ -61,7 +61,7 @@ class InMemoryQueueDouble(PostgresJobQueue):
     """In-memory replacement for ``PostgresJobQueue`` used in integration tests."""
 
     def __init__(self) -> None:
-        config = PostgresQueueConfig(dsn="postgresql://tests")
+        config = PostgresQueueConfig(dsn=TEST_QUEUE_DSN)
         backend = InMemoryQueueBackend(config)
         super().__init__(config=config, backend=backend)
 
