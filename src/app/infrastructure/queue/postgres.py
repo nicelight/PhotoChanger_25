@@ -48,7 +48,9 @@ class PostgresJobQueue(JobRepository):
         backend: _QueueBackend | None = None,
     ) -> None:
         self.config = config
-        self._backend = backend or _PostgresQueueBackend(config)
+        if backend is None:
+            backend = _PostgresQueueBackend(config)
+        self._backend = backend
 
     # Public API ---------------------------------------------------------
 
