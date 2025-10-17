@@ -9,13 +9,14 @@ from typing import Dict, Iterable, Mapping
 from uuid import UUID, uuid4
 
 from ..core.config import AppConfig
-from ..domain import calculate_job_expires_at
+from ..domain import calculate_job_expires_at, calculate_result_expires_at
 from ..domain.models import (
     Job,
     JobFailureReason,
     JobStatus,
     MediaObject,
     MediaCacheSettings,
+    ProcessingLog,
     Settings,
     SettingsDslrPasswordStatus,
     SettingsIngestConfig,
@@ -162,7 +163,10 @@ class DefaultJobService(JobService):
         return self.jobs.get(job_id)
 
     def acquire_next_job(self, *, now: datetime) -> Job | None:  # type: ignore[override]
-        raise NotImplementedError
+        job = self.queue.acquire_for_processing(now=now)
+        if job is not None:
+            self.jobs[job.id] = job
+        return job
 
     def finalize_job(
         self,
@@ -172,7 +176,21 @@ class DefaultJobService(JobService):
         result_media: MediaObject | None,
         inline_preview: str | None,
     ) -> Job:  # type: ignore[override]
-        raise NotImplementedError
+        job.finalized_at = finalized_at
+        job.updated_at = finalized_at
+        job.is_finalized = True
+        job.failure_reason = None
+        job.result_inline_base64 = inline_preview
+        if result_media is not None:
+            job.result_file_path = result_media.path
+            job.result_mime_type = result_media.mime
+            job.result_size_bytes = result_media.size_bytes
+        job.result_expires_at = calculate_result_expires_at(
+            finalized_at, result_retention_hours=self.result_retention_hours
+        )
+        persisted = self.queue.mark_finalized(job)
+        self.jobs[persisted.id] = persisted
+        return persisted
 
     def fail_job(
         self,
@@ -185,11 +203,12 @@ class DefaultJobService(JobService):
         job.failure_reason = failure_reason
         job.updated_at = occurred_at
         job.finalized_at = occurred_at
-        self.jobs[job.id] = job
-        return job
+        persisted = self.queue.mark_finalized(job)
+        self.jobs[persisted.id] = persisted
+        return persisted
 
-    def append_processing_logs(self, job: Job, logs: Iterable) -> None:  # type: ignore[override]
-        raise NotImplementedError
+    def append_processing_logs(self, job: Job, logs: Iterable[ProcessingLog]) -> None:  # type: ignore[override]
+        self.queue.append_processing_logs(logs)
 
     def refresh_recent_results(self, slot: Slot, *, limit: int = 10) -> Slot:  # type: ignore[override]
         raise NotImplementedError
