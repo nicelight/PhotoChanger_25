@@ -23,9 +23,11 @@ from ...services.job_service import QueueBusyError, QueueUnavailableError
 try:  # pragma: no cover - optional dependency
     import psycopg
     from psycopg.rows import dict_row
+    from psycopg.types.json import Jsonb
 except Exception:  # pragma: no cover - fall back when psycopg missing
     psycopg = None  # type: ignore[assignment]
     dict_row = None  # type: ignore[assignment]
+    Jsonb = None  # type: ignore[assignment]
 
 
 @dataclass(slots=True)
@@ -821,6 +823,13 @@ class _PostgresQueueBackend(_QueueBackend):
 
     def _serialize_log(self, log: ProcessingLog) -> dict[str, object]:
         details = dict(log.details) if log.details is not None else None
+        serialized_details: object | None
+        if details is None:
+            serialized_details = None
+        elif Jsonb is not None:
+            serialized_details = Jsonb(details)
+        else:  # pragma: no cover - Jsonb unavailable when psycopg missing
+            serialized_details = json.dumps(details)
         return {
             "id": log.id,
             "job_id": log.job_id,
@@ -828,7 +837,7 @@ class _PostgresQueueBackend(_QueueBackend):
             "status": log.status.value,
             "occurred_at": self._serialize_datetime(log.occurred_at),
             "message": log.message,
-            "details": details,
+            "details": serialized_details,
             "provider_latency_ms": log.provider_latency_ms,
         }
 
