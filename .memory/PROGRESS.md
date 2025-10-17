@@ -24,3 +24,4 @@ updated: 2025-10-25
 - 2025-10-23: Выполнены сабтаски 4.1.1–4.1.5 — внедрены default сервисы, реализован ingest endpoint с валидацией/сохранением payload, очередь и тесты unit/contract зелёные.
 - 2025-10-24: Подтверждена соответствие ingest core спецификациям/бриву — фабрики DI получают AppConfig, прогнаны ruff/mypy/pytest -m "unit or contract" (зелёные).
 - 2025-10-25: Завершены сабтаски 4.1.6–4.1.10 — ingest стал синхронным (polling, очистка, 429/504), обновлены тесты и ops runbook, ruff/mypy/pytest -m unit/contract зелёные.
+- 2025-10-16: Стартована реализация сабтасков 4.2.x — добавлен SQLite-бэкенд PostgresJobQueue, unit-тесты (pytest -m unit требует fastapi).
