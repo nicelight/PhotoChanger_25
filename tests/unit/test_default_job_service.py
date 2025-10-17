@@ -6,12 +6,12 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 from src.app.domain.models import Job, JobFailureReason, JobStatus
-from src.app.infrastructure.queue.postgres import PostgresJobQueue, PostgresQueueConfig
 from src.app.services.default import DefaultJobService
+from tests.mocks.queue import build_test_queue
 
 
 def _create_service() -> DefaultJobService:
-    queue = PostgresJobQueue(config=PostgresQueueConfig(dsn="sqlite://:memory:"))
+    queue = build_test_queue()
     return DefaultJobService(queue=queue)
 
 

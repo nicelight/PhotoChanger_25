@@ -6,14 +6,13 @@ from uuid import uuid4
 import pytest
 
 from src.app.domain.models import Job, JobFailureReason, JobStatus, ProcessingLog, ProcessingStatus
-from src.app.infrastructure.queue.postgres import PostgresJobQueue, PostgresQueueConfig
+from src.app.infrastructure.queue.postgres import PostgresJobQueue
 from src.app.services.job_service import QueueBusyError
+from tests.mocks.queue import build_test_queue
 
 
 def _queue(max_in_flight: int | None = None) -> PostgresJobQueue:
-    return PostgresJobQueue(
-        config=PostgresQueueConfig(dsn=":memory:", max_in_flight_jobs=max_in_flight)
-    )
+    return build_test_queue(max_in_flight_jobs=max_in_flight)
 
 
 def _job(*, expires_delta: timedelta = timedelta(minutes=1)) -> Job:

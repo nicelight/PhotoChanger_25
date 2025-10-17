@@ -4,8 +4,8 @@ The real PostgreSQL queue and worker implementations are not available in
 phase 3, therefore the tests provide lightweight doubles that mimic the
 behaviour described in ``spec/docs/blueprints/domain-model.md``:
 
-* :class:`InMemoryQueueDouble` reproduces ``enqueue``/``acquire``/``mark``
-  semantics and keeps jobs in memory while respecting ``expires_at``.
+* :class:`InMemoryQueueDouble` wires the application queue to the in-memory
+  backend used throughout the test suite.
 * :class:`InMemoryJobService` performs finalisation/timeout bookkeeping and
   delegates deadline arithmetic to patched helpers from
   :mod:`src.app.domain.deadlines`.
@@ -20,10 +20,9 @@ pytest marker policy outlined in ``tests/HOWTO.md``.
 from __future__ import annotations
 
 import asyncio
-from collections import deque
 from datetime import datetime, timedelta, timezone
-from typing import Deque, Dict, Iterable, Iterator
-from uuid import UUID, uuid4
+from typing import Iterator
+from uuid import uuid4
 
 import pytest
 from unittest.mock import Mock
@@ -40,6 +39,7 @@ from tests.mocks.providers import (
     MockProviderConfig,
     MockProviderScenario,
 )
+from tests.mocks.queue import InMemoryQueueBackend, TEST_QUEUE_DSN
 
 
 class TimeController:
@@ -61,46 +61,9 @@ class InMemoryQueueDouble(PostgresJobQueue):
     """In-memory replacement for ``PostgresJobQueue`` used in integration tests."""
 
     def __init__(self) -> None:
-        super().__init__(config=PostgresQueueConfig(dsn="sqlite://:memory:"))
-        self._pending: Deque[UUID] = deque()
-        self._jobs: Dict[UUID, Job] = {}
-
-    def enqueue(self, job: Job) -> Job:  # type: ignore[override]
-        if job.id not in self._jobs:
-            self._pending.append(job.id)
-        job.status = JobStatus.PENDING
-        job.is_finalized = False
-        job.failure_reason = None
-        self._jobs[job.id] = job
-        return job
-
-    def acquire_for_processing(self, *, now: datetime) -> Job | None:  # type: ignore[override]
-        for job_id in list(self._pending):
-            job = self._jobs[job_id]
-            if job.is_finalized:
-                self._pending.remove(job_id)
-                continue
-            if job.expires_at <= now:
-                # Expired jobs are handled separately via ``release_expired``.
-                continue
-            self._pending.remove(job_id)
-            job.status = JobStatus.PROCESSING
-            job.updated_at = now
-            return job
-        return None
-
-    def mark_finalized(self, job: Job) -> Job:  # type: ignore[override]
-        if job.id in self._pending:
-            self._pending.remove(job.id)
-        self._jobs[job.id] = job
-        return job
-
-    def release_expired(self, *, now: datetime) -> Iterable[Job]:  # type: ignore[override]
-        return [
-            job
-            for job in self._jobs.values()
-            if not job.is_finalized and job.expires_at <= now
-        ]
+        config = PostgresQueueConfig(dsn=TEST_QUEUE_DSN)
+        backend = InMemoryQueueBackend(config)
+        super().__init__(config=config, backend=backend)
 
 
 class InMemoryJobService(JobService):

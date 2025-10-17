@@ -40,14 +40,22 @@ class PostgresQueueConfig:
 
 
 class PostgresJobQueue(JobRepository):
-    """Concrete repository backed exclusively by PostgreSQL."""
+    """Concrete repository backed exclusively by PostgreSQL.
 
-    def __init__(self, *, config: PostgresQueueConfig) -> None:
+    Tests may supply a fake backend via ``backend`` to avoid touching a real
+    database while exercising the queue API.
+    """
+
+    def __init__(
+        self,
+        *,
+        config: PostgresQueueConfig,
+        backend: _QueueBackend | None = None,
+    ) -> None:
         self.config = config
-        if _InMemoryQueueBackend.supports_dsn(config.dsn):
-            self._backend = _InMemoryQueueBackend(config)
-        else:
-            self._backend = _PostgresQueueBackend(config)
+        if backend is None:
+            backend = _PostgresQueueBackend(config)
+        self._backend = backend
 
     # Public API ---------------------------------------------------------
 
