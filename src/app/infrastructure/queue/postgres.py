@@ -41,9 +41,14 @@ class PostgresQueueConfig:
 class PostgresJobQueue(JobRepository):
     """Concrete repository backed exclusively by PostgreSQL."""
 
-    def __init__(self, *, config: PostgresQueueConfig) -> None:
+    def __init__(
+        self,
+        *,
+        config: PostgresQueueConfig,
+        backend: _QueueBackend | None = None,
+    ) -> None:
         self.config = config
-        self._backend: _QueueBackend = _PostgresQueueBackend(config)
+        self._backend = backend or _PostgresQueueBackend(config)
 
     # Public API ---------------------------------------------------------
 
@@ -391,6 +396,7 @@ class _PostgresQueueBackend(_QueueBackend):
         count = 0 if row is None else row["cnt"]
         if count >= limit:
             raise QueueBusyError("ingest queue saturated")
+
 
     @staticmethod
     def _serialize_datetime(value: datetime) -> datetime:
