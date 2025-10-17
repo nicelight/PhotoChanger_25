@@ -12,8 +12,8 @@ memory:
   context: { version: 1, updated: "2025-10-08" }
   decisions: { index: ".memory/DECISIONS.md", updated: "2025-10-16" }
   tasks: { updated: "2025-10-25" }
-  progress: { updated: "2025-10-25" }
-  asks: { updated: "2025-10-25" }
+  progress: { updated: "2025-10-16" }
+  asks: { updated: "2025-10-16" }
   glossary: { updated: "2025-10-08" }
   autonomy: { updated: "2025-10-08" }
   usecases: { updated: "2025-10-08", count: 2 }

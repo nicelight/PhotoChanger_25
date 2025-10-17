@@ -11,7 +11,7 @@ from src.app.services.default import DefaultJobService
 
 
 def _create_service() -> DefaultJobService:
-    queue = PostgresJobQueue(config=PostgresQueueConfig(dsn="postgresql://test"))
+    queue = PostgresJobQueue(config=PostgresQueueConfig(dsn="sqlite://:memory:"))
     return DefaultJobService(queue=queue)
 
 
@@ -33,6 +33,7 @@ def _build_job() -> Job:
 def test_fail_job_sets_failure_metadata() -> None:
     service = _create_service()
     job = _build_job()
+    service.queue.enqueue(job)
     service.jobs[job.id] = job
     occurred_at = datetime.now(timezone.utc)
 
