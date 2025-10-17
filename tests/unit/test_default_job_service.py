@@ -5,14 +5,18 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from uuid import UUID
 
+import pytest
+
 from src.app.domain.models import Job, JobFailureReason, JobStatus
-from src.app.infrastructure.queue.postgres import PostgresJobQueue, PostgresQueueConfig
+from src.app.infrastructure.queue.postgres import PostgresJobQueue
 from src.app.services.default import DefaultJobService
 
 
-def _create_service() -> DefaultJobService:
-    queue = PostgresJobQueue(config=PostgresQueueConfig(dsn="sqlite://:memory:"))
-    return DefaultJobService(queue=queue)
+@pytest.fixture
+def job_service(postgres_queue: PostgresJobQueue) -> DefaultJobService:
+    service = DefaultJobService(queue=postgres_queue)
+    service.result_retention_hours = 72
+    return service
 
 
 def _build_job() -> Job:
@@ -30,8 +34,8 @@ def _build_job() -> Job:
     )
 
 
-def test_fail_job_sets_failure_metadata() -> None:
-    service = _create_service()
+def test_fail_job_sets_failure_metadata(job_service: DefaultJobService) -> None:
+    service = job_service
     job = _build_job()
     service.queue.enqueue(job)
     service.jobs[job.id] = job
@@ -50,8 +54,10 @@ def test_fail_job_sets_failure_metadata() -> None:
     assert service.get_job(job.id) is updated
 
 
-def test_clear_inline_preview_resets_inline_fields() -> None:
-    service = _create_service()
+def test_clear_inline_preview_resets_inline_fields(
+    job_service: DefaultJobService,
+) -> None:
+    service = job_service
     job = _build_job()
     job.result_inline_base64 = "Zm9v"
     job.result_mime_type = "image/png"

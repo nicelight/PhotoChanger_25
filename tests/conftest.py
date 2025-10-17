@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import base64
 import json
+import os
 import re
 import sys
 import uuid
@@ -19,7 +20,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from importlib import import_module
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable
+from typing import Any, Callable, Dict, Iterable, Iterator
 from urllib.parse import urlparse
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -27,6 +28,9 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 SCHEMAS_ROOT = PROJECT_ROOT / "spec" / "contracts" / "schemas"
+
+import psycopg  # noqa: E402  (import after sys.path update)
+from psycopg import conninfo, sql  # noqa: E402  (import after sys.path update)
 
 from tests.mocks.providers import (  # noqa: E402  (import after sys.path update)
     MockGeminiProvider,
@@ -275,6 +279,107 @@ class SimpleSchemaValidator:
 
 
 import pytest  # noqa: E402  (import after helper definitions)
+
+from src.app.infrastructure.queue.postgres import (  # noqa: E402
+    PostgresJobQueue,
+    PostgresQueueConfig,
+)
+
+
+def _resolve_postgres_dsn() -> str:
+    env_dsn = os.getenv("TEST_POSTGRES_DSN")
+    if env_dsn:
+        return env_dsn
+    params: dict[str, object] = {
+        "host": os.getenv("TEST_POSTGRES_HOST", "localhost"),
+        "port": os.getenv("TEST_POSTGRES_PORT", "5432"),
+        "dbname": os.getenv("TEST_POSTGRES_DB", "photochanger_test"),
+        "user": os.getenv("TEST_POSTGRES_USER", "postgres"),
+        "password": os.getenv("TEST_POSTGRES_PASSWORD", "postgres"),
+    }
+    return conninfo.make_conninfo(**params)
+
+
+def _ensure_database_exists(dsn: str) -> None:
+    params = conninfo.conninfo_to_dict(dsn)
+    dbname = params.get("dbname")
+    if not dbname:
+        raise RuntimeError("PostgreSQL DSN must include a database name")
+    admin_dsn = conninfo.make_conninfo(
+        host=params.get("host") or "localhost",
+        port=params.get("port") or "5432",
+        user=params.get("user"),
+        password=params.get("password"),
+        dbname=os.getenv("TEST_POSTGRES_TEMPLATE_DB", "postgres"),
+    )
+    with psycopg.connect(admin_dsn, autocommit=True) as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (dbname,))
+            if cur.fetchone() is None:
+                cur.execute(
+                    sql.SQL("CREATE DATABASE {}").format(sql.Identifier(dbname))
+                )
+
+
+def _truncate_postgres_tables(dsn: str) -> None:
+    with psycopg.connect(dsn, autocommit=True) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT tablename
+                FROM pg_tables
+                WHERE schemaname = 'public'
+                  AND tablename IN ('processing_logs', 'jobs')
+                ORDER BY tablename
+                """
+            )
+            tables = [sql.Identifier("public", row[0]) for row in cur.fetchall()]
+            if not tables:
+                return
+            cur.execute(
+                sql.SQL("TRUNCATE TABLE {} RESTART IDENTITY CASCADE").format(
+                    sql.SQL(", ").join(tables)
+                )
+            )
+
+
+@pytest.fixture(scope="session")
+def postgres_dsn() -> Iterator[str]:
+    dsn = _resolve_postgres_dsn()
+    try:
+        _ensure_database_exists(dsn)
+    except psycopg.OperationalError as exc:  # pragma: no cover - environment guard
+        pytest.skip(f"PostgreSQL unavailable for tests: {exc}")
+    yield dsn
+
+
+@pytest.fixture
+def postgres_queue_factory(postgres_dsn: str) -> Iterator[Callable[..., PostgresJobQueue]]:
+    created: list[PostgresJobQueue] = []
+
+    def _factory(**overrides: object) -> PostgresJobQueue:
+        _truncate_postgres_tables(postgres_dsn)
+        config_kwargs: dict[str, object] = {"dsn": postgres_dsn}
+        config_kwargs.update(overrides)
+        config = PostgresQueueConfig(**config_kwargs)
+        queue = PostgresJobQueue(config=config)
+        created.append(queue)
+        return queue
+
+    yield _factory
+
+    for queue in created:
+        backend = getattr(queue, "_backend", None)
+        connection = getattr(backend, "_conn", None)
+        if connection is not None:
+            connection.close()
+    _truncate_postgres_tables(postgres_dsn)
+
+
+@pytest.fixture
+def postgres_queue(postgres_queue_factory: Callable[..., PostgresJobQueue]) -> Iterator[PostgresJobQueue]:
+    queue = postgres_queue_factory()
+    yield queue
 
 try:  # pragma: no cover - guard for environments without FastAPI
     from fastapi import Response
