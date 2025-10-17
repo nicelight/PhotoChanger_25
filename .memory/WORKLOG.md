@@ -170,6 +170,12 @@ updated: 2025-10-24
 - 2025-10-27 11:05 — прогнал `pytest tests/unit/test_ingest_helpers.py` и `pytest tests/contract/test_ingest.py` (зелёные).
 - 2025-10-27 12:30 — отметил тесты ingest helper-ов маркером `unit`, чтобы они входили в матрицу `pytest -m unit`.
 
+## phase4-task4.2-2025-10-16
+- 2025-10-16 17:11 — изучил задание 4.2 и существующий каркас PostgresJobQueue
+- 2025-10-16 17:11 — запланировал реализацию SQLite-совместимого слоя (enqueue, acquire, finalize, timeout) и тесты
+- 2025-10-16 17:14 — реализовал PostgresJobQueue на SQLite (enqueue/acquire/finalize/timeout, backpressure) и обновил DefaultJobService
+- 2025-10-16 17:14 — добавил unit-тесты очереди, адаптировал тесты сервиса, pytest -m unit завершается ошибкой (нет fastapi)
+
 ## phase4-open-tasks-review-2025-10-27
 - 2025-10-27 13:25 — перечитал .memory/TASKS.md (подфазы 4.2–4.9) и требования roadmap для уточнения ожидаемых артефактов реализации.
 - 2025-10-27 13:40 — осмотрел текущие заготовки очереди, воркера и сервисов (`src/app/infrastructure/queue/postgres.py`, `src/app/workers/queue_worker.py`, `src/app/services/default.py`) на предмет пробелов.

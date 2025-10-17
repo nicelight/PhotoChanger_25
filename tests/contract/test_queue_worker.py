@@ -61,7 +61,7 @@ class InMemoryQueueDouble(PostgresJobQueue):
     """In-memory replacement for ``PostgresJobQueue`` used in integration tests."""
 
     def __init__(self) -> None:
-        super().__init__(config=PostgresQueueConfig(dsn="postgresql://contract-tests"))
+        super().__init__(config=PostgresQueueConfig(dsn="sqlite://:memory:"))
         self._pending: Deque[UUID] = deque()
         self._jobs: Dict[UUID, Job] = {}
 
