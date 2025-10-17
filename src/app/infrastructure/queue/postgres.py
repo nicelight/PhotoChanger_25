@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import json
 from contextlib import contextmanager
-from dataclasses import dataclass
+from collections import defaultdict
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from typing import Iterable
 from uuid import UUID
@@ -43,7 +44,10 @@ class PostgresJobQueue(JobRepository):
 
     def __init__(self, *, config: PostgresQueueConfig) -> None:
         self.config = config
-        self._backend: _QueueBackend = _PostgresQueueBackend(config)
+        if _InMemoryQueueBackend.supports_dsn(config.dsn):
+            self._backend = _InMemoryQueueBackend(config)
+        else:
+            self._backend = _PostgresQueueBackend(config)
 
     # Public API ---------------------------------------------------------
 
@@ -392,6 +396,7 @@ class _PostgresQueueBackend(_QueueBackend):
         if count >= limit:
             raise QueueBusyError("ingest queue saturated")
 
+
     @staticmethod
     def _serialize_datetime(value: datetime) -> datetime:
         if value.tzinfo is None:
@@ -469,6 +474,108 @@ class _PostgresQueueBackend(_QueueBackend):
             provider_latency_ms=row["provider_latency_ms"],
         )
 
+
+class _InMemoryQueueBackend(_QueueBackend):
+    """Testing backend used when the DSN requests an in-memory queue."""
+
+    _SUPPORTED_DSNS = {":memory:", "sqlite://:memory:", "sqlite:///:memory:"}
+
+    def __init__(self, config: PostgresQueueConfig) -> None:
+        self.config = config
+        self._jobs: dict[UUID, Job] = {}
+        self._pending: list[UUID] = []
+        self._processing_logs: dict[UUID, list[ProcessingLog]] = defaultdict(list)
+
+    # Queue operations ---------------------------------------------------
+
+    def enqueue(self, job: Job) -> Job:
+        self._enforce_backpressure(now=job.created_at)
+        stored = self._clone_job(job)
+        stored.status = JobStatus.PENDING
+        stored.is_finalized = False
+        stored.failure_reason = None
+        if job.id not in self._jobs:
+            self._pending.append(job.id)
+        self._jobs[job.id] = stored
+        return job
+
+    def acquire_for_processing(self, *, now: datetime) -> Job | None:
+        for job_id in list(self._pending):
+            stored = self._jobs.get(job_id)
+            if stored is None:
+                self._pending.remove(job_id)
+                continue
+            if stored.is_finalized:
+                self._pending.remove(job_id)
+                continue
+            if stored.expires_at <= now:
+                continue
+            updated = self._clone_job(stored)
+            updated.status = JobStatus.PROCESSING
+            updated.updated_at = now
+            self._jobs[job_id] = updated
+            self._pending.remove(job_id)
+            return self._clone_job(updated)
+        return None
+
+    def mark_finalized(self, job: Job) -> Job:
+        stored = self._clone_job(job)
+        self._jobs[job.id] = stored
+        if job.id in self._pending:
+            self._pending.remove(job.id)
+        return self._clone_job(stored)
+
+    def release_expired(self, *, now: datetime) -> Iterable[Job]:
+        released: list[Job] = []
+        for job_id, stored in list(self._jobs.items()):
+            if stored.is_finalized or stored.expires_at > now:
+                continue
+            updated = self._clone_job(stored)
+            updated.is_finalized = True
+            updated.failure_reason = JobFailureReason.TIMEOUT
+            updated.status = JobStatus.PROCESSING
+            updated.updated_at = now
+            updated.finalized_at = now
+            self._jobs[job_id] = updated
+            if job_id in self._pending:
+                self._pending.remove(job_id)
+            released.append(self._clone_job(updated))
+        return released
+
+    def append_processing_logs(self, logs: Iterable[ProcessingLog]) -> None:
+        for log in logs:
+            stored = self._clone_log(log)
+            self._processing_logs[stored.job_id].append(stored)
+
+    def list_processing_logs(self, job_id: UUID) -> list[ProcessingLog]:
+        return [self._clone_log(log) for log in self._processing_logs.get(job_id, [])]
+
+    # Helpers ------------------------------------------------------------
+
+    def _enforce_backpressure(self, *, now: datetime) -> None:
+        limit = self.config.max_in_flight_jobs
+        if limit is None:
+            return
+        active = sum(
+            1
+            for job in self._jobs.values()
+            if not job.is_finalized and job.expires_at >= now
+        )
+        if active >= limit:
+            raise QueueBusyError("ingest queue saturated")
+
+    @staticmethod
+    def supports_dsn(dsn: str) -> bool:
+        normalized = dsn.strip().lower()
+        return normalized in _InMemoryQueueBackend._SUPPORTED_DSNS
+
+    @staticmethod
+    def _clone_job(job: Job) -> Job:
+        return replace(job)
+
+    @staticmethod
+    def _clone_log(log: ProcessingLog) -> ProcessingLog:
+        return replace(log)
 
 __all__ = ["PostgresJobQueue", "PostgresQueueConfig"]
 
