@@ -39,7 +39,11 @@ class PostgresQueueConfig:
 
 
 class PostgresJobQueue(JobRepository):
-    """Concrete repository backed exclusively by PostgreSQL."""
+    """Concrete repository backed exclusively by PostgreSQL.
+
+    Tests may supply a fake backend via ``backend`` to avoid touching a real
+    database while exercising the queue API.
+    """
 
     def __init__(
         self,
