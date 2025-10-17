@@ -154,6 +154,9 @@ class _PostgresQueueBackend(_QueueBackend):
                     """,
                     self._serialize_job(job),
                 )
+        except QueueBusyError:
+            self._conn.rollback()
+            raise
         except Exception as exc:  # pragma: no cover - defensive
             self._conn.rollback()
             raise QueueUnavailableError("failed to enqueue job") from exc
@@ -316,10 +319,8 @@ class _PostgresQueueBackend(_QueueBackend):
 
     def _set_statement_timeout(self) -> None:
         with self._conn.cursor() as cur:
-            cur.execute(
-                "SET statement_timeout = %(timeout)s",
-                {"timeout": f"{self.config.statement_timeout_ms}ms"},
-            )
+            timeout = int(self.config.statement_timeout_ms)
+            cur.execute(f"SET statement_timeout = '{timeout}ms'")
 
     def _ensure_schema(self) -> None:
         with self._conn.cursor() as cur:

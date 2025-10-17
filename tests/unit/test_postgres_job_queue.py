@@ -6,14 +6,7 @@ from uuid import uuid4
 import pytest
 
 from src.app.domain.models import Job, JobFailureReason, JobStatus, ProcessingLog, ProcessingStatus
-from src.app.infrastructure.queue.postgres import PostgresJobQueue, PostgresQueueConfig
 from src.app.services.job_service import QueueBusyError
-
-
-def _queue(max_in_flight: int | None = None) -> PostgresJobQueue:
-    return PostgresJobQueue(
-        config=PostgresQueueConfig(dsn=":memory:", max_in_flight_jobs=max_in_flight)
-    )
 
 
 def _job(*, expires_delta: timedelta = timedelta(minutes=1)) -> Job:
@@ -30,8 +23,8 @@ def _job(*, expires_delta: timedelta = timedelta(minutes=1)) -> Job:
     )
 
 
-def test_enqueue_and_acquire_updates_status() -> None:
-    queue = _queue()
+def test_enqueue_and_acquire_updates_status(postgres_queue_factory) -> None:
+    queue = postgres_queue_factory()
     job = _job()
 
     queue.enqueue(job)
@@ -42,16 +35,16 @@ def test_enqueue_and_acquire_updates_status() -> None:
     assert acquired.status is JobStatus.PROCESSING
 
 
-def test_backpressure_limit_blocks_enqueue() -> None:
-    queue = _queue(max_in_flight=1)
+def test_backpressure_limit_blocks_enqueue(postgres_queue_factory) -> None:
+    queue = postgres_queue_factory(max_in_flight_jobs=1)
     queue.enqueue(_job())
 
     with pytest.raises(QueueBusyError):
         queue.enqueue(_job())
 
 
-def test_release_expired_marks_timeout() -> None:
-    queue = _queue()
+def test_release_expired_marks_timeout(postgres_queue_factory) -> None:
+    queue = postgres_queue_factory()
     expired_job = _job(expires_delta=-timedelta(minutes=1))
     queue.enqueue(expired_job)
 
@@ -63,8 +56,8 @@ def test_release_expired_marks_timeout() -> None:
     assert job.is_finalized is True
 
 
-def test_mark_finalized_persists_result_metadata() -> None:
-    queue = _queue()
+def test_mark_finalized_persists_result_metadata(postgres_queue_factory) -> None:
+    queue = postgres_queue_factory()
     job = _job()
     queue.enqueue(job)
     acquired = queue.acquire_for_processing(now=datetime.now(timezone.utc))
@@ -84,8 +77,8 @@ def test_mark_finalized_persists_result_metadata() -> None:
     assert persisted.result_inline_base64 == "Zm9v"
 
 
-def test_append_processing_logs_persists_records() -> None:
-    queue = _queue()
+def test_append_processing_logs_persists_records(postgres_queue_factory) -> None:
+    queue = postgres_queue_factory()
     job = _job()
     queue.enqueue(job)
     log = ProcessingLog(
