@@ -71,16 +71,21 @@ class InstrumentedWorker(QueueWorker):
         )
         self.provider = provider
 
-    def run_once(self, *, now: datetime) -> None:  # type: ignore[override]
+    async def run_once(
+        self, *, now: datetime, shutdown_event: asyncio.Event | None = None
+    ) -> bool:  # type: ignore[override]
         job = self.job_service.acquire_next_job(now=now)
         if job is None:
-            return
+            return False
         if now >= job.expires_at:
             self.handle_timeout(job, now=now)
-            return
-        self.process_job(job, now=now)
+            return True
+        await self.process_job(job, now=now, shutdown_event=shutdown_event)
+        return True
 
-    def process_job(self, job: Job, *, now: datetime) -> None:  # type: ignore[override]
+    async def process_job(
+        self, job: Job, *, now: datetime, shutdown_event: asyncio.Event | None = None
+    ) -> None:  # type: ignore[override]
         preview = "cHJldmlldy1iaW5hcnk="
         job.provider_job_reference = f"provider-{job.id.hex}"
         job.result_inline_base64 = preview
@@ -112,9 +117,9 @@ class InstrumentedWorker(QueueWorker):
         )
         self.job_service.jobs[job.id] = failed
 
-    def cancel_job(self, job: Job, *, now: datetime) -> None:
+    async def cancel_job(self, job: Job, *, now: datetime) -> None:
         if job.provider_job_reference is not None:
-            asyncio.run(self.provider.cancel(job.provider_job_reference))
+            await self.provider.cancel(job.provider_job_reference)
         job.result_file_path = None
         job.result_inline_base64 = None
         failed = self.job_service.fail_job(
@@ -262,7 +267,7 @@ def test_worker_finalizes_job_within_sync_window(
     processing_time = time_controller.advance(seconds=90)
     assert processing_time < job.expires_at
 
-    worker.run_once(now=processing_time)
+    asyncio.run(worker.run_once(now=processing_time))
 
     persisted = job_service.get_job(job.id)
     assert persisted is not None
@@ -300,7 +305,7 @@ def test_manual_cancel_invokes_provider_and_marks_failure(
     postgres_queue.enqueue(job)
 
     cancel_at = time_controller.advance(seconds=10)
-    worker.cancel_job(job, now=cancel_at)
+    asyncio.run(worker.cancel_job(job, now=cancel_at))
 
     assert provider.events[-1] == f"cancel:{reference}"
     with pytest.raises(RuntimeError, match="cancelled"):

@@ -28,6 +28,7 @@ from .job_service import JobService, QueueBusyError, QueueUnavailableError
 from .media_service import MediaService
 from .settings_service import SettingsService
 from .slot_service import SlotService
+from .stats_service import StatsService
 
 
 def _utcnow() -> datetime:
@@ -64,6 +65,26 @@ class DefaultSlotService(SlotService):
             return self.slots[slot_id]
         except KeyError as exc:
             raise KeyError(slot_id) from exc
+
+
+@dataclass(slots=True)
+class DefaultStatsService(StatsService):
+    """In-memory statistics aggregator for scaffolding and tests."""
+
+    events: list[ProcessingLog] = field(default_factory=list)
+
+    def collect_global_stats(
+        self, *, since: datetime | None = None
+    ) -> Mapping[str, int]:  # type: ignore[override]
+        return {}
+
+    def collect_slot_stats(
+        self, slot: Slot, *, since: datetime | None = None
+    ) -> Mapping[str, int]:  # type: ignore[override]
+        return {}
+
+    def record_processing_event(self, log: ProcessingLog) -> None:  # type: ignore[override]
+        self.events.append(log)
 
 
 @dataclass(slots=True)
@@ -118,6 +139,7 @@ class DefaultJobService(JobService):
 
     queue: PostgresJobQueue
     jobs: Dict[UUID, Job] = field(default_factory=dict)
+    result_retention_hours: int = 72
 
     def create_job(  # type: ignore[override]
         self,
@@ -203,6 +225,12 @@ class DefaultJobService(JobService):
         job.failure_reason = failure_reason
         job.updated_at = occurred_at
         job.finalized_at = occurred_at
+        job.result_inline_base64 = None
+        job.result_file_path = None
+        job.result_mime_type = None
+        job.result_size_bytes = None
+        job.result_checksum = None
+        job.result_expires_at = None
         persisted = self.queue.mark_finalized(job)
         self.jobs[persisted.id] = persisted
         return persisted
@@ -262,6 +290,7 @@ __all__ = [
     "DefaultMediaService",
     "DefaultSettingsService",
     "DefaultSlotService",
+    "DefaultStatsService",
     "bootstrap_settings",
     "bootstrap_slots",
 ]

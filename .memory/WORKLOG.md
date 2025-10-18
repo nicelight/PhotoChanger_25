@@ -165,6 +165,15 @@ updated: 2025-10-29
 - 2025-10-29 09:20 — обновил спецификации (context, vision, domain-model, NFR, constraints, test-plan) и ops runbook, чтобы зафиксировать утверждённую архитектуру воркеров и поведение ретраев/shutdown.
 - 2025-10-29 09:35 — синхронизировал .memory/TASKS (закрыл CONSULT/REFLECT подпункты 4.3.10–4.3.11, уточнил 4.3.1/4.3.9/4.3.12), добавил запись в WORKLOG и подготовил обновление PROGRESS/ASKS.
 
+## phase4-workers-async-2025-10-29
+- 2025-10-29 11:05 — перечитал .memory/TASKS.md (4.3.1/4.3.9/4.3.12), blueprints по воркерам и очереди, зафиксировал требования к retry (5 попыток, 3 с пауза, таймаут 5 с) и graceful shutdown.
+- 2025-10-29 11:18 — осмотрел текущую реализацию QueueWorker (sync, asyncio.run), DI create_app и тесты contract/integration для планирования перехода на async модель и фоновые задачи FastAPI.
+- 2025-10-29 11:32 — сформировал план: переписать QueueWorker на async методы, добавить RetryConfig, реализовать aclose/cancellation, обновить create_app с пулом воркеров и скорректировать тесты на asyncio.
+- 2025-10-29 12:10 — Переписал QueueWorker на async (run_once/process_job/dispatch), добавил retry 5×/3 с/5 с, cancel handling и aclose провайдеров; внедрил DefaultStatsService.
+- 2025-10-29 12:35 — Обновил create_app: регистрирует DefaultStatsService, стартует пул из четырёх воркеров на startup и корректно гасит его на shutdown; добавил опцию disable_worker_pool для тестов.
+- 2025-10-29 12:50 — Переписал contract/integration тесты QueueWorker на asyncio.run, адаптировал фикстуры sleep, отключил воркер-пул в contract_app.
+- 2025-10-29 13:05 — pytest tests/integration/test_queue_worker_dispatch.py завершился ошибкой (нет psycopg) — зафиксировал ограничение окружения.
+
 ## phase5-architecture-analysis-2025-10-28
 - 2025-10-28 09:10 — перечитал инструкции agents.md и политику CONSULT/REFLECT перед анализом Фазы 5.
 - 2025-10-28 09:25 — прошёлся по подпунктам 5.1–5.4 в .memory/TASKS.md, оценил сложность и потенциальные архитектурные ветвления для каждого сабтаска.
