@@ -1,6 +1,6 @@
 ---
 id: progress
-updated: 2025-10-25
+updated: 2025-10-28
 ---
 
 # Progress (changelog — одна строка на событие)
@@ -25,3 +25,5 @@ updated: 2025-10-25
 - 2025-10-24: Подтверждена соответствие ingest core спецификациям/бриву — фабрики DI получают AppConfig, прогнаны ruff/mypy/pytest -m "unit or contract" (зелёные).
 - 2025-10-25: Завершены сабтаски 4.1.6–4.1.10 — ingest стал синхронным (polling, очистка, 429/504), обновлены тесты и ops runbook, ruff/mypy/pytest -m unit/contract зелёные.
 - 2025-10-16: Стартована реализация сабтасков 4.2.x — добавлен SQLite-бэкенд PostgresJobQueue, unit-тесты (pytest -m unit требует fastapi).
+- 2025-10-28: Сабтаски 4.2.1 и 4.2.8 закрыты — добавлены Alembic-миграции очереди (`jobs`/`processing_logs`), прокинут `queue_statement_timeout_ms` в AppConfig и обновлена документация по миграциям.
+- 2025-10-28: Сабтаски 4.2.10–4.2.11 закрыты — подтверждён приоритет таблицы `processing_logs`, добавлен конфиг `queue_max_in_flight_jobs=12` и обновлены runbook/ingest инструкции по back-pressure.

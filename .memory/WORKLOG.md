@@ -189,3 +189,14 @@ updated: 2025-10-28
 - 2025-10-27 13:25 — перечитал .memory/TASKS.md (подфазы 4.2–4.9) и требования roadmap для уточнения ожидаемых артефактов реализации.
 - 2025-10-27 13:40 — осмотрел текущие заготовки очереди, воркера и сервисов (`src/app/infrastructure/queue/postgres.py`, `src/app/workers/queue_worker.py`, `src/app/services/default.py`) на предмет пробелов.
 - 2025-10-27 14:05 — зафиксировал анализ незавершённых тасков фазы 4 и рекомендации по декомпозиции/дополнительным пунктам в `.memory/notes/phase4_open_tasks_analysis.md`.
+
+## phase4-queue-migrations-2025-10-28
+- 2025-10-28 09:10 — перечитал .memory/TASKS.md (подфаза 4.2) и Docs/operations/ingest_runbook.md для требований к миграциям и конфигурации очереди.
+- 2025-10-28 09:25 — подготовил структуру Alembic (`alembic.ini`, `src/app/infrastructure/queue/migrations/*`), описал схему в `schema.py` и создал миграцию `202510280001_create_queue_tables`.
+- 2025-10-28 10:05 — обновил `PostgresJobQueue` (удалил создание схемы налету, добавил сообщения об отсутствии миграций), прокинул `queue_statement_timeout_ms` из `AppConfig` и настроил прогон миграций в `tests/conftest.py`.
+- 2025-10-28 10:40 — задокументировал запуск Alembic и параметры очереди (`Docs/operations/postgres_queue_runbook.md`, обновление README и ingest runbook), установил alembic/sqlalchemy/psycopg для локальной проверки, запуск `pytest -m unit` упал из-за отсутствия fastapi в окружении.
+
+## phase4-queue-backpressure-2025-10-28
+- 2025-10-28 14:05 — зафиксировал решение держать таблицу `processing_logs` в первой миграции, чтобы фазы 4.3/4.5 могли сразу опираться на историю обработки.
+- 2025-10-28 14:20 — добавил `queue_max_in_flight_jobs` в `AppConfig` и DI, обновил runbook/ingest README по переменной `PHOTOCHANGER_QUEUE_MAX_IN_FLIGHT_JOBS` (дефолт 12 активных задач).
+- 2025-10-28 14:35 — синхронизировал .memory (TASKS, ASKS, PROGRESS) и задокументировал back-pressure решение для команды эксплуатации.

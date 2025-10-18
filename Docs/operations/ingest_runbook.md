@@ -13,6 +13,8 @@
 | --- | --- |
 | `PHOTOCHANGER_MEDIA_ROOT` | Каталог для временных payload и результатов. Должен быть доступен для API и воркеров. |
 | `PHOTOCHANGER_DATABASE_URL` | DSN PostgreSQL-очереди. В локальном режиме можно использовать `postgresql://localhost:5432/photochanger`. |
+| `PHOTOCHANGER_QUEUE_STATEMENT_TIMEOUT_MS` | Таймаут SQL-запросов очереди в миллисекундах (по умолчанию 5000). Должен быть меньше `T_sync_response`. |
+| `PHOTOCHANGER_QUEUE_MAX_IN_FLIGHT_JOBS` | Верхняя граница активных задач очереди. По умолчанию 12, после превышения ingest возвращает 429 (`queue_busy`). |
 | `PHOTOCHANGER_T_SYNC_RESPONSE_SECONDS` | Значение `T_sync_response` (45–60 секунд). Используется для расчёта дедлайна job, TTL inline-результатов и лимита хранения payload. |
 | `PHOTOCHANGER_JWT_SECRET` | Секрет для административных JWT (используется для остальных API). |
 
