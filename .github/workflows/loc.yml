@@ -1,0 +1,69 @@
+name: Lines of Code
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  count-loc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install tools (cloc, jq)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cloc jq
+
+      - name: Count raw lines (tracked files, wc -l)
+        id: raw
+        shell: bash
+        run: |
+          # Считаем строки только в отслеживаемых git-файлах (уважает .gitignore)
+          RAW_TOTAL=$(git ls-files -z \
+            | xargs -0 wc -l \
+            | tail -n1 \
+            | awk '{print $1}')
+          echo "RAW_TOTAL=$RAW_TOTAL" >> $GITHUB_ENV
+          echo "Raw total lines: $RAW_TOTAL"
+      
+      - name: Count via cloc (code/comment/blank per language)
+        id: cloc
+        shell: bash
+        run: |
+          # cloc даёт разбивку по языкам и суммарную строку SUM
+          cloc . --json --quiet | tee cloc.json
+          CODE=$(jq -r '.SUM.code // 0' cloc.json)
+          COMMENT=$(jq -r '.SUM.comment // 0' cloc.json)
+          BLANK=$(jq -r '.SUM.blank // 0' cloc.json)
+          SUM=$((CODE + COMMENT + BLANK))
+          echo "CLOC_CODE=$CODE" >> $GITHUB_ENV
+          echo "CLOC_COMMENT=$COMMENT" >> $GITHUB_ENV
+          echo "CLOC_BLANK=$BLANK" >> $GITHUB_ENV
+          echo "CLOC_TOTAL=$SUM" >> $GITHUB_ENV
+          echo "cloc total (code+comment+blank): $SUM"
+
+      - name: Show report in Check Summary
+        shell: bash
+        run: |
+          # Красивый отчёт в Summary вкладке Checks
+          {
+            echo "## 📊 Lines of Code Report"
+            echo ""
+            echo "| Metric | Lines |"
+            echo "|---|---:|"
+            echo "| **Raw (wc -l, tracked)** | $RAW_TOTAL |"
+            echo "| Code (cloc) | $CLOC_CODE |"
+            echo "| Comments (cloc) | $CLOC_COMMENT |"
+            echo "| Blank (cloc) | $CLOC_BLANK |"
+            echo "| **Total (cloc: code+comment+blank)** | **$CLOC_TOTAL** |"
+            echo ""
+            echo "<sub>Raw учитывает все отслеживаемые файлы; cloc игнорирует бинарники и даёт разбивку по языкам.</sub>"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload cloc.json artifact (optional)
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloc-json
+          path: cloc.json
