@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
+import inspect
 import json
 import logging
-import time
-from collections.abc import Callable, Mapping
+from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any
+from typing import Any, TypeVar
 from uuid import uuid4
 
 from ..domain import deadlines
@@ -25,13 +26,10 @@ from ..domain.models import (
 )
 from ..plugins.base import PluginFactory
 from ..providers.base import ProviderAdapter
-from ..services import (
-    JobService,
-    MediaService,
-    SettingsService,
-    SlotService,
-    StatsService,
-)
+from ..services import JobService, MediaService, SettingsService, SlotService, StatsService
+
+
+T = TypeVar("T")
 
 
 class ProviderDispatchOutcome(str, Enum):
@@ -67,9 +65,12 @@ class QueueWorker:
         provider_factories: Mapping[str, PluginFactory],
         provider_configs: Mapping[str, Mapping[str, Any]] | None = None,
         clock: Callable[[], datetime] | None = None,
-        sleep: Callable[[float], None] | None = None,
+        sleep: Callable[[float], Any] | None = None,
         poll_interval: float = 1.0,
         max_poll_attempts: int = 10,
+        retry_attempts: int = 5,
+        retry_delay_seconds: float = 3.0,
+        request_timeout_seconds: float = 5.0,
     ) -> None:
         self.job_service = job_service
         self.slot_service = slot_service
@@ -80,38 +81,106 @@ class QueueWorker:
         self._provider_configs = dict(provider_configs or {})
         self._providers: dict[str, ProviderAdapter] = {}
         self._clock = clock or (lambda: datetime.now(timezone.utc))
-        self._sleep = sleep or time.sleep
+        self._sleep = self._wrap_sleep(sleep)
         self._poll_interval = poll_interval
         self._max_poll_attempts = max_poll_attempts
+        self._retry_attempts = max(1, retry_attempts)
+        self._retry_delay_seconds = max(0.0, retry_delay_seconds)
+        self._request_timeout_seconds = max(0.1, request_timeout_seconds)
         self._logger = logging.getLogger(__name__)
+        self._closed = False
+
+    @staticmethod
+    def _wrap_sleep(
+        sleep: Callable[[float], Any] | None,
+    ) -> Callable[[float], Awaitable[None]]:
+        if sleep is None:
+            return asyncio.sleep
+
+        async def _async_sleep(seconds: float) -> None:
+            result = sleep(seconds)
+            if inspect.isawaitable(result):
+                await result  # type: ignore[no-any-return]
+
+        return _async_sleep
 
     # ------------------------------------------------------------------
     # High-level control flow
     # ------------------------------------------------------------------
-    def run_once(self, *, now: datetime) -> None:
+    async def run_once(
+        self,
+        *,
+        now: datetime,
+        shutdown_event: asyncio.Event | None = None,
+    ) -> bool:
         """Pick and process at most one job within the ``T_sync_response`` window."""
+
+        if shutdown_event is not None and shutdown_event.is_set():
+            return False
 
         job = self.job_service.acquire_next_job(now=now)
         if job is None:
-            return
+            return False
         if now >= job.expires_at:
             self.handle_timeout(job, now=now)
-            return
-        self.process_job(job, now=now)
+            return True
 
-    def process_job(self, job: Job, *, now: datetime) -> None:
+        try:
+            await self.process_job(job, now=now, shutdown_event=shutdown_event)
+        except asyncio.CancelledError:
+            await self._handle_cancelled_job(job, now=self._clock())
+            raise
+        return True
+
+    async def run_forever(
+        self,
+        *,
+        worker_id: int,
+        shutdown_event: asyncio.Event,
+    ) -> None:
+        """Continuously process jobs until ``shutdown_event`` is set."""
+
+        try:
+            while not shutdown_event.is_set():
+                has_job = await self.run_once(
+                    now=self._clock(), shutdown_event=shutdown_event
+                )
+                if not has_job:
+                    try:
+                        await self._sleep(self._poll_interval)
+                    except asyncio.CancelledError:
+                        raise
+        except asyncio.CancelledError:
+            self._logger.debug("QueueWorker %s cancelled", worker_id)
+            raise
+        finally:
+            await self.aclose()
+
+    async def process_job(
+        self,
+        job: Job,
+        *,
+        now: datetime,
+        shutdown_event: asyncio.Event | None = None,
+    ) -> None:
         """Execute provider-specific logic while respecting queue deadlines."""
 
         slot = self.slot_service.get_slot(job.slot_id)
         settings = self.settings_service.read_settings()
         context = self._load_job_context(job)
-        dispatch_result = self.dispatch_to_provider(
-            job,
-            slot=slot,
-            settings=settings,
-            context=context,
-            started_at=now,
-        )
+
+        try:
+            dispatch_result = await self.dispatch_to_provider(
+                job,
+                slot=slot,
+                settings=settings,
+                context=context,
+                started_at=now,
+                shutdown_event=shutdown_event,
+            )
+        except asyncio.CancelledError:
+            await self._mark_job_cancelled(job, slot=slot, started_at=now)
+            raise
 
         if dispatch_result.outcome is ProviderDispatchOutcome.SUCCESS:
             finalized_at = dispatch_result.finished_at or self._clock()
@@ -166,7 +235,7 @@ class QueueWorker:
     # ------------------------------------------------------------------
     # Provider dispatch lifecycle
     # ------------------------------------------------------------------
-    def dispatch_to_provider(
+    async def dispatch_to_provider(
         self,
         job: Job,
         *,
@@ -174,6 +243,7 @@ class QueueWorker:
         settings: Settings,
         context: Mapping[str, Any],
         started_at: datetime,
+        shutdown_event: asyncio.Event | None = None,
     ) -> ProviderDispatchResult:
         """Delegate processing to the configured provider adapter."""
 
@@ -235,8 +305,13 @@ class QueueWorker:
             )
         )
 
+        reference: str | None = None
         try:
-            reference = asyncio.run(provider.submit_job(payload))
+            reference = await self._submit_with_retries(
+                provider,
+                payload,
+                shutdown_event=shutdown_event,
+            )
         except Exception as exc:
             failure_time = self._clock()
             self._logger.exception("Provider submission failed", exc_info=exc)
@@ -260,6 +335,11 @@ class QueueWorker:
                 finished_at=failure_time,
                 error=exc,
             )
+        except asyncio.CancelledError:
+            self.job_service.append_processing_logs(job, logs)
+            self._record_processing_logs(logs)
+            await self._cancel_reference_on_shutdown(slot, reference)
+            raise
 
         job.provider_job_reference = reference
         response: Mapping[str, Any] | None = None
@@ -274,8 +354,13 @@ class QueueWorker:
                 outcome = ProviderDispatchOutcome.TIMEOUT
                 finished_at = now
                 break
+            if shutdown_event is not None and shutdown_event.is_set():
+                raise asyncio.CancelledError
             try:
-                response = asyncio.run(provider.poll_status(reference))
+                response = await self._call_with_timeout(
+                    provider.poll_status(reference),
+                    label="poll_status",
+                )
             except TimeoutError as exc:
                 error = exc
                 outcome = ProviderDispatchOutcome.TIMEOUT
@@ -286,6 +371,11 @@ class QueueWorker:
                 outcome = ProviderDispatchOutcome.ERROR
                 finished_at = now
                 break
+            except asyncio.CancelledError:
+                self.job_service.append_processing_logs(job, logs)
+                self._record_processing_logs(logs)
+                await self._cancel_reference_on_shutdown(slot, reference)
+                raise
 
             status = self._classify_provider_response(slot.provider_id, response)
             if status == "success":
@@ -303,7 +393,11 @@ class QueueWorker:
                 outcome = ProviderDispatchOutcome.SUCCESS
                 break
             if status == "pending":
-                self._sleep(self._poll_interval)
+                if shutdown_event is not None and shutdown_event.is_set():
+                    raise asyncio.CancelledError
+                await self._sleep(self._poll_interval)
+                if shutdown_event is not None and shutdown_event.is_set():
+                    raise asyncio.CancelledError
                 continue
 
             error = RuntimeError(
@@ -319,7 +413,9 @@ class QueueWorker:
 
         if outcome is ProviderDispatchOutcome.TIMEOUT:
             try:
-                asyncio.run(provider.cancel(reference))
+                await self._call_with_timeout(
+                    provider.cancel(reference), label="cancel"
+                )
             except Exception as cancel_error:  # pragma: no cover - best effort logging
                 self._logger.warning(
                     "Provider cancellation raised an exception", exc_info=cancel_error
@@ -543,3 +639,100 @@ class QueueWorker:
         if status in {"processing", "pending", "running"}:
             return "pending"
         return "failure"
+
+    async def aclose(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+        close_tasks: list[Awaitable[Any]] = []
+        for provider in self._providers.values():
+            close = getattr(provider, "aclose", None)
+            if callable(close):
+                try:
+                    result = close()
+                except Exception:  # pragma: no cover - best effort cleanup
+                    continue
+                if inspect.isawaitable(result):
+                    close_tasks.append(result)  # type: ignore[arg-type]
+                continue
+            close_sync = getattr(provider, "close", None)
+            if callable(close_sync):
+                with contextlib.suppress(Exception):
+                    close_sync()
+        if close_tasks:
+            await asyncio.gather(*close_tasks, return_exceptions=True)
+
+    async def _submit_with_retries(
+        self,
+        provider: ProviderAdapter,
+        payload: Mapping[str, Any],
+        *,
+        shutdown_event: asyncio.Event | None,
+    ) -> str:
+        last_exc: Exception | None = None
+        for attempt in range(1, self._retry_attempts + 1):
+            if shutdown_event is not None and shutdown_event.is_set():
+                raise asyncio.CancelledError
+            try:
+                return await self._call_with_timeout(
+                    provider.submit_job(payload),
+                    label="submit_job",
+                )
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
+                last_exc = exc
+                if attempt >= self._retry_attempts:
+                    raise
+                await self._sleep(self._retry_delay_seconds)
+        if last_exc is not None:  # pragma: no cover - defensive guard
+            raise last_exc
+        raise RuntimeError("submit_job retries exhausted without exception")
+
+    async def _call_with_timeout(self, awaitable: Awaitable[T], *, label: str) -> T:
+        try:
+            return await asyncio.wait_for(
+                awaitable, timeout=self._request_timeout_seconds
+            )
+        except asyncio.TimeoutError as exc:
+            raise TimeoutError(
+                f"Provider operation {label} timed out after"
+                f" {self._request_timeout_seconds:.1f}s"
+            ) from exc
+
+    async def _cancel_reference_on_shutdown(
+        self, slot: Slot, reference: str | None
+    ) -> None:
+        if reference is not None:
+            provider = self._providers.get(slot.provider_id)
+            if provider is not None:
+                with contextlib.suppress(Exception):
+                    await self._call_with_timeout(
+                        provider.cancel(reference), label="cancel"
+                    )
+
+    async def _mark_job_cancelled(
+        self, job: Job, *, slot: Slot, started_at: datetime
+    ) -> None:
+        cancelled_at = self._clock()
+        await self._cancel_reference_on_shutdown(slot, job.provider_job_reference)
+        self.job_service.fail_job(
+            job,
+            failure_reason=JobFailureReason.CANCELLED,
+            occurred_at=cancelled_at,
+        )
+        log_entry = self._build_processing_log(
+            job,
+            slot,
+            status=ProcessingStatus.FAILED,
+            occurred_at=cancelled_at,
+            started_at=started_at,
+            message="Job cancelled due to worker shutdown",
+            details={"provider_id": slot.provider_id},
+        )
+        self.job_service.append_processing_logs(job, [log_entry])
+        self._record_processing_logs([log_entry])
+
+    async def _handle_cancelled_job(self, job: Job, *, now: datetime) -> None:
+        slot = self.slot_service.get_slot(job.slot_id)
+        await self._mark_job_cancelled(job, slot=slot, started_at=now)

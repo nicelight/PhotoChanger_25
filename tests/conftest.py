@@ -593,6 +593,7 @@ def contract_app(
         "job_queue": fake_job_queue,
         "result_store": fake_result_store,
         "app_config": app_config,
+        "disable_worker_pool": True,
     }
     app = create_app(extra_state=extra_state)
 

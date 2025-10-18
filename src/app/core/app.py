@@ -8,7 +8,9 @@ to implementation phases as described in the blueprints.
 
 from __future__ import annotations
 
+import asyncio
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -22,10 +24,15 @@ from ..services.default import (
     DefaultMediaService,
     DefaultSettingsService,
     DefaultSlotService,
+    DefaultStatsService,
     bootstrap_settings,
     bootstrap_slots,
 )
 from ..services.registry import ServiceRegistry
+from ..workers import QueueWorker
+
+
+logger = logging.getLogger(__name__)
 
 
 def _read_contract_version() -> str:
@@ -72,11 +79,13 @@ def _configure_dependencies(
     slot_service = DefaultSlotService(slots=dict(slots))
     media_service = DefaultMediaService(media_root=media_root)
     job_service = DefaultJobService(queue=queue)
+    stats_service = DefaultStatsService()
 
     registry.register_settings_service(lambda *, config=None: settings_service)
     registry.register_slot_service(lambda *, config=None: slot_service)
     registry.register_media_service(lambda *, config=None: media_service)
     registry.register_job_service(lambda *, config=None: job_service)
+    registry.register_stats_service(lambda *, config=None: stats_service)
     registry.register_job_repository(lambda *, config=None: queue)
 
     return config
@@ -106,7 +115,74 @@ def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
     if extra_state:
         for key, value in extra_state.items():
             setattr(app.state, key, value)
+    app.state.worker_pool = []
+    app.state.worker_tasks = []
+    app.state.worker_shutdown_event = None
+
+    async def _startup_worker_pool() -> None:
+        if getattr(app.state, "disable_worker_pool", False):
+            logger.info("Worker pool startup skipped: disabled via app state")
+            return
+        provider_factories = registry.provider_snapshot()
+        if not provider_factories:
+            logger.info(
+                "Worker pool startup skipped: no provider adapters registered"
+            )
+            return
+        job_service = registry.resolve_job_service()(config=app_config)
+        slot_service = registry.resolve_slot_service()(config=app_config)
+        settings_service = registry.resolve_settings_service()(config=app_config)
+        media_service = registry.resolve_media_service()(config=app_config)
+        stats_service = registry.resolve_stats_service()(config=app_config)
+        provider_configs = {
+            provider_id: registry.resolve_provider_config(provider_id)
+            for provider_id in provider_factories
+        }
+        worker_count = min(4, app_config.queue_max_in_flight_jobs)
+        if worker_count <= 0:
+            return
+        shutdown_event = asyncio.Event()
+        workers: list[QueueWorker] = []
+        tasks: list[asyncio.Task[None]] = []
+        for index in range(worker_count):
+            worker = QueueWorker(
+                job_service=job_service,
+                slot_service=slot_service,
+                media_service=media_service,
+                settings_service=settings_service,
+                stats_service=stats_service,
+                provider_factories=provider_factories,
+                provider_configs=provider_configs,
+            )
+            task = asyncio.create_task(
+                worker.run_forever(worker_id=index, shutdown_event=shutdown_event),
+                name=f"photochanger-worker-{index}",
+            )
+            workers.append(worker)
+            tasks.append(task)
+        app.state.worker_pool = workers
+        app.state.worker_tasks = tasks
+        app.state.worker_shutdown_event = shutdown_event
+
+    async def _shutdown_worker_pool() -> None:
+        shutdown_event = getattr(app.state, "worker_shutdown_event", None)
+        if shutdown_event is not None:
+            shutdown_event.set()
+        tasks: list[asyncio.Task[None]] = getattr(app.state, "worker_tasks", [])
+        for task in tasks:
+            task.cancel()
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
+        workers: list[QueueWorker] = getattr(app.state, "worker_pool", [])
+        for worker in workers:
+            await worker.aclose()
+        app.state.worker_pool = []
+        app.state.worker_tasks = []
+        app.state.worker_shutdown_event = None
+
     facade.mount(app)
+    app.add_event_handler("startup", _startup_worker_pool)
+    app.add_event_handler("shutdown", _shutdown_worker_pool)
     return app
 
 

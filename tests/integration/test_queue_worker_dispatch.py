@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from collections import deque
 from dataclasses import dataclass, field
@@ -299,6 +300,9 @@ def _make_worker(
     stats_service: StubStatsService,
     provider: MockGeminiProvider,
 ) -> QueueWorker:
+    async def _advance(seconds: float) -> None:
+        clock.advance(seconds)
+
     return QueueWorker(
         job_service=job_service,
         slot_service=slot_service,
@@ -307,7 +311,7 @@ def _make_worker(
         stats_service=stats_service,
         provider_factories={"gemini": lambda *, config=None: provider},
         clock=clock.now,
-        sleep=lambda seconds: clock.advance(seconds),
+        sleep=_advance,
         poll_interval=1.0,
         max_poll_attempts=4,
     )
@@ -335,7 +339,7 @@ def test_worker_finalizes_successful_job(
     )
     job_service.queue(job)
 
-    worker.run_once(now=clock.now())
+    asyncio.run(worker.run_once(now=clock.now()))
 
     assert job in job_service.finalized_jobs
     assert job.failure_reason is None
@@ -369,7 +373,7 @@ def test_worker_marks_timeout_and_cancels_provider(
     job.expires_at = clock.now() + timedelta(seconds=2)
     job_service.queue(job)
 
-    worker.run_once(now=clock.now())
+    asyncio.run(worker.run_once(now=clock.now()))
 
     assert job in job_service.failed_jobs
     assert job.failure_reason is JobFailureReason.TIMEOUT
@@ -399,7 +403,7 @@ def test_worker_handles_provider_error(
     )
     job_service.queue(job)
 
-    worker.run_once(now=clock.now())
+    asyncio.run(worker.run_once(now=clock.now()))
 
     assert job in job_service.failed_jobs
     assert job.failure_reason is JobFailureReason.PROVIDER_ERROR
