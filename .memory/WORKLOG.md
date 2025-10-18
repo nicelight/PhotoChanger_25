@@ -1,6 +1,6 @@
 ---
 id: worklog
-updated: 2025-10-28
+updated: 2025-10-29
 ---
 
 # Черновой журнал до checkpoint
@@ -159,6 +159,11 @@ updated: 2025-10-28
 - 2025-10-25 09:10 — изучил пользовательский запрос ASK-0013 (фаза 4.1.6–4.1.10), перечитал .memory/MISSION/CONTEXT/TASKS/ASKS/DECISIONS/USECASES и ingest спецификацию в OpenAPI/JSON Schema.
 - 2025-10-25 09:35 — осмотрел текущий код ingest маршрута, DefaultJobService, PostgresJobQueue и тестовые фикстуры, набросал план реализации polling, очистки, ошибок очереди и обновления тестов.
 - 2025-10-25 10:05 — уточнил требования к очистке payload и TTL, сверился с ADR-0002.
+
+## phase4-workers-plan-2025-10-29
+- 2025-10-29 09:05 — уточнил с тимлидом модель воркеров: четыре фоновые задачи внутри FastAPI, общий event loop uvicorn/asyncio, ретраи 5× (таймаут 5 с, пауза 3 с), при shutdown воркеры закрывают HTTP-клиенты.
+- 2025-10-29 09:20 — обновил спецификации (context, vision, domain-model, NFR, constraints, test-plan) и ops runbook, чтобы зафиксировать утверждённую архитектуру воркеров и поведение ретраев/shutdown.
+- 2025-10-29 09:35 — синхронизировал .memory/TASKS (закрыл CONSULT/REFLECT подпункты 4.3.10–4.3.11, уточнил 4.3.1/4.3.9/4.3.12), добавил запись в WORKLOG и подготовил обновление PROGRESS/ASKS.
 
 ## phase5-architecture-analysis-2025-10-28
 - 2025-10-28 09:10 — перечитал инструкции agents.md и политику CONSULT/REFLECT перед анализом Фазы 5.
