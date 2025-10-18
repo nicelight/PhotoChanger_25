@@ -158,6 +158,13 @@ updated: 2025-10-28
 ## phase4-ingest-sync-2025-10-25
 - 2025-10-25 09:10 — изучил пользовательский запрос ASK-0013 (фаза 4.1.6–4.1.10), перечитал .memory/MISSION/CONTEXT/TASKS/ASKS/DECISIONS/USECASES и ingest спецификацию в OpenAPI/JSON Schema.
 - 2025-10-25 09:35 — осмотрел текущий код ingest маршрута, DefaultJobService, PostgresJobQueue и тестовые фикстуры, набросал план реализации polling, очистки, ошибок очереди и обновления тестов.
+- 2025-10-25 10:05 — уточнил требования к очистке payload и TTL, сверился с ADR-0002.
+
+## phase5-architecture-analysis-2025-10-28
+- 2025-10-28 09:10 — перечитал инструкции agents.md и политику CONSULT/REFLECT перед анализом Фазы 5.
+- 2025-10-28 09:25 — прошёлся по подпунктам 5.1–5.4 в .memory/TASKS.md, оценил сложность и потенциальные архитектурные ветвления для каждого сабтаска.
+- 2025-10-28 09:40 — добавил пометки о сложности и рисках ветвления, создал дополнительные REFLECT/CONSULT задачи для ключевых решений (httpx lifecycle, Turbotext ссылки, фронтенд стек, публичный UX).
+- 2025-10-28 09:55 — перепроверил форматирование .memory/TASKS.md и убедился, что новые комментарии не нарушают структуру чекбоксов.
 - 2025-10-25 10:20 — реализовал синхронный ingest (polling по job, декодирование inline результата, маппинг 429/503/504) и очистку payload/inline данных, добавил queue exceptions.
 - 2025-10-25 10:55 — обновил FakeJobQueue и contract/unit тесты (успех, неверный пароль, 415, 429, 504), добавил unit проверки `_decode_inline_result` и DefaultJobService cleanup.
 - 2025-10-25 11:20 — создал Docs/operations/ingest_runbook.md и ссылку в README, синхронизировал .memory/TASKS/PROGRESS/ASKS/INDEX.
