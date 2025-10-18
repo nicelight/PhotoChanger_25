@@ -1,8 +1,6 @@
 """PostgreSQL-backed queue repository."""
 
 from __future__ import annotations
-
-import json
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -21,10 +19,12 @@ from ...services.job_service import QueueBusyError, QueueUnavailableError
 
 try:  # pragma: no cover - optional dependency
     import psycopg
+    from psycopg import errors as psycopg_errors
     from psycopg.rows import dict_row
 except Exception:  # pragma: no cover - capture missing optional dependency
     psycopg = None  # type: ignore[assignment]
     dict_row = None  # type: ignore[assignment]
+    psycopg_errors = None  # type: ignore[assignment]
 
 
 @dataclass(slots=True)
@@ -103,7 +103,6 @@ class _PostgresQueueBackend(_QueueBackend):
         self._conn = psycopg.connect(config.dsn, autocommit=False)
         self._conn.row_factory = dict_row  # type: ignore[assignment]
         self._set_statement_timeout()
-        self._ensure_schema()
 
     # Queue operations ---------------------------------------------------
 
@@ -155,11 +154,9 @@ class _PostgresQueueBackend(_QueueBackend):
                     self._serialize_job(job),
                 )
         except QueueBusyError:
-            self._conn.rollback()
             raise
         except Exception as exc:  # pragma: no cover - defensive
-            self._conn.rollback()
-            raise QueueUnavailableError("failed to enqueue job") from exc
+            self._raise_unavailable(exc, "failed to enqueue job")
         return job
 
     def acquire_for_processing(self, *, now: datetime) -> Job | None:
@@ -194,8 +191,7 @@ class _PostgresQueueBackend(_QueueBackend):
                     return None
                 return self._deserialize_job(row)
         except Exception as exc:  # pragma: no cover - defensive
-            self._conn.rollback()
-            raise QueueUnavailableError("failed to acquire job") from exc
+            self._raise_unavailable(exc, "failed to acquire job")
 
     def mark_finalized(self, job: Job) -> Job:
         try:
@@ -225,8 +221,7 @@ class _PostgresQueueBackend(_QueueBackend):
                     raise QueueUnavailableError(f"job {job.id} missing during finalization")
                 return self._deserialize_job(row)
         except Exception as exc:  # pragma: no cover - defensive
-            self._conn.rollback()
-            raise QueueUnavailableError("failed to finalize job") from exc
+            self._raise_unavailable(exc, "failed to finalize job")
 
     def release_expired(self, *, now: datetime) -> Iterable[Job]:
         try:
@@ -253,8 +248,7 @@ class _PostgresQueueBackend(_QueueBackend):
                 rows = cur.fetchall() or []
                 return [self._deserialize_job(row) for row in rows]
         except Exception as exc:  # pragma: no cover - defensive
-            self._conn.rollback()
-            raise QueueUnavailableError("failed to release expired jobs") from exc
+            self._raise_unavailable(exc, "failed to release expired jobs")
 
     def append_processing_logs(self, logs: Iterable[ProcessingLog]) -> None:
         entries = [self._serialize_log(log) for log in logs]
@@ -287,21 +281,23 @@ class _PostgresQueueBackend(_QueueBackend):
                     entries,
                 )
         except Exception as exc:  # pragma: no cover - defensive
-            self._conn.rollback()
-            raise QueueUnavailableError("failed to append processing logs") from exc
+            self._raise_unavailable(exc, "failed to append processing logs")
 
     def list_processing_logs(self, job_id: UUID) -> list[ProcessingLog]:
-        with self._conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT *
-                FROM processing_logs
-                WHERE job_id = %(job_id)s
-                ORDER BY occurred_at
-                """,
-                {"job_id": job_id},
-            )
-            rows = cur.fetchall() or []
+        try:
+            with self._conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT *
+                    FROM processing_logs
+                    WHERE job_id = %(job_id)s
+                    ORDER BY occurred_at
+                    """,
+                    {"job_id": job_id},
+                )
+                rows = cur.fetchall() or []
+        except Exception as exc:  # pragma: no cover - defensive
+            self._raise_unavailable(exc, "failed to list processing logs")
         return [self._deserialize_log(row) for row in rows]
 
     # Internal utilities -------------------------------------------------
@@ -322,58 +318,12 @@ class _PostgresQueueBackend(_QueueBackend):
             timeout = int(self.config.statement_timeout_ms)
             cur.execute(f"SET statement_timeout = '{timeout}ms'")
 
-    def _ensure_schema(self) -> None:
-        with self._conn.cursor() as cur:
-            cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS jobs (
-                    id UUID PRIMARY KEY,
-                    slot_id TEXT NOT NULL,
-                    status TEXT NOT NULL,
-                    is_finalized BOOLEAN NOT NULL DEFAULT FALSE,
-                    failure_reason TEXT,
-                    expires_at TIMESTAMPTZ NOT NULL,
-                    created_at TIMESTAMPTZ NOT NULL,
-                    updated_at TIMESTAMPTZ NOT NULL,
-                    finalized_at TIMESTAMPTZ,
-                    payload_path TEXT,
-                    provider_job_reference TEXT,
-                    result_file_path TEXT,
-                    result_inline_base64 TEXT,
-                    result_mime_type TEXT,
-                    result_size_bytes BIGINT,
-                    result_checksum TEXT,
-                    result_expires_at TIMESTAMPTZ
-                )
-                """
-            )
-            cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS processing_logs (
-                    id UUID PRIMARY KEY,
-                    job_id UUID NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
-                    slot_id TEXT NOT NULL,
-                    status TEXT NOT NULL,
-                    occurred_at TIMESTAMPTZ NOT NULL,
-                    message TEXT,
-                    details JSONB,
-                    provider_latency_ms INTEGER
-                )
-                """
-            )
-            cur.execute(
-                """
-                CREATE INDEX IF NOT EXISTS idx_jobs_pending
-                    ON jobs(status, is_finalized, expires_at)
-                """
-            )
-            cur.execute(
-                """
-                CREATE INDEX IF NOT EXISTS idx_processing_logs_job
-                    ON processing_logs(job_id, occurred_at)
-                """
-            )
-        self._conn.commit()
+    def _raise_unavailable(self, exc: Exception, message: str) -> None:
+        if psycopg_errors is not None and isinstance(exc, psycopg_errors.UndefinedTable):
+            raise QueueUnavailableError(
+                "queue schema is missing; run `alembic upgrade head`"
+            ) from exc
+        raise QueueUnavailableError(message) from exc
 
     def _enforce_backpressure(self, cur, now: datetime) -> None:
         limit = self.config.max_in_flight_jobs

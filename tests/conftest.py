@@ -32,6 +32,13 @@ SCHEMAS_ROOT = PROJECT_ROOT / "spec" / "contracts" / "schemas"
 import psycopg  # noqa: E402  (import after sys.path update)
 from psycopg import conninfo, sql  # noqa: E402  (import after sys.path update)
 
+try:  # noqa: E402  (import after sys.path update)
+    from alembic import command as alembic_command
+    from alembic.config import Config as AlembicConfig
+except ModuleNotFoundError:  # pragma: no cover - optional dependency
+    alembic_command = None  # type: ignore[assignment]
+    AlembicConfig = None  # type: ignore[assignment]
+
 from tests.mocks.providers import (  # noqa: E402  (import after sys.path update)
     MockGeminiProvider,
     MockProviderScenario,
@@ -321,6 +328,25 @@ def _ensure_database_exists(dsn: str) -> None:
                 )
 
 
+_applied_migrations: set[str] = set()
+
+
+def _apply_queue_migrations(dsn: str) -> None:
+    if alembic_command is None or AlembicConfig is None:
+        import pytest
+
+        pytest.skip("Alembic is required for PostgreSQL queue tests")
+    if dsn in _applied_migrations:
+        return
+    config = AlembicConfig(str(PROJECT_ROOT / "alembic.ini"))
+    config.set_main_option(
+        "script_location", str(PROJECT_ROOT / "src/app/infrastructure/queue/migrations")
+    )
+    config.set_main_option("sqlalchemy.url", dsn)
+    alembic_command.upgrade(config, "head")
+    _applied_migrations.add(dsn)
+
+
 def _truncate_postgres_tables(dsn: str) -> None:
     with psycopg.connect(dsn, autocommit=True) as conn:
         with conn.cursor() as cur:
@@ -359,6 +385,7 @@ def postgres_queue_factory(postgres_dsn: str) -> Iterator[Callable[..., Postgres
 
     def _factory(**overrides: object) -> PostgresJobQueue:
         _truncate_postgres_tables(postgres_dsn)
+        _apply_queue_migrations(postgres_dsn)
         config_kwargs: dict[str, object] = {"dsn": postgres_dsn}
         config_kwargs.update(overrides)
         config = PostgresQueueConfig(**config_kwargs)

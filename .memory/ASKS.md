@@ -1,6 +1,6 @@
 ---
 id: asks
-updated: 2025-10-25
+updated: 2025-10-28
 ---
 
 # Asks (запросы пользователей)
@@ -21,4 +21,4 @@ updated: 2025-10-25
 | 2025-10-23 | ASK-0011  | user     | Выполнить сабтаски 4.1.1–4.1.5 (ingest core)                           | done   | Реализованы DI, ingest endpoint, валидация multipart, сохранение payload, постановка Job и тесты. |
 | 2025-10-24 | ASK-0012  | user     | Проверить соответствие изменений ingest спецификациям и брифу           | done   | Обновлён DI (AppConfig), прогнаны ruff/mypy/pytest -m "unit or contract", отклонений нет. |
 | 2025-10-25 | ASK-0013  | user     | Закрыть сабтаски 4.1.6–4.1.10 (синхронный ingest, 429/504, документация) | done   | Реализован polling/cleanup, добавлены тесты и ingest_runbook, ruff/mypy/pytest unit/contract зелёные. |
-| 2025-10-16 | ASK-0014 | user     | Реализовать очередь на PostgreSQL (фаза 4.2) | in-progress | SQLite-бэкенд очереди, unit-тесты, pytest требует fastapi. |
+| 2025-10-16 | ASK-0014 | user     | Реализовать очередь на PostgreSQL (фаза 4.2) | done | Конфигурированы миграции `jobs`/`processing_logs`, добавлен лимит 12 активных задач (`QUEUE_MAX_IN_FLIGHT_JOBS`) и задокументирован back-pressure. |

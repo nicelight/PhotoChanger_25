@@ -60,7 +60,12 @@ def _configure_dependencies(
     settings = bootstrap_settings(config, password_hash=password_hash)
     slots = bootstrap_slots(config)
 
-    queue = PostgresJobQueue(config=PostgresQueueConfig(dsn=config.database_url))
+    queue_config = PostgresQueueConfig(
+        dsn=config.database_url,
+        statement_timeout_ms=config.queue_statement_timeout_ms,
+        max_in_flight_jobs=config.queue_max_in_flight_jobs,
+    )
+    queue = PostgresJobQueue(config=queue_config)
     settings_service = DefaultSettingsService(
         settings=settings, password_hash=password_hash
     )
