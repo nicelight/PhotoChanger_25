@@ -1,6 +1,6 @@
 ---
 id: asks
-updated: 2025-10-28
+updated: 2025-10-29
 ---
 
 # Asks (запросы пользователей)
@@ -22,3 +22,4 @@ updated: 2025-10-28
 | 2025-10-24 | ASK-0012  | user     | Проверить соответствие изменений ingest спецификациям и брифу           | done   | Обновлён DI (AppConfig), прогнаны ruff/mypy/pytest -m "unit or contract", отклонений нет. |
 | 2025-10-25 | ASK-0013  | user     | Закрыть сабтаски 4.1.6–4.1.10 (синхронный ingest, 429/504, документация) | done   | Реализован polling/cleanup, добавлены тесты и ingest_runbook, ruff/mypy/pytest unit/contract зелёные. |
 | 2025-10-16 | ASK-0014 | user     | Реализовать очередь на PostgreSQL (фаза 4.2) | done | Конфигурированы миграции `jobs`/`processing_logs`, добавлен лимит 12 активных задач (`QUEUE_MAX_IN_FLIGHT_JOBS`) и задокументирован back-pressure. |
+| 2025-10-29 | ASK-0015 | user     | Уточнить архитектуру воркеров (количество, event loop, ретраи) и обновить спецификации/таски | done | Зафиксирован пул из четырёх asyncio-воркеров внутри FastAPI, ретраи 5× (таймаут 5 с, пауза 3 с), обновлены SDD и .memory/TASKS. |

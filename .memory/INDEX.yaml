@@ -11,9 +11,9 @@ memory:
   mission: { version: 1, updated: "2025-10-08" }
   context: { version: 1, updated: "2025-10-08" }
   decisions: { index: ".memory/DECISIONS.md", updated: "2025-10-16" }
-  tasks: { updated: "2025-10-28" }
-  progress: { updated: "2025-10-28" }
-  asks: { updated: "2025-10-28" }
+  tasks: { updated: "2025-10-29" }
+  progress: { updated: "2025-10-29" }
+  asks: { updated: "2025-10-29" }
   glossary: { updated: "2025-10-08" }
   usecases: { updated: "2025-10-08", count: 2 }
 reporting:

@@ -1,6 +1,6 @@
 ---
 id: progress
-updated: 2025-10-28
+updated: 2025-10-29
 ---
 
 # Progress (changelog — одна строка на событие)
@@ -27,3 +27,4 @@ updated: 2025-10-28
 - 2025-10-16: Стартована реализация сабтасков 4.2.x — добавлен SQLite-бэкенд PostgresJobQueue, unit-тесты (pytest -m unit требует fastapi).
 - 2025-10-28: Сабтаски 4.2.1 и 4.2.8 закрыты — добавлены Alembic-миграции очереди (`jobs`/`processing_logs`), прокинут `queue_statement_timeout_ms` в AppConfig и обновлена документация по миграциям.
 - 2025-10-28: Сабтаски 4.2.10–4.2.11 закрыты — подтверждён приоритет таблицы `processing_logs`, добавлен конфиг `queue_max_in_flight_jobs=12` и обновлены runbook/ingest инструкции по back-pressure.
+- 2025-10-29: Согласован план по воркерам — фиксирован пул из четырёх фоновых задач в FastAPI, ретраи 5× (таймаут 5 с, пауза 3 с), graceful shutdown с закрытием HTTP-клиентов; обновлены спецификации и ops runbook.

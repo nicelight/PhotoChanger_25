@@ -3,7 +3,7 @@
 ## Системная граница
 Платформа PhotoChanger развёрнута как HTTP-сервер, принимающий ingest-запросы и управляющий AI-обработкой фотографий согласно утверждённым продуктовым требованиям. Система включает:
 - Ingest API c валидацией входящих POST от DSLR Remote Pro.
-- Очередь задач на PostgreSQL и воркеры.
+- Очередь задач на PostgreSQL и пул из четырёх асинхронных воркеров, запускаемых как фоновые задачи внутри FastAPI.
 - Адаптеры провайдеров (Gemini, Turbotext и др.).
 - Временное и постоянное медиа-хранилище.
 - Публичная выдача итоговых файлов с TTL 72 часа (`T_result_retention`).
@@ -35,10 +35,10 @@ flowchart LR
     UI -->|Конфигурация слотов| API
     UI -->|GET /public/results/{job_id}| API
     API --> Queue
-    Queue --> Worker
-    Worker --> Providers
-    Providers --> Worker
-    Worker --> Storage
+    Queue --> WorkerPool[AI Worker Pool (4 asyncio tasks)]
+    WorkerPool --> Providers
+    Providers --> WorkerPool
+    WorkerPool --> Storage
     Storage -->|GET /public/media/{id}| ExternalClient[Провайдеры, скачивающие public_url]
     API -->|Публичная ссылка на результат| Gallery[UI/Пользователи, скачивающие итог]
     API -->|Результат / 504| DSLR
