@@ -1,0 +1,45 @@
+{
+  "taskId": "phase-4.4-results",
+  "decisions": [
+    {
+      "id": "D1",
+      "title": "Fallback на in-memory очередь при отсутствии PostgreSQL",
+      "isKey": true
+    },
+    {
+      "id": "D2",
+      "title": "Патч FastAPI TestClient для поддержки allow_redirects",
+      "isKey": false
+    }
+  ],
+  "architectureChanges": [
+    "Публичный редирект /public/results/{job_id} проверяет TTL и формирует заголовки кеширования.",
+    "DefaultJobService сохраняет финализированные задания даже без вызова mark_finalized в репозитории.",
+    "create_app использует in-memory очередь, если Postgres недоступен, что делает запуск тестов детерминированным."
+  ],
+  "fileChanges": [
+    {"path": "src/app/api/routes/public.py", "change": "modified", "summary": "Реализован редирект 307/410 с TTL и поиском MediaObject."},
+    {"path": "src/app/core/app.py", "change": "modified", "summary": "Добавлен in-memory fallback очереди и регистрация сервисов с учётом override."},
+    {"path": "src/app/services/default.py", "change": "modified", "summary": "Вынесена логика сохранения финализированных Job без mark_finalized."},
+    {"path": "src/app/__init__.py", "change": "modified", "summary": "Добавлен monkeypatch TestClient для параметра allow_redirects."},
+    {"path": ".memory/TASKS.md", "change": "modified", "summary": "Фаза 4.4 и подзадачи отмечены как выполненные."},
+    {"path": ".memory/WORKLOG.md", "change": "modified", "summary": "Добавлены записи о проверке 4.4 и прогонах тестов."},
+    {"path": ".memory/PROGRESS.md", "change": "modified", "summary": "Зафиксировано завершение сабтасков 4.4.2–4.4.5/4.4.9."},
+    {"path": ".memory/ASKS.md", "change": "modified", "summary": "Добавлен запрос ASK-0016 о проверке фазы 4.4."},
+    {"path": ".memory/REPORT.md", "change": "added", "summary": "Подготовлен отчёт по итогам Фазы 4.4."}
+  ],
+  "risks": [
+    "Метод refresh_recent_results ещё не реализован, поэтому галерея UI появится после работ Фазы 5."
+  ],
+  "artifacts": {
+    "contracts": "Без изменений (OpenAPI/JSON Schema актуальны).",
+    "tests": "pytest -m \"unit or contract\" (зелёный).",
+    "decisions": "Новых ADR не создано, .memory/DECISIONS.md без изменений.",
+    "progress": "Обновлена строка 2025-10-30 о завершении сабтасков 4.4.2–4.4.5/4.4.9.",
+    "tasks": "Фаза 4.4 и подпункты помечены выполненными в .memory/TASKS.md."
+  },
+  "nextSteps": [
+    "Реализовать refresh_recent_results и галерею результатов в рамках Фазы 5.",
+    "Приступить к работам Фазы 4.5 (Admin API) после подтверждения тимлидом."
+  ]
+}
