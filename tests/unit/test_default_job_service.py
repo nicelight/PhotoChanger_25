@@ -11,6 +11,7 @@ from src.app.domain import calculate_result_expires_at
 from src.app.domain.models import Job, JobFailureReason, JobStatus, MediaObject
 from src.app.infrastructure.queue.postgres import PostgresJobQueue
 from src.app.services.default import DefaultJobService
+from src.app.services.job_service import QueueUnavailableError
 
 
 @pytest.fixture
@@ -148,17 +149,27 @@ class _QueueStub:
         return job
 
 
+class _FailingQueueStub(_QueueStub):
+    def mark_finalized(self, job: Job) -> Job:  # type: ignore[override]
+        raise QueueUnavailableError("temporary failure")
+
+
 def test_purge_expired_results_clears_metadata() -> None:
     queue = _QueueStub()
     service = DefaultJobService(queue=queue)  # type: ignore[arg-type]
     now = datetime.now(timezone.utc)
     job = _build_job()
     job.is_finalized = True
-    job.result_file_path = "results/final.png"
-    job.result_mime_type = "image/png"
-    job.result_size_bytes = 128
-    job.result_checksum = "sha256:deadbeef"
-    job.result_expires_at = now - timedelta(seconds=1)
+    original_file_path = "results/final.png"
+    original_mime = "image/png"
+    original_size = 128
+    original_checksum = "sha256:deadbeef"
+    original_expires_at = now - timedelta(seconds=1)
+    job.result_file_path = original_file_path
+    job.result_mime_type = original_mime
+    job.result_size_bytes = original_size
+    job.result_checksum = original_checksum
+    job.result_expires_at = original_expires_at
     service.jobs[job.id] = job
 
     expired = service.purge_expired_results(now=now)
@@ -188,4 +199,28 @@ def test_purge_expired_results_ignores_future_deadline() -> None:
     assert expired == []
     assert job.result_file_path == "results/final.png"
     assert job.result_expires_at == future
+    assert queue.finalized == []
+
+
+def test_purge_expired_results_restores_metadata_on_queue_failure() -> None:
+    queue = _FailingQueueStub()
+    service = DefaultJobService(queue=queue)  # type: ignore[arg-type]
+    now = datetime.now(timezone.utc)
+    job = _build_job()
+    job.is_finalized = True
+    job.result_file_path = "results/final.png"
+    job.result_mime_type = "image/png"
+    job.result_size_bytes = 128
+    job.result_checksum = "sha256:deadbeef"
+    job.result_expires_at = now - timedelta(seconds=1)
+    service.jobs[job.id] = job
+
+    expired = service.purge_expired_results(now=now)
+
+    assert expired == [job]
+    assert job.result_file_path == original_file_path
+    assert job.result_mime_type == original_mime
+    assert job.result_size_bytes == original_size
+    assert job.result_checksum == original_checksum
+    assert job.result_expires_at == original_expires_at
     assert queue.finalized == []
