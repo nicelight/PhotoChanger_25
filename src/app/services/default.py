@@ -319,6 +319,13 @@ class DefaultJobService(JobService):
             expires_at = job.result_expires_at
             if expires_at is None or expires_at > now:
                 continue
+            original_result_file_path = job.result_file_path
+            original_result_mime_type = job.result_mime_type
+            original_result_size_bytes = job.result_size_bytes
+            original_result_checksum = job.result_checksum
+            original_result_expires_at = job.result_expires_at
+            original_updated_at = job.updated_at
+
             job.result_file_path = None
             job.result_mime_type = None
             job.result_size_bytes = None
@@ -332,6 +339,12 @@ class DefaultJobService(JobService):
             try:
                 persisted = persist(job)
             except QueueUnavailableError:
+                job.result_file_path = original_result_file_path
+                job.result_mime_type = original_result_mime_type
+                job.result_size_bytes = original_result_size_bytes
+                job.result_checksum = original_result_checksum
+                job.result_expires_at = original_result_expires_at
+                job.updated_at = original_updated_at
                 self.jobs[job.id] = job
                 expired.append(job)
             else:
