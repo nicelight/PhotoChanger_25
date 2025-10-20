@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import functools
 import inspect
 import json
 import logging
+from concurrent.futures import Future
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -124,7 +126,45 @@ class QueueWorker:
         if shutdown_event is not None and shutdown_event.is_set():
             return False
 
-        job = await self._run_sync(self.job_service.acquire_next_job, now=now)
+        loop = asyncio.get_running_loop()
+        acquire_future = loop.run_in_executor(
+            None, functools.partial(self.job_service.acquire_next_job, now=now)
+        )
+        try:
+            job = await acquire_future
+        except asyncio.CancelledError:
+            def _finalize_pending_job(fut: Future[Job | None]) -> None:
+                try:
+                    acquired_job = fut.result()
+                except Exception:
+                    return
+                if acquired_job is None:
+                    return
+
+                if loop.is_closed():
+                    return
+
+                def _schedule_cancellation_cleanup() -> None:
+                    task = asyncio.create_task(
+                        self._handle_cancelled_job(acquired_job, now=self._clock())
+                    )
+
+                    def _log_task_failure(done_task: asyncio.Task[Any]) -> None:
+                        try:
+                            exc = done_task.exception()
+                        except asyncio.CancelledError:
+                            return
+                        if exc is not None:
+                            self._logger.error(
+                                "Failed to finalize cancelled job", exc_info=exc
+                            )
+
+                    task.add_done_callback(_log_task_failure)
+
+                loop.call_soon_threadsafe(_schedule_cancellation_cleanup)
+
+            acquire_future.add_done_callback(_finalize_pending_job)
+            raise
         if job is None:
             return False
         if now >= job.expires_at:
