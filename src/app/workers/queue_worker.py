@@ -3,15 +3,24 @@
 from __future__ import annotations
 
 import asyncio
+import base64
+import binascii
 import contextlib
+import hashlib
 import inspect
 import json
 import logging
+import mimetypes
+import os
+import urllib.error
+import urllib.request
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
+from pathlib import Path
 from typing import Any, TypeVar
+from urllib.parse import urlparse
 from uuid import uuid4
 
 from ..domain import deadlines
@@ -223,7 +232,15 @@ class QueueWorker:
     def handle_timeout(self, job: Job, *, now: datetime) -> None:
         """Synchronously mark a job as timed out for compatibility with tests."""
 
-        asyncio.run(self._handle_timeout_async(job, now=now))
+        slot = self.slot_service.get_slot(job.slot_id)
+        self.job_service.fail_job(
+            job,
+            failure_reason=JobFailureReason.TIMEOUT,
+            occurred_at=now,
+        )
+        log_entry = self._timeout_log_entry(job, slot=slot, now=now)
+        self.job_service.append_processing_logs(job, [log_entry])
+        self._record_processing_logs([log_entry])
 
     async def _handle_timeout_async(self, job: Job, *, now: datetime) -> None:
         """Mark the job as timed out when ``now`` exceeds ``job.expires_at``."""
@@ -235,14 +252,7 @@ class QueueWorker:
             failure_reason=JobFailureReason.TIMEOUT,
             occurred_at=now,
         )
-        log_entry = self._build_processing_log(
-            job,
-            slot,
-            status=ProcessingStatus.TIMEOUT,
-            occurred_at=now,
-            started_at=now,
-            message="Job expired before dispatch",
-        )
+        log_entry = self._timeout_log_entry(job, slot=slot, now=now)
         await self._run_sync(self.job_service.append_processing_logs, job, [log_entry])
         self._record_processing_logs([log_entry])
 
@@ -553,6 +563,171 @@ class QueueWorker:
             except NotImplementedError:  # pragma: no cover - optional override
                 continue
 
+    def _timeout_log_entry(self, job: Job, *, slot: Slot, now: datetime) -> ProcessingLog:
+        return self._build_processing_log(
+            job,
+            slot,
+            status=ProcessingStatus.TIMEOUT,
+            occurred_at=now,
+            started_at=now,
+            message="Job expired before dispatch",
+        )
+
+    @staticmethod
+    def _extract_inline_response_data(
+        response: Mapping[str, Any]
+    ) -> tuple[str | None, str | None]:
+        inline_data = response.get("inline_data")
+        if isinstance(inline_data, Mapping):
+            data = inline_data.get("data")
+            mime = inline_data.get("mime_type")
+            if isinstance(data, str):
+                return data, str(mime) if mime is not None else None
+
+        candidates = response.get("candidates")
+        if isinstance(candidates, list):
+            for candidate in candidates:
+                if not isinstance(candidate, Mapping):
+                    continue
+                content = candidate.get("content")
+                if not isinstance(content, Mapping):
+                    continue
+                parts = content.get("parts")
+                if not isinstance(parts, list):
+                    continue
+                for part in parts:
+                    if not isinstance(part, Mapping):
+                        continue
+                    if "data" not in part:
+                        continue
+                    data = part.get("data")
+                    mime = part.get("mime_type")
+                    if isinstance(data, str):
+                        return data, str(mime) if mime is not None else None
+        return None, None
+
+    async def _persist_result_bytes(
+        self,
+        job: Job,
+        *,
+        data: bytes,
+        mime: str,
+        finalized_at: datetime,
+        settings: Settings,
+        suggested_name: str | None = None,
+    ) -> MediaObject:
+        media_root = self._resolve_media_root().resolve()
+        results_dir = media_root / "results"
+        await self._run_sync(self._ensure_directory, results_dir)
+
+        extension = self._guess_extension_from_mime(mime)
+        filename = self._build_result_filename(
+            job,
+            extension=extension,
+            suggested_name=suggested_name,
+        )
+        target_path = results_dir / filename
+        await self._run_sync(self._write_bytes, target_path, data)
+
+        size_bytes = len(data)
+        checksum = hashlib.sha256(data).hexdigest()
+        relative_path = self._relative_media_path(target_path, media_root)
+        result_expires_at = deadlines.calculate_result_expires_at(
+            finalized_at,
+            result_retention_hours=settings.media_cache.processed_media_ttl_hours,
+        )
+
+        media = await self._run_sync(
+            self.media_service.register_media,
+            path=relative_path,
+            mime=mime,
+            size_bytes=size_bytes,
+            expires_at=result_expires_at,
+            job_id=job.id,
+        )
+
+        job.result_file_path = media.path
+        job.result_mime_type = mime
+        job.result_size_bytes = size_bytes
+        job.result_checksum = checksum
+        job.result_expires_at = result_expires_at
+        job.result_inline_base64 = None
+        return media
+
+    async def _fetch_uploaded_image(
+        self, url: str
+    ) -> tuple[bytes, str | None, str | None]:
+        def _download() -> tuple[bytes, str | None, str | None]:
+            with urllib.request.urlopen(url, timeout=self._request_timeout_seconds) as response:
+                payload = response.read()
+                mime: str | None = None
+                headers = getattr(response, "headers", None)
+                if headers is not None:
+                    get_content_type = getattr(headers, "get_content_type", None)
+                    if callable(get_content_type):
+                        mime = get_content_type()
+                    else:
+                        mime = headers.get("Content-Type")
+                        if mime is not None:
+                            mime = str(mime)
+                resolved_url = getattr(response, "geturl", None)
+                final_url = resolved_url() if callable(resolved_url) else url
+                filename = Path(urlparse(final_url).path).name or None
+                return payload, mime, filename
+
+        try:
+            return await self._run_sync(_download)
+        except urllib.error.URLError as exc:  # pragma: no cover - network failure
+            raise RuntimeError(f"Failed to download uploaded image: {url}") from exc
+
+    @staticmethod
+    def _relative_media_path(target: Path, media_root: Path) -> str:
+        return target.relative_to(media_root).as_posix()
+
+    @staticmethod
+    def _write_bytes(target: Path, data: bytes) -> None:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with target.open("wb") as handle:
+            handle.write(data)
+
+    @staticmethod
+    def _ensure_directory(path: Path) -> None:
+        path.mkdir(parents=True, exist_ok=True)
+
+    @staticmethod
+    def _guess_extension_from_mime(mime: str | None) -> str | None:
+        if not mime:
+            return None
+        return mimetypes.guess_extension(mime)
+
+    @staticmethod
+    def _build_result_filename(
+        job: Job, *, extension: str | None, suggested_name: str | None = None
+    ) -> str:
+        candidate_ext = Path(suggested_name).suffix if suggested_name else ""
+        final_ext = candidate_ext or (extension or "")
+        if not final_ext:
+            final_ext = ".bin"
+        if not final_ext.startswith("."):
+            final_ext = f".{final_ext}"
+        return f"{job.id.hex}{final_ext}"
+
+    @staticmethod
+    def _guess_mime_from_filename(filename: str | None) -> str | None:
+        if not filename:
+            return None
+        mime, _ = mimetypes.guess_type(filename)
+        return mime
+
+    def _resolve_media_root(self) -> Path:
+        media_root = getattr(self.media_service, "media_root", None)
+        if media_root is not None:
+            return Path(media_root)
+        env_root = os.getenv("PHOTOCHANGER_MEDIA_ROOT")
+        if env_root:
+            return Path(env_root)
+        return Path("./var/media")
+
     def _load_job_context(self, job: Job) -> Mapping[str, Any]:
         if job.payload_path is None:
             return {}
@@ -586,49 +761,57 @@ class QueueWorker:
         inline_preview: str | None = None
         media_object: MediaObject | None = None
 
-        inline_data = response.get("inline_data")
-        if isinstance(inline_data, Mapping):
-            inline_preview = inline_data.get("data")  # type: ignore[assignment]
-            mime = inline_data.get("mime_type")
-            if mime is not None:
-                job.result_mime_type = str(mime)
+        inline_data, inline_mime = self._extract_inline_response_data(response)
+        if inline_data:
+            inline_preview = inline_data
+            try:
+                decoded = base64.b64decode(inline_data, validate=True)
+            except (binascii.Error, ValueError) as exc:
+                self._logger.error(
+                    "Failed to decode inline result for job %s: %s", job.id, exc
+                )
+            else:
+                mime = str(inline_mime or job.result_mime_type or "image/png")
+                media_object = await self._persist_result_bytes(
+                    job,
+                    data=decoded,
+                    mime=mime,
+                    finalized_at=finalized_at,
+                    settings=settings,
+                )
+                inline_preview = None
 
-        if inline_preview is None:
-            candidate = response.get("candidates")
-            if isinstance(candidate, list) and candidate:
-                first = candidate[0]
-                if isinstance(first, Mapping):
-                    content = first.get("content")
-                    if isinstance(content, Mapping):
-                        parts = content.get("parts")
-                        if isinstance(parts, list) and parts:
-                            part = parts[0]
-                            if isinstance(part, Mapping) and "data" in part:
-                                inline_preview = part.get("data")  # type: ignore[assignment]
-                                mime = part.get("mime_type")
-                                if mime is not None:
-                                    job.result_mime_type = str(mime)
-
-        if provider_id == "turbotext":
+        if media_object is None and provider_id == "turbotext":
             data = response.get("data")
+            uploaded_image: str | None = None
+            declared_mime: str | None = None
             if isinstance(data, Mapping):
-                uploaded_image = data.get("uploaded_image")
-                if uploaded_image:
-                    expires_at = deadlines.calculate_artifact_expiry(
-                        artifact_created_at=finalized_at,
-                        job_expires_at=job.expires_at,
-                        ttl_seconds=settings.media_cache.public_link_ttl_sec,
-                    )
-                    media_object = await self._run_sync(
-                        self.media_service.register_media,
-                        path=str(uploaded_image),
-                        mime=str(
-                            data.get("mime", job.result_mime_type or "image/png")
-                        ),
-                        size_bytes=int(data.get("size_bytes", 0)),
-                        expires_at=expires_at,
-                        job_id=job.id,
-                    )
+                raw_uploaded = data.get("uploaded_image")
+                if raw_uploaded:
+                    uploaded_image = str(raw_uploaded)
+                raw_mime = data.get("mime")
+                if raw_mime is not None:
+                    declared_mime = str(raw_mime)
+            if uploaded_image:
+                file_bytes, detected_mime, filename = await self._fetch_uploaded_image(
+                    uploaded_image
+                )
+                mime = str(
+                    declared_mime
+                    or detected_mime
+                    or job.result_mime_type
+                    or self._guess_mime_from_filename(filename)
+                    or "application/octet-stream"
+                )
+                media_object = await self._persist_result_bytes(
+                    job,
+                    data=file_bytes,
+                    mime=mime,
+                    finalized_at=finalized_at,
+                    settings=settings,
+                    suggested_name=filename,
+                )
+                inline_preview = None
 
         return inline_preview, media_object
 
