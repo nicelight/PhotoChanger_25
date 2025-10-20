@@ -68,13 +68,15 @@ class JobService:
         finalized_at: datetime,
         result_media: MediaObject | None,
         inline_preview: str | None,
+        result_checksum: str | None,
     ) -> Job:
         """Finalize a job and persist 72h retention metadata.
 
         ``result_media`` should represent the stored result artifact whose
         ``expires_at`` equals ``finalized_at + T_result_retention`` (72h). The
         method is also responsible for clearing inline previews once the HTTP
-        response is delivered.
+        response is delivered and persisting ``result_checksum`` for
+        verification endpoints.
         """
 
         raise NotImplementedError

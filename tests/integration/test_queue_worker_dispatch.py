@@ -196,16 +196,23 @@ class StubJobService(JobService):
         finalized_at: datetime,
         result_media: MediaObject | None,
         inline_preview: str | None,
+        result_checksum: str | None,
     ) -> Job:  # type: ignore[override]
         job.finalized_at = finalized_at
         job.updated_at = finalized_at
         job.is_finalized = True
         job.failure_reason = None
-        job.result_inline_base64 = inline_preview
+        job.result_inline_base64 = None
         if result_media is not None:
             job.result_file_path = result_media.path
             job.result_mime_type = result_media.mime
             job.result_size_bytes = result_media.size_bytes
+            job.result_checksum = result_checksum
+        else:
+            job.result_file_path = None
+            job.result_mime_type = None
+            job.result_size_bytes = None
+            job.result_checksum = None
         job.result_expires_at = deadlines.calculate_result_expires_at(
             finalized_at,
             result_retention_hours=self.result_retention_hours,
