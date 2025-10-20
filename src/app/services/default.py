@@ -310,6 +310,35 @@ class DefaultJobService(JobService):
     def append_processing_logs(self, job: Job, logs: Iterable[ProcessingLog]) -> None:  # type: ignore[override]
         self.queue.append_processing_logs(logs)
 
+    def purge_expired_results(self, *, now: datetime) -> list[Job]:  # type: ignore[override]
+        expired: list[Job] = []
+        persist = getattr(self.queue, "mark_finalized", None)
+        if persist is not None and not callable(persist):
+            persist = None
+        for job in list(self.jobs.values()):
+            expires_at = job.result_expires_at
+            if expires_at is None or expires_at > now:
+                continue
+            job.result_file_path = None
+            job.result_mime_type = None
+            job.result_size_bytes = None
+            job.result_checksum = None
+            job.result_expires_at = None
+            job.updated_at = now
+            if persist is None:
+                self.jobs[job.id] = job
+                expired.append(job)
+                continue
+            try:
+                persisted = persist(job)
+            except QueueUnavailableError:
+                self.jobs[job.id] = job
+                expired.append(job)
+            else:
+                self.jobs[persisted.id] = persisted
+                expired.append(persisted)
+        return expired
+
     def refresh_recent_results(self, slot: Slot, *, limit: int = 10) -> Slot:  # type: ignore[override]
         raise NotImplementedError
 

@@ -102,6 +102,11 @@ class JobService:
 
         raise NotImplementedError
 
+    def purge_expired_results(self, *, now: datetime) -> list[Job]:
+        """Remove expired result artefacts and return affected jobs."""
+
+        raise NotImplementedError
+
     def refresh_recent_results(self, slot: Slot, *, limit: int = 10) -> Slot:
         """Update ``slot.recent_results`` with recent finalized jobs.
 

@@ -9,6 +9,7 @@ to implementation phases as described in the blueprints.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 from pathlib import Path
@@ -19,6 +20,7 @@ from fastapi import FastAPI
 from ..api import ApiFacade
 from ..core.config import AppConfig
 from ..infrastructure.queue.postgres import PostgresJobQueue, PostgresQueueConfig
+from ..lifecycle import run_periodic_media_cleanup
 from ..services.default import (
     DefaultJobService,
     DefaultMediaService,
@@ -101,8 +103,9 @@ def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
 
     job_queue_override = extra_state.get("job_queue")
     if job_queue_override is not None:
+        override_job_service = DefaultJobService(queue=job_queue_override)
         registry.register_job_service(
-            lambda *, config=None: DefaultJobService(queue=job_queue_override)
+            lambda *, config=None: override_job_service
         )
         registry.register_job_repository(lambda *, config=None: job_queue_override)
 
@@ -118,6 +121,10 @@ def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
     app.state.worker_pool = []
     app.state.worker_tasks = []
     app.state.worker_shutdown_event = None
+    app.state.media_cleanup_task = None
+    app.state.media_cleanup_shutdown_event = None
+    if not hasattr(app.state, "media_cleanup_interval_seconds"):
+        app.state.media_cleanup_interval_seconds = 15 * 60
 
     async def _startup_worker_pool() -> None:
         if getattr(app.state, "disable_worker_pool", False):
@@ -180,8 +187,42 @@ def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
         app.state.worker_tasks = []
         app.state.worker_shutdown_event = None
 
+    async def _startup_media_cleanup() -> None:
+        if getattr(app.state, "disable_media_cleanup", False):
+            logger.info("Media cleanup startup skipped: disabled via app state")
+            return
+        job_service = registry.resolve_job_service()(config=app_config)
+        media_service = registry.resolve_media_service()(config=app_config)
+        interval = float(getattr(app.state, "media_cleanup_interval_seconds", 15 * 60))
+        shutdown_event = asyncio.Event()
+        task = asyncio.create_task(
+            run_periodic_media_cleanup(
+                media_service=media_service,
+                job_service=job_service,
+                shutdown_event=shutdown_event,
+                interval_seconds=interval,
+            ),
+            name="photochanger-media-cleanup",
+        )
+        app.state.media_cleanup_task = task
+        app.state.media_cleanup_shutdown_event = shutdown_event
+
+    async def _shutdown_media_cleanup() -> None:
+        shutdown_event = getattr(app.state, "media_cleanup_shutdown_event", None)
+        if shutdown_event is not None:
+            shutdown_event.set()
+        task: asyncio.Task[None] | None = getattr(app.state, "media_cleanup_task", None)
+        if task is not None:
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
+        app.state.media_cleanup_task = None
+        app.state.media_cleanup_shutdown_event = None
+
     facade.mount(app)
     app.add_event_handler("startup", _startup_worker_pool)
+    app.add_event_handler("startup", _startup_media_cleanup)
+    app.add_event_handler("shutdown", _shutdown_media_cleanup)
     app.add_event_handler("shutdown", _shutdown_worker_pool)
     return app
 
