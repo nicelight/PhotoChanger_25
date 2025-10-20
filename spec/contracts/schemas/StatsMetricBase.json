@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StatsMetricBase",
+  "type": "object",
+  "description": "Базовая схема метрики статистики для глобальных и слотовых агрегаций",
+  "required": [
+    "period_start",
+    "period_end",
+    "success",
+    "timeouts",
+    "provider_errors",
+    "cancelled",
+    "errors",
+    "ingest_count"
+  ],
+  "properties": {
+    "period_start": {
+      "description": "Начало агрегируемого интервала",
+      "anyOf": [
+        { "type": "string", "format": "date-time" },
+        { "type": "string", "format": "date" }
+      ]
+    },
+    "period_end": {
+      "description": "Конец агрегируемого интервала",
+      "anyOf": [
+        { "type": "string", "format": "date-time" },
+        { "type": "string", "format": "date" }
+      ]
+    },
+    "success": { "type": "integer", "minimum": 0 },
+    "timeouts": { "type": "integer", "minimum": 0 },
+    "provider_errors": { "type": "integer", "minimum": 0 },
+    "cancelled": { "type": "integer", "minimum": 0 },
+    "errors": { "type": "integer", "minimum": 0 },
+    "ingest_count": { "type": "integer", "minimum": 0 }
+  },
+  "additionalProperties": false
+}

@@ -1,6 +1,6 @@
 {
-  "version": "0.2.0",
-  "released_at": "2025-10-29",
+  "version": "0.3.0",
+  "released_at": "2025-10-31",
   "changes": [
     {
       "scope": "api",
@@ -26,6 +26,11 @@
       "scope": "api",
       "type": "minor",
       "description": "GET /public/results/{job_id} теперь отдаёт 307 redirect с TTL-заголовками вместо прямой передачи бинарного контента"
+    },
+    {
+      "scope": "api",
+      "type": "minor",
+      "description": "Unified SlotStatsMetric и GlobalStatsMetric через общую StatsMetricBase для консистентного набора счётчиков"
     }
   ],
   "semver_policy": {
