@@ -29,8 +29,16 @@ if str(PROJECT_ROOT) not in sys.path:
 
 SCHEMAS_ROOT = PROJECT_ROOT / "spec" / "contracts" / "schemas"
 
-import psycopg  # noqa: E402  (import after sys.path update)
-from psycopg import conninfo, sql  # noqa: E402  (import after sys.path update)
+import pytest  # noqa: E402  (import after sys.path update)
+
+try:  # noqa: E402  (import after sys.path update)
+    import psycopg
+    from psycopg import conninfo, sql
+except ModuleNotFoundError:  # pragma: no cover - optional dependency
+    psycopg = None  # type: ignore[assignment]
+    conninfo = None  # type: ignore[assignment]
+    sql = None  # type: ignore[assignment]
+    pytest.skip("psycopg is required for PostgreSQL queue tests", allow_module_level=True)
 
 try:  # noqa: E402  (import after sys.path update)
     from alembic import command as alembic_command
