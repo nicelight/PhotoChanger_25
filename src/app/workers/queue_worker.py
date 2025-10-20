@@ -8,9 +8,11 @@ import inspect
 import json
 import logging
 from collections.abc import Awaitable, Callable, Mapping
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
+from functools import partial
 from typing import Any, TypeVar
 from uuid import uuid4
 
@@ -89,6 +91,9 @@ class QueueWorker:
         self._request_timeout_seconds = max(0.1, request_timeout_seconds)
         self._logger = logging.getLogger(__name__)
         self._closed = False
+        self._job_executor = ThreadPoolExecutor(
+            max_workers=1, thread_name_prefix="queue-worker-db"
+        )
 
     @staticmethod
     def _wrap_sleep(
@@ -118,11 +123,11 @@ class QueueWorker:
         if shutdown_event is not None and shutdown_event.is_set():
             return False
 
-        job = self.job_service.acquire_next_job(now=now)
+        job = await self._call_blocking(self.job_service.acquire_next_job, now=now)
         if job is None:
             return False
         if now >= job.expires_at:
-            self.handle_timeout(job, now=now)
+            await self._call_blocking(self.handle_timeout, job, now=now)
             return True
 
         try:
@@ -165,8 +170,8 @@ class QueueWorker:
     ) -> None:
         """Execute provider-specific logic while respecting queue deadlines."""
 
-        slot = self.slot_service.get_slot(job.slot_id)
-        settings = self.settings_service.read_settings()
+        slot = await self._call_blocking(self.slot_service.get_slot, job.slot_id)
+        settings = await self._call_blocking(self.settings_service.read_settings)
         context = self._load_job_context(job)
 
         try:
@@ -192,7 +197,8 @@ class QueueWorker:
                 finalized_at=finalized_at,
                 settings=settings,
             )
-            self.job_service.finalize_job(
+            await self._call_blocking(
+                self.job_service.finalize_job,
                 job,
                 finalized_at=finalized_at,
                 result_media=result_media,
@@ -206,7 +212,8 @@ class QueueWorker:
             if dispatch_result.outcome is ProviderDispatchOutcome.TIMEOUT
             else JobFailureReason.PROVIDER_ERROR
         )
-        self.job_service.fail_job(
+        await self._call_blocking(
+            self.job_service.fail_job,
             job,
             failure_reason=failure_reason,
             occurred_at=occurred_at,
@@ -282,7 +289,7 @@ class QueueWorker:
                     details={"error": repr(exc)},
                 )
             )
-            self.job_service.append_processing_logs(job, logs)
+            await self._call_blocking(self.job_service.append_processing_logs, job, logs)
             self._record_processing_logs(logs)
             return ProviderDispatchResult(
                 outcome=ProviderDispatchOutcome.ERROR,
@@ -326,7 +333,7 @@ class QueueWorker:
                     details={"error": repr(exc)},
                 )
             )
-            self.job_service.append_processing_logs(job, logs)
+            await self._call_blocking(self.job_service.append_processing_logs, job, logs)
             self._record_processing_logs(logs)
             return ProviderDispatchResult(
                 outcome=ProviderDispatchOutcome.ERROR,
@@ -336,7 +343,7 @@ class QueueWorker:
                 error=exc,
             )
         except asyncio.CancelledError:
-            self.job_service.append_processing_logs(job, logs)
+            await self._call_blocking(self.job_service.append_processing_logs, job, logs)
             self._record_processing_logs(logs)
             await self._cancel_reference_on_shutdown(slot, reference)
             raise
@@ -372,7 +379,9 @@ class QueueWorker:
                 finished_at = now
                 break
             except asyncio.CancelledError:
-                self.job_service.append_processing_logs(job, logs)
+                await self._call_blocking(
+                    self.job_service.append_processing_logs, job, logs
+                )
                 self._record_processing_logs(logs)
                 await self._cancel_reference_on_shutdown(slot, reference)
                 raise
@@ -458,7 +467,7 @@ class QueueWorker:
                 )
             )
 
-        self.job_service.append_processing_logs(job, logs)
+        await self._call_blocking(self.job_service.append_processing_logs, job, logs)
         self._record_processing_logs(logs)
 
         return ProviderDispatchResult(
@@ -661,6 +670,7 @@ class QueueWorker:
                     close_sync()
         if close_tasks:
             await asyncio.gather(*close_tasks, return_exceptions=True)
+        self._job_executor.shutdown(wait=False)
 
     async def _submit_with_retries(
         self,
@@ -716,7 +726,8 @@ class QueueWorker:
     ) -> None:
         cancelled_at = self._clock()
         await self._cancel_reference_on_shutdown(slot, job.provider_job_reference)
-        self.job_service.fail_job(
+        await self._call_blocking(
+            self.job_service.fail_job,
             job,
             failure_reason=JobFailureReason.CANCELLED,
             occurred_at=cancelled_at,
@@ -730,9 +741,18 @@ class QueueWorker:
             message="Job cancelled due to worker shutdown",
             details={"provider_id": slot.provider_id},
         )
-        self.job_service.append_processing_logs(job, [log_entry])
+        await self._call_blocking(
+            self.job_service.append_processing_logs, job, [log_entry]
+        )
         self._record_processing_logs([log_entry])
 
     async def _handle_cancelled_job(self, job: Job, *, now: datetime) -> None:
-        slot = self.slot_service.get_slot(job.slot_id)
+        slot = await self._call_blocking(self.slot_service.get_slot, job.slot_id)
         await self._mark_job_cancelled(job, slot=slot, started_at=now)
+
+    async def _call_blocking(
+        self, func: Callable[..., T], /, *args: Any, **kwargs: Any
+    ) -> T:
+        loop = asyncio.get_running_loop()
+        bound = partial(func, *args, **kwargs)
+        return await loop.run_in_executor(self._job_executor, bound)
