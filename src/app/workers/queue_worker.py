@@ -131,7 +131,7 @@ class QueueWorker:
             None, functools.partial(self.job_service.acquire_next_job, now=now)
         )
         try:
-            job = await acquire_future
+            job = await asyncio.shield(acquire_future)
         except asyncio.CancelledError:
             def _finalize_pending_job(fut: Future[Job | None]) -> None:
                 try:
