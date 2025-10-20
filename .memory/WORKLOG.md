@@ -226,3 +226,6 @@ updated: 2025-10-29
 - 2025-10-29 15:00 — адаптировал StubMediaService в интеграционных тестах для записи файлов и возврата checksum через новый интерфейс.
 - 2025-10-29 15:10 — попытался запустить pytest tests/integration/test_queue_worker_dispatch.py::test_worker_finalizes_successful_job; прогон прерван skip из-за отсутствия psycopg в окружении.
 - 2025-10-29 15:20 — прогнал ruff format для обновлённых модулей (services/media_service.py, services/default.py, workers/queue_worker.py, integration stub).
+- 2025-10-29 16:20 — реализовал helper `persist_base64_result` для сохранения inline base64 результатов в MEDIA_ROOT/results и подготовил unit-тесты.
+- 2025-10-29 16:45 — обновил QueueWorker._materialize_provider_result для повторного использования helper, проброса checksum и очистки inline_preview.
+- 2025-10-29 17:05 — расширил DefaultJobService.finalize_job (TTL 72h, очистка inline, checksum) и адаптировал unit/contract тесты очереди под новое поведение.

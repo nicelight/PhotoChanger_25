@@ -104,6 +104,7 @@ class InstrumentedWorker(QueueWorker):
             finalized_at=now,
             result_media=media,
             inline_preview=preview,
+            result_checksum="sha256:deadbeef",
         )
         self.job_service.jobs[job.id] = persisted
 
@@ -276,7 +277,8 @@ def test_worker_finalizes_job_within_sync_window(
     assert persisted.finalized_at == processing_time
     assert persisted.result_file_path == f"results/{job.id.hex}.png"
     assert persisted.result_mime_type == "image/png"
-    assert persisted.result_inline_base64 == "cHJldmlldy1iaW5hcnk="
+    assert persisted.result_inline_base64 is None
+    assert persisted.result_checksum == "sha256:deadbeef"
     assert persisted.result_expires_at == processing_time + timedelta(hours=72)
 
 

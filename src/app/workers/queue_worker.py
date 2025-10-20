@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import base64
 import binascii
 import contextlib
 import inspect
@@ -39,6 +38,7 @@ from ..services import (
     SlotService,
     StatsService,
 )
+from ..services.media_helpers import persist_base64_result
 
 
 T = TypeVar("T")
@@ -202,7 +202,7 @@ class QueueWorker:
 
         if dispatch_result.outcome is ProviderDispatchOutcome.SUCCESS:
             finalized_at = dispatch_result.finished_at or self._clock()
-            inline_preview, result_media = await self._materialize_provider_result(
+            inline_preview, result_media, result_checksum = await self._materialize_provider_result(
                 job=job,
                 slot=slot,
                 provider_id=slot.provider_id,
@@ -216,6 +216,7 @@ class QueueWorker:
                 finalized_at=finalized_at,
                 result_media=result_media,
                 inline_preview=inline_preview,
+                result_checksum=result_checksum,
             )
             return
 
@@ -620,7 +621,7 @@ class QueueWorker:
         finalized_at: datetime,
         settings: Settings,
         suggested_name: str | None = None,
-    ) -> MediaObject:
+    ) -> tuple[MediaObject, str]:
         media, checksum = await self._run_sync(
             self.media_service.save_result_media,
             job_id=job.id,
@@ -630,14 +631,7 @@ class QueueWorker:
             retention_hours=settings.media_cache.processed_media_ttl_hours,
             suggested_name=suggested_name,
         )
-
-        job.result_file_path = media.path
-        job.result_mime_type = media.mime or mime
-        job.result_size_bytes = media.size_bytes
-        job.result_checksum = checksum
-        job.result_expires_at = media.expires_at
-        job.result_inline_base64 = None
-        return media
+        return media, checksum
 
     async def _fetch_uploaded_image(
         self, url: str
@@ -703,29 +697,31 @@ class QueueWorker:
         response: Mapping[str, Any],
         finalized_at: datetime,
         settings: Settings,
-    ) -> tuple[str | None, MediaObject | None]:
+    ) -> tuple[str | None, MediaObject | None, str | None]:
         inline_preview: str | None = None
         media_object: MediaObject | None = None
+        checksum: str | None = None
 
         inline_data, inline_mime = self._extract_inline_response_data(response)
         if inline_data:
-            inline_preview = inline_data
             try:
-                decoded = base64.b64decode(inline_data, validate=True)
+                media_object, checksum = await self._run_sync(
+                    persist_base64_result,
+                    self.media_service,
+                    job_id=job.id,
+                    base64_data=inline_data,
+                    finalized_at=finalized_at,
+                    retention_hours=settings.media_cache.processed_media_ttl_hours,
+                    mime=str(inline_mime or job.result_mime_type or "image/png"),
+                )
             except (binascii.Error, ValueError) as exc:
                 self._logger.error(
                     "Failed to decode inline result for job %s: %s", job.id, exc
                 )
             else:
-                mime = str(inline_mime or job.result_mime_type or "image/png")
-                media_object = await self._persist_result_bytes(
-                    job,
-                    data=decoded,
-                    mime=mime,
-                    finalized_at=finalized_at,
-                    settings=settings,
-                )
                 inline_preview = None
+            if media_object is None:
+                inline_preview = inline_data
 
         if media_object is None and provider_id == "turbotext":
             data = response.get("data")
@@ -749,7 +745,7 @@ class QueueWorker:
                     or self._guess_mime_from_filename(filename)
                     or "application/octet-stream"
                 )
-                media_object = await self._persist_result_bytes(
+                media_object, checksum = await self._persist_result_bytes(
                     job,
                     data=file_bytes,
                     mime=mime,
@@ -759,7 +755,7 @@ class QueueWorker:
                 )
                 inline_preview = None
 
-        return inline_preview, media_object
+        return inline_preview, media_object, checksum
 
     def _classify_provider_response(
         self, provider_id: str, response: Mapping[str, Any]
