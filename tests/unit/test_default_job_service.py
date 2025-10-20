@@ -208,11 +208,16 @@ def test_purge_expired_results_restores_metadata_on_queue_failure() -> None:
     now = datetime.now(timezone.utc)
     job = _build_job()
     job.is_finalized = True
-    job.result_file_path = "results/final.png"
-    job.result_mime_type = "image/png"
-    job.result_size_bytes = 128
-    job.result_checksum = "sha256:deadbeef"
-    job.result_expires_at = now - timedelta(seconds=1)
+    original_file_path = "results/final.png"
+    original_mime = "image/png"
+    original_size = 128
+    original_checksum = "sha256:deadbeef"
+    original_expires_at = now - timedelta(seconds=1)
+    job.result_file_path = original_file_path
+    job.result_mime_type = original_mime
+    job.result_size_bytes = original_size
+    job.result_checksum = original_checksum
+    job.result_expires_at = original_expires_at
     service.jobs[job.id] = job
 
     expired = service.purge_expired_results(now=now)
