@@ -31,6 +31,9 @@ SCHEMAS_ROOT = PROJECT_ROOT / "spec" / "contracts" / "schemas"
 
 import pytest  # noqa: E402  (import after sys.path update)
 
+PSYCOPG_SKIP_REASON = "psycopg is required for PostgreSQL queue tests"
+
+
 try:  # noqa: E402  (import after sys.path update)
     import psycopg
     from psycopg import conninfo, sql
@@ -38,7 +41,11 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency
     psycopg = None  # type: ignore[assignment]
     conninfo = None  # type: ignore[assignment]
     sql = None  # type: ignore[assignment]
-    pytest.skip("psycopg is required for PostgreSQL queue tests", allow_module_level=True)
+
+
+def _require_psycopg() -> None:
+    if psycopg is None or conninfo is None or sql is None:
+        pytest.skip(PSYCOPG_SKIP_REASON)
 
 try:  # noqa: E402  (import after sys.path update)
     from alembic import command as alembic_command
@@ -379,6 +386,7 @@ def _truncate_postgres_tables(dsn: str) -> None:
 
 @pytest.fixture(scope="session")
 def postgres_dsn() -> Iterator[str]:
+    _require_psycopg()
     dsn = _resolve_postgres_dsn()
     try:
         _ensure_database_exists(dsn)
@@ -389,6 +397,7 @@ def postgres_dsn() -> Iterator[str]:
 
 @pytest.fixture
 def postgres_queue_factory(postgres_dsn: str) -> Iterator[Callable[..., PostgresJobQueue]]:
+    _require_psycopg()
     created: list[PostgresJobQueue] = []
 
     def _factory(**overrides: object) -> PostgresJobQueue:
@@ -413,6 +422,7 @@ def postgres_queue_factory(postgres_dsn: str) -> Iterator[Callable[..., Postgres
 
 @pytest.fixture
 def postgres_queue(postgres_queue_factory: Callable[..., PostgresJobQueue]) -> Iterator[PostgresJobQueue]:
+    _require_psycopg()
     queue = postgres_queue_factory()
     yield queue
 
