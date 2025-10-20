@@ -250,3 +250,7 @@ updated: 2025-10-30
 - 2025-10-30 18:45 — подготовил отдельные fixtures для актуальных/просроченных публичных результатов, переработал контрактные и интеграционные сценарии публичных ссылок с проверкой перехода 307→410 и зачистки файлов очистителем.
 - 2025-10-30 19:10 — прогнал `pytest tests/api/public/test_results.py`; запуск остановился на подключении к локальному PostgreSQL (OperationalError, БД не поднята в окружении).【7189ce†L1-L88】
 - 2025-10-30 19:18 — прогнал `pytest tests/services/test_media_cleanup.py`; после установки pytest-asyncio тесты зелёные (подтверждена работа очистителя, отсутствуют остаточные файлы).【8a0a94†L1-L9】
+- 2025-10-30 20:05 — проверил финализацию JobService (очистка inline preview, TTL 72h, checksum) и корректность редиректов `/public/results/{job_id}`.
+- 2025-10-30 20:20 — доработал create_app (fallback на in-memory очередь для тестов) и пропатчил FastAPI TestClient для параметра `allow_redirects`.
+- 2025-10-30 20:35 — установил недостающие зависимости (psycopg, fastapi, httpx, pydantic-settings, pytest-asyncio) и прогнал `pytest -m "unit or contract"` (зелёный).【0c0bb7†L1-L22】
+- 2025-10-30 20:45 — синхронизировал .memory/TASKS.md, PROGRESS.md, ASKS.md, WORKLOG и подготовил отчёт по фазе 4.4 перед checkpoint.

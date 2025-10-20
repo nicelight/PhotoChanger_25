@@ -208,6 +208,15 @@ class DefaultJobService(JobService):
     jobs: Dict[UUID, Job] = field(default_factory=dict)
     result_retention_hours: int = 72
 
+    def _persist_finalized_job(self, job: Job) -> Job:
+        mark_finalized = getattr(self.queue, "mark_finalized", None)
+        if callable(mark_finalized):
+            persisted = mark_finalized(job)
+            self.jobs[persisted.id] = persisted
+            return persisted
+        self.jobs[job.id] = job
+        return job
+
     def create_job(  # type: ignore[override]
         self,
         slot: Slot,
@@ -288,9 +297,7 @@ class DefaultJobService(JobService):
             job.result_size_bytes = None
             job.result_checksum = None
             job.result_expires_at = retention_expires_at
-        persisted = self.queue.mark_finalized(job)
-        self.jobs[persisted.id] = persisted
-        return persisted
+        return self._persist_finalized_job(job)
 
     def fail_job(
         self,
@@ -309,9 +316,7 @@ class DefaultJobService(JobService):
         job.result_size_bytes = None
         job.result_checksum = None
         job.result_expires_at = None
-        persisted = self.queue.mark_finalized(job)
-        self.jobs[persisted.id] = persisted
-        return persisted
+        return self._persist_finalized_job(job)
 
     def append_processing_logs(self, job: Job, logs: Iterable[ProcessingLog]) -> None:  # type: ignore[override]
         self.queue.append_processing_logs(logs)

@@ -8,7 +8,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Path, status
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse, Response
 
 from ...services import JobService, MediaService
 from .ingest import get_job_service, get_media_service
@@ -77,10 +77,10 @@ async def get_public_media(
     status_code=status.HTTP_307_TEMPORARY_REDIRECT,
 )
 async def download_public_result(
-    job_id: UUID = Path(..., description="Идентификатор Job с успешным результатом."),
     job_service: Annotated[JobService, Depends(get_job_service)],
     media_service: Annotated[MediaService, Depends(get_media_service)],
-) -> RedirectResponse | JSONResponse:
+    job_id: UUID = Path(..., description="Идентификатор Job с успешным результатом."),
+) -> Response:
     """Issue a temporary redirect to the finalized job artefact.
 
     The redirect is only valid until ``job.result_expires_at``. Once the TTL

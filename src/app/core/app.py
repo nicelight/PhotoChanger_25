@@ -12,13 +12,16 @@ import asyncio
 import contextlib
 import json
 import logging
+from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
+from uuid import UUID
 
 from fastapi import FastAPI
 
 from ..api import ApiFacade
 from ..core.config import AppConfig
+from ..domain.models import Job, ProcessingLog
 from ..infrastructure.queue.postgres import PostgresJobQueue, PostgresQueueConfig
 from ..lifecycle import run_periodic_media_cleanup
 from ..services.default import (
@@ -37,6 +40,36 @@ from ..workers import QueueWorker
 logger = logging.getLogger(__name__)
 
 
+class _InMemoryJobQueue:
+    """Minimal queue used when PostgreSQL is unavailable during scaffolding."""
+
+    def __init__(self) -> None:
+        self.jobs: dict[UUID, Job] = {}
+        self.logs: list[ProcessingLog] = []
+
+    def enqueue(self, job: Job) -> Job:
+        self.jobs[job.id] = job
+        return job
+
+    def acquire_for_processing(self, *, now: datetime) -> Job | None:
+        _ = now
+        return None
+
+    def mark_finalized(self, job: Job) -> Job:
+        self.jobs[job.id] = job
+        return job
+
+    def release_expired(self, *, now: datetime) -> list[Job]:
+        _ = now
+        return []
+
+    def append_processing_logs(self, logs: Iterable[ProcessingLog]) -> None:
+        self.logs.extend(logs)
+
+    def list_processing_logs(self, job_id: UUID) -> list[ProcessingLog]:
+        return [log for log in self.logs if log.job_id == job_id]
+
+
 def _read_contract_version() -> str:
     """Return the OpenAPI version declared in ``spec/contracts``."""
 
@@ -53,7 +86,10 @@ def _read_contract_version() -> str:
 
 
 def _configure_dependencies(
-    registry: ServiceRegistry, *, app_config: AppConfig | None = None
+    registry: ServiceRegistry,
+    *,
+    app_config: AppConfig | None = None,
+    job_queue_override: object | None = None,
 ) -> AppConfig:
     """Register infrastructure adapters and domain services."""
 
@@ -69,12 +105,22 @@ def _configure_dependencies(
     settings = bootstrap_settings(config, password_hash=password_hash)
     slots = bootstrap_slots(config)
 
-    queue_config = PostgresQueueConfig(
-        dsn=config.database_url,
-        statement_timeout_ms=config.queue_statement_timeout_ms,
-        max_in_flight_jobs=config.queue_max_in_flight_jobs,
-    )
-    queue = PostgresJobQueue(config=queue_config)
+    if job_queue_override is not None:
+        queue = job_queue_override
+    else:
+        queue_config = PostgresQueueConfig(
+            dsn=config.database_url,
+            statement_timeout_ms=config.queue_statement_timeout_ms,
+            max_in_flight_jobs=config.queue_max_in_flight_jobs,
+        )
+        try:
+            queue = PostgresJobQueue(config=queue_config)
+        except Exception as exc:  # pragma: no cover - depends on external Postgres
+            logger.warning(
+                "PostgreSQL queue unavailable (%s); falling back to in-memory queue",
+                exc,
+            )
+            queue = _InMemoryJobQueue()
     settings_service = DefaultSettingsService(
         settings=settings, password_hash=password_hash
     )
@@ -98,8 +144,13 @@ def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
 
     extra_state = dict(extra_state or {})
     config_override = extra_state.pop("app_config", None)
+    job_queue_override = extra_state.get("job_queue")
     registry = ServiceRegistry()
-    app_config = _configure_dependencies(registry, app_config=config_override)
+    app_config = _configure_dependencies(
+        registry,
+        app_config=config_override,
+        job_queue_override=job_queue_override,
+    )
 
     job_queue_override = extra_state.get("job_queue")
     if job_queue_override is not None:
