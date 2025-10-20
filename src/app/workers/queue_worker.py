@@ -124,7 +124,19 @@ class QueueWorker:
         if shutdown_event is not None and shutdown_event.is_set():
             return False
 
-        job = await self._run_sync(self.job_service.acquire_next_job, now=now)
+        acquire_task = asyncio.create_task(
+            self._run_sync(self.job_service.acquire_next_job, now=now)
+        )
+        try:
+            job = await asyncio.shield(acquire_task)
+        except asyncio.CancelledError:
+            try:
+                job = await acquire_task
+            except Exception:
+                raise
+            if job is not None:
+                await self._handle_cancelled_job(job, now=self._clock())
+            raise
         if job is None:
             return False
         if now >= job.expires_at:
