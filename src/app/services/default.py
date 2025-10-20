@@ -278,10 +278,12 @@ class DefaultJobService(JobService):
             job.result_expires_at = result_media.expires_at or retention_expires_at
         else:
             job.result_file_path = None
-            job.result_mime_type = None
+            if inline_preview is None:
+                job.result_mime_type = None
             job.result_size_bytes = None
             job.result_checksum = None
             job.result_expires_at = retention_expires_at
+            job.result_inline_base64 = inline_preview
         persisted = self.queue.mark_finalized(job)
         self.jobs[persisted.id] = persisted
         return persisted

@@ -119,6 +119,36 @@ def test_finalize_job_without_media_sets_retention_ttl(
     )
 
 
+def test_finalize_job_without_media_preserves_inline_preview(
+    job_service: DefaultJobService,
+) -> None:
+    service = job_service
+    job = _build_job()
+    job.result_mime_type = "image/png"
+    service.queue.enqueue(job)
+    service.jobs[job.id] = job
+    finalized_at = datetime.now(timezone.utc)
+
+    inline_preview = "cHJldmlldyI="
+
+    persisted = service.finalize_job(
+        job,
+        finalized_at=finalized_at,
+        result_media=None,
+        inline_preview=inline_preview,
+        result_checksum=None,
+    )
+
+    assert persisted.result_inline_base64 == inline_preview
+    assert persisted.result_mime_type == "image/png"
+    assert persisted.result_file_path is None
+    assert persisted.result_checksum is None
+    assert persisted.result_size_bytes is None
+    assert persisted.result_expires_at == calculate_result_expires_at(
+        finalized_at, result_retention_hours=service.result_retention_hours
+    )
+
+
 def test_clear_inline_preview_resets_inline_fields(
     job_service: DefaultJobService,
 ) -> None:
