@@ -47,6 +47,9 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency
     alembic_command = None  # type: ignore[assignment]
     AlembicConfig = None  # type: ignore[assignment]
 
+from tests.helpers.public_results import (  # noqa: E402  (import after sys.path update)
+    register_finalized_job,
+)
 from tests.mocks.providers import (  # noqa: E402  (import after sys.path update)
     MockGeminiProvider,
     MockProviderScenario,
@@ -646,6 +649,59 @@ def contract_client(contract_app):
 
     with TestClient(contract_app) as client:
         yield client
+
+
+@dataclass(slots=True)
+class PublicResultCase:
+    job: Job
+    public_url: str
+    expires_at: datetime
+    media_path: Path
+
+
+@pytest.fixture
+def fresh_public_result(contract_app) -> PublicResultCase:
+    """Register a finalized job whose public link is still valid."""
+
+    finalized_at = datetime.now(timezone.utc)
+    job, public_url, expires_at = register_finalized_job(
+        contract_app, finalized_at=finalized_at
+    )
+    assert job.result_file_path is not None
+    media_root: Path = contract_app.state.config.media_root
+    media_path = media_root / job.result_file_path
+    assert media_path.exists()
+    return PublicResultCase(
+        job=job,
+        public_url=public_url,
+        expires_at=expires_at,
+        media_path=media_path,
+    )
+
+
+@pytest.fixture
+def expired_public_result(contract_app) -> PublicResultCase:
+    """Register a finalized job whose TTL already elapsed."""
+
+    registry: ServiceRegistry = contract_app.state.service_registry  # type: ignore[attr-defined]
+    job_service = registry.resolve_job_service()(config=contract_app.state.config)
+    retention_hours = job_service.result_retention_hours
+    finalized_at = datetime.now(timezone.utc) - timedelta(
+        hours=retention_hours + 1
+    )
+    job, public_url, expires_at = register_finalized_job(
+        contract_app, finalized_at=finalized_at
+    )
+    assert job.result_file_path is not None
+    media_root: Path = contract_app.state.config.media_root
+    media_path = media_root / job.result_file_path
+    assert media_path.exists()
+    return PublicResultCase(
+        job=job,
+        public_url=public_url,
+        expires_at=expires_at,
+        media_path=media_path,
+    )
 
 
 # ---------------------------------------------------------------------------
