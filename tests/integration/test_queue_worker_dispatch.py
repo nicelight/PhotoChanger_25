@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Deque, Iterable
 from uuid import UUID, uuid4
 
+import base64
+import hashlib
 import pytest
 
 from src.app.domain import deadlines
@@ -26,6 +28,7 @@ from src.app.domain.models import (
     SettingsProviderKeyStatus,
     Slot,
 )
+from src.app.providers.base import ProviderAdapter
 from src.app.services import (
     JobService,
     MediaService,
@@ -38,6 +41,7 @@ from tests.mocks.providers import (
     MockGeminiProvider,
     MockProviderConfig,
     MockProviderScenario,
+    MockTurbotextProvider,
     TRANSPARENT_PNG_BASE64,
 )
 
@@ -255,8 +259,17 @@ def settings_service(settings: Settings) -> StubSettingsService:
 
 
 @pytest.fixture
-def media_service() -> StubMediaService:
-    return StubMediaService()
+def media_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    root = tmp_path / "media"
+    monkeypatch.setenv("PHOTOCHANGER_MEDIA_ROOT", str(root))
+    return root
+
+
+@pytest.fixture
+def media_service(media_root: Path) -> StubMediaService:
+    service = StubMediaService()
+    service.media_root = media_root
+    return service
 
 
 @pytest.fixture
@@ -290,6 +303,15 @@ def provider_error() -> MockGeminiProvider:
     return MockGeminiProvider(config)
 
 
+@pytest.fixture
+def provider_turbotext() -> MockTurbotextProvider:
+    config = MockProviderConfig(
+        scenario=MockProviderScenario.SUCCESS,
+        timeout_polls=1,
+    )
+    return MockTurbotextProvider(config)
+
+
 def _make_worker(
     *,
     clock: Clock,
@@ -298,7 +320,8 @@ def _make_worker(
     media_service: StubMediaService,
     settings_service: StubSettingsService,
     stats_service: StubStatsService,
-    provider: MockGeminiProvider,
+    provider: ProviderAdapter,
+    provider_id: str = "gemini",
 ) -> QueueWorker:
     async def _advance(seconds: float) -> None:
         clock.advance(seconds)
@@ -309,7 +332,7 @@ def _make_worker(
         media_service=media_service,
         settings_service=settings_service,
         stats_service=stats_service,
-        provider_factories={"gemini": lambda *, config=None: provider},
+        provider_factories={provider_id: lambda *, config=None: provider},
         clock=clock.now,
         sleep=_advance,
         poll_interval=1.0,
@@ -327,6 +350,7 @@ def test_worker_finalizes_successful_job(
     stats_service: StubStatsService,
     provider_success: MockGeminiProvider,
     job: Job,
+    media_root: Path,
 ) -> None:
     worker = _make_worker(
         clock=clock,
@@ -343,11 +367,24 @@ def test_worker_finalizes_successful_job(
 
     assert job in job_service.finalized_jobs
     assert job.failure_reason is None
-    assert job.result_inline_base64 == TRANSPARENT_PNG_BASE64
+    assert job.result_inline_base64 is None
     assert job.result_expires_at == job.finalized_at + timedelta(hours=72)
     assert any(log.status is ProcessingStatus.SUCCEEDED for log in job_service.logs)
     assert stats_service.events
     assert provider_success.events[-1].startswith("poll:")
+
+    decoded = base64.b64decode(TRANSPARENT_PNG_BASE64)
+    expected_checksum = hashlib.sha256(decoded).hexdigest()
+    assert job.result_file_path is not None
+    assert job.result_mime_type == "image/png"
+    assert job.result_size_bytes == len(decoded)
+    assert job.result_checksum == expected_checksum
+    assert media_service.registered
+    assert media_service.registered[0].path == job.result_file_path
+
+    result_path = media_root / job.result_file_path
+    assert result_path.exists()
+    assert result_path.read_bytes() == decoded
 
 
 @pytest.mark.integration
@@ -409,3 +446,77 @@ def test_worker_handles_provider_error(
     assert job.failure_reason is JobFailureReason.PROVIDER_ERROR
     assert any(log.status is ProcessingStatus.FAILED for log in job_service.logs)
     assert provider_error.events.count("submit:attempt") == 1
+
+
+@pytest.mark.integration
+def test_worker_materializes_turbotext_result(
+    clock: Clock,
+    job_service: StubJobService,
+    media_service: StubMediaService,
+    settings_service: StubSettingsService,
+    stats_service: StubStatsService,
+    provider_turbotext: MockTurbotextProvider,
+    media_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    now = clock.now()
+    slot = Slot(
+        id="slot-turbotext",
+        name="Turbotext Slot",
+        provider_id="turbotext",
+        operation_id="generate_image2image",
+        settings_json={},
+        created_at=now,
+        updated_at=now,
+    )
+    slot_service = StubSlotService(slot)
+    job = Job(
+        id=uuid4(),
+        slot_id=slot.id,
+        status=JobStatus.PENDING,
+        is_finalized=False,
+        failure_reason=None,
+        expires_at=now + timedelta(seconds=120),
+        created_at=now,
+        updated_at=now,
+        finalized_at=None,
+    )
+
+    async def _fake_fetch(
+        self: QueueWorker, url: str
+    ) -> tuple[bytes, str | None, str | None]:
+        _ = url
+        return b"turbotext-bytes", "image/png", "turbotext.png"
+
+    monkeypatch.setattr(QueueWorker, "_fetch_uploaded_image", _fake_fetch)
+
+    worker = _make_worker(
+        clock=clock,
+        job_service=job_service,
+        slot_service=slot_service,
+        media_service=media_service,
+        settings_service=settings_service,
+        stats_service=stats_service,
+        provider=provider_turbotext,
+        provider_id="turbotext",
+    )
+    job_service.queue(job)
+
+    asyncio.run(worker.run_once(now=clock.now()))
+
+    assert job in job_service.finalized_jobs
+    assert job.failure_reason is None
+    assert job.result_inline_base64 is None
+    assert job.result_file_path is not None
+    assert job.result_mime_type == "image/png"
+    assert job.result_size_bytes == len(b"turbotext-bytes")
+    expected_checksum = hashlib.sha256(b"turbotext-bytes").hexdigest()
+    assert job.result_checksum == expected_checksum
+    assert job.result_expires_at == job.finalized_at + timedelta(hours=72)
+    assert media_service.registered
+    assert media_service.registered[0].path == job.result_file_path
+
+    result_path = media_root / job.result_file_path
+    assert result_path.exists()
+    assert result_path.read_bytes() == b"turbotext-bytes"
+    assert any(event.startswith("poll:") for event in provider_turbotext.events)
