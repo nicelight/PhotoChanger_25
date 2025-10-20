@@ -101,10 +101,12 @@ def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
 
     job_queue_override = extra_state.get("job_queue")
     if job_queue_override is not None:
+        job_service_override = DefaultJobService(queue=job_queue_override)
         registry.register_job_service(
-            lambda *, config=None: DefaultJobService(queue=job_queue_override)
+            lambda *, config=None: job_service_override
         )
         registry.register_job_repository(lambda *, config=None: job_queue_override)
+        extra_state.setdefault("job_service", job_service_override)
 
     facade = ApiFacade(registry=registry)
     app = FastAPI(title="PhotoChanger API", version=_read_contract_version())

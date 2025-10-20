@@ -572,26 +572,27 @@ paths:
             format: uuid
           description: Идентификатор Job с успешным результатом.
       responses:
-        '200':
-          description: Итоговое изображение обработки (кнопка «Скачать» в UI)
+        '307':
+          description: Временный редирект на подписанную ссылку результата
           headers:
-            Content-Disposition:
+            Location:
               schema:
                 type: string
-              description: "attachment; filename=..."
-          content:
-            image/jpeg:
+                format: uri
+              description: Подписанный URL для скачивания итогового файла
+            Cache-Control:
               schema:
                 type: string
-                format: binary
-            image/png:
+              description: "private, max-age=..." до наступления ``result_expires_at``
+            Expires:
               schema:
                 type: string
-                format: binary
-            image/webp:
+              description: HTTP-date момента истечения TTL ссылки
+            PhotoChanger-Result-Expires-At:
               schema:
                 type: string
-                format: binary
+                format: date-time
+              description: RFC 3339 момент истечения TTL результата
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
