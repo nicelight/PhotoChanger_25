@@ -6,12 +6,10 @@ import asyncio
 import base64
 import binascii
 import contextlib
-import hashlib
 import inspect
 import json
 import logging
 import mimetypes
-import os
 import urllib.error
 import urllib.request
 from collections.abc import Awaitable, Callable, Mapping
@@ -23,7 +21,6 @@ from typing import Any, TypeVar
 from urllib.parse import urlparse
 from uuid import uuid4
 
-from ..domain import deadlines
 from ..domain.models import (
     Job,
     JobFailureReason,
@@ -35,7 +32,13 @@ from ..domain.models import (
 )
 from ..plugins.base import PluginFactory
 from ..providers.base import ProviderAdapter
-from ..services import JobService, MediaService, SettingsService, SlotService, StatsService
+from ..services import (
+    JobService,
+    MediaService,
+    SettingsService,
+    SlotService,
+    StatsService,
+)
 
 
 T = TypeVar("T")
@@ -563,7 +566,9 @@ class QueueWorker:
             except NotImplementedError:  # pragma: no cover - optional override
                 continue
 
-    def _timeout_log_entry(self, job: Job, *, slot: Slot, now: datetime) -> ProcessingLog:
+    def _timeout_log_entry(
+        self, job: Job, *, slot: Slot, now: datetime
+    ) -> ProcessingLog:
         return self._build_processing_log(
             job,
             slot,
@@ -575,7 +580,7 @@ class QueueWorker:
 
     @staticmethod
     def _extract_inline_response_data(
-        response: Mapping[str, Any]
+        response: Mapping[str, Any],
     ) -> tuple[str | None, str | None]:
         inline_data = response.get("inline_data")
         if isinstance(inline_data, Mapping):
@@ -616,41 +621,21 @@ class QueueWorker:
         settings: Settings,
         suggested_name: str | None = None,
     ) -> MediaObject:
-        media_root = self._resolve_media_root().resolve()
-        results_dir = media_root / "results"
-        await self._run_sync(self._ensure_directory, results_dir)
-
-        extension = self._guess_extension_from_mime(mime)
-        filename = self._build_result_filename(
-            job,
-            extension=extension,
-            suggested_name=suggested_name,
-        )
-        target_path = results_dir / filename
-        await self._run_sync(self._write_bytes, target_path, data)
-
-        size_bytes = len(data)
-        checksum = hashlib.sha256(data).hexdigest()
-        relative_path = self._relative_media_path(target_path, media_root)
-        result_expires_at = deadlines.calculate_result_expires_at(
-            finalized_at,
-            result_retention_hours=settings.media_cache.processed_media_ttl_hours,
-        )
-
-        media = await self._run_sync(
-            self.media_service.register_media,
-            path=relative_path,
-            mime=mime,
-            size_bytes=size_bytes,
-            expires_at=result_expires_at,
+        media, checksum = await self._run_sync(
+            self.media_service.save_result_media,
             job_id=job.id,
+            data=data,
+            mime=mime,
+            finalized_at=finalized_at,
+            retention_hours=settings.media_cache.processed_media_ttl_hours,
+            suggested_name=suggested_name,
         )
 
         job.result_file_path = media.path
-        job.result_mime_type = mime
-        job.result_size_bytes = size_bytes
+        job.result_mime_type = media.mime or mime
+        job.result_size_bytes = media.size_bytes
         job.result_checksum = checksum
-        job.result_expires_at = result_expires_at
+        job.result_expires_at = media.expires_at
         job.result_inline_base64 = None
         return media
 
@@ -658,7 +643,9 @@ class QueueWorker:
         self, url: str
     ) -> tuple[bytes, str | None, str | None]:
         def _download() -> tuple[bytes, str | None, str | None]:
-            with urllib.request.urlopen(url, timeout=self._request_timeout_seconds) as response:
+            with urllib.request.urlopen(
+                url, timeout=self._request_timeout_seconds
+            ) as response:
                 payload = response.read()
                 mime: str | None = None
                 headers = getattr(response, "headers", None)
@@ -681,52 +668,11 @@ class QueueWorker:
             raise RuntimeError(f"Failed to download uploaded image: {url}") from exc
 
     @staticmethod
-    def _relative_media_path(target: Path, media_root: Path) -> str:
-        return target.relative_to(media_root).as_posix()
-
-    @staticmethod
-    def _write_bytes(target: Path, data: bytes) -> None:
-        target.parent.mkdir(parents=True, exist_ok=True)
-        with target.open("wb") as handle:
-            handle.write(data)
-
-    @staticmethod
-    def _ensure_directory(path: Path) -> None:
-        path.mkdir(parents=True, exist_ok=True)
-
-    @staticmethod
-    def _guess_extension_from_mime(mime: str | None) -> str | None:
-        if not mime:
-            return None
-        return mimetypes.guess_extension(mime)
-
-    @staticmethod
-    def _build_result_filename(
-        job: Job, *, extension: str | None, suggested_name: str | None = None
-    ) -> str:
-        candidate_ext = Path(suggested_name).suffix if suggested_name else ""
-        final_ext = candidate_ext or (extension or "")
-        if not final_ext:
-            final_ext = ".bin"
-        if not final_ext.startswith("."):
-            final_ext = f".{final_ext}"
-        return f"{job.id.hex}{final_ext}"
-
-    @staticmethod
     def _guess_mime_from_filename(filename: str | None) -> str | None:
         if not filename:
             return None
         mime, _ = mimetypes.guess_type(filename)
         return mime
-
-    def _resolve_media_root(self) -> Path:
-        media_root = getattr(self.media_service, "media_root", None)
-        if media_root is not None:
-            return Path(media_root)
-        env_root = os.getenv("PHOTOCHANGER_MEDIA_ROOT")
-        if env_root:
-            return Path(env_root)
-        return Path("./var/media")
 
     def _load_job_context(self, job: Job) -> Mapping[str, Any]:
         if job.payload_path is None:

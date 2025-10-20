@@ -29,6 +29,27 @@ class MediaService:
 
         raise NotImplementedError
 
+    def save_result_media(
+        self,
+        *,
+        job_id: UUID,
+        data: bytes,
+        mime: str,
+        finalized_at: datetime,
+        retention_hours: int,
+        suggested_name: str | None = None,
+    ) -> tuple[MediaObject, str]:
+        """Persist processed result bytes and register the media object.
+
+        Implementations must store ``data`` under ``MEDIA_ROOT/results`` using a
+        deterministic filename derived from ``job_id`` and ``suggested_name`` or
+        ``mime``. The returned tuple contains the registered media object and
+        the SHA-256 checksum of the stored payload. ``media.expires_at`` must be
+        calculated as ``finalized_at + retention_hours`` (72h per ADR-0002).
+        """
+
+        raise NotImplementedError
+
     def refresh_public_link(
         self, media: MediaObject, settings: Settings
     ) -> MediaObject:
