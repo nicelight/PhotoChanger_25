@@ -137,3 +137,55 @@ def test_clear_inline_preview_resets_inline_fields(
     assert cleared.result_size_bytes is None
     assert cleared.result_checksum is None
     assert service.get_job(job.id) is cleared
+
+
+class _QueueStub:
+    def __init__(self) -> None:
+        self.finalized: list[Job] = []
+
+    def mark_finalized(self, job: Job) -> Job:
+        self.finalized.append(job)
+        return job
+
+
+def test_purge_expired_results_clears_metadata() -> None:
+    queue = _QueueStub()
+    service = DefaultJobService(queue=queue)  # type: ignore[arg-type]
+    now = datetime.now(timezone.utc)
+    job = _build_job()
+    job.is_finalized = True
+    job.result_file_path = "results/final.png"
+    job.result_mime_type = "image/png"
+    job.result_size_bytes = 128
+    job.result_checksum = "sha256:deadbeef"
+    job.result_expires_at = now - timedelta(seconds=1)
+    service.jobs[job.id] = job
+
+    expired = service.purge_expired_results(now=now)
+
+    assert expired == [job]
+    assert job.result_file_path is None
+    assert job.result_mime_type is None
+    assert job.result_size_bytes is None
+    assert job.result_checksum is None
+    assert job.result_expires_at is None
+    assert queue.finalized == [job]
+
+
+def test_purge_expired_results_ignores_future_deadline() -> None:
+    queue = _QueueStub()
+    service = DefaultJobService(queue=queue)  # type: ignore[arg-type]
+    now = datetime.now(timezone.utc)
+    job = _build_job()
+    job.is_finalized = True
+    job.result_file_path = "results/final.png"
+    future = now + timedelta(hours=1)
+    job.result_expires_at = future
+    service.jobs[job.id] = job
+
+    expired = service.purge_expired_results(now=now)
+
+    assert expired == []
+    assert job.result_file_path == "results/final.png"
+    assert job.result_expires_at == future
+    assert queue.finalized == []

@@ -164,6 +164,12 @@ updated: 2025-10-29
 - 2025-10-30 09:15 — перечитал .memory/CONTEXT.md, .memory/USECASES.md и ADR-0002 для подтверждения политики TTL/очистки (T_sync_response, T_public_link_ttl, T_result_retention 72h, фоновые очистители).
 - 2025-10-30 09:35 — сверил требования с docstring-ами `MediaService` и `JobService`: подтверждена синхронизация расчёта `expires_at`, удаления inline base64 и необходимости фонового очистителя; изменения политик не требуются, но реализация ещё отсутствует (риск задержки очистки).
 
+## phase4-media-cleanup-2025-10-30
+- 2025-10-30 10:05 — пересмотрел Issue 2 реализацию (`result_expires_at`, структура MEDIA_ROOT/results) и ограничения ADR-0002, уточнил источники TTL для очистителя.
+- 2025-10-30 10:32 — спроектировал периодический таск очистки (15 мин, FastAPI lifecycle), учёл повторное использование DefaultJobService/MediaService и интеграцию с DI в create_app.
+- 2025-10-30 11:05 — реализовал lifecycle-модуль, `JobService.purge_expired_results`, обновил DI create_app и написал unit/async тесты (`tests/services/test_media_cleanup.py`, `tests/unit/test_default_job_service.py`).
+- 2025-10-30 11:25 — попытался запустить целевые pytest (`tests/services/test_media_cleanup.py`, `tests/unit/test_default_job_service.py`); прогон остановился на импорте psycopg (ограничение окружения).
+
 ## phase4-workers-plan-2025-10-29
 - 2025-10-29 09:05 — уточнил с тимлидом модель воркеров: четыре фоновые задачи внутри FastAPI, общий event loop uvicorn/asyncio, ретраи 5× (таймаут 5 с, пауза 3 с), при shutdown воркеры закрывают HTTP-клиенты.
 - 2025-10-29 09:20 — обновил спецификации (context, vision, domain-model, NFR, constraints, test-plan) и ops runbook, чтобы зафиксировать утверждённую архитектуру воркеров и поведение ретраев/shutdown.
