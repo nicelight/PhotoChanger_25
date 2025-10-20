@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import mimetypes
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -116,6 +118,49 @@ class DefaultMediaService(MediaService):
         self.objects[media.id] = media
         return media
 
+    def save_result_media(
+        self,
+        *,
+        job_id: UUID,
+        data: bytes,
+        mime: str,
+        finalized_at: datetime,
+        retention_hours: int,
+        suggested_name: str | None = None,
+    ) -> tuple[MediaObject, str]:  # type: ignore[override]
+        if retention_hours <= 0:
+            raise ValueError("retention_hours must be positive")
+
+        root = self.media_root.resolve()
+        results_dir = root / "results"
+        results_dir.mkdir(parents=True, exist_ok=True)
+
+        filename = self._build_result_filename(
+            job_id,
+            mime=mime,
+            suggested_name=suggested_name,
+        )
+        target_path = results_dir / filename
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        with target_path.open("wb") as handle:
+            handle.write(data)
+
+        size_bytes = len(data)
+        checksum = hashlib.sha256(data).hexdigest()
+        expires_at = calculate_result_expires_at(
+            finalized_at, result_retention_hours=retention_hours
+        )
+        relative_path = target_path.relative_to(root).as_posix()
+
+        media = self.register_media(
+            path=relative_path,
+            mime=mime,
+            size_bytes=size_bytes,
+            expires_at=expires_at,
+            job_id=job_id,
+        )
+        return media, checksum
+
     def revoke_media(self, media: MediaObject) -> None:  # type: ignore[override]
         self.objects.pop(media.id, None)
         try:
@@ -131,6 +176,22 @@ class DefaultMediaService(MediaService):
                 expired.append(media)
                 self.revoke_media(media)
         return expired
+
+    @staticmethod
+    def _build_result_filename(
+        job_id: UUID, *, mime: str | None, suggested_name: str | None = None
+    ) -> str:
+        if suggested_name:
+            candidate = Path(suggested_name).suffix
+            if candidate:
+                return f"{job_id.hex}{candidate}"
+
+        extension = mimetypes.guess_extension(mime or "") or ""
+        if extension and not extension.startswith("."):
+            extension = f".{extension}"
+        if not extension:
+            extension = ".bin"
+        return f"{job_id.hex}{extension}"
 
 
 @dataclass(slots=True)

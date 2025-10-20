@@ -214,3 +214,11 @@ updated: 2025-10-29
 - 2025-10-28 14:05 — зафиксировал решение держать таблицу `processing_logs` в первой миграции, чтобы фазы 4.3/4.5 могли сразу опираться на историю обработки.
 - 2025-10-28 14:20 — добавил `queue_max_in_flight_jobs` в `AppConfig` и DI, обновил runbook/ingest README по переменной `PHOTOCHANGER_QUEUE_MAX_IN_FLIGHT_JOBS` (дефолт 12 активных задач).
 - 2025-10-28 14:35 — синхронизировал .memory (TASKS, ASKS, PROGRESS) и задокументировал back-pressure решение для команды эксплуатации.
+## phase4-results-media-2025-10-29
+- 2025-10-29 14:05 — изучил сабтаск 4.4.1 в .memory/TASKS.md, перечитал spec/docs/blueprints/use-cases.md и ADR-0002 для требований к TTL 72h и хранению результатов в MEDIA_ROOT/results.
+- 2025-10-29 14:18 — осмотрел текущую реализацию DefaultMediaService и QueueWorker._persist_result_bytes, отметил дублирование расчёта checksum/TTL и необходимость вынести запись файлов в MediaService.
+- 2025-10-29 14:35 — добавил save_result_media в MediaService/DefaultMediaService: запись файлов в MEDIA_ROOT/results, расчёт checksum и TTL 72h, переиспользование register_media.
+- 2025-10-29 14:48 — обновил QueueWorker._persist_result_bytes вызывать MediaService.save_result_media и почистил вспомогательные методы/импорты.
+- 2025-10-29 15:00 — адаптировал StubMediaService в интеграционных тестах для записи файлов и возврата checksum через новый интерфейс.
+- 2025-10-29 15:10 — попытался запустить pytest tests/integration/test_queue_worker_dispatch.py::test_worker_finalizes_successful_job; прогон прерван skip из-за отсутствия psycopg в окружении.
+- 2025-10-29 15:20 — прогнал ruff format для обновлённых модулей (services/media_service.py, services/default.py, workers/queue_worker.py, integration stub).

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import mimetypes
 from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -106,6 +107,59 @@ class StubMediaService(MediaService):
         )
         self.registered.append(media)
         return media
+
+    def save_result_media(
+        self,
+        *,
+        job_id: UUID,
+        data: bytes,
+        mime: str,
+        finalized_at: datetime,
+        retention_hours: int,
+        suggested_name: str | None = None,
+    ) -> tuple[MediaObject, str]:  # type: ignore[override]
+        media_root = Path(getattr(self, "media_root", Path("."))).resolve()
+        results_dir = media_root / "results"
+        results_dir.mkdir(parents=True, exist_ok=True)
+
+        filename = self._build_result_filename(
+            job_id,
+            mime=mime,
+            suggested_name=suggested_name,
+        )
+        target = results_dir / filename
+        target.write_bytes(data)
+
+        expires_at = deadlines.calculate_result_expires_at(
+            finalized_at,
+            result_retention_hours=retention_hours,
+        )
+        relative_path = target.relative_to(media_root).as_posix()
+        media = self.register_media(
+            path=relative_path,
+            mime=mime,
+            size_bytes=len(data),
+            expires_at=expires_at,
+            job_id=job_id,
+        )
+        checksum = hashlib.sha256(data).hexdigest()
+        return media, checksum
+
+    @staticmethod
+    def _build_result_filename(
+        job_id: UUID, *, mime: str | None, suggested_name: str | None = None
+    ) -> str:
+        if suggested_name:
+            suffix = Path(suggested_name).suffix
+            if suffix:
+                return f"{job_id.hex}{suffix}"
+
+        extension = mimetypes.guess_extension(mime or "") or ""
+        if extension and not extension.startswith("."):
+            extension = f".{extension}"
+        if not extension:
+            extension = ".bin"
+        return f"{job_id.hex}{extension}"
 
 
 class StubStatsService(StatsService):
