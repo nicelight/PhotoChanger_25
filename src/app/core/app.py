@@ -103,9 +103,9 @@ def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
 
     job_queue_override = extra_state.get("job_queue")
     if job_queue_override is not None:
-        override_job_service = DefaultJobService(queue=job_queue_override)
+        job_service_override = DefaultJobService(queue=job_queue_override)
         registry.register_job_service(
-            lambda *, config=None: override_job_service
+            lambda *, config=None: job_service_override
         )
         registry.register_job_repository(lambda *, config=None: job_queue_override)
 
