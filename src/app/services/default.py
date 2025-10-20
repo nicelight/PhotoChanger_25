@@ -118,6 +118,12 @@ class DefaultMediaService(MediaService):
         self.objects[media.id] = media
         return media
 
+    def get_media_by_path(self, path: str) -> MediaObject | None:  # type: ignore[override]
+        for media in self.objects.values():
+            if media.path == path:
+                return media
+        return None
+
     def save_result_media(
         self,
         *,

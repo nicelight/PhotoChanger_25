@@ -229,3 +229,12 @@ updated: 2025-10-29
 - 2025-10-29 16:20 — реализовал helper `persist_base64_result` для сохранения inline base64 результатов в MEDIA_ROOT/results и подготовил unit-тесты.
 - 2025-10-29 16:45 — обновил QueueWorker._materialize_provider_result для повторного использования helper, проброса checksum и очистки inline_preview.
 - 2025-10-29 17:05 — расширил DefaultJobService.finalize_job (TTL 72h, очистка inline, checksum) и адаптировал unit/contract тесты очереди под новое поведение.
+
+## phase4-public-links-2025-10-30
+- 2025-10-30 09:05 — перечитал .memory/TASKS.md (подпункты 4.4.2–4.4.5), ADR-0002 и spec/contracts/openapi.yaml, уточнил требования к 307 redirect и 410 Gone.
+- 2025-10-30 09:25 — поправил DI в create_app, чтобы тестовый job_service reuse'ил состояние при подмене очереди.
+- 2025-10-30 09:40 — расширил MediaService/DefaultMediaService методом get_media_by_path для поиска зарегистрированного результата.
+- 2025-10-30 10:10 — реализовал download_public_result (TTL-проверка, Cache-Control, Expires, header PhotoChanger-Result-Expires-At, редирект на public_url).
+- 2025-10-30 10:35 — обновил OpenAPI (ответ 307 + заголовки), поднял версию контрактов до 0.2.0.
+- 2025-10-30 10:55 — добавил helper tests/helpers/public_results.py и новые API-тесты (redirect, 410) + переработал contract tests под реальную реализацию.
+- 2025-10-30 11:20 — прогнал pytest tests/api/public/test_results.py tests/contract/test_public_links.py (зелёные).

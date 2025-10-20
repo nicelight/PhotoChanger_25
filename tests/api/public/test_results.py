@@ -1,5 +1,3 @@
-"""Contract tests for public download links exposed under ``/public``."""
-
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -10,12 +8,14 @@ from fastapi import status
 from tests.helpers.public_results import isoformat_utc, register_finalized_job
 
 
-@pytest.mark.contract
-def test_public_result_success(contract_app, contract_client):
-    """``GET /public/results/{job_id}`` issues a temporary redirect before TTL."""
-
+@pytest.mark.integration
+def test_download_public_result_redirects_before_ttl_expiry(
+    contract_app,
+    contract_client,
+):
+    finalized_at = datetime.now(timezone.utc)
     job, public_url, expires_at = register_finalized_job(
-        contract_app, finalized_at=datetime.now(timezone.utc)
+        contract_app, finalized_at=finalized_at
     )
 
     response = contract_client.get(
@@ -27,16 +27,23 @@ def test_public_result_success(contract_app, contract_client):
     assert response.headers["photochanger-result-expires-at"] == isoformat_utc(
         expires_at
     )
+    cache_control = response.headers["cache-control"]
+    assert cache_control.startswith("private, max-age=")
+    max_age = int(cache_control.split("=", 1)[1])
+    assert max_age > 0
 
 
-@pytest.mark.contract
-def test_public_result_gone(contract_app, contract_client, validate_with_schema):
-    """Expired public links respond with ``410 Gone`` following ADR-0002."""
-
+@pytest.mark.integration
+def test_download_public_result_returns_410_after_ttl(
+    contract_app,
+    contract_client,
+    validate_with_schema,
+):
     registry = contract_app.state.service_registry
     job_service = registry.resolve_job_service()(config=contract_app.state.config)
+    retention_hours = job_service.result_retention_hours
     finalized_at = datetime.now(timezone.utc) - timedelta(
-        hours=job_service.result_retention_hours + 1
+        hours=retention_hours + 1
     )
     job, _, expires_at = register_finalized_job(
         contract_app, finalized_at=finalized_at

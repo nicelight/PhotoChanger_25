@@ -29,6 +29,11 @@ class MediaService:
 
         raise NotImplementedError
 
+    def get_media_by_path(self, path: str) -> MediaObject | None:
+        """Return registered media metadata for ``MEDIA_ROOT`` relative ``path``."""
+
+        raise NotImplementedError
+
     def save_result_media(
         self,
         *,
