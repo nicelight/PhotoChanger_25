@@ -104,6 +104,12 @@ class QueueWorker:
 
         return _async_sleep
 
+    @staticmethod
+    async def _run_sync(func: Callable[..., T], /, *args: Any, **kwargs: Any) -> T:
+        """Execute ``func`` in a worker thread to avoid blocking the event loop."""
+
+        return await asyncio.to_thread(func, *args, **kwargs)
+
     # ------------------------------------------------------------------
     # High-level control flow
     # ------------------------------------------------------------------
@@ -118,11 +124,11 @@ class QueueWorker:
         if shutdown_event is not None and shutdown_event.is_set():
             return False
 
-        job = self.job_service.acquire_next_job(now=now)
+        job = await self._run_sync(self.job_service.acquire_next_job, now=now)
         if job is None:
             return False
         if now >= job.expires_at:
-            self.handle_timeout(job, now=now)
+            await self._handle_timeout_async(job, now=now)
             return True
 
         try:
@@ -165,8 +171,8 @@ class QueueWorker:
     ) -> None:
         """Execute provider-specific logic while respecting queue deadlines."""
 
-        slot = self.slot_service.get_slot(job.slot_id)
-        settings = self.settings_service.read_settings()
+        slot = await self._run_sync(self.slot_service.get_slot, job.slot_id)
+        settings = await self._run_sync(self.settings_service.read_settings)
         context = self._load_job_context(job)
 
         try:
@@ -184,7 +190,7 @@ class QueueWorker:
 
         if dispatch_result.outcome is ProviderDispatchOutcome.SUCCESS:
             finalized_at = dispatch_result.finished_at or self._clock()
-            inline_preview, result_media = self._materialize_provider_result(
+            inline_preview, result_media = await self._materialize_provider_result(
                 job=job,
                 slot=slot,
                 provider_id=slot.provider_id,
@@ -192,7 +198,8 @@ class QueueWorker:
                 finalized_at=finalized_at,
                 settings=settings,
             )
-            self.job_service.finalize_job(
+            await self._run_sync(
+                self.job_service.finalize_job,
                 job,
                 finalized_at=finalized_at,
                 result_media=result_media,
@@ -206,17 +213,24 @@ class QueueWorker:
             if dispatch_result.outcome is ProviderDispatchOutcome.TIMEOUT
             else JobFailureReason.PROVIDER_ERROR
         )
-        self.job_service.fail_job(
+        await self._run_sync(
+            self.job_service.fail_job,
             job,
             failure_reason=failure_reason,
             occurred_at=occurred_at,
         )
 
     def handle_timeout(self, job: Job, *, now: datetime) -> None:
+        """Synchronously mark a job as timed out for compatibility with tests."""
+
+        asyncio.run(self._handle_timeout_async(job, now=now))
+
+    async def _handle_timeout_async(self, job: Job, *, now: datetime) -> None:
         """Mark the job as timed out when ``now`` exceeds ``job.expires_at``."""
 
-        slot = self.slot_service.get_slot(job.slot_id)
-        self.job_service.fail_job(
+        slot = await self._run_sync(self.slot_service.get_slot, job.slot_id)
+        await self._run_sync(
+            self.job_service.fail_job,
             job,
             failure_reason=JobFailureReason.TIMEOUT,
             occurred_at=now,
@@ -229,7 +243,7 @@ class QueueWorker:
             started_at=now,
             message="Job expired before dispatch",
         )
-        self.job_service.append_processing_logs(job, [log_entry])
+        await self._run_sync(self.job_service.append_processing_logs, job, [log_entry])
         self._record_processing_logs([log_entry])
 
     # ------------------------------------------------------------------
@@ -282,7 +296,7 @@ class QueueWorker:
                     details={"error": repr(exc)},
                 )
             )
-            self.job_service.append_processing_logs(job, logs)
+            await self._run_sync(self.job_service.append_processing_logs, job, logs)
             self._record_processing_logs(logs)
             return ProviderDispatchResult(
                 outcome=ProviderDispatchOutcome.ERROR,
@@ -326,7 +340,7 @@ class QueueWorker:
                     details={"error": repr(exc)},
                 )
             )
-            self.job_service.append_processing_logs(job, logs)
+            await self._run_sync(self.job_service.append_processing_logs, job, logs)
             self._record_processing_logs(logs)
             return ProviderDispatchResult(
                 outcome=ProviderDispatchOutcome.ERROR,
@@ -336,7 +350,7 @@ class QueueWorker:
                 error=exc,
             )
         except asyncio.CancelledError:
-            self.job_service.append_processing_logs(job, logs)
+            await self._run_sync(self.job_service.append_processing_logs, job, logs)
             self._record_processing_logs(logs)
             await self._cancel_reference_on_shutdown(slot, reference)
             raise
@@ -372,7 +386,7 @@ class QueueWorker:
                 finished_at = now
                 break
             except asyncio.CancelledError:
-                self.job_service.append_processing_logs(job, logs)
+                await self._run_sync(self.job_service.append_processing_logs, job, logs)
                 self._record_processing_logs(logs)
                 await self._cancel_reference_on_shutdown(slot, reference)
                 raise
@@ -458,7 +472,7 @@ class QueueWorker:
                 )
             )
 
-        self.job_service.append_processing_logs(job, logs)
+        await self._run_sync(self.job_service.append_processing_logs, job, logs)
         self._record_processing_logs(logs)
 
         return ProviderDispatchResult(
@@ -559,7 +573,7 @@ class QueueWorker:
             return dict(context)
         return {}
 
-    def _materialize_provider_result(
+    async def _materialize_provider_result(
         self,
         *,
         job: Job,
@@ -605,9 +619,12 @@ class QueueWorker:
                         job_expires_at=job.expires_at,
                         ttl_seconds=settings.media_cache.public_link_ttl_sec,
                     )
-                    media_object = self.media_service.register_media(
+                    media_object = await self._run_sync(
+                        self.media_service.register_media,
                         path=str(uploaded_image),
-                        mime=str(data.get("mime", job.result_mime_type or "image/png")),
+                        mime=str(
+                            data.get("mime", job.result_mime_type or "image/png")
+                        ),
                         size_bytes=int(data.get("size_bytes", 0)),
                         expires_at=expires_at,
                         job_id=job.id,
@@ -716,7 +733,8 @@ class QueueWorker:
     ) -> None:
         cancelled_at = self._clock()
         await self._cancel_reference_on_shutdown(slot, job.provider_job_reference)
-        self.job_service.fail_job(
+        await self._run_sync(
+            self.job_service.fail_job,
             job,
             failure_reason=JobFailureReason.CANCELLED,
             occurred_at=cancelled_at,
@@ -730,9 +748,9 @@ class QueueWorker:
             message="Job cancelled due to worker shutdown",
             details={"provider_id": slot.provider_id},
         )
-        self.job_service.append_processing_logs(job, [log_entry])
+        await self._run_sync(self.job_service.append_processing_logs, job, [log_entry])
         self._record_processing_logs([log_entry])
 
     async def _handle_cancelled_job(self, job: Job, *, now: datetime) -> None:
-        slot = self.slot_service.get_slot(job.slot_id)
+        slot = await self._run_sync(self.slot_service.get_slot, job.slot_id)
         await self._mark_job_cancelled(job, slot=slot, started_at=now)
