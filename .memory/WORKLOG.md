@@ -1,6 +1,6 @@
 ---
 id: worklog
-updated: 2025-10-29
+updated: 2025-10-30
 ---
 
 # Черновой журнал до checkpoint
@@ -169,6 +169,9 @@ updated: 2025-10-29
 - 2025-10-30 10:32 — спроектировал периодический таск очистки (15 мин, FastAPI lifecycle), учёл повторное использование DefaultJobService/MediaService и интеграцию с DI в create_app.
 - 2025-10-30 11:05 — реализовал lifecycle-модуль, `JobService.purge_expired_results`, обновил DI create_app и написал unit/async тесты (`tests/services/test_media_cleanup.py`, `tests/unit/test_default_job_service.py`).
 - 2025-10-30 11:25 — попытался запустить целевые pytest (`tests/services/test_media_cleanup.py`, `tests/unit/test_default_job_service.py`); прогон остановился на импорте psycopg (ограничение окружения).
+
+## docs-media-cleanup-2025-10-30
+- 2025-10-30 14:20 — зафиксировал финальные решения Issues 2–4 в брифе, blueprints и ops runbook: описал структуру `MEDIA_ROOT/results/<job_id>.<ext>`, TTL 72h, работу фонового очистителя `photochanger-media-cleanup` (каждые 15 мин) и ссылки на `JobService.purge_expired_results`/`MediaService.purge_expired_media`.
 
 ## phase4-workers-plan-2025-10-29
 - 2025-10-29 09:05 — уточнил с тимлидом модель воркеров: четыре фоновые задачи внутри FastAPI, общий event loop uvicorn/asyncio, ретраи 5× (таймаут 5 с, пауза 3 с), при shutdown воркеры закрывают HTTP-клиенты.

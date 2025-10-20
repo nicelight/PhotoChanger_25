@@ -40,4 +40,5 @@
 ## Управление данными
 - Исходные файлы удаляются сразу после `is_finalized = true` либо по наступлении `T_ingest_ttl`.
 - Результаты хранятся в полях `Job.result_*` и автоматически очищаются по TTL 72 часа (`media_cache.processed_media_ttl_hours`); временное поле `result_inline_base64` очищается немедленно после выдачи HTTP 200/504, а новое выполнение перезаписывает предыдущий ответ.
+- Финальное решение **Issue 4** вводит фоновый сервис `photochanger-media-cleanup`, который каждые 15 минут вызывает `JobService.purge_expired_results` и `MediaService.purge_expired_media`, чтобы удалить файлы с истекшим `result_expires_at` и освободить пространство `MEDIA_ROOT`.
 - Публичные ссылки живут фиксированный TTL `T_public_link_ttl = T_sync_response` и не продлеваются: при необходимости требуется повторная регистрация файла.

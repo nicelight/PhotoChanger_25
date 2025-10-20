@@ -36,8 +36,9 @@
   4. Ingest API удерживает HTTP-соединение и раз в секунду читает запись `Job` из БД, ожидая появления `is_finalized = true` или наступления дедлайна `T_sync_response`; дополнительных уведомлений не используется.
   5. Воркер вызывает провайдера Gemini (`models.generateContent`), передавая параметры слота и изображение.
   6. Провайдер возвращает обработанное изображение до наступления `T_sync_response`.
-  7. Воркер сохраняет итоговый файл в `MEDIA_ROOT/results`, обновляет `Job.result_file_path`, `result_mime_type`, `result_size_bytes`, `result_checksum`, рассчитывает `result_expires_at = finalized_at + 72h`, заполняет временный `result_inline_base64`, очищает исходный `media_object`, выставляет `is_finalized = true`.
+  7. Воркер сохраняет итоговый файл в `MEDIA_ROOT/results`, обновляет `Job.result_file_path`, `result_mime_type`, `result_size_bytes`, `result_checksum`, рассчитывает `result_expires_at = finalized_at + 72h`, заполняет временный `result_inline_base64`, очищает исходный `media_object`, выставляет `is_finalized = true`. С учётом финального решения **Issue 2** файл получает имя `<job_id>.<ext>` (ext определяется по MIME), контрольная сумма (`result_checksum`) фиксируется по финальному решению **Issue 3**.
   8. На ближайшей итерации polling Ingest API обнаруживает финализацию, собирает ответ и возвращает 200 OK с обработанным изображением. После отправки `result_inline_base64` обнуляется, а файл остаётся доступным по `GET /public/results/{job_id}` до наступления `result_expires_at`.
+  9. Согласно финальному решению **Issue 4**, фоновой процесс `photochanger-media-cleanup` раз в 15 минут проверяет `result_expires_at` и удаляет просроченные артефакты через `JobService.purge_expired_results`/`MediaService.purge_expired_media`.
 
 ### Диаграмма последовательности (успех)
 ```mermaid
