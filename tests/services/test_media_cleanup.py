@@ -78,6 +78,7 @@ def _job(*, expires_at: datetime | None) -> Job:
     )
 
 
+@pytest.mark.unit
 def test_media_cleanup_once_collects_expired_entities() -> None:
     now = datetime.now(timezone.utc)
     media = [
@@ -103,6 +104,7 @@ def test_media_cleanup_once_collects_expired_entities() -> None:
     assert media_service.calls == [now]
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_periodic_media_cleanup_stops_on_shutdown() -> None:
     now = datetime.now(timezone.utc)
