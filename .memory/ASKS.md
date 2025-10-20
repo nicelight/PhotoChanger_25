@@ -1,17 +1,25 @@
 ---
 id: asks
-updated: 2025-10-21
+updated: 2025-10-29
 ---
 
 # Asks (запросы пользователей)
 
-- 2025-10-08 | id:ASK-0001 | source:user | summary:"Инициализация шаблона" | status:done | notes:"Регистрируется автоматически после закрытия задачи."
-- 2025-10-16 | id:ASK-0002 | source:user | summary:"Выполнить задачи 1.3–1.4 (SPEC REVIEW)" | status:done | notes:"Обновлены контракты Gemini/Turbotext, оформлен ADR по TTL."
-- 2025-10-16 | id:ASK-0002 | source:user | summary:"Фаза 1.1-1.2: ревью OpenAPI и JSON Schema" | status:done | notes:"OpenAPI выровнен, схемы TTL уточнены, версии обновлены до 0.1.1"
-- 2025-10-16 | id:ASK-0003 | source:user | summary:"Зафиксировать завершение фазы 1 в мемори-банке" | status:done | notes:"Обновлены TASKS (фаза 1 → DONE), PROGRESS и ASKS, записи в WORKLOG"
-- 2025-10-16 | id:ASK-0004 | source:user | summary:"Закрыть сабтаск 2.1 и синхронизировать стаб-код со спецификацией" | status:done | notes:"OpenAPI поднят до 0.1.2, стабы пересобраны, enum-параметры и клиент обновлены"
-- 2025-10-18 | id:ASK-0005 | source:user | summary:"Фаза 2: провести аудит сервисов и подготовить инфраструктурные заглушки" | status:done | notes:"Обновлены стабы домена/очереди, добавлен providers.json и backlog"
-- 2025-10-18 | id:ASK-0006 | source:user | summary:"Зафиксировать завершение фазы 2 в мемори-банке" | status:done | notes:"Обновлены TASKS, PROGRESS, ASKS и INDEX"
-- 2025-10-18 | id:ASK-0007 | source:user | summary:"Реализовать контрактные тесты ingest/админ-API/публичных ссылок (фаза 3.1)" | status:done | notes:"Добавлены фикстуры, позитивные и негативные сценарии, pytest -m contract зелёный"
-- 2025-10-19 | id:ASK-0008 | source:user | summary:"Сабтаск 3.3 — разработать моки провайдеров Gemini/Turbotext" | status:done | notes:"Созданы deterministic mocks, pytest фикстуры и контрактные тесты provider_mocks"
-- 2025-10-21 | id:ASK-0009 | source:user | summary:"Повторно подтвердить готовность Фазы 3, обновить тестовый отчёт" | status:done | notes:"Перезапущены pytest unit/contract, установлены зависимости, tests/TEST_REPORT_PHASE3.md и .memory синхронизированы"
+| Дата       | ID        | Источник | Кратко                                                                 | Статус | Примечания |
+| ---------- | --------- | -------- | ---------------------------------------------------------------------- | ------ | ---------- |
+| 2025-10-08 | ASK-0001  | user     | Инициализация шаблона                                                 | done   | Регистрируется автоматически после закрытия задачи. |
+| 2025-10-16 | ASK-0002  | user     | Выполнить задачи 1.3–1.4 (SPEC REVIEW)                                | done   | Обновлены контракты Gemini/Turbotext, оформлен ADR по TTL. |
+| 2025-10-16 | ASK-0002  | user     | Фаза 1.1-1.2: ревью OpenAPI и JSON Schema                             | done   | OpenAPI выровнен, схемы TTL уточнены, версии обновлены до 0.1.1. |
+| 2025-10-16 | ASK-0003  | user     | Зафиксировать завершение фазы 1 в мемори-банке                        | done   | Обновлены TASKS (фаза 1 → DONE), PROGRESS и ASKS, записи в WORKLOG. |
+| 2025-10-16 | ASK-0004  | user     | Закрыть сабтаск 2.1 и синхронизировать стаб-код со спецификацией      | done   | OpenAPI поднят до 0.1.2, стабы пересобраны, enum-параметры и клиент обновлены. |
+| 2025-10-18 | ASK-0005  | user     | Фаза 2: провести аудит сервисов и подготовить инфраструктурные заглушки | done   | Обновлены стабы домена/очереди, добавлен providers.json и backlog. |
+| 2025-10-18 | ASK-0006  | user     | Зафиксировать завершение фазы 2 в мемори-банке                         | done   | Обновлены TASKS, PROGRESS, ASKS и INDEX. |
+| 2025-10-18 | ASK-0007  | user     | Реализовать контрактные тесты ingest/админ-API/публичных ссылок (фаза 3.1) | done   | Добавлены фикстуры, позитивные и негативные сценарии, pytest -m contract зелёный. |
+| 2025-10-19 | ASK-0008  | user     | Сабтаск 3.3 — разработать моки провайдеров Gemini/Turbotext           | done   | Созданы deterministic mocks, pytest фикстуры и контрактные тесты provider_mocks. |
+| 2025-10-21 | ASK-0009  | user     | Повторно подтвердить готовность Фазы 3, обновить тестовый отчёт       | done   | Перезапущены pytest unit/contract, установлены зависимости, tests/TEST_REPORT_PHASE3.md и .memory синхронизированы. |
+| 2025-10-22 | ASK-0010  | user     | Устранить DI-провайдеров и реализовать QueueWorker.dispatch_to_provider | done   | Расширен ServiceRegistry, реализован полный цикл QueueWorker, добавлены интеграционные проверки успех/timeout/error. |
+| 2025-10-23 | ASK-0011  | user     | Выполнить сабтаски 4.1.1–4.1.5 (ingest core)                           | done   | Реализованы DI, ingest endpoint, валидация multipart, сохранение payload, постановка Job и тесты. |
+| 2025-10-24 | ASK-0012  | user     | Проверить соответствие изменений ingest спецификациям и брифу           | done   | Обновлён DI (AppConfig), прогнаны ruff/mypy/pytest -m "unit or contract", отклонений нет. |
+| 2025-10-25 | ASK-0013  | user     | Закрыть сабтаски 4.1.6–4.1.10 (синхронный ingest, 429/504, документация) | done   | Реализован polling/cleanup, добавлены тесты и ingest_runbook, ruff/mypy/pytest unit/contract зелёные. |
+| 2025-10-16 | ASK-0014 | user     | Реализовать очередь на PostgreSQL (фаза 4.2) | done | Конфигурированы миграции `jobs`/`processing_logs`, добавлен лимит 12 активных задач (`QUEUE_MAX_IN_FLIGHT_JOBS`) и задокументирован back-pressure. |
+| 2025-10-29 | ASK-0015 | user     | Уточнить архитектуру воркеров (количество, event loop, ретраи) и обновить спецификации/таски | done | Зафиксирован пул из четырёх asyncio-воркеров внутри FastAPI, ретраи 5× (таймаут 5 с, пауза 3 с), обновлены SDD и .memory/TASKS. |

@@ -1,17 +1,10 @@
 """Integration-style contract tests for the queue worker scaffolding.
 
-The real PostgreSQL queue and worker implementations are not available in
-phase 3, therefore the tests provide lightweight doubles that mimic the
-behaviour described in ``spec/docs/blueprints/domain-model.md``:
-
-* :class:`InMemoryQueueDouble` reproduces ``enqueue``/``acquire``/``mark``
-  semantics and keeps jobs in memory while respecting ``expires_at``.
-* :class:`InMemoryJobService` performs finalisation/timeout bookkeeping and
-  delegates deadline arithmetic to patched helpers from
-  :mod:`src.app.domain.deadlines`.
-* :class:`InstrumentedWorker` exercises the control flow between the queue,
-  job service and mocked provider adapter, enabling us to verify end-to-end
-  contract expectations without hitting the database.
+The suite now relies on the real PostgreSQL-backed queue and
+:class:`~src.app.services.default.DefaultJobService` to verify end-to-end
+behaviour. A lightweight :class:`InstrumentedWorker` is still used to avoid
+touching provider adapters, but all queue interactions go through the live
+database provided by the ``postgres_queue`` fixture.
 
 Each test is marked both as ``contract`` and ``integration`` to align with the
 pytest marker policy outlined in ``tests/HOWTO.md``.
@@ -20,9 +13,8 @@ pytest marker policy outlined in ``tests/HOWTO.md``.
 from __future__ import annotations
 
 import asyncio
-from collections import deque
 from datetime import datetime, timedelta, timezone
-from typing import Deque, Dict, Iterable, Iterator
+from typing import Iterator
 from uuid import UUID, uuid4
 
 import pytest
@@ -30,9 +22,9 @@ from unittest.mock import Mock
 
 from src.app.domain import deadlines
 from src.app.domain.models import Job, JobFailureReason, JobStatus, MediaObject, Slot
-from src.app.infrastructure.queue.postgres import PostgresJobQueue, PostgresQueueConfig
+from src.app.infrastructure.queue.postgres import PostgresJobQueue
+from src.app.services.default import DefaultJobService
 from src.app.providers.base import ProviderAdapter
-from src.app.services.job_service import JobService
 from src.app.workers.queue_worker import QueueWorker
 
 from tests.mocks.providers import (
@@ -57,121 +49,13 @@ class TimeController:
         return self._current
 
 
-class InMemoryQueueDouble(PostgresJobQueue):
-    """In-memory replacement for ``PostgresJobQueue`` used in integration tests."""
-
-    def __init__(self) -> None:
-        super().__init__(config=PostgresQueueConfig(dsn="postgresql://contract-tests"))
-        self._pending: Deque[UUID] = deque()
-        self._jobs: Dict[UUID, Job] = {}
-
-    def enqueue(self, job: Job) -> Job:  # type: ignore[override]
-        if job.id not in self._jobs:
-            self._pending.append(job.id)
-        job.status = JobStatus.PENDING
-        job.is_finalized = False
-        job.failure_reason = None
-        self._jobs[job.id] = job
-        return job
-
-    def acquire_for_processing(self, *, now: datetime) -> Job | None:  # type: ignore[override]
-        for job_id in list(self._pending):
-            job = self._jobs[job_id]
-            if job.is_finalized:
-                self._pending.remove(job_id)
-                continue
-            if job.expires_at <= now:
-                # Expired jobs are handled separately via ``release_expired``.
-                continue
-            self._pending.remove(job_id)
-            job.status = JobStatus.PROCESSING
-            job.updated_at = now
-            return job
-        return None
-
-    def mark_finalized(self, job: Job) -> Job:  # type: ignore[override]
-        if job.id in self._pending:
-            self._pending.remove(job.id)
-        self._jobs[job.id] = job
-        return job
-
-    def release_expired(self, *, now: datetime) -> Iterable[Job]:  # type: ignore[override]
-        return [
-            job
-            for job in self._jobs.values()
-            if not job.is_finalized and job.expires_at <= now
-        ]
-
-
-class InMemoryJobService(JobService):
-    """Job service double that updates :class:`Job` records synchronously."""
-
-    def __init__(
-        self, queue: InMemoryQueueDouble, *, result_retention_hours: int
-    ) -> None:
-        self._queue = queue
-        self._result_retention_hours = result_retention_hours
-        self.finalized_jobs: list[Job] = []
-        self.failed_jobs: list[Job] = []
-
-    def acquire_next_job(self, *, now: datetime) -> Job | None:  # type: ignore[override]
-        return self._queue.acquire_for_processing(now=now)
-
-    def finalize_job(  # type: ignore[override]
-        self,
-        job: Job,
-        *,
-        finalized_at: datetime,
-        result_media: MediaObject | None,
-        inline_preview: str | None,
-    ) -> Job:
-        job.finalized_at = finalized_at
-        job.updated_at = finalized_at
-        job.is_finalized = True
-        job.failure_reason = None
-        if result_media is not None:
-            job.result_file_path = result_media.path
-            job.result_mime_type = result_media.mime
-            job.result_size_bytes = result_media.size_bytes
-            job.result_checksum = "mock-checksum"
-        job.result_inline_base64 = None  # Cleared after synchronous HTTP delivery.
-        job.result_expires_at = deadlines.calculate_result_expires_at(
-            finalized_at,
-            result_retention_hours=self._result_retention_hours,
-        )
-        self._queue.mark_finalized(job)
-        self.finalized_jobs.append(job)
-        return job
-
-    def fail_job(  # type: ignore[override]
-        self,
-        job: Job,
-        *,
-        failure_reason: JobFailureReason,
-        occurred_at: datetime,
-    ) -> Job:
-        job.finalized_at = occurred_at
-        job.updated_at = occurred_at
-        job.is_finalized = True
-        job.failure_reason = failure_reason
-        job.result_file_path = None
-        job.result_inline_base64 = None
-        job.result_mime_type = None
-        job.result_size_bytes = None
-        job.result_checksum = None
-        job.result_expires_at = None
-        self._queue.mark_finalized(job)
-        self.failed_jobs.append(job)
-        return job
-
-
 class InstrumentedWorker(QueueWorker):
     """Minimal worker that finalises jobs immediately for integration tests."""
 
     def __init__(
         self,
         *,
-        job_service: InMemoryJobService,
+        job_service: DefaultJobService,
         media_service: Mock,
         settings_service: Mock,
         stats_service: Mock,
@@ -179,22 +63,29 @@ class InstrumentedWorker(QueueWorker):
     ) -> None:
         super().__init__(
             job_service=job_service,
+            slot_service=Mock(name="slot_service"),
             media_service=media_service,
             settings_service=settings_service,
             stats_service=stats_service,
+            provider_factories={},
         )
         self.provider = provider
 
-    def run_once(self, *, now: datetime) -> None:  # type: ignore[override]
+    async def run_once(
+        self, *, now: datetime, shutdown_event: asyncio.Event | None = None
+    ) -> bool:  # type: ignore[override]
         job = self.job_service.acquire_next_job(now=now)
         if job is None:
-            return
+            return False
         if now >= job.expires_at:
             self.handle_timeout(job, now=now)
-            return
-        self.process_job(job, now=now)
+            return True
+        await self.process_job(job, now=now, shutdown_event=shutdown_event)
+        return True
 
-    def process_job(self, job: Job, *, now: datetime) -> None:  # type: ignore[override]
+    async def process_job(
+        self, job: Job, *, now: datetime, shutdown_event: asyncio.Event | None = None
+    ) -> None:  # type: ignore[override]
         preview = "cHJldmlldy1iaW5hcnk="
         job.provider_job_reference = f"provider-{job.id.hex}"
         job.result_inline_base64 = preview
@@ -208,28 +99,35 @@ class InstrumentedWorker(QueueWorker):
             mime="image/png",
             size_bytes=4096,
         )
-        self.job_service.finalize_job(
+        persisted = self.job_service.finalize_job(
             job,
             finalized_at=now,
             result_media=media,
             inline_preview=preview,
         )
+        self.job_service.jobs[job.id] = persisted
 
     def handle_timeout(self, job: Job, *, now: datetime) -> None:  # type: ignore[override]
-        self.job_service.fail_job(
+        job.result_file_path = None
+        job.result_inline_base64 = None
+        failed = self.job_service.fail_job(
             job,
             failure_reason=JobFailureReason.TIMEOUT,
             occurred_at=now,
         )
+        self.job_service.jobs[job.id] = failed
 
-    def cancel_job(self, job: Job, *, now: datetime) -> None:
+    async def cancel_job(self, job: Job, *, now: datetime) -> None:
         if job.provider_job_reference is not None:
-            asyncio.run(self.provider.cancel(job.provider_job_reference))
-        self.job_service.fail_job(
+            await self.provider.cancel(job.provider_job_reference)
+        job.result_file_path = None
+        job.result_inline_base64 = None
+        failed = self.job_service.fail_job(
             job,
             failure_reason=JobFailureReason.CANCELLED,
             occurred_at=now,
         )
+        self.job_service.jobs[job.id] = failed
 
 
 @pytest.fixture(autouse=True)
@@ -252,6 +150,14 @@ def patch_deadline_helpers(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
 
     monkeypatch.setattr(deadlines, "calculate_job_expires_at", _job_expires_at)
     monkeypatch.setattr(deadlines, "calculate_result_expires_at", _result_expires_at)
+    from src.app.services import default as default_services
+
+    monkeypatch.setattr(
+        default_services, "calculate_job_expires_at", _job_expires_at
+    )
+    monkeypatch.setattr(
+        default_services, "calculate_result_expires_at", _result_expires_at
+    )
     yield
 
 
@@ -261,13 +167,10 @@ def time_controller() -> TimeController:
 
 
 @pytest.fixture
-def queue_double() -> InMemoryQueueDouble:
-    return InMemoryQueueDouble()
-
-
-@pytest.fixture
-def job_service(queue_double: InMemoryQueueDouble) -> InMemoryJobService:
-    return InMemoryJobService(queue_double, result_retention_hours=72)
+def job_service(postgres_queue: PostgresJobQueue) -> DefaultJobService:
+    service = DefaultJobService(queue=postgres_queue)
+    service.result_retention_hours = 72
+    return service
 
 
 @pytest.fixture
@@ -283,7 +186,7 @@ def provider() -> MockGeminiProvider:
 
 @pytest.fixture
 def worker(
-    job_service: InMemoryJobService, provider: ProviderAdapter
+    job_service: DefaultJobService, provider: ProviderAdapter
 ) -> InstrumentedWorker:
     return InstrumentedWorker(
         job_service=job_service,
@@ -350,39 +253,40 @@ def slot(time_controller: TimeController) -> Slot:
 @pytest.mark.contract
 @pytest.mark.integration
 def test_worker_finalizes_job_within_sync_window(
-    queue_double: InMemoryQueueDouble,
+    postgres_queue: PostgresJobQueue,
     worker: InstrumentedWorker,
-    job_service: InMemoryJobService,
+    job_service: DefaultJobService,
     make_job,
     time_controller: TimeController,
 ) -> None:
     """Full cycle: enqueue → acquire → finalize within ``T_sync_response``."""
 
     job = make_job(sync_timeout_sec=180)
-    queue_double.enqueue(job)
+    postgres_queue.enqueue(job)
 
     processing_time = time_controller.advance(seconds=90)
     assert processing_time < job.expires_at
 
-    worker.run_once(now=processing_time)
+    asyncio.run(worker.run_once(now=processing_time))
 
-    assert job.is_finalized is True
-    assert job.failure_reason is None
-    assert job.finalized_at == processing_time
-    assert job.result_file_path == f"results/{job.id.hex}.png"
-    assert job.result_mime_type == "image/png"
-    assert job.result_inline_base64 is None
-    assert job.result_expires_at == processing_time + timedelta(hours=72)
-    assert job_service.finalized_jobs == [job]
+    persisted = job_service.get_job(job.id)
+    assert persisted is not None
+    assert persisted.is_finalized is True
+    assert persisted.failure_reason is None
+    assert persisted.finalized_at == processing_time
+    assert persisted.result_file_path == f"results/{job.id.hex}.png"
+    assert persisted.result_mime_type == "image/png"
+    assert persisted.result_inline_base64 == "cHJldmlldy1iaW5hcnk="
+    assert persisted.result_expires_at == processing_time + timedelta(hours=72)
 
 
 @pytest.mark.contract
 @pytest.mark.integration
 def test_manual_cancel_invokes_provider_and_marks_failure(
-    queue_double: InMemoryQueueDouble,
+    postgres_queue: PostgresJobQueue,
     worker: InstrumentedWorker,
     provider: MockGeminiProvider,
-    job_service: InMemoryJobService,
+    job_service: DefaultJobService,
     make_job,
     time_controller: TimeController,
     slot: Slot,
@@ -398,28 +302,29 @@ def test_manual_cancel_invokes_provider_and_marks_failure(
     )
     reference = asyncio.run(provider.submit_job(payload))
     job.provider_job_reference = reference
-    queue_double.enqueue(job)
+    postgres_queue.enqueue(job)
 
     cancel_at = time_controller.advance(seconds=10)
-    worker.cancel_job(job, now=cancel_at)
+    asyncio.run(worker.cancel_job(job, now=cancel_at))
 
     assert provider.events[-1] == f"cancel:{reference}"
     with pytest.raises(RuntimeError, match="cancelled"):
         asyncio.run(provider.poll_status(reference))
-    assert job.is_finalized is True
-    assert job.failure_reason == JobFailureReason.CANCELLED
-    assert job.finalized_at == cancel_at
-    assert job.result_file_path is None
-    assert job.result_inline_base64 is None
-    assert job_service.failed_jobs == [job]
+    persisted = job_service.get_job(job.id)
+    assert persisted is not None
+    assert persisted.is_finalized is True
+    assert persisted.failure_reason == JobFailureReason.CANCELLED
+    assert persisted.finalized_at == cancel_at
+    assert persisted.result_file_path is None
+    assert persisted.result_inline_base64 is None
 
 
 @pytest.mark.contract
 @pytest.mark.integration
 def test_release_expired_jobs_trigger_timeout_processing(
-    queue_double: InMemoryQueueDouble,
+    postgres_queue: PostgresJobQueue,
     worker: InstrumentedWorker,
-    job_service: InMemoryJobService,
+    job_service: DefaultJobService,
     make_job,
     time_controller: TimeController,
 ) -> None:
@@ -430,18 +335,19 @@ def test_release_expired_jobs_trigger_timeout_processing(
         result_file_path="results/pending.bin",
         result_inline_base64="cHJldmlldyI=",
     )
-    queue_double.enqueue(job)
+    postgres_queue.enqueue(job)
 
     expired_now = time_controller.advance(seconds=45)
     assert expired_now > job.expires_at
 
-    expired_jobs = list(queue_double.release_expired(now=expired_now))
-    assert expired_jobs == [job]
+    expired_jobs = list(postgres_queue.release_expired(now=expired_now))
+    assert [item.id for item in expired_jobs] == [job.id]
 
     worker.handle_timeout(job, now=expired_now)
 
-    assert job.is_finalized is True
-    assert job.failure_reason == JobFailureReason.TIMEOUT
-    assert job.result_file_path is None
-    assert job.result_inline_base64 is None
-    assert job_service.failed_jobs == [job]
+    persisted = job_service.get_job(job.id)
+    assert persisted is not None
+    assert persisted.is_finalized is True
+    assert persisted.failure_reason == JobFailureReason.TIMEOUT
+    assert persisted.result_file_path is None
+    assert persisted.result_inline_base64 is None

@@ -4,13 +4,14 @@ The scaffolding in phase 2 introduces domain models and interfaces without
 implementations. Follow-up phases must address the following integration gaps:
 
 - **PostgreSQL schema & migrations** — create tables for `job`, `media_object`,
-  `processing_log`, `template_media`, slot/template bindings and `app_settings`.
-  Queue operations have to honour `job.expires_at = created_at + T_sync_response`
-  and use `SELECT ... FOR UPDATE SKIP LOCKED` with appropriate indexes to avoid
+  `processing_log`, `template_media`, slot/template bindings and `app_settings`
+  via Alembic migrations. Queue operations have to honour
+  `job.expires_at = created_at + T_sync_response` and use
+  `SELECT ... FOR UPDATE SKIP LOCKED` with appropriate indexes to avoid
   head-of-line blocking.
-- **PostgresJobQueue implementation** — wire `PostgresJobQueue` with psycopg or
-  SQLAlchemy, inject `statement_timeout`, batching and retry policies matching
-  `T_sync_response`.
+- **PostgresJobQueue implementation** — wire `PostgresJobQueue` with
+  SQLAlchemy (Core), inject `statement_timeout`, batching and retry policies
+  matching `T_sync_response`.
 - **Transaction management** — wire a concrete `UnitOfWork` (SQLAlchemy or
   psycopg-based) to coordinate `JobRepository`, `SlotRepository`,
   `SettingsRepository`, `StatsRepository` and media storage updates within

@@ -1,9 +1,11 @@
 ---
 id: worklog
-updated: 2025-10-21
+updated: 2025-10-29
 ---
 
 # Черновой журнал до checkpoint
+
+> Перед созданием `CONSULT`/`REFLECT` задач в `.memory/TASKS.md` (см. «Практика CONSULT/REFLECT» в `agents.md`) запиши в этом журнале краткий контекст решения и вопросы, чтобы на созвоне можно было ссылаться на готовые заметки.
 
 ## <taskId>
 - 2025-10-08 10:12 — проверил версии spec/contracts/* (OK)
@@ -107,3 +109,108 @@ updated: 2025-10-21
 - 2025-10-21 09:12 — установил отсутствующие зависимости fastapi/httpx/pydantic-settings/jinja2 для запуска pytest в окружении контейнера.
 - 2025-10-21 09:25 — прогнал `pytest -m unit` и `pytest -m contract`, убедился в зелёном статусе обеих матриц и зафиксировал предупреждения httpx.
 - 2025-10-21 09:40 — обновил tests/TEST_REPORT_PHASE3.md логами текущего прогона и подготовил изменения в .memory (WORKLOG/PROGRESS/ASKS).
+
+## phase4-decomposition-2025-10-22
+- 2025-10-22 09:05 — перечитал .memory/MISSION.md, CONTEXT.md, USECASES.md и спецификации OpenAPI/blueprints для напоминания ограничений Фазы 4.
+- 2025-10-22 09:25 — проанализировал текущие пункты Фазы 4 в .memory/TASKS.md, отметил крупные области (ingest, очередь, воркеры, admin, security, observability).
+- 2025-10-22 09:45 — сопоставил требования TTL/очереди/провайдеров/безопасности из Docs/implementation_roadmap.md и ADR-0002 с существующими каркасами src/ (JobService, QueueWorker, MediaService).
+- 2025-10-22 10:05 — сформировал детальную декомпозицию подпунктов 4.1–4.7, учёл тесты/документацию/очистку, обновил .memory/TASKS.md и проверил структуру чекбоксов.
+
+## phase4-analysis-2025-10-22
+- 2025-10-22 11:20 — прошёлся по контрактам ingest и тестовым фикстурам, выявил рассинхрон multipart ↔ JSON/base64 и несоответствие Pydantic-модели `IngestRequest` требованиям `UploadFile`.
+- 2025-10-22 11:40 — проверил воркер и DI: отсутствие `SlotService`/регистрации провайдеров в `ServiceRegistry` блокирует `dispatch_to_provider` и выбор адаптера.
+- 2025-10-22 12:00 — зафиксировал найденные блокеры и подготовил рекомендации/промпты для их устранения перед стартом реализации Фазы 4.
+
+## ask-table-fix-2025-10-22
+- 2025-10-22 13:10 — проверил .memory/ASKS.md и заметил, что записи оформлены списком вместо табличного представления.
+- 2025-10-22 13:18 — преобразовал список запросов в Markdown-таблицу и визуально убедился, что разметка корректна.
+
+## phase4-worker-di-2025-10-22
+- 2025-10-22 15:10 — сформировал расширенный промпт для Codex Agent по устранению пробелов DI и доработке `QueueWorker`/`ServiceRegistry`, сохранил в Docs/prompts/phase4-worker-provider-di.md.
+
+## phase4-worker-dispatch-2025-10-22
+- 2025-10-22 16:05 — изучил замечания пользователя, пересмотрел текущие изменения `QueueWorker`/`ServiceRegistry` и тесты, сверил требования с blueprints и providers docs.
+- 2025-10-22 16:20 — проверил DI-поток: убедился в регистрации фабрик провайдеров и конфигов, проанализировал `dispatch_to_provider`, обработку логов и TTL.
+- 2025-10-22 16:35 — запустил `pytest -m "unit or integration"`, получил ошибку отсутствия fastapi; установил fastapi/httpx/pydantic-settings/jinja2 через pip.
+- 2025-10-22 16:45 — повторно выполнил `pytest -m "unit or integration"` (зелёный) и `pytest -m contract` (зелёный), сохранил логи для отчёта.
+- 2025-10-22 16:55 — подготовил обновления .memory (WORKLOG/TASKS/PROGRESS/ASKS/INDEX) и сформировал план фиксации изменений.
+
+## phase4-ingest-core-2025-10-23
+- 2025-10-23 09:05 — перечитал .memory/MISSION.md, CONTEXT.md, TASKS.md, USECASES.md для уточнения ценности ingest и TTL ограничений.
+- 2025-10-23 09:25 — изучил .memory/DECISIONS.md и ADR-0002 по TTL/очистке, убедился в требованиях к Job.expires_at и media_object TTL.
+- 2025-10-23 09:40 — сверился с .memory/ASKS.md и PROGRESS.md, подтвердил текущий scope (фаза 4.1.1–4.1.5) без дополнительных запросов.
+- 2025-10-23 10:00 — проанализировал spec/contracts/openapi.yaml и схемы IngestRequest/Job/Settings на обязательные поля, статусы и TTL расчёты.
+- 2025-10-23 10:20 — прошёлся по blueprints (domain-model, use-cases, constraints-risks, nfr, test-plan) и сделал заметки по дедлайнам, лимитам payload и требованиям логирования.
+- 2025-10-23 10:45 — изучил реализацию scaffolding src/app/api/routes/ingest.py, core/app.py, services, инфраструктуру и тесты contract/test_ingest.py для планирования реализации.
+- 2025-10-23 11:15 — реализовал DefaultSettings/Slot/Media/JobService и привязал их в create_app, настроил PostgresJobQueue хранить Job in-memory.
+- 2025-10-23 12:00 — доработал ingest_slot: проверка пароля/слота, валидация multipart, сохранение файла в MEDIA_ROOT/payloads, регистрация MediaObject и создание Job.
+- 2025-10-23 13:10 — переписал contract/unit тесты ingest, добавил unit тесты для password helper, адаптировал FakeJobQueue и фикстуры.
+- 2025-10-23 14:00 — починил зависимые модули (schemas model_rebuild, default settings stubs), прогнал ruff/mypy/pytest unit+contract (зелёные).
+
+## phase4-ingest-followup-2025-10-24
+- 2025-10-24 09:05 — перечитал .memory/MISSION.md, CONTEXT.md, TASKS.md, USECASES.md перед продолжением работ по ingest.
+- 2025-10-24 09:20 — ознакомился с .memory/DECISIONS.md, ADR-0002, ASKS.md, PROGRESS.md для подтверждения статуса сабтасков 4.1.1–4.1.5.
+- 2025-10-24 09:35 — сверился с spec/contracts/openapi.yaml и схемами IngestRequest/Job/Settings, а также blueprints (domain-model, use-cases, constraints-risks, nfr, test-plan) для требований по фазе 4.1.
+- 2025-10-24 12:05 — сопоставил текущую реализацию ingest с Docs/brief.md и OpenAPI (проверка пароля, TTL, лимит payload, коды ошибок).
+- 2025-10-24 12:20 — обновил DI: сервисные фабрики получают AppConfig из FastAPI state, перепроверил MEDIA_ROOT и регистрацию ServiceRegistry.
+- 2025-10-24 12:35 — установил недостающие зависимости (fastapi, httpx, python-multipart, jinja2, pydantic-settings), прогнал ruff format/check, mypy и pytest -q -m "unit or contract" (зелёные).
+
+## phase4-ingest-sync-2025-10-25
+- 2025-10-25 09:10 — изучил пользовательский запрос ASK-0013 (фаза 4.1.6–4.1.10), перечитал .memory/MISSION/CONTEXT/TASKS/ASKS/DECISIONS/USECASES и ingest спецификацию в OpenAPI/JSON Schema.
+- 2025-10-25 09:35 — осмотрел текущий код ingest маршрута, DefaultJobService, PostgresJobQueue и тестовые фикстуры, набросал план реализации polling, очистки, ошибок очереди и обновления тестов.
+- 2025-10-25 10:05 — уточнил требования к очистке payload и TTL, сверился с ADR-0002.
+
+## phase4-workers-plan-2025-10-29
+- 2025-10-29 09:05 — уточнил с тимлидом модель воркеров: четыре фоновые задачи внутри FastAPI, общий event loop uvicorn/asyncio, ретраи 5× (таймаут 5 с, пауза 3 с), при shutdown воркеры закрывают HTTP-клиенты.
+- 2025-10-29 09:20 — обновил спецификации (context, vision, domain-model, NFR, constraints, test-plan) и ops runbook, чтобы зафиксировать утверждённую архитектуру воркеров и поведение ретраев/shutdown.
+- 2025-10-29 09:35 — синхронизировал .memory/TASKS (закрыл CONSULT/REFLECT подпункты 4.3.10–4.3.11, уточнил 4.3.1/4.3.9/4.3.12), добавил запись в WORKLOG и подготовил обновление PROGRESS/ASKS.
+
+## phase4-workers-async-2025-10-29
+- 2025-10-29 11:05 — перечитал .memory/TASKS.md (4.3.1/4.3.9/4.3.12), blueprints по воркерам и очереди, зафиксировал требования к retry (5 попыток, 3 с пауза, таймаут 5 с) и graceful shutdown.
+- 2025-10-29 11:18 — осмотрел текущую реализацию QueueWorker (sync, asyncio.run), DI create_app и тесты contract/integration для планирования перехода на async модель и фоновые задачи FastAPI.
+- 2025-10-29 11:32 — сформировал план: переписать QueueWorker на async методы, добавить RetryConfig, реализовать aclose/cancellation, обновить create_app с пулом воркеров и скорректировать тесты на asyncio.
+- 2025-10-29 12:10 — Переписал QueueWorker на async (run_once/process_job/dispatch), добавил retry 5×/3 с/5 с, cancel handling и aclose провайдеров; внедрил DefaultStatsService.
+- 2025-10-29 12:35 — Обновил create_app: регистрирует DefaultStatsService, стартует пул из четырёх воркеров на startup и корректно гасит его на shutdown; добавил опцию disable_worker_pool для тестов.
+- 2025-10-29 12:50 — Переписал contract/integration тесты QueueWorker на asyncio.run, адаптировал фикстуры sleep, отключил воркер-пул в contract_app.
+- 2025-10-29 13:05 — pytest tests/integration/test_queue_worker_dispatch.py завершился ошибкой (нет psycopg) — зафиксировал ограничение окружения.
+
+## phase5-architecture-analysis-2025-10-28
+- 2025-10-28 09:10 — перечитал инструкции agents.md и политику CONSULT/REFLECT перед анализом Фазы 5.
+- 2025-10-28 09:25 — прошёлся по подпунктам 5.1–5.4 в .memory/TASKS.md, оценил сложность и потенциальные архитектурные ветвления для каждого сабтаска.
+- 2025-10-28 09:40 — добавил пометки о сложности и рисках ветвления, создал дополнительные REFLECT/CONSULT задачи для ключевых решений (httpx lifecycle, Turbotext ссылки, фронтенд стек, публичный UX).
+- 2025-10-28 09:55 — перепроверил форматирование .memory/TASKS.md и убедился, что новые комментарии не нарушают структуру чекбоксов.
+- 2025-10-25 10:20 — реализовал синхронный ingest (polling по job, декодирование inline результата, маппинг 429/503/504) и очистку payload/inline данных, добавил queue exceptions.
+- 2025-10-25 10:55 — обновил FakeJobQueue и contract/unit тесты (успех, неверный пароль, 415, 429, 504), добавил unit проверки `_decode_inline_result` и DefaultJobService cleanup.
+- 2025-10-25 11:20 — создал Docs/operations/ingest_runbook.md и ссылку в README, синхронизировал .memory/TASKS/PROGRESS/ASKS/INDEX.
+- 2025-10-25 11:35 — прогнал `ruff format`, `ruff check`, `mypy src/`, `pytest -m unit`, `pytest -m contract` (после установки fastapi/httpx/pydantic и python-multipart).
+
+## phase4-ingest-tests-2025-10-27
+- 2025-10-27 09:15 — перечитал .memory/TASKS.md (сабтаски 4.1.9–4.1.10) и Docs/operations/ingest_runbook.md для уточнения требований к тестам и документации.
+- 2025-10-27 09:45 — обновил фикстуры ingest (небезопасное имя файла, предвычисленный TTL) и проверил FakeJobQueue на очистку payload после ошибок.
+- 2025-10-27 10:10 — расширил unit-тесты ingest helper-ов (`_store_payload`, `_sanitize_filename`, `_error_response`), адаптировал вызовы через `asyncio.run`.
+- 2025-10-27 10:35 — актуализировал контрактные тесты ingest (Cache-Control, очищенные payload, `expires_at` в ответе 504).
+- 2025-10-27 10:50 — дополнил Docs/operations/ingest_runbook.md примерами curl, TTL-политикой и описанием заголовков.
+- 2025-10-27 11:05 — прогнал `pytest tests/unit/test_ingest_helpers.py` и `pytest tests/contract/test_ingest.py` (зелёные).
+- 2025-10-27 12:30 — отметил тесты ingest helper-ов маркером `unit`, чтобы они входили в матрицу `pytest -m unit`.
+
+## phase4-task4.2-2025-10-16
+- 2025-10-16 17:11 — изучил задание 4.2 и существующий каркас PostgresJobQueue
+- 2025-10-16 17:11 — запланировал реализацию SQLite-совместимого слоя (enqueue, acquire, finalize, timeout) и тесты
+- 2025-10-16 17:14 — реализовал PostgresJobQueue на SQLite (enqueue/acquire/finalize/timeout, backpressure) и обновил DefaultJobService
+- 2025-10-16 17:14 — добавил unit-тесты очереди, адаптировал тесты сервиса, pytest -m unit завершается ошибкой (нет fastapi)
+
+## phase4-open-tasks-review-2025-10-27
+- 2025-10-27 13:25 — перечитал .memory/TASKS.md (подфазы 4.2–4.9) и требования roadmap для уточнения ожидаемых артефактов реализации.
+- 2025-10-27 13:40 — осмотрел текущие заготовки очереди, воркера и сервисов (`src/app/infrastructure/queue/postgres.py`, `src/app/workers/queue_worker.py`, `src/app/services/default.py`) на предмет пробелов.
+- 2025-10-27 14:05 — зафиксировал анализ незавершённых тасков фазы 4 и рекомендации по декомпозиции/дополнительным пунктам в `.memory/notes/phase4_open_tasks_analysis.md`.
+
+## phase4-queue-migrations-2025-10-28
+- 2025-10-28 09:10 — перечитал .memory/TASKS.md (подфаза 4.2) и Docs/operations/ingest_runbook.md для требований к миграциям и конфигурации очереди.
+- 2025-10-28 09:25 — подготовил структуру Alembic (`alembic.ini`, `src/app/infrastructure/queue/migrations/*`), описал схему в `schema.py` и создал миграцию `202510280001_create_queue_tables`.
+- 2025-10-28 10:05 — обновил `PostgresJobQueue` (удалил создание схемы налету, добавил сообщения об отсутствии миграций), прокинул `queue_statement_timeout_ms` из `AppConfig` и настроил прогон миграций в `tests/conftest.py`.
+- 2025-10-28 10:40 — задокументировал запуск Alembic и параметры очереди (`Docs/operations/postgres_queue_runbook.md`, обновление README и ingest runbook), установил alembic/sqlalchemy/psycopg для локальной проверки, запуск `pytest -m unit` упал из-за отсутствия fastapi в окружении.
+
+## phase4-queue-backpressure-2025-10-28
+- 2025-10-28 14:05 — зафиксировал решение держать таблицу `processing_logs` в первой миграции, чтобы фазы 4.3/4.5 могли сразу опираться на историю обработки.
+- 2025-10-28 14:20 — добавил `queue_max_in_flight_jobs` в `AppConfig` и DI, обновил runbook/ingest README по переменной `PHOTOCHANGER_QUEUE_MAX_IN_FLIGHT_JOBS` (дефолт 12 активных задач).
+- 2025-10-28 14:35 — синхронизировал .memory (TASKS, ASKS, PROGRESS) и задокументировал back-pressure решение для команды эксплуатации.

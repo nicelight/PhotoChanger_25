@@ -35,9 +35,7 @@ def test_list_slots_success(
     def _response() -> JSONResponse:
         return JSONResponse(status_code=status.HTTP_200_OK, content=sample_slot_list)
 
-    patch_endpoint_response(
-        "src.app.api.routes.slots", "listSlots", _response
-    )
+    patch_endpoint_response("src.app.api.routes.slots", "listSlots", _response)
 
     response = contract_client.get("/api/slots")
 
@@ -62,16 +60,17 @@ def test_get_slot_success(
     def _response() -> JSONResponse:
         return JSONResponse(status_code=status.HTTP_200_OK, content=sample_slot)
 
-    patch_endpoint_response(
-        "src.app.api.routes.slots", "getSlot", _response
-    )
+    patch_endpoint_response("src.app.api.routes.slots", "getSlot", _response)
 
     response = contract_client.get("/api/slots/slot-001")
 
     assert response.status_code == status.HTTP_200_OK
     payload = response.json()
     validate_with_schema(payload, "Slot.json")
-    assert payload["recent_results"][0]["result_expires_at"] == sample_slot["recent_results"][0]["result_expires_at"]
+    assert (
+        payload["recent_results"][0]["result_expires_at"]
+        == sample_slot["recent_results"][0]["result_expires_at"]
+    )
 
 
 @pytest.mark.contract
@@ -91,9 +90,7 @@ def test_update_slot_success(
             content={"id": "slot-001", "updated_at": "2025-10-18T10:01:00Z"},
         )
 
-    patch_endpoint_response(
-        "src.app.api.routes.slots", "updateSlot", _response
-    )
+    patch_endpoint_response("src.app.api.routes.slots", "updateSlot", _response)
 
     response = contract_client.put(
         "/api/slots/slot-001",
@@ -135,7 +132,10 @@ def test_get_settings_success(
     assert response.status_code == status.HTTP_200_OK
     payload = response.json()
     validate_with_schema(payload, "Settings.json")
-    assert payload["media_cache"]["public_link_ttl_sec"] == payload["ingest"]["sync_response_timeout_sec"]
+    assert (
+        payload["media_cache"]["public_link_ttl_sec"]
+        == payload["ingest"]["sync_response_timeout_sec"]
+    )
 
 
 @pytest.mark.contract
@@ -153,16 +153,17 @@ def test_get_slot_stats_success(
     def _response() -> JSONResponse:
         return JSONResponse(status_code=status.HTTP_200_OK, content=sample_slot_stats)
 
-    patch_endpoint_response(
-        "src.app.api.routes.stats", "getSlotStats", _response
-    )
+    patch_endpoint_response("src.app.api.routes.stats", "getSlotStats", _response)
 
     response = contract_client.get("/api/stats/slot-001?group_by=day")
 
     assert response.status_code == status.HTTP_200_OK
     payload = response.json()
     validate_with_schema(payload, "SlotStatsResponse.json")
-    assert payload["summary"]["last_reset_at"] == sample_slot_stats["summary"]["last_reset_at"]
+    assert (
+        payload["summary"]["last_reset_at"]
+        == sample_slot_stats["summary"]["last_reset_at"]
+    )
 
 
 @pytest.mark.contract
@@ -180,9 +181,7 @@ def test_get_global_stats_success(
     def _response() -> JSONResponse:
         return JSONResponse(status_code=status.HTTP_200_OK, content=sample_global_stats)
 
-    patch_endpoint_response(
-        "src.app.api.routes.stats", "getGlobalStats", _response
-    )
+    patch_endpoint_response("src.app.api.routes.stats", "getGlobalStats", _response)
 
     response = contract_client.get(
         "/api/stats/global?page=1&page_size=10&group_by=week&sort_by=period_start&sort_order=desc"
@@ -289,9 +288,7 @@ def test_global_stats_invalid_range(
             },
         )
 
-    patch_endpoint_response(
-        "src.app.api.routes.stats", "getGlobalStats", _response
-    )
+    patch_endpoint_response("src.app.api.routes.stats", "getGlobalStats", _response)
 
     response = contract_client.get(
         "/api/stats/global?from=2025-10-20T00:00:00Z&to=2025-10-10T00:00:00Z&group_by=week"

@@ -43,6 +43,18 @@ class AppConfig(BaseSettings):
         default="postgresql://localhost:5432/photochanger",
         description="Connection string for the primary PostgreSQL queue",
     )
+    queue_statement_timeout_ms: int = Field(
+        default=5_000,
+        ge=1_000,
+        description="PostgreSQL statement_timeout used by the job queue (ms).",
+    )
+    queue_max_in_flight_jobs: int = Field(
+        default=12,
+        ge=1,
+        description=(
+            "Upper bound on concurrently active jobs before ingest applies back-pressure."
+        ),
+    )
     media_root: Path = Field(
         default_factory=_default_media_root,
         description="Filesystem root for MEDIA_ROOT artefacts.",

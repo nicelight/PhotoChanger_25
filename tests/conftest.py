@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import base64
 import json
+import os
 import re
 import sys
 import uuid
@@ -19,7 +20,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from importlib import import_module
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable
+from typing import Any, Callable, Dict, Iterable, Iterator
 from urllib.parse import urlparse
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -27,6 +28,16 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 SCHEMAS_ROOT = PROJECT_ROOT / "spec" / "contracts" / "schemas"
+
+import psycopg  # noqa: E402  (import after sys.path update)
+from psycopg import conninfo, sql  # noqa: E402  (import after sys.path update)
+
+try:  # noqa: E402  (import after sys.path update)
+    from alembic import command as alembic_command
+    from alembic.config import Config as AlembicConfig
+except ModuleNotFoundError:  # pragma: no cover - optional dependency
+    alembic_command = None  # type: ignore[assignment]
+    AlembicConfig = None  # type: ignore[assignment]
 
 from tests.mocks.providers import (  # noqa: E402  (import after sys.path update)
     MockGeminiProvider,
@@ -276,6 +287,127 @@ class SimpleSchemaValidator:
 
 import pytest  # noqa: E402  (import after helper definitions)
 
+from src.app.infrastructure.queue.postgres import (  # noqa: E402
+    PostgresJobQueue,
+    PostgresQueueConfig,
+)
+
+
+def _resolve_postgres_dsn() -> str:
+    env_dsn = os.getenv("TEST_POSTGRES_DSN")
+    if env_dsn:
+        return env_dsn
+    params: dict[str, object] = {
+        "host": os.getenv("TEST_POSTGRES_HOST", "localhost"),
+        "port": os.getenv("TEST_POSTGRES_PORT", "5432"),
+        "dbname": os.getenv("TEST_POSTGRES_DB", "photochanger_test"),
+        "user": os.getenv("TEST_POSTGRES_USER", "postgres"),
+        "password": os.getenv("TEST_POSTGRES_PASSWORD", "postgres"),
+    }
+    return conninfo.make_conninfo(**params)
+
+
+def _ensure_database_exists(dsn: str) -> None:
+    params = conninfo.conninfo_to_dict(dsn)
+    dbname = params.get("dbname")
+    if not dbname:
+        raise RuntimeError("PostgreSQL DSN must include a database name")
+    admin_dsn = conninfo.make_conninfo(
+        host=params.get("host") or "localhost",
+        port=params.get("port") or "5432",
+        user=params.get("user"),
+        password=params.get("password"),
+        dbname=os.getenv("TEST_POSTGRES_TEMPLATE_DB", "postgres"),
+    )
+    with psycopg.connect(admin_dsn, autocommit=True) as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (dbname,))
+            if cur.fetchone() is None:
+                cur.execute(
+                    sql.SQL("CREATE DATABASE {}").format(sql.Identifier(dbname))
+                )
+
+
+_applied_migrations: set[str] = set()
+
+
+def _apply_queue_migrations(dsn: str) -> None:
+    if alembic_command is None or AlembicConfig is None:
+        import pytest
+
+        pytest.skip("Alembic is required for PostgreSQL queue tests")
+    if dsn in _applied_migrations:
+        return
+    config = AlembicConfig(str(PROJECT_ROOT / "alembic.ini"))
+    config.set_main_option(
+        "script_location", str(PROJECT_ROOT / "src/app/infrastructure/queue/migrations")
+    )
+    config.set_main_option("sqlalchemy.url", dsn)
+    alembic_command.upgrade(config, "head")
+    _applied_migrations.add(dsn)
+
+
+def _truncate_postgres_tables(dsn: str) -> None:
+    with psycopg.connect(dsn, autocommit=True) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT tablename
+                FROM pg_tables
+                WHERE schemaname = 'public'
+                  AND tablename IN ('processing_logs', 'jobs')
+                ORDER BY tablename
+                """
+            )
+            tables = [sql.Identifier("public", row[0]) for row in cur.fetchall()]
+            if not tables:
+                return
+            cur.execute(
+                sql.SQL("TRUNCATE TABLE {} RESTART IDENTITY CASCADE").format(
+                    sql.SQL(", ").join(tables)
+                )
+            )
+
+
+@pytest.fixture(scope="session")
+def postgres_dsn() -> Iterator[str]:
+    dsn = _resolve_postgres_dsn()
+    try:
+        _ensure_database_exists(dsn)
+    except psycopg.OperationalError as exc:  # pragma: no cover - environment guard
+        pytest.skip(f"PostgreSQL unavailable for tests: {exc}")
+    yield dsn
+
+
+@pytest.fixture
+def postgres_queue_factory(postgres_dsn: str) -> Iterator[Callable[..., PostgresJobQueue]]:
+    created: list[PostgresJobQueue] = []
+
+    def _factory(**overrides: object) -> PostgresJobQueue:
+        _truncate_postgres_tables(postgres_dsn)
+        _apply_queue_migrations(postgres_dsn)
+        config_kwargs: dict[str, object] = {"dsn": postgres_dsn}
+        config_kwargs.update(overrides)
+        config = PostgresQueueConfig(**config_kwargs)
+        queue = PostgresJobQueue(config=config)
+        created.append(queue)
+        return queue
+
+    yield _factory
+
+    for queue in created:
+        backend = getattr(queue, "_backend", None)
+        connection = getattr(backend, "_conn", None)
+        if connection is not None:
+            connection.close()
+    _truncate_postgres_tables(postgres_dsn)
+
+
+@pytest.fixture
+def postgres_queue(postgres_queue_factory: Callable[..., PostgresJobQueue]) -> Iterator[PostgresJobQueue]:
+    queue = postgres_queue_factory()
+    yield queue
+
 try:  # pragma: no cover - guard for environments without FastAPI
     from fastapi import Response
     from fastapi.testclient import TestClient
@@ -283,6 +415,10 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency
     pytest.skip("FastAPI is required for contract tests", allow_module_level=True)
 
 from src.app.core.app import create_app  # noqa: E402
+from src.app.core.config import AppConfig  # noqa: E402
+from src.app.domain.models import Job  # noqa: E402
+from src.app.services.job_service import QueueBusyError, QueueUnavailableError  # noqa: E402
+from src.app.services.registry import ServiceRegistry  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -295,6 +431,11 @@ class FakeJobQueue:
     """In-memory collection that stores Job records for contract tests."""
 
     jobs: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    domain_jobs: Dict[str, Job] = field(default_factory=dict)
+    raise_busy: bool = False
+    raise_unavailable: bool = False
+    auto_finalize_inline: bytes | None = None
+    auto_finalize_mime: str = "image/jpeg"
 
     def register(self, job: Dict[str, Any]) -> None:
         """Persist a Job payload so tests can reuse its deadline metadata."""
@@ -305,6 +446,74 @@ class FakeJobQueue:
         """Return a previously registered Job by identifier."""
 
         return self.jobs[job_id]
+
+    @staticmethod
+    def _iso(dt: datetime | None) -> str | None:
+        if dt is None:
+            return None
+        return (
+            dt.astimezone(timezone.utc)
+            .replace(microsecond=0)
+            .isoformat()
+            .replace("+00:00", "Z")
+        )
+
+    def _snapshot(self, job: Job) -> Dict[str, Any]:
+        return {
+            "id": str(job.id),
+            "slot_id": job.slot_id,
+            "status": job.status.value,
+            "is_finalized": job.is_finalized,
+            "failure_reason": job.failure_reason.value if job.failure_reason else None,
+            "provider_job_reference": job.provider_job_reference,
+            "payload_path": job.payload_path,
+            "result_file_path": job.result_file_path,
+            "result_inline_base64": job.result_inline_base64,
+            "result_mime_type": job.result_mime_type,
+            "result_size_bytes": job.result_size_bytes,
+            "result_checksum": job.result_checksum,
+            "result_expires_at": self._iso(job.result_expires_at),
+            "expires_at": self._iso(job.expires_at),
+            "created_at": self._iso(job.created_at),
+            "updated_at": self._iso(job.updated_at),
+            "finalized_at": self._iso(job.finalized_at),
+        }
+
+    def _store(self, job: Job) -> None:
+        job_id = str(job.id)
+        self.domain_jobs[job_id] = job
+        self.jobs[job_id] = self._snapshot(job)
+
+    def enqueue(self, job: Job) -> Job:
+        """Store an enqueued job for later inspection."""
+
+        if self.raise_busy:
+            raise QueueBusyError("queue saturated")
+        if self.raise_unavailable:
+            raise QueueUnavailableError("queue unavailable")
+
+        self._store(job)
+        job_id = str(job.id)
+        if self.auto_finalize_inline is not None:
+            self.finalize_inline(
+                job_id, self.auto_finalize_inline, mime=self.auto_finalize_mime
+            )
+        return job
+
+    def finalize_inline(
+        self, job_id: str, payload: bytes, *, mime: str = "image/jpeg"
+    ) -> None:
+        """Mark a job as finalized with an inline base64 payload."""
+
+        job = self.domain_jobs[job_id]
+        job.is_finalized = True
+        job.failure_reason = None
+        job.result_inline_base64 = base64.b64encode(payload).decode("ascii")
+        job.result_mime_type = mime
+        job.result_size_bytes = len(payload)
+        job.updated_at = datetime.now(timezone.utc)
+        job.finalized_at = job.updated_at
+        self._store(job)
 
 
 @dataclass
@@ -372,11 +581,29 @@ def fake_result_store() -> FakeResultStore:
 
 
 @pytest.fixture
-def contract_app(fake_job_queue: FakeJobQueue, fake_result_store: FakeResultStore):
+def contract_app(
+    fake_job_queue: FakeJobQueue,
+    fake_result_store: FakeResultStore,
+    tmp_path,
+):
     """Instantiate the FastAPI application with fake infrastructure state."""
 
-    extra_state = {"job_queue": fake_job_queue, "result_store": fake_result_store}
+    app_config = AppConfig(media_root=tmp_path / "media")
+    extra_state = {
+        "job_queue": fake_job_queue,
+        "result_store": fake_result_store,
+        "app_config": app_config,
+        "disable_worker_pool": True,
+    }
     app = create_app(extra_state=extra_state)
+
+    # Reduce the synchronous response timeout to keep tests fast.
+    registry: ServiceRegistry = app.state.service_registry  # type: ignore[attr-defined]
+    settings_service = registry.resolve_settings_service()(config=app.state.config)
+    settings = settings_service.read_settings()
+    settings.ingest.sync_response_timeout_sec = 1
+    settings.ingest.ingest_ttl_sec = 1
+    settings.media_cache.public_link_ttl_sec = 1
 
     # Ensure static stats routes have priority over dynamic slot routes for tests.
     routes = app.router.routes
@@ -753,12 +980,20 @@ def ingest_payload() -> Dict[str, Any]:
     """Provide form-encoded ingest payload compatible with the stub schema."""
 
     image_bytes = b"\xff\xd8contract-image\xff\xd9"
-    image_b64 = base64.b64encode(image_bytes).decode("ascii")
+    filename = "contract-test.jpg"
+    unsafe_filename = "contract test/../payload?.jpg"
+    sanitized_filename = (
+        re.sub(r"[^A-Za-z0-9_.-]", "_", Path(unsafe_filename).name) or "upload.bin"
+    )
     return {
-        "form": {
-            "password": "correct-horse-battery",
-            "fileToUpload": image_b64,
+        "data": {"password": "correct-horse-battery"},
+        "files": {"fileToUpload": (filename, image_bytes, "image/jpeg")},
+        "files_with_unsafe_name": {
+            "fileToUpload": (unsafe_filename, image_bytes, "image/jpeg")
         },
         "image_bytes": image_bytes,
-        "image_base64": image_b64,
+        "filename": filename,
+        "mime": "image/jpeg",
+        "unsafe_filename": unsafe_filename,
+        "sanitized_filename": sanitized_filename,
     }

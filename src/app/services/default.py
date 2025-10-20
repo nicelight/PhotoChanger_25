@@ -1,0 +1,296 @@
+"""Default service implementations used during the ingest phase."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Dict, Iterable, Mapping
+from uuid import UUID, uuid4
+
+from ..core.config import AppConfig
+from ..domain import calculate_job_expires_at, calculate_result_expires_at
+from ..domain.models import (
+    Job,
+    JobFailureReason,
+    JobStatus,
+    MediaObject,
+    MediaCacheSettings,
+    ProcessingLog,
+    Settings,
+    SettingsDslrPasswordStatus,
+    SettingsIngestConfig,
+    Slot,
+)
+from ..infrastructure.queue.postgres import PostgresJobQueue
+from ..security.passwords import verify_password
+from .job_service import JobService, QueueBusyError, QueueUnavailableError
+from .media_service import MediaService
+from .settings_service import SettingsService
+from .slot_service import SlotService
+from .stats_service import StatsService
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+@dataclass(slots=True)
+class DefaultSettingsService(SettingsService):
+    """In-memory settings backed by :class:`AppConfig`."""
+
+    settings: Settings
+    password_hash: str
+
+    def read_settings(self) -> Settings:  # type: ignore[override]
+        return self.settings
+
+    def verify_ingest_password(self, password: str) -> bool:  # type: ignore[override]
+        if not password:
+            return False
+        return verify_password(password, self.password_hash)
+
+
+@dataclass(slots=True)
+class DefaultSlotService(SlotService):
+    """Simple slot registry loaded at application startup."""
+
+    slots: Dict[str, Slot]
+
+    def list_slots(self) -> list[Slot]:  # type: ignore[override]
+        return list(self.slots.values())
+
+    def get_slot(self, slot_id: str) -> Slot:  # type: ignore[override]
+        try:
+            return self.slots[slot_id]
+        except KeyError as exc:
+            raise KeyError(slot_id) from exc
+
+
+@dataclass(slots=True)
+class DefaultStatsService(StatsService):
+    """In-memory statistics aggregator for scaffolding and tests."""
+
+    events: list[ProcessingLog] = field(default_factory=list)
+
+    def collect_global_stats(
+        self, *, since: datetime | None = None
+    ) -> Mapping[str, int]:  # type: ignore[override]
+        return {}
+
+    def collect_slot_stats(
+        self, slot: Slot, *, since: datetime | None = None
+    ) -> Mapping[str, int]:  # type: ignore[override]
+        return {}
+
+    def record_processing_event(self, log: ProcessingLog) -> None:  # type: ignore[override]
+        self.events.append(log)
+
+
+@dataclass(slots=True)
+class DefaultMediaService(MediaService):
+    """Registers media metadata for stored payloads."""
+
+    media_root: Path
+    objects: Dict[UUID, MediaObject] = field(default_factory=dict)
+
+    def register_media(
+        self,
+        *,
+        path: str,
+        mime: str,
+        size_bytes: int,
+        expires_at: datetime,
+        job_id: UUID | None = None,
+    ) -> MediaObject:  # type: ignore[override]
+        media = MediaObject(
+            id=uuid4(),
+            path=path,
+            public_url=f"/media/{path}",
+            expires_at=expires_at,
+            created_at=_utcnow(),
+            job_id=job_id,
+            mime=mime,
+            size_bytes=size_bytes,
+        )
+        self.objects[media.id] = media
+        return media
+
+    def revoke_media(self, media: MediaObject) -> None:  # type: ignore[override]
+        self.objects.pop(media.id, None)
+        try:
+            file_path = (self.media_root / media.path).resolve()
+            file_path.unlink(missing_ok=True)
+        except FileNotFoundError:  # pragma: no cover - defensive cleanup
+            return
+
+    def purge_expired_media(self, *, now: datetime) -> list[MediaObject]:  # type: ignore[override]
+        expired: list[MediaObject] = []
+        for media in list(self.objects.values()):
+            if media.expires_at <= now:
+                expired.append(media)
+                self.revoke_media(media)
+        return expired
+
+
+@dataclass(slots=True)
+class DefaultJobService(JobService):
+    """Creates jobs and enqueues them using :class:`PostgresJobQueue`."""
+
+    queue: PostgresJobQueue
+    jobs: Dict[UUID, Job] = field(default_factory=dict)
+    result_retention_hours: int = 72
+
+    def create_job(  # type: ignore[override]
+        self,
+        slot: Slot,
+        *,
+        payload: MediaObject | None,
+        settings: Settings,
+        job_id: UUID | None = None,
+        created_at: datetime | None = None,
+    ) -> Job:
+        created = created_at or _utcnow()
+        identifier = job_id or uuid4()
+        expires_at = calculate_job_expires_at(
+            created,
+            sync_response_timeout_sec=settings.ingest.sync_response_timeout_sec,
+            public_link_ttl_sec=settings.media_cache.public_link_ttl_sec,
+        )
+        job = Job(
+            id=identifier,
+            slot_id=slot.id,
+            status=JobStatus.PENDING,
+            is_finalized=False,
+            failure_reason=None,
+            expires_at=expires_at,
+            created_at=created,
+            updated_at=created,
+            payload_path=payload.path if payload else None,
+        )
+        if payload is not None:
+            payload.job_id = identifier
+        self.jobs[identifier] = job
+        try:
+            self.queue.enqueue(job)
+        except QueueBusyError:
+            self.jobs.pop(identifier, None)
+            raise
+        except QueueUnavailableError:
+            self.jobs.pop(identifier, None)
+            raise
+        return job
+
+    def get_job(self, job_id: UUID) -> Job | None:  # type: ignore[override]
+        return self.jobs.get(job_id)
+
+    def acquire_next_job(self, *, now: datetime) -> Job | None:  # type: ignore[override]
+        job = self.queue.acquire_for_processing(now=now)
+        if job is not None:
+            self.jobs[job.id] = job
+        return job
+
+    def finalize_job(
+        self,
+        job: Job,
+        *,
+        finalized_at: datetime,
+        result_media: MediaObject | None,
+        inline_preview: str | None,
+    ) -> Job:  # type: ignore[override]
+        job.finalized_at = finalized_at
+        job.updated_at = finalized_at
+        job.is_finalized = True
+        job.failure_reason = None
+        job.result_inline_base64 = inline_preview
+        if result_media is not None:
+            job.result_file_path = result_media.path
+            job.result_mime_type = result_media.mime
+            job.result_size_bytes = result_media.size_bytes
+        job.result_expires_at = calculate_result_expires_at(
+            finalized_at, result_retention_hours=self.result_retention_hours
+        )
+        persisted = self.queue.mark_finalized(job)
+        self.jobs[persisted.id] = persisted
+        return persisted
+
+    def fail_job(
+        self,
+        job: Job,
+        *,
+        failure_reason: JobFailureReason,
+        occurred_at: datetime,
+    ) -> Job:  # type: ignore[override]
+        job.is_finalized = True
+        job.failure_reason = failure_reason
+        job.updated_at = occurred_at
+        job.finalized_at = occurred_at
+        job.result_inline_base64 = None
+        job.result_file_path = None
+        job.result_mime_type = None
+        job.result_size_bytes = None
+        job.result_checksum = None
+        job.result_expires_at = None
+        persisted = self.queue.mark_finalized(job)
+        self.jobs[persisted.id] = persisted
+        return persisted
+
+    def append_processing_logs(self, job: Job, logs: Iterable[ProcessingLog]) -> None:  # type: ignore[override]
+        self.queue.append_processing_logs(logs)
+
+    def refresh_recent_results(self, slot: Slot, *, limit: int = 10) -> Slot:  # type: ignore[override]
+        raise NotImplementedError
+
+    def clear_inline_preview(self, job: Job) -> Job:  # type: ignore[override]
+        job.result_inline_base64 = None
+        job.result_mime_type = None
+        job.result_size_bytes = None
+        job.result_checksum = None
+        job.updated_at = _utcnow()
+        self.jobs[job.id] = job
+        return job
+
+
+def bootstrap_settings(config: AppConfig, *, password_hash: str) -> Settings:
+    now = _utcnow()
+    return Settings(
+        dslr_password=SettingsDslrPasswordStatus(
+            is_set=True,
+            updated_at=now,
+            updated_by="bootstrap",
+        ),
+        ingest=SettingsIngestConfig(
+            sync_response_timeout_sec=config.t_sync_response_seconds,
+            ingest_ttl_sec=config.t_sync_response_seconds,
+        ),
+        media_cache=MediaCacheSettings(
+            processed_media_ttl_hours=72,
+            public_link_ttl_sec=config.t_sync_response_seconds,
+        ),
+        provider_keys={},
+    )
+
+
+def bootstrap_slots(config: AppConfig) -> Mapping[str, Slot]:
+    now = _utcnow()
+    slot = Slot(
+        id="slot-001",
+        name="Default Slot",
+        provider_id="gemini",
+        operation_id="style_transfer",
+        settings_json={},
+        created_at=now,
+        updated_at=now,
+    )
+    return {slot.id: slot}
+
+
+__all__ = [
+    "DefaultJobService",
+    "DefaultMediaService",
+    "DefaultSettingsService",
+    "DefaultSlotService",
+    "DefaultStatsService",
+    "bootstrap_settings",
+    "bootstrap_slots",
+]

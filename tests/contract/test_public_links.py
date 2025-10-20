@@ -28,9 +28,7 @@ def test_public_result_success(
         "src.app.api.routes.public", "downloadPublicResult", _response
     )
 
-    response = contract_client.get(
-        f"/public/results/{sample_result['job_id']}"
-    )
+    response = contract_client.get(f"/public/results/{sample_result['job_id']}")
 
     assert response.status_code == status.HTTP_200_OK
     assert response.headers["content-type"] == "image/png"
@@ -66,11 +64,12 @@ def test_public_result_gone(
         "src.app.api.routes.public", "downloadPublicResult", _response
     )
 
-    response = contract_client.get(
-        f"/public/results/{expired_result['job_id']}"
-    )
+    response = contract_client.get(f"/public/results/{expired_result['job_id']}")
 
     assert response.status_code == status.HTTP_410_GONE
     payload = response.json()
     validate_with_schema(payload, "Error.json")
-    assert payload["error"]["details"]["result_expires_at"] == expired_result["result_expires_at"]
+    assert (
+        payload["error"]["details"]["result_expires_at"]
+        == expired_result["result_expires_at"]
+    )
