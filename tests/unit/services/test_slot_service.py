@@ -280,7 +280,7 @@ def _slot(settings: Mapping[str, object] | None = None) -> Slot:
         name="Test Slot",
         provider_id="gemini",
         operation_id="image_edit",
-        settings_json=settings or {"prompt": "Enhance"},
+        settings_json=settings if settings is not None else {"prompt": "Enhance"},
         created_at=now,
         updated_at=now,
     )
