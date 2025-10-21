@@ -4,10 +4,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import psycopg
 import pytest
 from alembic import command
 from alembic.config import Config
+
+psycopg = pytest.importorskip(
+    "psycopg", reason="psycopg is required for database migration tests"
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 

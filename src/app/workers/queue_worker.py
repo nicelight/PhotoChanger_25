@@ -185,6 +185,7 @@ class QueueWorker:
 
         slot = await self.slot_service.get_slot(job.slot_id)
         settings = await self._run_sync(self.settings_service.read_settings)
+
         context = self._load_job_context(job)
 
         try:

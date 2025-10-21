@@ -26,10 +26,13 @@ from ..domain.models import (
     TemplateMedia,
 )
 from ..infrastructure.queue.postgres import PostgresJobQueue
-from ..security.passwords import verify_password
+
+from ..infrastructure.settings_repository import SettingsRepository
+from ..security import SecurityService
+
 from .job_service import JobService, QueueBusyError, QueueUnavailableError
 from .media_service import MediaService
-from .settings_service import SettingsService
+from .settings import SettingsService
 from .slot_service import SlotService
 from .stats_service import StatsService
 
@@ -39,19 +42,63 @@ def _utcnow() -> datetime:
 
 
 @dataclass(slots=True)
-class DefaultSettingsService(SettingsService):
-    """In-memory settings backed by :class:`AppConfig`."""
+class InMemoryAuditLogger:
+    """Collect audit events in memory for scaffolding environments."""
+
+    records: list[dict[str, object]] = field(default_factory=list)
+
+    def log(self, *, action: str, actor: str, details: Mapping[str, object]) -> None:
+        self.records.append(
+            {"action": action, "actor": actor, "details": dict(details)}
+        )
+
+
+@dataclass(slots=True)
+class InMemorySettingsRepository(SettingsRepository):
+    """Minimal in-memory implementation of :class:`SettingsRepository`."""
 
     settings: Settings
     password_hash: str
 
-    def read_settings(self) -> Settings:  # type: ignore[override]
+    def load(self) -> Settings:
         return self.settings
 
-    def verify_ingest_password(self, password: str) -> bool:  # type: ignore[override]
-        if not password:
-            return False
-        return verify_password(password, self.password_hash)
+    def save(self, settings: Settings) -> Settings:
+        self.settings = settings
+        return self.settings
+
+    def get_ingest_password_hash(self) -> str | None:
+        return self.password_hash
+
+    def update_ingest_password(
+        self, *, rotated_at: datetime, updated_by: str, password_hash: str
+    ) -> Settings:
+        self.password_hash = password_hash
+        password_status = replace(
+            self.settings.dslr_password,
+            is_set=True,
+            updated_at=rotated_at,
+            updated_by=updated_by,
+        )
+        self.settings = replace(self.settings, dslr_password=password_status)
+        return self.settings
+
+
+class DefaultSettingsService(SettingsService):
+    """In-memory settings backed by :class:`AppConfig`."""
+
+    def __init__(self, settings: Settings, password_hash: str) -> None:
+        repository = InMemorySettingsRepository(
+            settings=settings, password_hash=password_hash
+        )
+        audit_logger = InMemoryAuditLogger()
+        super().__init__(
+            repository=repository,
+            security_service=SecurityService(),
+            audit_logger=audit_logger,
+        )
+        self._repository_impl = repository
+        self.audit_records = audit_logger.records
 
 
 @dataclass(slots=True)
@@ -190,14 +237,25 @@ class DefaultStatsService(StatsService):
     events: list[ProcessingLog] = field(default_factory=list)
 
     def collect_global_stats(
-        self, *, since: datetime | None = None
-    ) -> Mapping[str, int]:  # type: ignore[override]
-        return {}
+        self,
+        *,
+        window: StatsWindow = StatsWindow.DAY,
+        since: datetime | None = None,
+        now: datetime | None = None,
+    ) -> StatsAggregation:  # type: ignore[override]
+        _ = since, now
+        return StatsAggregation.from_metrics(window, [])
 
     def collect_slot_stats(
-        self, slot: Slot, *, since: datetime | None = None
-    ) -> Mapping[str, int]:  # type: ignore[override]
-        return {}
+        self,
+        slot: Slot,
+        *,
+        window: StatsWindow = StatsWindow.DAY,
+        since: datetime | None = None,
+        now: datetime | None = None,
+    ) -> StatsAggregation:  # type: ignore[override]
+        _ = slot, since, now
+        return StatsAggregation.from_metrics(window, [])
 
     def record_processing_event(self, log: ProcessingLog) -> None:  # type: ignore[override]
         self.events.append(log)

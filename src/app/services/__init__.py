@@ -11,6 +11,7 @@ from .registry import ServiceRegistry
 from .settings_service import SettingsService
 from .slot_service import SlotService
 from .slots import SlotManagementService, SlotValidationError
+from .stats import CachedStatsService
 from .stats_service import StatsService
 
 __all__ = [
@@ -21,5 +22,6 @@ __all__ = [
     "SlotService",
     "SlotManagementService",
     "SlotValidationError",
+    "CachedStatsService",
     "StatsService",
 ]

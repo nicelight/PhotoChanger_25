@@ -256,7 +256,7 @@ async def ingest_slot(
 ) -> Response:
     """Принять ingest-запрос от DSLR Remote Pro."""
 
-    settings = settings_service.read_settings()
+    settings = settings_service.get_settings()
     if not settings.dslr_password.is_set or not settings_service.verify_ingest_password(
         password
     ):
