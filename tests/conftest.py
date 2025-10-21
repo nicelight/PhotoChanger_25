@@ -350,9 +350,7 @@ def _apply_queue_migrations(dsn: str) -> None:
     if dsn in _applied_migrations:
         return
     config = AlembicConfig(str(PROJECT_ROOT / "alembic.ini"))
-    config.set_main_option(
-        "script_location", str(PROJECT_ROOT / "src/app/infrastructure/queue/migrations")
-    )
+    config.set_main_option("script_location", str(PROJECT_ROOT / "alembic"))
     config.set_main_option("sqlalchemy.url", dsn)
     alembic_command.upgrade(config, "head")
     _applied_migrations.add(dsn)
