@@ -7,9 +7,21 @@
 
 from functools import wraps
 
-from .api.facade import ApiFacade
-from .ui import UiFacade
 from .services.registry import ServiceRegistry
+
+try:
+    from .api.facade import ApiFacade
+except ModuleNotFoundError as exc:  # pragma: no cover - optional FastAPI dependency
+    if exc.name != "fastapi":
+        raise
+    ApiFacade = None  # type: ignore[assignment]
+
+try:
+    from .ui import UiFacade
+except ModuleNotFoundError as exc:  # pragma: no cover - optional FastAPI dependency
+    if exc.name != "fastapi":
+        raise
+    UiFacade = None  # type: ignore[assignment]
 
 try:  # pragma: no cover - optional dependency used only in tests
     from fastapi.testclient import TestClient as _FastAPITestClient

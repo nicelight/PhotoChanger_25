@@ -35,7 +35,7 @@ MODULES_AND_SYMBOLS = [
     ("src.app.services", "ServiceRegistry"),
     ("src.app.services.job_service", "JobService"),
     ("src.app.services.slot_service", "SlotService"),
-    ("src.app.services.settings_service", "SettingsService"),
+    ("src.app.services.settings", "SettingsService"),
     ("src.app.services.media_service", "MediaService"),
     ("src.app.services.stats_service", "StatsService"),
     ("src.app.providers", "ProviderAdapter"),
