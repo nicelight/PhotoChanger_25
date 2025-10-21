@@ -6,7 +6,12 @@
 конкретной реализации.
 """
 
-from .config import AppConfig
+try:
+    from .config import AppConfig
+except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency
+    if exc.name != "pydantic":
+        raise
+    AppConfig = None  # type: ignore[assignment]
 from .ui_config import (
     ProviderConfigEntry,
     ProviderOperationConfig,

@@ -38,18 +38,32 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency
     psycopg = None  # type: ignore[assignment]
     conninfo = None  # type: ignore[assignment]
     sql = None  # type: ignore[assignment]
-    pytest.skip("psycopg is required for PostgreSQL queue tests", allow_module_level=True)
+
+PSYCOPG_MISSING_REASON = "psycopg is required for PostgreSQL queue tests"
+
+
+def _require_psycopg() -> None:
+    """Skip PostgreSQL-dependent tests when psycopg is unavailable."""
+
+    if psycopg is None or conninfo is None or sql is None:
+        pytest.skip(PSYCOPG_MISSING_REASON, allow_module_level=True)
 
 try:  # noqa: E402  (import after sys.path update)
     from alembic import command as alembic_command
     from alembic.config import Config as AlembicConfig
-except ModuleNotFoundError:  # pragma: no cover - optional dependency
+except Exception:  # pragma: no cover - optional dependency
     alembic_command = None  # type: ignore[assignment]
     AlembicConfig = None  # type: ignore[assignment]
 
-from tests.helpers.public_results import (  # noqa: E402  (import after sys.path update)
-    register_finalized_job,
-)
+try:  # noqa: E402  (import after sys.path update)
+    from tests.helpers.public_results import (
+        register_finalized_job,
+    )
+except ModuleNotFoundError:  # pragma: no cover - optional FastAPI dependency
+    def register_finalized_job(*args: object, **kwargs: object):  # type: ignore[no-untyped-def]
+        pytest.skip("fastapi is required for public results helpers")
+
+
 from tests.mocks.providers import (  # noqa: E402  (import after sys.path update)
     MockGeminiProvider,
     MockProviderScenario,
@@ -305,6 +319,7 @@ from src.app.infrastructure.queue.postgres import (  # noqa: E402
 
 
 def _resolve_postgres_dsn() -> str:
+    _require_psycopg()
     env_dsn = os.getenv("TEST_POSTGRES_DSN")
     if env_dsn:
         return env_dsn
@@ -319,6 +334,7 @@ def _resolve_postgres_dsn() -> str:
 
 
 def _ensure_database_exists(dsn: str) -> None:
+    _require_psycopg()
     params = conninfo.conninfo_to_dict(dsn)
     dbname = params.get("dbname")
     if not dbname:
@@ -357,6 +373,7 @@ def _apply_queue_migrations(dsn: str) -> None:
 
 
 def _truncate_postgres_tables(dsn: str) -> None:
+    _require_psycopg()
     with psycopg.connect(dsn, autocommit=True) as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -380,6 +397,7 @@ def _truncate_postgres_tables(dsn: str) -> None:
 
 @pytest.fixture(scope="session")
 def postgres_dsn() -> Iterator[str]:
+    _require_psycopg()
     dsn = _resolve_postgres_dsn()
     try:
         _ensure_database_exists(dsn)
@@ -421,10 +439,35 @@ try:  # pragma: no cover - guard for environments without FastAPI
     from fastapi import Response
     from fastapi.testclient import TestClient
 except ModuleNotFoundError:  # pragma: no cover - optional dependency
-    pytest.skip("FastAPI is required for contract tests", allow_module_level=True)
+    Response = None  # type: ignore[assignment]
+    TestClient = None  # type: ignore[assignment]
+    FASTAPI_MISSING_REASON = "FastAPI is required for contract tests"
+else:
+    FASTAPI_MISSING_REASON = ""
 
-from src.app.core.app import create_app  # noqa: E402
-from src.app.core.config import AppConfig  # noqa: E402
+
+def _require_fastapi() -> None:
+    if Response is None or TestClient is None:
+        pytest.skip(FASTAPI_MISSING_REASON, allow_module_level=True)
+
+
+def _require_app_config() -> None:
+    if AppConfig is None:
+        pytest.skip("pydantic is required for AppConfig", allow_module_level=True)
+
+try:  # noqa: E402  (import after optional FastAPI dependency)
+    from src.app.core.app import create_app
+except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency
+    if exc.name != "fastapi":
+        raise
+    create_app = None  # type: ignore[assignment]
+
+try:  # noqa: E402  (import after optional FastAPI dependency)
+    from src.app.core.config import AppConfig
+except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency
+    if exc.name != "pydantic":
+        raise
+    AppConfig = None  # type: ignore[assignment]
 from src.app.domain.models import Job  # noqa: E402
 from src.app.services.job_service import QueueBusyError, QueueUnavailableError  # noqa: E402
 from src.app.services.registry import ServiceRegistry  # noqa: E402
@@ -597,6 +640,10 @@ def contract_app(
 ):
     """Instantiate the FastAPI application with fake infrastructure state."""
 
+    _require_fastapi()
+    _require_app_config()
+    if create_app is None:
+        pytest.skip(FASTAPI_MISSING_REASON or "FastAPI create_app unavailable")
     app_config = AppConfig(media_root=tmp_path / "media")
     extra_state = {
         "job_queue": fake_job_queue,
@@ -645,6 +692,7 @@ def contract_app(
 def contract_client(contract_app):
     """Return a ``TestClient`` bound to the contract-testing FastAPI app."""
 
+    _require_fastapi()
     with TestClient(contract_app) as client:
         yield client
 
@@ -974,6 +1022,7 @@ def patch_endpoint_response(
 ) -> Callable[[str, str, Callable[[], Response] | Response], None]:
     """Patch ``endpoint_not_implemented`` for a router module with a stub."""
 
+    _require_fastapi()
     def _patch(
         module_path: str,
         operation: str,
@@ -1000,6 +1049,7 @@ def patch_authentication_response(
 ) -> Callable[[str, Callable[[], Response] | Response], None]:
     """Override ``authentication_not_configured`` to emit contract errors."""
 
+    _require_fastapi()
     def _patch(
         module_path: str,
         response_factory: Callable[[], Response] | Response,
