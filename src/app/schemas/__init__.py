@@ -55,9 +55,14 @@ class AdminSettingPayload:
 
 
 @dataclass(slots=True)
-class AdminSettingDTO(AdminSettingPayload):
+class AdminSettingDTO:
     """DTO returned by repositories when loading admin settings."""
 
+    key: str
+    value: Any | None
+    value_type: str | None
+    is_secret: bool = False
+    updated_by: str | None = None
     etag: str = ""
     created_at: datetime | None = None
     updated_at: datetime | None = None
@@ -88,11 +93,19 @@ class SlotTemplatePayload:
 
 
 @dataclass(slots=True)
-class SlotTemplateDTO(SlotTemplatePayload):
+class SlotTemplateDTO:
     """DTO describing a persisted slot template binding."""
 
+    slot_id: str
+    setting_key: str
+    path: str
+    mime: str
+    size_bytes: int
     template_id: UUID
     created_at: datetime
+    checksum: str | None = None
+    label: str | None = None
+    uploaded_by: str | None = None
 
 
 @dataclass(slots=True)
@@ -109,12 +122,19 @@ class SlotPayload:
 
 
 @dataclass(slots=True)
-class SlotDTO(SlotPayload):
+class SlotDTO:
     """DTO returned by the slot repository."""
 
+    id: str
+    name: str
+    provider_id: str
+    operation_id: str
+    settings_json: Mapping[str, Any]
     created_at: datetime
     updated_at: datetime
     etag: str
+    last_reset_at: datetime | None = None
+    updated_by: str | None = None
     archived_at: datetime | None = None
     templates: list[SlotTemplateDTO] = field(default_factory=list)
 
