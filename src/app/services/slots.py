@@ -175,7 +175,7 @@ class SlotManagementService(SlotService):
         operations = self._providers.get(provider_id)
         if operations is None:
             raise SlotValidationError(f"provider '{provider_id}' is not supported")
-        settings = self.settings_service.read_settings()
+        settings = self.settings_service.get_settings()
         if settings.provider_keys:
             provider_status = settings.provider_keys.get(provider_id)
             if provider_status is None or not provider_status.is_configured:
