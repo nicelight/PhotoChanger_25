@@ -14,7 +14,7 @@ class StatsService:
     def collect_global_stats(
         self,
         *,
-        window: StatsWindow = StatsWindow.DAY,
+        window: StatsWindow = StatsWindow.WEEK,
         since: datetime | None = None,
         now: datetime | None = None,
     ) -> StatsAggregation:
