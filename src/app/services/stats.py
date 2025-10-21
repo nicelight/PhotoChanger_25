@@ -142,8 +142,16 @@ class CachedStatsService(StatsService):
         else:
             default_range = SLOT_DEFAULT_RANGE
             max_range = SLOT_MAX_RANGE
+        if now.tzinfo is None or now.tzinfo.utcoffset(now) is None:
+            raise ValueError("now must be timezone-aware")
+
         lower_bound = now - max_range
-        candidate = since or (now - default_range)
+        if since is None:
+            candidate = now - default_range
+        else:
+            candidate = since
+            if candidate.tzinfo is None or candidate.tzinfo.utcoffset(candidate) is None:
+                candidate = candidate.replace(tzinfo=now.tzinfo)
         if candidate < lower_bound:
             candidate = lower_bound
         if candidate > now:
