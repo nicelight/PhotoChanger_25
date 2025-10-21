@@ -1,6 +1,6 @@
 """Gemini provider adapter stubs.
 
-Gemini operations are described in ``Docs/brief.md`` and the provider
+Gemini operations are described in ``brief.md`` and the provider
 blueprints. The platform relies on model ``gemini-2.5-flash-image`` with
 rate limits 500 RPS / 2 000 RPD and accepts images up to 2 GB with MIME
 ``image/png``, ``image/jpeg``, ``image/webp``, ``image/heic`` и
