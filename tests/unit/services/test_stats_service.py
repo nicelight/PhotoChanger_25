@@ -91,6 +91,24 @@ def test_collect_global_stats_builds_summary_and_caches_metrics() -> None:
 
 
 @pytest.mark.unit
+def test_collect_global_stats_accepts_naive_since() -> None:
+    now = datetime(2025, 1, 10, tzinfo=timezone.utc)
+    naive_since = datetime(2024, 12, 31)
+    repository = StubStatsRepository()
+    service = CachedStatsService(
+        repository,
+        global_ttl=timedelta(seconds=0),
+        clock=lambda: now,
+    )
+
+    service.collect_global_stats(window=StatsWindow.DAY, since=naive_since, now=now)
+
+    assert repository.global_calls == [
+        (StatsWindow.DAY, naive_since.replace(tzinfo=timezone.utc)),
+    ]
+
+
+@pytest.mark.unit
 def test_cache_expires_after_ttl() -> None:
     now = datetime(2025, 2, 1, tzinfo=timezone.utc)
     repository = StubStatsRepository()
