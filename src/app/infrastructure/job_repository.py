@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Iterable
+from typing import Iterable, Sequence
 
 from ..domain.models import Job
 
@@ -33,5 +33,16 @@ class JobRepository:
 
     def release_expired(self, *, now: datetime) -> Iterable[Job]:
         """Return jobs that exceeded ``T_sync_response`` and mark them failed."""
+
+        raise NotImplementedError
+
+    def list_recent_results(
+        self,
+        slot_id: str,
+        *,
+        limit: int,
+        since: datetime,
+    ) -> Sequence[Job]:
+        """Return finalized jobs for ``slot_id`` ordered by completion time."""
 
         raise NotImplementedError

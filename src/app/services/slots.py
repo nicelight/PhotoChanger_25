@@ -18,6 +18,7 @@ from ..schemas import (
     SlotTemplateDTO,
     SlotTemplatePayload,
 )
+from .job_service import JobService
 from .settings_service import SettingsService
 from .slot_service import SlotService
 
@@ -64,6 +65,7 @@ class SlotManagementService(SlotService):
     settings_service: SettingsService
     provider_catalog: ProviderCatalog | None = None
     provider_catalog_path: Path | None = None
+    job_service: JobService | None = None
 
     def __post_init__(self) -> None:
         if self.provider_catalog is None:
@@ -81,13 +83,15 @@ class SlotManagementService(SlotService):
             pagination=Pagination(page=1, per_page=0), include_archived=include_archived
         )
         page = await self.slot_repository.search(query)
-        return [self._to_domain(slot, include_templates=False) for slot in page.items]
+        slots = [self._to_domain(slot, include_templates=False) for slot in page.items]
+        return [self._attach_recent_results(slot) for slot in slots]
 
     async def get_slot(
         self, slot_id: str, *, include_templates: bool = True
     ) -> Slot:  # type: ignore[override]
         dto = await self.slot_repository.get(slot_id, with_templates=include_templates)
-        return self._to_domain(dto, include_templates=include_templates)
+        slot = self._to_domain(dto, include_templates=include_templates)
+        return self._attach_recent_results(slot)
 
     async def create_slot(
         self, slot: Slot, *, updated_by: str | None = None
@@ -101,7 +105,8 @@ class SlotManagementService(SlotService):
         )
         payload = self._to_payload(slot, updated_by=updated_by)
         created = await self.slot_repository.create(payload)
-        return self._to_domain(created, include_templates=False)
+        slot = self._to_domain(created, include_templates=False)
+        return self._attach_recent_results(slot)
 
     async def update_slot(
         self,
@@ -121,14 +126,16 @@ class SlotManagementService(SlotService):
         updated = await self.slot_repository.update(
             slot.id, payload, expected_etag=expected_etag
         )
-        return self._to_domain(updated, include_templates=False)
+        slot = self._to_domain(updated, include_templates=False)
+        return self._attach_recent_results(slot)
 
     async def archive_slot(
         self, slot_id: str, *, expected_etag: str, updated_by: str | None = None
     ) -> Slot:  # type: ignore[override]
         _ = updated_by
         archived = await self.slot_repository.archive(slot_id, expected_etag=expected_etag)
-        return self._to_domain(archived, include_templates=False)
+        slot = self._to_domain(archived, include_templates=False)
+        return self._attach_recent_results(slot)
 
     async def attach_templates(
         self,
@@ -149,7 +156,8 @@ class SlotManagementService(SlotService):
             operation_id=updated.operation_id,
             settings=updated.settings_json,
         )
-        return self._to_domain(updated, include_templates=True)
+        slot = self._to_domain(updated, include_templates=True)
+        return self._attach_recent_results(slot)
 
     async def detach_template(
         self,
@@ -169,7 +177,17 @@ class SlotManagementService(SlotService):
             operation_id=updated.operation_id,
             settings=updated.settings_json,
         )
-        return self._to_domain(updated, include_templates=True)
+        slot = self._to_domain(updated, include_templates=True)
+        return self._attach_recent_results(slot)
+
+    def _attach_recent_results(self, slot: Slot) -> Slot:
+        job_service = self.job_service
+        if job_service is None:
+            return slot
+        try:
+            return job_service.refresh_recent_results(slot)
+        except NotImplementedError:
+            return slot
 
     async def _ensure_provider_allowed(self, provider_id: str) -> None:
         operations = self._providers.get(provider_id)

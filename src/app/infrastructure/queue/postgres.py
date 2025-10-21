@@ -4,7 +4,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Iterable
+from typing import Iterable, Sequence
 from uuid import UUID
 
 from ...domain.models import (
@@ -67,6 +67,17 @@ class PostgresJobQueue(JobRepository):
 
         return self._backend.list_processing_logs(job_id)
 
+    def list_recent_results(
+        self,
+        slot_id: str,
+        *,
+        limit: int,
+        since: datetime,
+    ) -> Sequence[Job]:  # type: ignore[override]
+        return self._backend.list_recent_results(
+            slot_id, limit=limit, since=since
+        )
+
     # Helpers ------------------------------------------------------------
 
 class _QueueBackend:
@@ -88,6 +99,15 @@ class _QueueBackend:
         raise NotImplementedError
 
     def list_processing_logs(self, job_id: UUID) -> list[ProcessingLog]:
+        raise NotImplementedError
+
+    def list_recent_results(
+        self,
+        slot_id: str,
+        *,
+        limit: int,
+        since: datetime,
+    ) -> Sequence[Job]:
         raise NotImplementedError
 
 
@@ -299,6 +319,37 @@ class _PostgresQueueBackend(_QueueBackend):
         except Exception as exc:  # pragma: no cover - defensive
             self._raise_unavailable(exc, "failed to list processing logs")
         return [self._deserialize_log(row) for row in rows]
+
+    def list_recent_results(
+        self,
+        slot_id: str,
+        *,
+        limit: int,
+        since: datetime,
+    ) -> Sequence[Job]:
+        try:
+            with self._conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT *
+                    FROM jobs
+                    WHERE slot_id = %(slot_id)s
+                      AND is_finalized = TRUE
+                      AND failure_reason IS NULL
+                      AND finalized_at IS NOT NULL
+                      AND result_file_path IS NOT NULL
+                      AND result_mime_type IS NOT NULL
+                      AND result_expires_at IS NOT NULL
+                      AND finalized_at >= %(since)s
+                    ORDER BY finalized_at DESC
+                    LIMIT %(limit)s
+                    """,
+                    {"slot_id": slot_id, "since": since, "limit": limit},
+                )
+                rows = cur.fetchall() or []
+        except Exception as exc:  # pragma: no cover - defensive
+            self._raise_unavailable(exc, "failed to list recent results")
+        return [self._deserialize_job(row) for row in rows]
 
     # Internal utilities -------------------------------------------------
 

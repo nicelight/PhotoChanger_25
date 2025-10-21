@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import mimetypes
 from dataclasses import dataclass, field, replace
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Iterable, Mapping
 from uuid import UUID, uuid4
@@ -23,12 +23,14 @@ from ..domain.models import (
     SettingsDslrPasswordStatus,
     SettingsIngestConfig,
     Slot,
+    SlotRecentResult,
     TemplateMedia,
 )
 from ..infrastructure.queue.postgres import PostgresJobQueue
 
 from ..infrastructure.settings_repository import SettingsRepository
 from ..security import SecurityService
+from ..schemas.stats import StatsAggregation, StatsWindow
 
 from .job_service import JobService, QueueBusyError, QueueUnavailableError
 from .media_service import MediaService
@@ -523,7 +525,55 @@ class DefaultJobService(JobService):
         return expired
 
     def refresh_recent_results(self, slot: Slot, *, limit: int = 10) -> Slot:  # type: ignore[override]
-        raise NotImplementedError
+        if limit <= 0:
+            slot.recent_results = []
+            return slot
+
+        since = _utcnow() - timedelta(hours=self.result_retention_hours)
+        list_recent = getattr(self.queue, "list_recent_results", None)
+        jobs: Iterable[Job]
+        if callable(list_recent):
+            try:
+                jobs = list_recent(slot.id, limit=limit, since=since)
+            except QueueUnavailableError:
+                jobs = []
+        else:
+            jobs = [
+                job
+                for job in self.jobs.values()
+                if job.slot_id == slot.id
+                and job.is_finalized
+                and job.failure_reason is None
+            ]
+
+        recent: list[SlotRecentResult] = []
+        for job in jobs:
+            finalized_at = job.finalized_at
+            if finalized_at is None or finalized_at < since:
+                continue
+            if (
+                job.result_expires_at is None
+                or job.result_mime_type is None
+                or job.result_file_path is None
+            ):
+                continue
+            download_url = f"/public/results/{job.id}"
+            thumbnail_url = f"/media/{job.result_file_path}"
+            result: SlotRecentResult = {
+                "job_id": job.id,
+                "thumbnail_url": thumbnail_url,
+                "download_url": download_url,
+                "completed_at": finalized_at,
+                "result_expires_at": job.result_expires_at,
+                "mime": job.result_mime_type,
+            }
+            if job.result_size_bytes is not None:
+                result["size_bytes"] = job.result_size_bytes
+            recent.append(result)
+
+        recent.sort(key=lambda item: item["completed_at"], reverse=True)
+        slot.recent_results = recent[:limit]
+        return slot
 
     def clear_inline_preview(self, job: Job) -> Job:  # type: ignore[override]
         job.result_inline_base64 = None
