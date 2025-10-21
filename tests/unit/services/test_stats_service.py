@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
-from src.app.domain.models import ProcessingLog, ProcessingStatus, Slot
+from src.app.domain.models import (
+    ProcessingLog,
+    ProcessingStatus,
+    Slot,
+    SlotRecentResult,
+)
 from src.app.schemas.stats import StatsCounters, StatsMetric, StatsWindow
 from src.app.services.stats import CachedStatsService
 
@@ -17,6 +22,10 @@ class StubStatsRepository:
         self.global_calls: list[tuple[StatsWindow, datetime | None]] = []
         self.slot_calls: list[tuple[str, StatsWindow, datetime | None]] = []
         self.stored_logs: list[ProcessingLog] = []
+        self.recent_results_data: dict[str, list[SlotRecentResult]] = {}
+        self.recent_results_calls: list[
+            tuple[str, datetime, int, datetime]
+        ] = []
 
     def collect_global_metrics(
         self, *, window: StatsWindow, since: datetime | None = None
@@ -32,6 +41,17 @@ class StubStatsRepository:
 
     def store_processing_log(self, log: ProcessingLog) -> None:
         self.stored_logs.append(log)
+
+    def load_recent_results(
+        self,
+        slot: Slot,
+        *,
+        since: datetime,
+        limit: int,
+        now: datetime,
+    ) -> list[SlotRecentResult]:
+        self.recent_results_calls.append((slot.id, since, limit, now))
+        return list(self.recent_results_data.get(slot.id, []))
 
 
 def _build_metric(
@@ -56,6 +76,27 @@ def _build_metric(
             ingest_count=ingest_count,
         ),
     )
+
+
+def _build_recent_result(
+    *,
+    job_id: UUID,
+    completed_at: datetime,
+    expires_at: datetime,
+    mime: str = "image/png",
+    size: int | None = None,
+) -> SlotRecentResult:
+    result: SlotRecentResult = {
+        "job_id": job_id,
+        "thumbnail_url": f"/media/results/{job_id}",
+        "download_url": f"/public/results/{job_id}",
+        "completed_at": completed_at,
+        "result_expires_at": expires_at,
+        "mime": mime,
+    }
+    if size is not None:
+        result["size_bytes"] = size
+    return result
 
 
 @pytest.mark.unit
@@ -272,3 +313,86 @@ def test_distinct_cache_ttls_for_global_and_slot() -> None:
     assert third_slot.summary.success == 2
     assert third_global is not first_global
     assert third_slot is not first_slot
+
+
+@pytest.mark.unit
+def test_recent_results_sorted_limited_and_cached() -> None:
+    now = datetime(2025, 6, 1, tzinfo=timezone.utc)
+    slot = Slot(
+        id="slot-900",
+        name="Slot 900",
+        provider_id="gemini",
+        operation_id="style_transfer",
+        settings_json={},
+        created_at=now,
+        updated_at=now,
+    )
+    repository = StubStatsRepository()
+    entries = []
+    for offset in range(12):
+        completed = now - timedelta(hours=offset)
+        expires = completed + timedelta(hours=72)
+        entries.append(
+            _build_recent_result(
+                job_id=uuid4(),
+                completed_at=completed,
+                expires_at=expires,
+                size=offset,
+            )
+        )
+    repository.recent_results_data[slot.id] = list(reversed(entries))
+    service = CachedStatsService(repository, clock=lambda: now)
+
+    first = service.recent_results(slot, now=now)
+
+    assert len(first) == 10
+    assert [item["completed_at"] for item in first] == [
+        now - timedelta(hours=offset) for offset in range(10)
+    ]
+    assert repository.recent_results_calls == [
+        (slot.id, now - timedelta(hours=72), 10, now)
+    ]
+
+    second = service.recent_results(slot, now=now + timedelta(minutes=4))
+    assert second == first
+    assert repository.recent_results_calls == [
+        (slot.id, now - timedelta(hours=72), 10, now)
+    ]
+
+
+@pytest.mark.unit
+def test_recent_results_expire_after_retention_window() -> None:
+    now = datetime(2025, 6, 2, tzinfo=timezone.utc)
+    slot = Slot(
+        id="slot-901",
+        name="Slot 901",
+        provider_id="gemini",
+        operation_id="style_transfer",
+        settings_json={},
+        created_at=now,
+        updated_at=now,
+    )
+    repository = StubStatsRepository()
+    fresh = _build_recent_result(
+        job_id=uuid4(),
+        completed_at=now - timedelta(hours=1),
+        expires_at=now + timedelta(hours=71),
+    )
+    expired = _build_recent_result(
+        job_id=uuid4(),
+        completed_at=now - timedelta(hours=80),
+        expires_at=now - timedelta(hours=1),
+    )
+    repository.recent_results_data[slot.id] = [expired, fresh]
+    service = CachedStatsService(repository, clock=lambda: now)
+
+    current = service.recent_results(slot, now=now)
+    assert [item["job_id"] for item in current] == [fresh["job_id"]]
+
+    future_time = now + timedelta(hours=73)
+    later = service.recent_results(slot, now=future_time)
+    assert later == []
+    assert repository.recent_results_calls == [
+        (slot.id, now - timedelta(hours=72), 10, now),
+        (slot.id, future_time - timedelta(hours=72), 10, future_time),
+    ]

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from ..domain.models import ProcessingLog, Slot
+from ..domain.models import ProcessingLog, Slot, SlotRecentResult
 from ..schemas.stats import StatsAggregation, StatsWindow
 
 
@@ -36,5 +36,15 @@ class StatsService:
 
     def record_processing_event(self, log: ProcessingLog) -> None:
         """Persist a new processing log record for future aggregation."""
+
+        raise NotImplementedError
+
+    def recent_results(
+        self,
+        slot: Slot,
+        *,
+        now: datetime | None = None,
+    ) -> list[SlotRecentResult]:
+        """Return recent successful results for ``slot`` respecting TTL."""
 
         raise NotImplementedError

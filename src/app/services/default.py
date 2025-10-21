@@ -7,7 +7,7 @@ import mimetypes
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict, Iterable, Mapping
+from typing import Dict, Iterable, Mapping, cast
 from uuid import UUID, uuid4
 
 from ..core.config import AppConfig
@@ -261,6 +261,23 @@ class DefaultStatsService(StatsService):
 
     def record_processing_event(self, log: ProcessingLog) -> None:  # type: ignore[override]
         self.events.append(log)
+
+    def recent_results(
+        self,
+        slot: Slot,
+        *,
+        now: datetime | None = None,
+    ) -> list[SlotRecentResult]:  # type: ignore[override]
+        current_time = now or _utcnow()
+        retention_cutoff = current_time - timedelta(hours=72)
+        results = [
+            cast(SlotRecentResult, dict(result))
+            for result in slot.recent_results
+            if result["completed_at"] >= retention_cutoff
+            and result["result_expires_at"] > current_time
+        ]
+        results.sort(key=lambda item: item["completed_at"], reverse=True)
+        return results[:10]
 
 
 @dataclass(slots=True)
