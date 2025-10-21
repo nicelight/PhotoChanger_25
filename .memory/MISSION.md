@@ -19,7 +19,10 @@ owner: product
 - **Out-of-scope:**
   - Регистрация новых пользователей, self-service смена паролей и внешние IdP (MVP ограничивается статическими аккаунтами).【F:spec/docs/blueprints/context.md】
   - Автоматическое продление TTL публичных ссылок или исходных файлов; повторный доступ требует нового ingest или повторной регистрации медиа.【F:spec/docs/blueprints/constraints-risks.md】【F:spec/docs/blueprints/use-cases.md】
-  - Подключение дополнительных AI-провайдеров, новых очередей (Kafka) и расширенной UI-аналитики — отдельные инициативы roadmap.【F:spec/docs/blueprints/context.md】【F:Docs/implementation_roadmap.md】
+- Подключение дополнительных AI-провайдеров, новых очередей (Kafka) и расширенной UI-аналитики — отдельные инициативы roadmap.【F:spec/docs/blueprints/context.md】【F:Docs/implementation_roadmap.md】
+
+## Принципы разработки
+- Сохраняем минимальную комплексность: простота контрактов и кода ценится выше максимальной стабильности и удобства тестирования. Дополнительные механизмы вводим только если они не усложняют архитектуру и пользовательский опыт.
 
 ## Критерии успеха (верхнеуровневые NFR/SLO/SLA)
 - Ingest API удерживает соединение и завершает ответ (200/504) строго в пределах актуального `T_sync_response`; после таймаута все временные ресурсы очищаются, а задача фиксируется как `failure_reason = 'timeout'`.【F:spec/docs/blueprints/nfr.md】【F:spec/docs/blueprints/use-cases.md】
