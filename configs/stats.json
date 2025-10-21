@@ -1,0 +1,6 @@
+{
+  "cache": {
+    "slot_ttl_seconds": 300,
+    "global_ttl_seconds": 60
+  }
+}

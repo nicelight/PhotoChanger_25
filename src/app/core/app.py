@@ -18,22 +18,25 @@ from typing import Any, Iterable
 from uuid import UUID
 
 from fastapi import FastAPI
+from sqlalchemy import create_engine
 
 from ..api import ApiFacade
 from ..core.config import AppConfig
 from ..domain.models import Job, ProcessingLog
 from ..infrastructure.queue.postgres import PostgresJobQueue, PostgresQueueConfig
+from ..infrastructure.sqlalchemy import SqlAlchemyStatsRepository
 from ..lifecycle import run_periodic_media_cleanup
 from ..services.default import (
     DefaultJobService,
     DefaultMediaService,
     DefaultSettingsService,
     DefaultSlotService,
-    DefaultStatsService,
     bootstrap_settings,
     bootstrap_slots,
 )
+from ..services.stats import CachedStatsService
 from ..services.registry import ServiceRegistry
+from ..services.container import load_stats_cache_settings, SqlAlchemyUnitOfWork
 from ..workers import QueueWorker
 
 
@@ -149,7 +152,14 @@ def _configure_dependencies(
     slot_service = DefaultSlotService(slots=dict(slots))
     media_service = DefaultMediaService(media_root=media_root)
     job_service = DefaultJobService(queue=queue)
-    stats_service = DefaultStatsService()
+    slot_ttl, global_ttl = load_stats_cache_settings()
+    stats_engine = create_engine(config.database_url, future=True)
+    stats_repository = SqlAlchemyStatsRepository(stats_engine)
+    stats_service = CachedStatsService(
+        stats_repository,
+        slot_ttl=slot_ttl,
+        global_ttl=global_ttl,
+    )
 
     registry.register_settings_service(lambda *, config=None: settings_service)
     registry.register_slot_service(lambda *, config=None: slot_service)
@@ -157,6 +167,10 @@ def _configure_dependencies(
     registry.register_job_service(lambda *, config=None: job_service)
     registry.register_stats_service(lambda *, config=None: stats_service)
     registry.register_job_repository(lambda *, config=None: queue)
+    registry.register_stats_repository(lambda *, config=None: stats_repository)
+    registry.register_unit_of_work(
+        lambda *, config=None: SqlAlchemyUnitOfWork(stats_engine)
+    )
 
     return config
 
@@ -182,6 +196,15 @@ def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
         )
         registry.register_job_repository(lambda *, config=None: job_queue_override)
         extra_state.setdefault("job_service", job_service_override)
+
+    stats_service_instance = registry.resolve_stats_service()(config=app_config)
+    stats_repository_factory = registry.resolve_stats_repository()
+    stats_repository_instance = stats_repository_factory(config=app_config)
+    extra_state.setdefault("stats_service", stats_service_instance)
+    extra_state.setdefault("stats_repository", stats_repository_instance)
+    extra_state.setdefault(
+        "stats_unit_of_work_factory", registry.resolve_unit_of_work()
+    )
 
     facade = ApiFacade(registry=registry)
     app = FastAPI(title="PhotoChanger API", version=_read_contract_version())

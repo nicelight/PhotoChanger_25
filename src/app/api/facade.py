@@ -31,6 +31,8 @@ class ApiFacade:
     def mount(self, app: FastAPI) -> None:
         """Подключает все маршрутизаторы к экземпляру FastAPI."""
 
+        if getattr(app.state, "service_registry", None) is None:
+            app.state.service_registry = self.registry
         for router in self._iter_routers():
             app.include_router(router)
 
