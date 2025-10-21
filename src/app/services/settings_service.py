@@ -19,6 +19,11 @@ class SettingsService:
 
         raise NotImplementedError
 
+    def get_settings(self) -> Settings:
+        """Compatibility alias for :meth:`read_settings`."""
+
+        return self.read_settings()
+
     def verify_ingest_password(self, password: str) -> bool:
         """Validate DSLR ingest credentials."""
 
