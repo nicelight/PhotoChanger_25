@@ -10,6 +10,7 @@ from .media_service import MediaService
 from .registry import ServiceRegistry
 from .settings_service import SettingsService
 from .slot_service import SlotService
+from .stats import CachedStatsService
 from .stats_service import StatsService
 
 __all__ = [
@@ -18,5 +19,6 @@ __all__ = [
     "ServiceRegistry",
     "SettingsService",
     "SlotService",
+    "CachedStatsService",
     "StatsService",
 ]

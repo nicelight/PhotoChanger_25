@@ -3,25 +3,34 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Mapping
 
 from ..domain.models import ProcessingLog, Slot
+from ..schemas.stats import StatsAggregation, StatsWindow
 
 
 class StatsService:
     """Aggregates job/slot metrics for dashboards and monitoring."""
 
     def collect_global_stats(
-        self, *, since: datetime | None = None
-    ) -> Mapping[str, int]:
-        """Return aggregated counters (success/fail/timeout) for all jobs."""
+        self,
+        *,
+        window: StatsWindow = StatsWindow.DAY,
+        since: datetime | None = None,
+        now: datetime | None = None,
+    ) -> StatsAggregation:
+        """Return aggregated counters for all jobs within ``window``."""
 
         raise NotImplementedError
 
     def collect_slot_stats(
-        self, slot: Slot, *, since: datetime | None = None
-    ) -> Mapping[str, int]:
-        """Return metrics scoped to a single slot."""
+        self,
+        slot: Slot,
+        *,
+        window: StatsWindow = StatsWindow.DAY,
+        since: datetime | None = None,
+        now: datetime | None = None,
+    ) -> StatsAggregation:
+        """Return metrics scoped to a single slot for the chosen ``window``."""
 
         raise NotImplementedError
 
