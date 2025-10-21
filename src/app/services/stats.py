@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Callable, Dict, Iterable, Tuple
+from typing import Callable, Dict, Iterable, Sequence, Tuple, cast
 
-from ..domain.models import ProcessingLog, Slot
+from ..domain.models import ProcessingLog, Slot, SlotRecentResult
 from ..infrastructure.stats_repository import StatsRepository
 from ..schemas.stats import StatsAggregation, StatsMetric, StatsWindow
 from .stats_service import StatsService
@@ -18,7 +18,7 @@ def _default_clock() -> datetime:
 
 @dataclass(slots=True)
 class _CacheEntry:
-    aggregation: StatsAggregation
+    value: object
     expires_at: datetime
 
     def is_valid(self, *, now: datetime) -> bool:
@@ -31,7 +31,10 @@ GLOBAL_DEFAULT_RANGE = timedelta(weeks=8)
 GLOBAL_MAX_RANGE = timedelta(days=90)
 SLOT_CACHE_TTL = timedelta(minutes=5)
 GLOBAL_CACHE_TTL = timedelta(minutes=1)
+RECENT_RESULTS_LIMIT = 10
+RECENT_RESULTS_RETENTION = timedelta(hours=72)
 _DEFAULT_RANGE_SENTINEL = object()
+_RECENT_RESULTS_CACHE_KEY = "recent_results"
 
 
 class CachedStatsService(StatsService):
@@ -53,7 +56,7 @@ class CachedStatsService(StatsService):
         self._slot_ttl = slot_ttl
         self._global_ttl = global_ttl
         self._clock = clock or _default_clock
-        self._cache: Dict[Tuple[str | None, StatsWindow, object], _CacheEntry] = {}
+        self._cache: Dict[Tuple[object, ...], _CacheEntry] = {}
 
     def collect_global_stats(
         self,
@@ -77,13 +80,46 @@ class CachedStatsService(StatsService):
         return self._collect(slot, window=window, since=since, now=current_time)
 
     def record_processing_event(self, log: ProcessingLog) -> None:
-        store_log = getattr(self._repository, "store_processing_log", None)
-        if callable(store_log):
-            try:
-                store_log(log)
-            except NotImplementedError:
-                pass
+        self._repository.store_processing_log(log)
         self._invalidate(slot_id=log.slot_id)
+
+    def recent_results(
+        self,
+        slot: Slot,
+        *,
+        now: datetime | None = None,
+    ) -> list[SlotRecentResult]:
+        current_time = now or self._clock()
+        ttl = self._select_ttl(slot)
+        key = (slot.id, _RECENT_RESULTS_CACHE_KEY)
+        entry = self._cache.get(key) if ttl > timedelta(0) else None
+        if entry is not None and entry.is_valid(now=current_time):
+            cached = cast(Sequence[SlotRecentResult], entry.value)
+            return [self._clone_recent(item) for item in cached]
+
+        since = current_time - RECENT_RESULTS_RETENTION
+        results = list(
+            self._repository.load_recent_results(
+                slot,
+                since=since,
+                limit=RECENT_RESULTS_LIMIT,
+                now=current_time,
+            )
+        )
+        normalized = [
+            self._clone_recent(item)
+            for item in results
+            if item["completed_at"] >= since
+            and item["result_expires_at"] > current_time
+        ]
+        normalized.sort(key=lambda item: item["completed_at"], reverse=True)
+        limited = normalized[:RECENT_RESULTS_LIMIT]
+        if ttl > timedelta(0):
+            self._cache[key] = _CacheEntry(
+                value=tuple(limited),
+                expires_at=current_time + ttl,
+            )
+        return limited
 
     def _collect(
         self,
@@ -101,13 +137,13 @@ class CachedStatsService(StatsService):
         ttl = self._select_ttl(slot)
         entry = self._cache.get(key) if ttl > timedelta(0) else None
         if entry is not None and entry.is_valid(now=now):
-            return entry.aggregation
+            return cast(StatsAggregation, entry.value)
 
         metrics = self._load_metrics(slot, window=window, since=normalized_since)
         aggregation = StatsAggregation.from_metrics(window, metrics)
         if ttl > timedelta(0):
             self._cache[key] = _CacheEntry(
-                aggregation=aggregation,
+                value=aggregation,
                 expires_at=now + ttl,
             )
         return aggregation
@@ -163,6 +199,10 @@ class CachedStatsService(StatsService):
         ]
         for key in keys_to_remove:
             self._cache.pop(key, None)
+
+    @staticmethod
+    def _clone_recent(result: SlotRecentResult) -> SlotRecentResult:
+        return cast(SlotRecentResult, dict(result))
 
 
 __all__ = [

@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Iterable
 
-from ..domain.models import ProcessingLog, Slot
+from ..domain.models import ProcessingLog, Slot, SlotRecentResult
 from ..schemas.stats import StatsMetric, StatsWindow
 
 
@@ -35,5 +35,17 @@ class StatsRepository:
 
     def store_processing_log(self, log: ProcessingLog) -> None:
         """Persist a processing log entry for further aggregation."""
+
+        raise NotImplementedError
+
+    def load_recent_results(
+        self,
+        slot: Slot,
+        *,
+        since: datetime,
+        limit: int,
+        now: datetime,
+    ) -> Iterable[SlotRecentResult]:
+        """Return slot recent results ordered by completion time."""
 
         raise NotImplementedError
