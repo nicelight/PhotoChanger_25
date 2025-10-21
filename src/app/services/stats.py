@@ -25,6 +25,15 @@ class _CacheEntry:
         return now < self.expires_at
 
 
+SLOT_DEFAULT_RANGE = timedelta(days=14)
+SLOT_MAX_RANGE = timedelta(days=31)
+GLOBAL_DEFAULT_RANGE = timedelta(weeks=8)
+GLOBAL_MAX_RANGE = timedelta(days=90)
+SLOT_CACHE_TTL = timedelta(minutes=5)
+GLOBAL_CACHE_TTL = timedelta(minutes=1)
+_DEFAULT_RANGE_SENTINEL = object()
+
+
 class CachedStatsService(StatsService):
     """Provide cached statistics aggregations with event-driven invalidation."""
 
@@ -32,24 +41,24 @@ class CachedStatsService(StatsService):
         self,
         repository: StatsRepository,
         *,
-        ttl: timedelta = timedelta(seconds=60),
+        slot_ttl: timedelta = SLOT_CACHE_TTL,
+        global_ttl: timedelta = GLOBAL_CACHE_TTL,
         clock: Callable[[], datetime] | None = None,
     ) -> None:
-        if ttl < timedelta(0):
-            raise ValueError("ttl must be non-negative")
+        if slot_ttl < timedelta(0):
+            raise ValueError("slot_ttl must be non-negative")
+        if global_ttl < timedelta(0):
+            raise ValueError("global_ttl must be non-negative")
         self._repository = repository
-        self._ttl = ttl
+        self._slot_ttl = slot_ttl
+        self._global_ttl = global_ttl
         self._clock = clock or _default_clock
-        self._cache: Dict[Tuple[str | None, StatsWindow, datetime | None], _CacheEntry] = {}
-
-    @property
-    def _cache_enabled(self) -> bool:
-        return self._ttl > timedelta(0)
+        self._cache: Dict[Tuple[str | None, StatsWindow, object], _CacheEntry] = {}
 
     def collect_global_stats(
         self,
         *,
-        window: StatsWindow = StatsWindow.DAY,
+        window: StatsWindow = StatsWindow.WEEK,
         since: datetime | None = None,
         now: datetime | None = None,
     ) -> StatsAggregation:
@@ -84,17 +93,22 @@ class CachedStatsService(StatsService):
         since: datetime | None,
         now: datetime,
     ) -> StatsAggregation:
-        key = (slot.id if slot else None, window, since)
-        entry = self._cache.get(key)
-        if entry is not None and self._cache_enabled and entry.is_valid(now=now):
+        normalized_since = self._normalise_since(
+            slot=slot, window=window, since=since, now=now
+        )
+        cache_since = normalized_since if since is not None else _DEFAULT_RANGE_SENTINEL
+        key = (slot.id if slot else None, window, cache_since)
+        ttl = self._select_ttl(slot)
+        entry = self._cache.get(key) if ttl > timedelta(0) else None
+        if entry is not None and entry.is_valid(now=now):
             return entry.aggregation
 
-        metrics = self._load_metrics(slot, window=window, since=since)
+        metrics = self._load_metrics(slot, window=window, since=normalized_since)
         aggregation = StatsAggregation.from_metrics(window, metrics)
-        if self._cache_enabled:
+        if ttl > timedelta(0):
             self._cache[key] = _CacheEntry(
                 aggregation=aggregation,
-                expires_at=now + self._ttl,
+                expires_at=now + ttl,
             )
         return aggregation
 
@@ -113,6 +127,32 @@ class CachedStatsService(StatsService):
             self._repository.collect_slot_metrics(slot, window=window, since=since)
         )
 
+    def _normalise_since(
+        self,
+        *,
+        slot: Slot | None,
+        window: StatsWindow,
+        since: datetime | None,
+        now: datetime,
+    ) -> datetime:
+        _ = window  # reserved for future granularity-specific logic
+        if slot is None:
+            default_range = GLOBAL_DEFAULT_RANGE
+            max_range = GLOBAL_MAX_RANGE
+        else:
+            default_range = SLOT_DEFAULT_RANGE
+            max_range = SLOT_MAX_RANGE
+        lower_bound = now - max_range
+        candidate = since or (now - default_range)
+        if candidate < lower_bound:
+            candidate = lower_bound
+        if candidate > now:
+            candidate = now
+        return candidate
+
+    def _select_ttl(self, slot: Slot | None) -> timedelta:
+        return self._slot_ttl if slot is not None else self._global_ttl
+
     def _invalidate(self, *, slot_id: str | None) -> None:
         if not self._cache:
             return
@@ -125,5 +165,13 @@ class CachedStatsService(StatsService):
             self._cache.pop(key, None)
 
 
-__all__ = ["CachedStatsService"]
+__all__ = [
+    "CachedStatsService",
+    "GLOBAL_CACHE_TTL",
+    "GLOBAL_DEFAULT_RANGE",
+    "GLOBAL_MAX_RANGE",
+    "SLOT_CACHE_TTL",
+    "SLOT_DEFAULT_RANGE",
+    "SLOT_MAX_RANGE",
+]
 

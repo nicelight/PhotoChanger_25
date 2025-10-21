@@ -81,37 +81,53 @@ class SlotTemplatePayload:
     path: str
     mime: str
     size_bytes: int
+    template_id: UUID | None = None
     checksum: str | None = None
     label: str | None = None
     uploaded_by: str | None = None
-    template_id: UUID | None = None
 
 
 @dataclass(slots=True)
-class SlotTemplateDTO(SlotTemplatePayload):
+class SlotTemplateDTO:
     """DTO describing a persisted slot template binding."""
 
+    slot_id: str
+    setting_key: str
+    path: str
+    mime: str
+    size_bytes: int
     template_id: UUID
     created_at: datetime
+    checksum: str | None
+    label: str | None
+    uploaded_by: str | None
 
 
 @dataclass(slots=True)
-class SlotPayload:
-    """Input payload for slot mutations."""
+class SlotBase:
+    """Shared fields for slot payloads and DTOs."""
 
     id: str
     name: str
     provider_id: str
     operation_id: str
     settings_json: Mapping[str, Any]
+
+
+@dataclass(slots=True)
+class SlotPayload(SlotBase):
+    """Input payload for slot mutations."""
+
     last_reset_at: datetime | None = None
     updated_by: str | None = None
 
 
 @dataclass(slots=True)
-class SlotDTO(SlotPayload):
+class SlotDTO(SlotBase):
     """DTO returned by the slot repository."""
 
+    last_reset_at: datetime | None
+    updated_by: str | None
     created_at: datetime
     updated_at: datetime
     etag: str

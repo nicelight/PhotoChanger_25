@@ -66,7 +66,11 @@ def test_collect_global_stats_builds_summary_and_caches_metrics() -> None:
         _build_metric(now - timedelta(days=1), success=3, ingest_count=3),
         _build_metric(now - timedelta(days=2), timeouts=2, errors=1, ingest_count=3),
     ]
-    service = CachedStatsService(repository, ttl=timedelta(seconds=30), clock=lambda: now)
+    service = CachedStatsService(
+        repository,
+        global_ttl=timedelta(seconds=30),
+        clock=lambda: now,
+    )
 
     aggregation = service.collect_global_stats(window=StatsWindow.DAY, now=now)
 
@@ -75,11 +79,15 @@ def test_collect_global_stats_builds_summary_and_caches_metrics() -> None:
     assert aggregation.summary.failure_count == 3
     assert aggregation.summary.ingest_count == 6
     assert len(aggregation.metrics) == 2
-    assert repository.global_calls == [(StatsWindow.DAY, None)]
+    assert repository.global_calls == [
+        (StatsWindow.DAY, now - timedelta(weeks=8)),
+    ]
 
     second = service.collect_global_stats(window=StatsWindow.DAY, now=now + timedelta(seconds=10))
     assert second is aggregation
-    assert repository.global_calls == [(StatsWindow.DAY, None)]
+    assert repository.global_calls == [
+        (StatsWindow.DAY, now - timedelta(weeks=8)),
+    ]
 
 
 @pytest.mark.unit
@@ -89,10 +97,16 @@ def test_cache_expires_after_ttl() -> None:
     repository.global_data[StatsWindow.WEEK] = [
         _build_metric(now - timedelta(weeks=1), success=1, ingest_count=1)
     ]
-    service = CachedStatsService(repository, ttl=timedelta(seconds=5), clock=lambda: now)
+    service = CachedStatsService(
+        repository,
+        global_ttl=timedelta(seconds=5),
+        clock=lambda: now,
+    )
 
     service.collect_global_stats(window=StatsWindow.WEEK, now=now)
-    assert repository.global_calls == [(StatsWindow.WEEK, None)]
+    assert repository.global_calls == [
+        (StatsWindow.WEEK, now - timedelta(weeks=8)),
+    ]
 
     later = now + timedelta(seconds=6)
     repository.global_data[StatsWindow.WEEK] = [
@@ -100,7 +114,10 @@ def test_cache_expires_after_ttl() -> None:
     ]
     refreshed = service.collect_global_stats(window=StatsWindow.WEEK, now=later)
 
-    assert repository.global_calls == [(StatsWindow.WEEK, None), (StatsWindow.WEEK, None)]
+    assert repository.global_calls == [
+        (StatsWindow.WEEK, now - timedelta(weeks=8)),
+        (StatsWindow.WEEK, later - timedelta(weeks=8)),
+    ]
     assert refreshed.summary.success == 2
 
 
@@ -123,7 +140,12 @@ def test_record_processing_event_invalidates_slot_and_global_cache() -> None:
     repository.slot_data[(slot.id, StatsWindow.DAY)] = [
         _build_metric(now - timedelta(days=1), success=1, ingest_count=1)
     ]
-    service = CachedStatsService(repository, ttl=timedelta(seconds=60), clock=lambda: now)
+    service = CachedStatsService(
+        repository,
+        slot_ttl=timedelta(seconds=60),
+        global_ttl=timedelta(seconds=60),
+        clock=lambda: now,
+    )
 
     service.collect_global_stats(window=StatsWindow.DAY, now=now)
     service.collect_slot_stats(slot, window=StatsWindow.DAY, now=now)
@@ -157,8 +179,12 @@ def test_record_processing_event_invalidates_slot_and_global_cache() -> None:
     )
 
     assert repository.stored_logs == [log]
-    assert repository.global_calls == [(StatsWindow.DAY, None)]
-    assert repository.slot_calls == [(slot.id, StatsWindow.DAY, None)]
+    assert repository.global_calls == [
+        (StatsWindow.DAY, (now + timedelta(seconds=1)) - timedelta(weeks=8)),
+    ]
+    assert repository.slot_calls == [
+        (slot.id, StatsWindow.DAY, (now + timedelta(seconds=1)) - timedelta(days=14)),
+    ]
     assert refreshed_global.summary.success == 2
     assert refreshed_slot.summary.success == 2
 
@@ -170,7 +196,11 @@ def test_caches_are_keyed_by_since_parameter() -> None:
     repository.global_data[StatsWindow.DAY] = [
         _build_metric(now - timedelta(days=1), success=1, ingest_count=1)
     ]
-    service = CachedStatsService(repository, ttl=timedelta(seconds=60), clock=lambda: now)
+    service = CachedStatsService(
+        repository,
+        global_ttl=timedelta(seconds=60),
+        clock=lambda: now,
+    )
 
     since = now - timedelta(days=7)
     aggregation_with_since = service.collect_global_stats(
@@ -183,5 +213,62 @@ def test_caches_are_keyed_by_since_parameter() -> None:
     assert aggregation_with_since is not aggregation_without_since
     assert repository.global_calls == [
         (StatsWindow.DAY, since),
-        (StatsWindow.DAY, None),
+        (StatsWindow.DAY, now - timedelta(weeks=8)),
     ]
+
+
+@pytest.mark.unit
+def test_distinct_cache_ttls_for_global_and_slot() -> None:
+    now = datetime(2025, 5, 1, tzinfo=timezone.utc)
+    slot = Slot(
+        id="slot-123",
+        name="Slot 123",
+        provider_id="gemini",
+        operation_id="style_transfer",
+        settings_json={},
+        created_at=now,
+        updated_at=now,
+    )
+    repository = StubStatsRepository()
+    repository.global_data[StatsWindow.WEEK] = [
+        _build_metric(now - timedelta(weeks=1), success=1, ingest_count=1)
+    ]
+    repository.slot_data[(slot.id, StatsWindow.DAY)] = [
+        _build_metric(now - timedelta(days=1), success=1, ingest_count=1)
+    ]
+    service = CachedStatsService(repository, clock=lambda: now)
+
+    first_global = service.collect_global_stats(now=now)
+    first_slot = service.collect_slot_stats(slot, now=now)
+
+    repository.global_calls.clear()
+    repository.slot_calls.clear()
+
+    second_global = service.collect_global_stats(now=now + timedelta(seconds=59))
+    second_slot = service.collect_slot_stats(slot, now=now + timedelta(minutes=2))
+
+    assert second_global is first_global
+    assert second_slot is first_slot
+    assert repository.global_calls == []
+    assert repository.slot_calls == []
+
+    repository.global_data[StatsWindow.WEEK] = [
+        _build_metric(now - timedelta(weeks=1), success=2, ingest_count=2)
+    ]
+    repository.slot_data[(slot.id, StatsWindow.DAY)] = [
+        _build_metric(now - timedelta(days=1), success=2, ingest_count=2)
+    ]
+
+    third_global = service.collect_global_stats(now=now + timedelta(seconds=61))
+    third_slot = service.collect_slot_stats(slot, now=now + timedelta(minutes=6))
+
+    assert repository.global_calls == [
+        (StatsWindow.WEEK, (now + timedelta(seconds=61)) - timedelta(weeks=8)),
+    ]
+    assert repository.slot_calls == [
+        (slot.id, StatsWindow.DAY, (now + timedelta(minutes=6)) - timedelta(days=14)),
+    ]
+    assert third_global.summary.success == 2
+    assert third_slot.summary.success == 2
+    assert third_global is not first_global
+    assert third_slot is not first_slot
