@@ -1,6 +1,6 @@
 ---
 id: worklog
-updated: 2025-10-30
+updated: 2025-10-31
 ---
 
 # Черновой журнал до checkpoint
@@ -260,3 +260,10 @@ updated: 2025-10-30
 - 2025-10-31 09:28 — сверил требования к авторизации и claim'ам: OpenAPI требует bearer JWT со scope `settings:read/write`, `slots:write`, `stats:read`; бриф фиксирует статические аккаунты `serg`/`igor`, claim `permissions` и TTL ограничения; DTO `AuthToken` описывает форму ответа и срок действия токена.【F:spec/contracts/openapi.yaml†L1-L339】【F:Docs/brief.md†L12-L48】【F:spec/docs/blueprints/use-cases.md†L1-L26】【F:src/app/api/schemas/models.py†L82-L109】
 - 2025-10-31 09:45 — подготовил варианты структур ответов для admin API: подтвердил базовую схему пагинации `data+meta` из контрактов, предложил альтернативы (расширенная мета с `has_next`, инкрементальные фильтры) и оценил влияние на объём данных и сложность агрегации.【F:spec/contracts/schemas/JobListResponse.json†L1-L38】【F:spec/contracts/schemas/SlotListResponse.json†L1-L28】【F:spec/contracts/schemas/GlobalStatsResponse.json†L1-L41】
 - 2025-10-31 10:05 — оформил вопросы для CONSULT 4.5.C1 (нужны ли отдельные права `slots:read`, как считать `recent_results` лимиты, какой объём агрегатов нужен UI) и предложенные решения; обновил .memory/TASKS.md, пометил ожидание подтверждения тимлида.【F:.memory/TASKS.md†L65-L87】
+
+## phase4-admin-stats-consult-2025-10-31
+- 2025-10-31 10:20 — перечитал спецификации статистики и `recent_results`: OpenAPI параметры `/api/stats/{slot_id}` и `/api/stats/global`, JSON Schema `Slot`, `Result`, `GlobalStatsResponse`, `StatsMetricBase` и разделы брифа/доменной модели о галерее результатов, чтобы собрать исходные ограничения по диапазонам, группировкам и полям выдачи.【F:spec/contracts/openapi.yaml†L560-L653】【F:spec/contracts/schemas/Slot.json†L1-L72】【F:spec/contracts/schemas/Result.json†L1-L40】【F:spec/contracts/schemas/GlobalStatsResponse.json†L1-L37】【F:spec/contracts/schemas/StatsMetricBase.json†L1-L34】【F:Docs/brief.md†L10-L22】【F:spec/docs/blueprints/domain-model.md†L6-L24】
+- 2025-10-31 10:45 — подготовил варианты горизонтов агрегации и структуры `recent_results`: базовый сценарий «последние 14 дней/90 дней» с привязкой к `group_by`, sliding окна для UI, лимит 10 элементов с TTL 72h и отличиями между slot/global статистикой; выделил риски (нагрузка на `processing_logs`, кеширование) для обсуждения с тимлидом.
+- 2025-10-31 11:05 — сформировал пакет вопросов для CONSULT 4.5.C2 и 4.5.Q1: уточнение горизонтов, лимитов и SLA обновления статистики, ожиданий по UX (частота автообновления, экспорт CSV/PNG, индикаторы свежести), подготовил формулировки для отправки пользователю и отметил зависимые задачи (4.5.5a, 4.5.12a, UI backlog).
+- 2025-10-31 15:10 — сам утвердил значения по умолчанию для статистики: `/api/stats/{slot_id}` → последние 14 дней c `group_by=day`, `/api/stats/global` → последние 8 недель с `group_by=week`; кеш обновляем каждые 5 мин (слот) и 1 мин (глобально), без дополнительных фильтров.
+- 2025-10-31 15:20 — финализировал требования `recent_results` и UX: отдаём до 10 успешных задач за 72 часа, отображаем отметку «обновлено N секунд назад», автообновление таблиц раз в 60 секунд, экспортируем CSV, без дополнительных графиков.
