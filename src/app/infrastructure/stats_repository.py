@@ -3,25 +3,33 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Mapping
+from typing import Iterable
 
 from ..domain.models import ProcessingLog, Slot
+from ..schemas.stats import StatsMetric, StatsWindow
 
 
 class StatsRepository:
     """Provides raw counters for dashboards and monitoring exporters."""
 
     def collect_global_metrics(
-        self, *, since: datetime | None = None
-    ) -> Mapping[str, int]:
-        """Aggregate totals across all jobs."""
+        self,
+        *,
+        window: StatsWindow,
+        since: datetime | None = None,
+    ) -> Iterable[StatsMetric]:
+        """Return time-series metrics across all jobs."""
 
         raise NotImplementedError
 
     def collect_slot_metrics(
-        self, slot: Slot, *, since: datetime | None = None
-    ) -> Mapping[str, int]:
-        """Aggregate metrics limited to a specific slot."""
+        self,
+        slot: Slot,
+        *,
+        window: StatsWindow,
+        since: datetime | None = None,
+    ) -> Iterable[StatsMetric]:
+        """Return metrics limited to a specific slot."""
 
         raise NotImplementedError
 

@@ -26,6 +26,7 @@ from ..domain.models import (
 )
 from ..infrastructure.queue.postgres import PostgresJobQueue
 from ..security.passwords import verify_password
+from ..schemas.stats import StatsAggregation, StatsWindow
 from .job_service import JobService, QueueBusyError, QueueUnavailableError
 from .media_service import MediaService
 from .settings_service import SettingsService
@@ -76,14 +77,25 @@ class DefaultStatsService(StatsService):
     events: list[ProcessingLog] = field(default_factory=list)
 
     def collect_global_stats(
-        self, *, since: datetime | None = None
-    ) -> Mapping[str, int]:  # type: ignore[override]
-        return {}
+        self,
+        *,
+        window: StatsWindow = StatsWindow.DAY,
+        since: datetime | None = None,
+        now: datetime | None = None,
+    ) -> StatsAggregation:  # type: ignore[override]
+        _ = since, now
+        return StatsAggregation.from_metrics(window, [])
 
     def collect_slot_stats(
-        self, slot: Slot, *, since: datetime | None = None
-    ) -> Mapping[str, int]:  # type: ignore[override]
-        return {}
+        self,
+        slot: Slot,
+        *,
+        window: StatsWindow = StatsWindow.DAY,
+        since: datetime | None = None,
+        now: datetime | None = None,
+    ) -> StatsAggregation:  # type: ignore[override]
+        _ = slot, since, now
+        return StatsAggregation.from_metrics(window, [])
 
     def record_processing_event(self, log: ProcessingLog) -> None:  # type: ignore[override]
         self.events.append(log)
