@@ -8,7 +8,7 @@
 from .job_service import JobService
 from .media_service import MediaService
 from .registry import ServiceRegistry
-from .settings_service import SettingsService
+from .settings import SettingsService
 from .slot_service import SlotService
 from .slots import SlotManagementService, SlotValidationError
 from .stats import CachedStatsService
