@@ -296,3 +296,4 @@ updated: 2025-11-04
 - 2025-11-04 14:05 — проанализировал контракт SettingsService и вызовы read_settings() в сервисах и воркерах.
 - 2025-11-04 14:18 — обновил интерфейс SettingsService:get_settings(), привёл реализации/воркеры/тесты к новому методу, проверил логику кеша.
 - 2025-11-04 14:32 — актуализировал Docs/admin/settings.md и .memory/TASKS.md, убедился что unit-тесты покрывают обращения get_settings().
+- 2025-11-04 14:45 — синхронизировал `spec/docs/blueprints/use-cases.md`, зафиксировал, что Admin API использует только `SettingsService.get_settings()` для чтения настроек.
