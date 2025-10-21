@@ -99,10 +99,12 @@ def upgrade() -> None:
         sa.CheckConstraint("period_end >= period_start", name="ck_processing_log_aggregates_period"),
         sa.ForeignKeyConstraint(["slot_id"], ["slots.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id", name="pk_processing_log_aggregates"),
-        sa.UniqueConstraint(
-            "slot_id", "granularity", "period_start", "period_end",
-            name="uq_processing_log_aggregates_scope_period",
-        ),
+    )
+    op.create_index(
+        "uq_processing_log_aggregates_scope_period",
+        "processing_log_aggregates",
+        [sa.text("COALESCE(slot_id, 'GLOBAL')"), "granularity", "period_start", "period_end"],
+        unique=True,
     )
     op.create_index(
         "ix_processing_log_aggregates_slot_period",
@@ -119,6 +121,10 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_index("ix_processing_log_aggregates_period_end", table_name="processing_log_aggregates")
     op.drop_index("ix_processing_log_aggregates_slot_period", table_name="processing_log_aggregates")
+    op.drop_index(
+        "uq_processing_log_aggregates_scope_period",
+        table_name="processing_log_aggregates",
+    )
     op.drop_table("processing_log_aggregates")
 
     op.drop_index("ix_slot_templates_slot_id", table_name="slot_templates")
