@@ -38,7 +38,7 @@ alternatives:
 consequences: "Нужны фоновые процессы очистки, метрики просрочек и тесты TTL/410 Gone. Настройка T_sync_response влияет на ingest, воркеры и публичные ссылки."
 links:
   - contracts: "spec/contracts/openapi.yaml"
-  - docs: "Docs/reviews/2025-10-16-provider-contract-review.md"
+  - docs: "spec/docs/reviews/2025-10-16-provider-contract-review.md"
   - adr: "spec/adr/ADR-0002.md"
 
 ## Активные решения
