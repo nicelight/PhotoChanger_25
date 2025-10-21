@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Iterable, Mapping
 from uuid import UUID, uuid4
 
 import pytest
 
 from src.app.domain.models import (
+    Job,
+    JobStatus,
     MediaCacheSettings,
     Settings,
     SettingsDslrPasswordStatus,
@@ -27,6 +29,8 @@ from src.app.schemas import (
     SlotTemplateDTO,
     SlotTemplatePayload,
 )
+import src.app.services.default as default_services
+from src.app.services.default import DefaultJobService
 from src.app.services.settings_service import SettingsService
 from src.app.services.slots import (
     ProviderOperation,
@@ -213,6 +217,25 @@ class InMemorySlotRepository(SlotRepository):
 
 
 @dataclass(slots=True)
+class StubRecentJobQueue:
+    jobs_by_slot: dict[str, list[Job]] = field(default_factory=dict)
+
+    def list_recent_results(
+        self,
+        slot_id: str,
+        *,
+        limit: int,
+        since: datetime,
+    ) -> list[Job]:
+        jobs = [
+            job
+            for job in self.jobs_by_slot.get(slot_id, [])
+            if job.finalized_at is not None and job.finalized_at >= since
+        ]
+        return list(jobs)
+
+
+@dataclass(slots=True)
 class StubSettingsService(SettingsService):
     settings: Settings
 
@@ -283,6 +306,29 @@ def _slot(settings: Mapping[str, object] | None = None) -> Slot:
         settings_json=settings if settings is not None else {"prompt": "Enhance"},
         created_at=now,
         updated_at=now,
+    )
+
+
+def _result_job(slot_id: str, *, finalized_at: datetime, size: int = 1024) -> Job:
+    job_id = uuid4()
+    return Job(
+        id=job_id,
+        slot_id=slot_id,
+        status=JobStatus.PROCESSING,
+        is_finalized=True,
+        failure_reason=None,
+        expires_at=finalized_at + timedelta(hours=1),
+        created_at=finalized_at - timedelta(minutes=5),
+        updated_at=finalized_at,
+        finalized_at=finalized_at,
+        payload_path=None,
+        provider_job_reference=None,
+        result_file_path=f"results/{job_id.hex}.png",
+        result_inline_base64=None,
+        result_mime_type="image/png",
+        result_size_bytes=size,
+        result_checksum="checksum",
+        result_expires_at=finalized_at + timedelta(hours=72),
     )
 
 
@@ -410,3 +456,45 @@ async def test_provider_requires_configuration(
     )
     with pytest.raises(SlotValidationError):
         await service.create_slot(_slot())
+
+
+@pytest.mark.asyncio
+async def test_recent_results_sorted_and_limited(
+    slot_repository: InMemorySlotRepository,
+    template_repository: InMemoryTemplateRepository,
+    settings_service: StubSettingsService,
+    provider_catalog: Mapping[str, Mapping[str, ProviderOperation]],
+    monkeypatch,
+) -> None:
+    queue = StubRecentJobQueue()
+    now = datetime(2025, 1, 5, 12, 0, tzinfo=timezone.utc)
+    jobs = [
+        _result_job("slot-001", finalized_at=now - timedelta(hours=offset))
+        for offset in range(12)
+    ]
+    queue.jobs_by_slot["slot-001"] = list(reversed(jobs)) + [
+        _result_job("slot-001", finalized_at=now - timedelta(hours=100))
+    ]
+    job_service = DefaultJobService(queue=queue)  # type: ignore[arg-type]
+    monkeypatch.setattr(default_services, "_utcnow", lambda: now)
+    service = SlotManagementService(
+        slot_repository=slot_repository,
+        template_repository=template_repository,
+        settings_service=settings_service,
+        provider_catalog=provider_catalog,
+        job_service=job_service,
+    )
+
+    created = await service.create_slot(_slot())
+    assert len(created.recent_results) == 10
+    completed_at = [result["completed_at"] for result in created.recent_results]
+    assert completed_at == sorted(completed_at, reverse=True)
+    assert all(
+        timestamp >= now - timedelta(hours=72) for timestamp in completed_at
+    )
+
+    fetched = await service.get_slot("slot-001")
+    assert fetched.recent_results == created.recent_results
+
+    listed = await service.list_slots()
+    assert listed[0].recent_results == created.recent_results

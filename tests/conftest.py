@@ -552,6 +552,28 @@ class FakeJobQueue:
             )
         return job
 
+    def list_recent_results(
+        self,
+        slot_id: str,
+        *,
+        limit: int,
+        since: datetime,
+    ) -> list[Job]:
+        jobs = [
+            job
+            for job in self.domain_jobs.values()
+            if job.slot_id == slot_id
+            and job.is_finalized
+            and job.failure_reason is None
+            and job.finalized_at is not None
+            and job.result_file_path is not None
+            and job.result_mime_type is not None
+            and job.result_expires_at is not None
+            and job.finalized_at >= since
+        ]
+        jobs.sort(key=lambda item: item.finalized_at or item.updated_at, reverse=True)
+        return jobs[:limit]
+
     def finalize_inline(
         self, job_id: str, payload: bytes, *, mime: str = "image/jpeg"
     ) -> None:
