@@ -297,3 +297,8 @@ updated: 2025-11-04
 - 2025-11-04 14:18 — обновил интерфейс SettingsService:get_settings(), привёл реализации/воркеры/тесты к новому методу, проверил логику кеша.
 - 2025-11-04 14:32 — актуализировал Docs/admin/settings.md и .memory/TASKS.md, убедился что unit-тесты покрывают обращения get_settings().
 - 2025-11-04 14:45 — синхронизировал `spec/docs/blueprints/use-cases.md`, зафиксировал, что Admin API использует только `SettingsService.get_settings()` для чтения настроек.
+
+## phase4-admin-repositories-2025-11-04
+- 2025-11-04 15:05 — пересмотрел подпункт 4.5.2b в `.memory/TASKS.md` и текущие SQLAlchemy репозитории (settings/slots/stats), уточнил требования к фильтрам, транзакциям и обработке ошибок.
+- 2025-11-04 15:30 — реализовал `SQLAlchemyTemplateMediaRepository` (методы `list_for_slot`/`list_by_ids`) и экспортировал его из пакета `src/app/repositories/sqlalchemy/__init__.py`.
+- 2025-11-04 15:45 — попытался прогнать `pytest tests/unit/repositories -q`; выполнение упало из-за PostgreSQL-специфичного CHECK (оператор `~`) в SQLite (`sqlalchemy.exc.OperationalError`).
