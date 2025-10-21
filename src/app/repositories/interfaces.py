@@ -14,6 +14,7 @@ from ..schemas import (
     SlotDTO,
     SlotPayload,
     SlotSearchQuery,
+    SlotTemplateDTO,
     SlotTemplatePayload,
     StatsQuery,
 )
@@ -70,6 +71,16 @@ class SlotRepository(Protocol):
         self, slot_id: str, template_id: UUID, *, expected_etag: str
     ) -> SlotDTO:
         """Detach a template ensuring ownership by ``slot_id``."""
+
+
+class TemplateMediaRepository(Protocol):
+    """Read operations for template media linked to slots."""
+
+    async def list_for_slot(self, slot_id: str) -> list[SlotTemplateDTO]:
+        """Return template bindings belonging to ``slot_id``."""
+
+    async def list_by_ids(self, template_ids: Iterable[UUID]) -> list[SlotTemplateDTO]:
+        """Return templates for provided identifiers."""
 
 
 class StatsRepository(Protocol):

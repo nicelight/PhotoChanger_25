@@ -82,7 +82,10 @@ class Slot:
     created_at: datetime
     updated_at: datetime
     last_reset_at: datetime | None = None
+    etag: str | None = None
+    archived_at: datetime | None = None
     recent_results: list[SlotRecentResult] = field(default_factory=list)
+    templates: list[TemplateMedia] = field(default_factory=list)
 
 
 @dataclass(slots=True)

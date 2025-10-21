@@ -183,7 +183,7 @@ class QueueWorker:
     ) -> None:
         """Execute provider-specific logic while respecting queue deadlines."""
 
-        slot = await self._run_sync(self.slot_service.get_slot, job.slot_id)
+        slot = await self.slot_service.get_slot(job.slot_id)
         settings = await self._run_sync(self.settings_service.read_settings)
         context = self._load_job_context(job)
 
@@ -233,10 +233,10 @@ class QueueWorker:
             occurred_at=occurred_at,
         )
 
-    def handle_timeout(self, job: Job, *, now: datetime) -> None:
-        """Synchronously mark a job as timed out for compatibility with tests."""
+    async def handle_timeout(self, job: Job, *, now: datetime) -> None:
+        """Mark a job as timed out for compatibility with tests."""
 
-        slot = self.slot_service.get_slot(job.slot_id)
+        slot = await self.slot_service.get_slot(job.slot_id)
         self.job_service.fail_job(
             job,
             failure_reason=JobFailureReason.TIMEOUT,
@@ -249,7 +249,7 @@ class QueueWorker:
     async def _handle_timeout_async(self, job: Job, *, now: datetime) -> None:
         """Mark the job as timed out when ``now`` exceeds ``job.expires_at``."""
 
-        slot = await self._run_sync(self.slot_service.get_slot, job.slot_id)
+        slot = await self.slot_service.get_slot(job.slot_id)
         await self._run_sync(
             self.job_service.fail_job,
             job,
@@ -877,5 +877,5 @@ class QueueWorker:
         self._record_processing_logs([log_entry])
 
     async def _handle_cancelled_job(self, job: Job, *, now: datetime) -> None:
-        slot = await self._run_sync(self.slot_service.get_slot, job.slot_id)
+        slot = await self.slot_service.get_slot(job.slot_id)
         await self._mark_job_cancelled(job, slot=slot, started_at=now)

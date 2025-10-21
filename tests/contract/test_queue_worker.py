@@ -78,7 +78,7 @@ class InstrumentedWorker(QueueWorker):
         if job is None:
             return False
         if now >= job.expires_at:
-            self.handle_timeout(job, now=now)
+            await self.handle_timeout(job, now=now)
             return True
         await self.process_job(job, now=now, shutdown_event=shutdown_event)
         return True
@@ -108,7 +108,9 @@ class InstrumentedWorker(QueueWorker):
         )
         self.job_service.jobs[job.id] = persisted
 
-    def handle_timeout(self, job: Job, *, now: datetime) -> None:  # type: ignore[override]
+    async def handle_timeout(  # type: ignore[override]
+        self, job: Job, *, now: datetime
+    ) -> None:
         job.result_file_path = None
         job.result_inline_base64 = None
         failed = self.job_service.fail_job(
@@ -345,7 +347,7 @@ def test_release_expired_jobs_trigger_timeout_processing(
     expired_jobs = list(postgres_queue.release_expired(now=expired_now))
     assert [item.id for item in expired_jobs] == [job.id]
 
-    worker.handle_timeout(job, now=expired_now)
+    asyncio.run(worker.handle_timeout(job, now=expired_now))
 
     persisted = job_service.get_job(job.id)
     assert persisted is not None
