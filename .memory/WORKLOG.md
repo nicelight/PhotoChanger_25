@@ -164,6 +164,11 @@ updated: 2025-11-04
 - 2025-11-04 10:18 — изучил реализации `create_app`, `ServiceRegistry`, `QueueWorker`, `DefaultJobService`, `CachedStatsService` и интерфейсы репозиториев для оценки точек интеграции и зависимостей.
 - 2025-11-04 10:32 — декомпозировал пункт 4.5.6 на REFLECT/CONSULT и пошаговые сабтаски (DI, события, тесты/конфигурация), зафиксировал риски кеш-инвалидации и отказоустойчивости StatsService.
 - 2025-10-25 10:05 — уточнил требования к очистке payload и TTL, сверился с ADR-0002.
+- 2025-11-04 11:05 — прошёлся по `DefaultJobService`, `QueueWorker`, `CachedStatsService` и `PostgresJobQueue.append_processing_logs`: собрал карту генерации `ProcessingLog`, отметил, что в scaffolding DI (`DefaultStatsService`, in-memory queue) нет записи в БД и кеш-инвалидация не применяется.
+- 2025-11-04 11:20 — выписал зависимости DI (`create_app`, `ServiceRegistry`, `services/container.py`), выделил стабы: StatsService/StatsRepository остаются in-memory/NotImplemented, очередь может деградировать до `_InMemoryJobQueue`.
+- 2025-11-04 11:30 — сопоставил `ProcessingLog` из domain модели с отсутствующим контрактом в `spec/contracts/schemas`, проверил агрегаты `ProcessingLogAggregate` и схемы `StatsAggregation`/`StatsMetric` на консистентность с Docs/admin/stats.md.
+- 2025-11-04 11:40 — зафиксировал риски: (1) дублирование логов при ретраях провайдера/перезапуске воркера; (2) отсутствие транзакционной обвязки между записью job state и processing_logs (потенциальная рассинхронизация); (3) при падении StatsService кеши не инвалидируются, а очередь продолжает писать только в БД.
+- 2025-11-04 11:45 — подготовил вопросы к тимлиду: обязательные поля `ProcessingLog`, политика ретраев/дедупликации, допустимая задержка обновления метрик после job, разделение TTL кешей. Предложил ответы по умолчанию: требуемые поля = `id/job_id/slot_id/status/occurred_at` + `provider_latency_ms`; дедупликация за счёт идемпотентного `id` и фильтра в агрегаторе, ретраи публикуют отдельные события; SLA обновления ≤1 мин для глобальных и ≤5 мин для слотов (соответствует текущему кешу); TTL кешей разделяются (1 мин глобальный, 5 мин слот) с возможностью override через конфиг.
 
 ## phase4-media-ttl-2025-10-30
 - 2025-10-30 09:15 — перечитал .memory/CONTEXT.md, .memory/USECASES.md и ADR-0002 для подтверждения политики TTL/очистки (T_sync_response, T_public_link_ttl, T_result_retention 72h, фоновые очистители).
@@ -297,6 +302,8 @@ updated: 2025-11-04
 
 ## phase4-admin-stats-2025-11-04
 - 2025-11-04 13:45 — переработал `CachedStatsService`: добавил раздельные TTL (1 мин для глобальных, 5 мин для слотов), нормализацию диапазона `since` по требованиям CONSULT 4.5.C2 и очистку кэша при событиях; обновил документацию и unit-тесты, добавив проверку разных TTL и диапазонов. Прогнал `pytest tests/unit/services/test_stats_service.py` (зелёный).【F:src/app/services/stats.py†L1-L143】【F:Docs/admin/stats.md†L1-L74】【F:tests/unit/services/test_stats_service.py†L1-L220】【a62ba8†L1-L9】
+- 2025-11-04 16:05 — Тимлид подтвердил предложенные ответы по CONSULT 4.5.6.C1 (формат `ProcessingLog`, политика ретраев и разделение TTL кешей); отметил задачу выполненной и синхронизировал записи.
+- 2025-11-04 16:15 — Разбил имплементацию по Key Findings на сабтаски 4.5.6c/4.5.6d/4.5.6e: перевод DI на `PostgresJobQueue`/`CachedStatsService`, гарантированная запись `ProcessingLog`, smoke-тест и добавление JSON Schema/тестов.
 ## admin-settings-2025-11-04
 - 2025-11-04 14:05 — проанализировал контракт SettingsService и вызовы read_settings() в сервисах и воркерах.
 - 2025-11-04 14:18 — обновил интерфейс SettingsService:get_settings(), привёл реализации/воркеры/тесты к новому методу, проверил логику кеша.
