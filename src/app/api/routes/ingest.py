@@ -276,7 +276,7 @@ async def ingest_slot(
         )
 
     try:
-        slot = slot_service.get_slot(slot_id)
+        slot = await slot_service.get_slot(slot_id)
     except KeyError:
         _log_attempt(
             request=request,

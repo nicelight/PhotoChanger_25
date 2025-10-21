@@ -23,6 +23,7 @@ from ..domain.models import (
     SettingsDslrPasswordStatus,
     SettingsIngestConfig,
     Slot,
+    TemplateMedia,
 )
 from ..infrastructure.queue.postgres import PostgresJobQueue
 
@@ -106,14 +107,127 @@ class DefaultSlotService(SlotService):
 
     slots: Dict[str, Slot]
 
-    def list_slots(self) -> list[Slot]:  # type: ignore[override]
-        return list(self.slots.values())
+    async def list_slots(  # type: ignore[override]
+        self, *, include_archived: bool = False
+    ) -> list[Slot]:
+        if include_archived:
+            return list(self.slots.values())
+        return [slot for slot in self.slots.values() if slot.archived_at is None]
 
-    def get_slot(self, slot_id: str) -> Slot:  # type: ignore[override]
+    async def get_slot(
+        self, slot_id: str, *, include_templates: bool = True
+    ) -> Slot:  # type: ignore[override]
+        _ = include_templates
         try:
             return self.slots[slot_id]
         except KeyError as exc:
             raise KeyError(slot_id) from exc
+
+    async def create_slot(
+        self, slot: Slot, *, updated_by: str | None = None
+    ) -> Slot:  # type: ignore[override]
+        _ = updated_by
+        if slot.id in self.slots:
+            raise KeyError(slot.id)
+        created = self._with_version(slot, assign_new_etag=True)
+        self.slots[created.id] = created
+        return created
+
+    async def update_slot(
+        self,
+        slot: Slot,
+        *,
+        expected_etag: str,
+        updated_by: str | None = None,
+    ) -> Slot:  # type: ignore[override]
+        _ = updated_by
+        current = self.slots.get(slot.id)
+        if current is None:
+            raise KeyError(slot.id)
+        if current.etag != expected_etag:
+            raise KeyError("etag mismatch")
+        updated = self._with_version(slot, assign_new_etag=True)
+        updated.archived_at = None
+        self.slots[updated.id] = updated
+        return updated
+
+    async def archive_slot(
+        self, slot_id: str, *, expected_etag: str, updated_by: str | None = None
+    ) -> Slot:  # type: ignore[override]
+        _ = updated_by
+        slot = self.slots.get(slot_id)
+        if slot is None:
+            raise KeyError(slot_id)
+        if slot.etag != expected_etag:
+            raise KeyError("etag mismatch")
+        archived = replace(slot, archived_at=_utcnow(), etag=uuid4().hex)
+        archived.updated_at = archived.archived_at
+        self.slots[slot_id] = archived
+        return archived
+
+    async def attach_templates(
+        self,
+        slot_id: str,
+        templates: Iterable[TemplateMedia],
+        *,
+        expected_etag: str,
+        updated_by: str | None = None,
+    ) -> Slot:  # type: ignore[override]
+        _ = updated_by
+        slot = self.slots.get(slot_id)
+        if slot is None:
+            raise KeyError(slot_id)
+        if slot.etag != expected_etag:
+            raise KeyError("etag mismatch")
+        new_templates = [replace(template) for template in templates]
+        updated = replace(
+            slot,
+            templates=new_templates,
+            etag=uuid4().hex,
+            updated_at=_utcnow(),
+        )
+        self.slots[slot_id] = updated
+        return updated
+
+    async def detach_template(
+        self,
+        slot_id: str,
+        template_id: UUID,
+        *,
+        expected_etag: str,
+        updated_by: str | None = None,
+    ) -> Slot:  # type: ignore[override]
+        _ = updated_by
+        slot = self.slots.get(slot_id)
+        if slot is None:
+            raise KeyError(slot_id)
+        if slot.etag != expected_etag:
+            raise KeyError("etag mismatch")
+        remaining = [
+            template for template in slot.templates if template.id != template_id
+        ]
+        updated = replace(
+            slot,
+            templates=remaining,
+            etag=uuid4().hex,
+            updated_at=_utcnow(),
+        )
+        self.slots[slot_id] = updated
+        return updated
+
+    @staticmethod
+    def _with_version(slot: Slot, *, assign_new_etag: bool) -> Slot:
+        etag = slot.etag or uuid4().hex
+        if assign_new_etag:
+            etag = uuid4().hex
+        return replace(
+            slot,
+            etag=etag,
+            updated_at=slot.updated_at,
+            created_at=slot.created_at,
+            templates=list(slot.templates),
+            recent_results=list(slot.recent_results),
+        )
 
 
 @dataclass(slots=True)

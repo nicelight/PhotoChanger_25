@@ -28,6 +28,7 @@ from src.app.domain.models import (
     SettingsIngestConfig,
     SettingsProviderKeyStatus,
     Slot,
+    TemplateMedia,
 )
 from src.app.providers.base import ProviderAdapter
 from src.app.services import (
@@ -65,9 +66,66 @@ class StubSlotService(SlotService):
     def __init__(self, slot: Slot) -> None:
         self._slot = slot
 
-    def get_slot(self, slot_id: str) -> Slot:  # type: ignore[override]
+    async def list_slots(
+        self, *, include_archived: bool = False
+    ) -> list[Slot]:  # type: ignore[override]
+        _ = include_archived
+        return [self._slot]
+
+    async def get_slot(
+        self, slot_id: str, *, include_templates: bool = True
+    ) -> Slot:  # type: ignore[override]
+        _ = include_templates
         if slot_id != self._slot.id:
             raise KeyError(slot_id)
+        return self._slot
+
+    async def create_slot(
+        self, slot: Slot, *, updated_by: str | None = None
+    ) -> Slot:  # type: ignore[override]
+        _ = updated_by
+        self._slot = slot
+        return slot
+
+    async def update_slot(
+        self,
+        slot: Slot,
+        *,
+        expected_etag: str,
+        updated_by: str | None = None,
+    ) -> Slot:  # type: ignore[override]
+        _ = (expected_etag, updated_by)
+        self._slot = slot
+        return slot
+
+    async def archive_slot(
+        self, slot_id: str, *, expected_etag: str, updated_by: str | None = None
+    ) -> Slot:  # type: ignore[override]
+        _ = (expected_etag, updated_by)
+        if slot_id != self._slot.id:
+            raise KeyError(slot_id)
+        return self._slot
+
+    async def attach_templates(
+        self,
+        slot_id: str,
+        templates: Iterable[TemplateMedia],
+        *,
+        expected_etag: str,
+        updated_by: str | None = None,
+    ) -> Slot:  # type: ignore[override]
+        _ = (slot_id, templates, expected_etag, updated_by)
+        return self._slot
+
+    async def detach_template(
+        self,
+        slot_id: str,
+        template_id: UUID,
+        *,
+        expected_etag: str,
+        updated_by: str | None = None,
+    ) -> Slot:  # type: ignore[override]
+        _ = (slot_id, template_id, expected_etag, updated_by)
         return self._slot
 
 
