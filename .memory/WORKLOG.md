@@ -279,3 +279,8 @@ updated: 2025-10-31
 ## phase4-admin-review-2025-11-02
 - 2025-11-02 09:15 — провёл код-ревью задач 4.5.3/4.5.4/4.5.5. SettingsService соответствует документу Docs/admin/settings.md, однако SlotManagementService вызывает `SettingsService.read_settings()` (метода нет, нужно перейти на `get_settings`). CachedStatsService использует единый TTL для глобальных и слотовых метрик и не покрывает требования кеша 5 мин/1 мин из CONSULT 4.5.C2; требуется скорректировать контракт и реализацию перед завершением сабтасков.
 - 2025-11-02 09:50 — подтвердил, что 4.5.3 и её подпункты закрыты (реализация, тесты, документация). Сабтаски 4.5.4/4.5.5 остаются в работе из-за ошибок, найденных на ревью: `SlotManagementService` должен использовать `get_settings()`, а `CachedStatsService` — разделять TTL кеша для глобальных и слотовых агрегаций.
+
+## phase4-admin-settings-2025-11-03
+- 2025-11-03 09:10 — перечитал `.memory/TASKS.md` (пункт 4.5.3) и код `src/app/services/slots.py`/`queue_worker.py`, зафиксировал расхождение: сервис настроек предоставляет `get_settings`, тогда как остальные компоненты ожидают `read_settings`, из-за чего воркер и SlotManagementService используют несуществующий метод.
+- 2025-11-03 09:25 — наметил исправление: ввести интерфейс `SettingsService` (отдельный модуль) с методом `read_settings(force_refresh=False)` и реализовать его в `src/app/services/settings.py`, сохранив алиас `get_settings` для обратной совместимости; обновить кеш-инвалидацию и тесты при необходимости.
+- 2025-11-03 10:05 — добавил интерфейс `src/app/services/settings_service.py` и обновил реализацию `SettingsService` для поддержки `read_settings` с кешем и алиаса `get_settings`, чтобы воркеры и SlotManagementService могли использовать единый контракт.
