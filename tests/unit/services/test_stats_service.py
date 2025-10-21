@@ -361,6 +361,7 @@ def test_recent_results_sorted_limited_and_cached() -> None:
 
 
 @pytest.mark.unit
+
 def test_record_processing_event_invalidates_recent_results_cache() -> None:
     now = datetime(2025, 6, 3, tzinfo=timezone.utc)
     slot = Slot(
@@ -414,6 +415,7 @@ def test_record_processing_event_invalidates_recent_results_cache() -> None:
 
 
 @pytest.mark.unit
+
 def test_recent_results_expire_after_retention_window() -> None:
     now = datetime(2025, 6, 2, tzinfo=timezone.utc)
     slot = Slot(
