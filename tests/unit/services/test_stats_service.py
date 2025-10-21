@@ -361,6 +361,61 @@ def test_recent_results_sorted_limited_and_cached() -> None:
 
 
 @pytest.mark.unit
+
+def test_record_processing_event_invalidates_recent_results_cache() -> None:
+    now = datetime(2025, 6, 3, tzinfo=timezone.utc)
+    slot = Slot(
+        id="slot-902",
+        name="Slot 902",
+        provider_id="gemini",
+        operation_id="style_transfer",
+        settings_json={},
+        created_at=now,
+        updated_at=now,
+    )
+    repository = StubStatsRepository()
+    first_result = _build_recent_result(
+        job_id=uuid4(),
+        completed_at=now - timedelta(hours=1),
+        expires_at=now + timedelta(hours=71),
+    )
+    repository.recent_results_data[slot.id] = [first_result]
+    service = CachedStatsService(repository, clock=lambda: now)
+
+    initial = service.recent_results(slot, now=now)
+    assert [item["job_id"] for item in initial] == [first_result["job_id"]]
+
+    second_result = _build_recent_result(
+        job_id=uuid4(),
+        completed_at=now,
+        expires_at=now + timedelta(hours=72),
+    )
+    repository.recent_results_data[slot.id] = [second_result]
+
+    log = ProcessingLog(
+        id=uuid4(),
+        job_id=uuid4(),
+        slot_id=slot.id,
+        status=ProcessingStatus.SUCCEEDED,
+        occurred_at=now,
+    )
+    service.record_processing_event(log)
+
+    refreshed = service.recent_results(slot, now=now + timedelta(minutes=1))
+    assert [item["job_id"] for item in refreshed] == [second_result["job_id"]]
+    assert repository.recent_results_calls == [
+        (slot.id, now - timedelta(hours=72), 10, now),
+        (
+            slot.id,
+            (now + timedelta(minutes=1)) - timedelta(hours=72),
+            10,
+            now + timedelta(minutes=1),
+        ),
+    ]
+
+
+@pytest.mark.unit
+
 def test_recent_results_expire_after_retention_window() -> None:
     now = datetime(2025, 6, 2, tzinfo=timezone.utc)
     slot = Slot(
