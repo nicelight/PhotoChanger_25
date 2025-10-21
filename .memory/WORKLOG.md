@@ -1,6 +1,6 @@
 ---
 id: worklog
-updated: 2025-10-31
+updated: 2025-11-04
 ---
 
 # Черновой журнал до checkpoint
@@ -292,3 +292,7 @@ updated: 2025-10-31
 
 ## phase4-admin-stats-2025-11-04
 - 2025-11-04 13:45 — переработал `CachedStatsService`: добавил раздельные TTL (1 мин для глобальных, 5 мин для слотов), нормализацию диапазона `since` по требованиям CONSULT 4.5.C2 и очистку кэша при событиях; обновил документацию и unit-тесты, добавив проверку разных TTL и диапазонов. Прогнал `pytest tests/unit/services/test_stats_service.py` (зелёный).【F:src/app/services/stats.py†L1-L143】【F:Docs/admin/stats.md†L1-L74】【F:tests/unit/services/test_stats_service.py†L1-L220】【a62ba8†L1-L9】
+## admin-settings-2025-11-04
+- 2025-11-04 14:05 — проанализировал контракт SettingsService и вызовы read_settings() в сервисах и воркерах.
+- 2025-11-04 14:18 — обновил интерфейс SettingsService:get_settings(), привёл реализации/воркеры/тесты к новому методу, проверил логику кеша.
+- 2025-11-04 14:32 — актуализировал Docs/admin/settings.md и .memory/TASKS.md, убедился что unit-тесты покрывают обращения get_settings().

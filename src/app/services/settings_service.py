@@ -10,7 +10,7 @@ from ..domain.models import Settings
 class SettingsService:
     """Coordinates access to global configuration and ingest credentials."""
 
-    def read_settings(self, *, force_refresh: bool = False) -> Settings:
+    def get_settings(self, *, force_refresh: bool = False) -> Settings:
         """Return the latest configuration snapshot.
 
         Implementations may cache results in memory. ``force_refresh``

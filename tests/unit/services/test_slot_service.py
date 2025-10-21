@@ -216,7 +216,7 @@ class InMemorySlotRepository(SlotRepository):
 class StubSettingsService(SettingsService):
     settings: Settings
 
-    def read_settings(self) -> Settings:  # type: ignore[override]
+    def get_settings(self) -> Settings:  # type: ignore[override]
         return self.settings
 
     def verify_ingest_password(self, password: str) -> bool:  # type: ignore[override]
