@@ -105,10 +105,10 @@ updated: 2025-11-04
         - [ ] 4.5.6a Обновить DI-контейнер/провайдеры FastAPI новыми зависимостями.
           - [ ] 4.5.6a1 Зарегистрировать реализации `StatsRepository`/`StatsService` в `ServiceRegistry`, обеспечить получение конфигурации Postgres и параметров кешей.
           - [ ] 4.5.6a2 Расширить `create_app` и связанные фабрики (`ApiFacade`, state FastAPI) передачей StatsService/StatsRepository и unit of work для админских эндпоинтов.
-        - [ ] 4.5.6b Настроить публикацию событий между воркерами/JobService и StatsService.
-          - [ ] 4.5.6b1 Дополнить `JobService` (create/finalize/fail) записью `ProcessingLog` и вызовом `StatsService.record_processing_event` с нужными атрибутами.
-          - [ ] 4.5.6b2 Обновить `QueueWorker` для генерации `ProcessingLog` по исходам (success/timeout/error/cancel), передачи слота/провайдера и очистки после публикации.
-          - [ ] 4.5.6b3 Подготовить вспомогательные методы и обработку ошибок/ретраев при недоступности StatsService (логирование, метрики, деградация).
+        - [x] 4.5.6b Настроить публикацию событий между воркерами/JobService и StatsService.
+          - [x] 4.5.6b1 Дополнить `JobService` (create/finalize/fail) записью `ProcessingLog` и вызовом `StatsService.record_processing_event` с нужными атрибутами.
+          - [x] 4.5.6b2 Обновить `QueueWorker` для генерации `ProcessingLog` по исходам (success/timeout/error/cancel), передачи слота/провайдера и очистки после публикации.
+          - [x] 4.5.6b3 Подготовить вспомогательные методы и обработку ошибок/ретраев при недоступности StatsService (логирование, метрики, деградация).
         - [ ] 4.5.6c Обеспечить постоянную запись `ProcessingLog` и инвалидирование кеша в дефолтной конфигурации.
           - [ ] 4.5.6c1 Переключить DI по умолчанию на `PostgresJobQueue`/`CachedStatsService`, исключив `_InMemoryJobQueue` и `DefaultStatsService` вне тестов.
           - [ ] 4.5.6c2 Добавить проверку и тесты, что обработанные задания фиксируются в БД и вызывают `StatsService.record_processing_event`.

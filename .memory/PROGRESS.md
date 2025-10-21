@@ -1,6 +1,6 @@
 ---
 id: progress
-updated: 2025-11-04
+updated: 2025-11-05
 ---
 
 # Progress (changelog — одна строка на событие)
@@ -37,3 +37,4 @@ updated: 2025-11-04
 - 2025-11-04: Сабтаски 4.5.4a–4.5.4d выполнены — SlotManagementService реализован с проверками провайдеров/шаблонов, обновлены DTO/репозитории и unit-тесты `tests/unit/services/test_slot_service.py` проходят (pytest).
 - 2025-11-04: Сабтаск 4.5.2b завершён — SQLAlchemy репозитории дополнились TemplateMediaRepository, обеспечены фильтры/транзакции/обработка ошибок и синхронизированы .memory-файлы.
 - 2025-11-05: Сабтаски 4.5.4/4.5.5 подтверждены — `SlotService` и `CachedStatsService` проходят ревью, разделены TTL статистики, добавлен кеш recent_results и unit-тесты `tests/unit/services/test_stats_service.py` зелёные.
+- 2025-11-05: Сабтаски 4.5.6b1–4.5.6b3 выполнены — JobService фиксирует ProcessingLog (create/finalize/fail) и публикует события в StatsService, QueueWorker делегирует сервису и обогащает детали логов, unit/integration тесты обновлены.

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import mimetypes
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta, timezone
@@ -19,6 +20,7 @@ from ..domain.models import (
     MediaObject,
     MediaCacheSettings,
     ProcessingLog,
+    ProcessingStatus,
     Settings,
     SettingsDslrPasswordStatus,
     SettingsIngestConfig,
@@ -398,6 +400,10 @@ class DefaultJobService(JobService):
     queue: PostgresJobQueue
     jobs: Dict[UUID, Job] = field(default_factory=dict)
     result_retention_hours: int = 72
+    stats_service: StatsService | None = None
+    _logger: logging.Logger = field(
+        default_factory=lambda: logging.getLogger(__name__), init=False
+    )
 
     def _persist_finalized_job(self, job: Job) -> Job:
         mark_finalized = getattr(self.queue, "mark_finalized", None)
@@ -446,6 +452,26 @@ class DefaultJobService(JobService):
         except QueueUnavailableError:
             self.jobs.pop(identifier, None)
             raise
+        log = ProcessingLog(
+            id=uuid4(),
+            job_id=job.id,
+            slot_id=slot.id,
+            status=ProcessingStatus.RECEIVED,
+            occurred_at=created,
+            message="Job enqueued",
+            details={
+                "slot_id": slot.id,
+                "payload_path": payload.path if payload else None,
+                "expires_at": expires_at.isoformat(),
+            },
+            provider_latency_ms=0,
+        )
+        try:
+            self.append_processing_logs(job, [log])
+        except QueueUnavailableError:
+            # Propagate queue errors, but ensure the job cache remains consistent.
+            self.jobs.pop(identifier, None)
+            raise
         return job
 
     def get_job(self, job_id: UUID) -> Job | None:  # type: ignore[override]
@@ -488,7 +514,24 @@ class DefaultJobService(JobService):
             job.result_size_bytes = None
             job.result_checksum = None
             job.result_expires_at = retention_expires_at
-        return self._persist_finalized_job(job)
+        persisted = self._persist_finalized_job(job)
+        log_details: dict[str, object | None] = {
+            "result_file_path": persisted.result_file_path,
+            "result_checksum": result_checksum,
+            "inline_preview": inline_preview is not None,
+        }
+        log = ProcessingLog(
+            id=uuid4(),
+            job_id=persisted.id,
+            slot_id=persisted.slot_id,
+            status=ProcessingStatus.SUCCEEDED,
+            occurred_at=finalized_at,
+            message="Job finalized",
+            details=log_details,
+            provider_latency_ms=None,
+        )
+        self.append_processing_logs(persisted, [log])
+        return persisted
 
     def fail_job(
         self,
@@ -507,10 +550,56 @@ class DefaultJobService(JobService):
         job.result_size_bytes = None
         job.result_checksum = None
         job.result_expires_at = None
-        return self._persist_finalized_job(job)
+        persisted = self._persist_finalized_job(job)
+        status = (
+            ProcessingStatus.TIMEOUT
+            if failure_reason is JobFailureReason.TIMEOUT
+            else ProcessingStatus.FAILED
+        )
+        log = ProcessingLog(
+            id=uuid4(),
+            job_id=persisted.id,
+            slot_id=persisted.slot_id,
+            status=status,
+            occurred_at=occurred_at,
+            message=f"Job failed: {failure_reason.value}",
+            details={"failure_reason": failure_reason.value},
+            provider_latency_ms=None,
+        )
+        self.append_processing_logs(persisted, [log])
+        return persisted
 
-    def append_processing_logs(self, job: Job, logs: Iterable[ProcessingLog]) -> None:  # type: ignore[override]
-        self.queue.append_processing_logs(logs)
+    def append_processing_logs(
+        self, job: Job, logs: Iterable[ProcessingLog]
+    ) -> None:  # type: ignore[override]
+        entries = list(logs)
+        if not entries:
+            return
+        for index, log in enumerate(entries):
+            if log.job_id != job.id:
+                raise ValueError(
+                    "processing log job_id mismatch",
+                )
+            if log.slot_id != job.slot_id:
+                raise ValueError("processing log slot_id mismatch")
+            entries[index] = replace(log)
+        self.queue.append_processing_logs(entries)
+        self._forward_to_stats(entries)
+
+    def _forward_to_stats(self, logs: Iterable[ProcessingLog]) -> None:
+        if self.stats_service is None:
+            return
+        for log in logs:
+            try:
+                self.stats_service.record_processing_event(log)
+            except NotImplementedError:  # pragma: no cover - optional override
+                continue
+            except Exception as exc:  # pragma: no cover - defensive logging
+                self._logger.warning(
+                    "Failed to publish processing log to stats service",
+                    exc_info=exc,
+                    extra={"job_id": str(log.job_id), "slot_id": log.slot_id},
+                )
 
     def purge_expired_results(self, *, now: datetime) -> list[Job]:  # type: ignore[override]
         expired: list[Job] = []

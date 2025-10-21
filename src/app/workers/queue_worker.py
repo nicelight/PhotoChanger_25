@@ -31,13 +31,7 @@ from ..domain.models import (
 )
 from ..plugins.base import PluginFactory
 from ..providers.base import ProviderAdapter
-from ..services import (
-    JobService,
-    MediaService,
-    SettingsService,
-    SlotService,
-    StatsService,
-)
+from ..services import JobService, MediaService, SettingsService, SlotService
 from ..services.media_helpers import persist_base64_result
 
 
@@ -73,7 +67,6 @@ class QueueWorker:
         slot_service: SlotService,
         media_service: MediaService,
         settings_service: SettingsService,
-        stats_service: StatsService,
         provider_factories: Mapping[str, PluginFactory],
         provider_configs: Mapping[str, Mapping[str, Any]] | None = None,
         clock: Callable[[], datetime] | None = None,
@@ -88,7 +81,6 @@ class QueueWorker:
         self.slot_service = slot_service
         self.media_service = media_service
         self.settings_service = settings_service
-        self.stats_service = stats_service
         self._provider_factories = dict(provider_factories)
         self._provider_configs = dict(provider_configs or {})
         self._providers: dict[str, ProviderAdapter] = {}
@@ -245,7 +237,6 @@ class QueueWorker:
         )
         log_entry = self._timeout_log_entry(job, slot=slot, now=now)
         self.job_service.append_processing_logs(job, [log_entry])
-        self._record_processing_logs([log_entry])
 
     async def _handle_timeout_async(self, job: Job, *, now: datetime) -> None:
         """Mark the job as timed out when ``now`` exceeds ``job.expires_at``."""
@@ -258,8 +249,9 @@ class QueueWorker:
             occurred_at=now,
         )
         log_entry = self._timeout_log_entry(job, slot=slot, now=now)
-        await self._run_sync(self.job_service.append_processing_logs, job, [log_entry])
-        self._record_processing_logs([log_entry])
+        await self._run_sync(
+            self.job_service.append_processing_logs, job, [log_entry]
+        )
 
     # ------------------------------------------------------------------
     # Provider dispatch lifecycle
@@ -286,7 +278,12 @@ class QueueWorker:
                 occurred_at=started_at,
                 started_at=started_at,
                 message="Job received for processing",
-                details={"provider_id": slot.provider_id},
+                details={
+                    "provider_id": slot.provider_id,
+                    "operation_id": slot.operation_id,
+                    "payload_path": job.payload_path,
+                    "expires_at": job.expires_at.isoformat(),
+                },
             )
         ]
 
@@ -308,11 +305,13 @@ class QueueWorker:
                     occurred_at=error_time,
                     started_at=started_at,
                     message=str(exc),
-                    details={"error": repr(exc)},
+                    details={
+                        "error": repr(exc),
+                        "provider_id": slot.provider_id,
+                    },
                 )
             )
             await self._run_sync(self.job_service.append_processing_logs, job, logs)
-            self._record_processing_logs(logs)
             return ProviderDispatchResult(
                 outcome=ProviderDispatchOutcome.ERROR,
                 provider_reference=None,
@@ -330,7 +329,10 @@ class QueueWorker:
                 occurred_at=dispatched_at,
                 started_at=started_at,
                 message="Submitted payload to provider",
-                details={"provider_id": slot.provider_id},
+                details={
+                    "provider_id": slot.provider_id,
+                    "operation_id": slot.operation_id,
+                },
             )
         )
 
@@ -352,11 +354,13 @@ class QueueWorker:
                     occurred_at=failure_time,
                     started_at=started_at,
                     message=str(exc),
-                    details={"error": repr(exc)},
+                    details={
+                        "error": repr(exc),
+                        "provider_id": slot.provider_id,
+                    },
                 )
             )
             await self._run_sync(self.job_service.append_processing_logs, job, logs)
-            self._record_processing_logs(logs)
             return ProviderDispatchResult(
                 outcome=ProviderDispatchOutcome.ERROR,
                 provider_reference=None,
@@ -366,7 +370,6 @@ class QueueWorker:
             )
         except asyncio.CancelledError:
             await self._run_sync(self.job_service.append_processing_logs, job, logs)
-            self._record_processing_logs(logs)
             await self._cancel_reference_on_shutdown(slot, reference)
             raise
 
@@ -401,8 +404,9 @@ class QueueWorker:
                 finished_at = now
                 break
             except asyncio.CancelledError:
-                await self._run_sync(self.job_service.append_processing_logs, job, logs)
-                self._record_processing_logs(logs)
+                await self._run_sync(
+                    self.job_service.append_processing_logs, job, logs
+                )
                 await self._cancel_reference_on_shutdown(slot, reference)
                 raise
 
@@ -416,7 +420,11 @@ class QueueWorker:
                         status=ProcessingStatus.PROVIDER_RESPONDED,
                         occurred_at=now,
                         started_at=started_at,
-                        details={"attempt": attempt},
+                        details={
+                            "attempt": attempt,
+                            "provider_reference": reference,
+                            "provider_id": slot.provider_id,
+                        },
                     )
                 )
                 outcome = ProviderDispatchOutcome.SUCCESS
@@ -457,7 +465,10 @@ class QueueWorker:
                     occurred_at=finished_at,
                     started_at=started_at,
                     message=(str(error) if error else None),
-                    details={"provider_id": slot.provider_id},
+                    details={
+                        "provider_id": slot.provider_id,
+                        "provider_reference": reference,
+                    },
                 )
             )
         elif outcome is ProviderDispatchOutcome.SUCCESS:
@@ -468,7 +479,10 @@ class QueueWorker:
                     status=ProcessingStatus.SUCCEEDED,
                     occurred_at=finished_at,
                     started_at=started_at,
-                    details={"provider_id": slot.provider_id},
+                    details={
+                        "provider_id": slot.provider_id,
+                        "provider_reference": reference,
+                    },
                 )
             )
         else:
@@ -482,13 +496,13 @@ class QueueWorker:
                     message=(str(error) if error else None),
                     details={
                         "provider_id": slot.provider_id,
+                        "provider_reference": reference,
                         "error": repr(error) if error else None,
                     },
                 )
             )
 
         await self._run_sync(self.job_service.append_processing_logs, job, logs)
-        self._record_processing_logs(logs)
 
         return ProviderDispatchResult(
             outcome=outcome,
@@ -561,13 +575,6 @@ class QueueWorker:
             provider_latency_ms=latency_ms,
         )
 
-    def _record_processing_logs(self, logs: list[ProcessingLog]) -> None:
-        for log in logs:
-            try:
-                self.stats_service.record_processing_event(log)
-            except NotImplementedError:  # pragma: no cover - optional override
-                continue
-
     def _timeout_log_entry(
         self, job: Job, *, slot: Slot, now: datetime
     ) -> ProcessingLog:
@@ -578,6 +585,7 @@ class QueueWorker:
             occurred_at=now,
             started_at=now,
             message="Job expired before dispatch",
+            details={"provider_id": slot.provider_id},
         )
 
     @staticmethod
@@ -875,7 +883,6 @@ class QueueWorker:
             details={"provider_id": slot.provider_id},
         )
         await self._run_sync(self.job_service.append_processing_logs, job, [log_entry])
-        self._record_processing_logs([log_entry])
 
     async def _handle_cancelled_job(self, job: Job, *, now: datetime) -> None:
         slot = await self.slot_service.get_slot(job.slot_id)
