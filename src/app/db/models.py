@@ -9,7 +9,7 @@ from uuid import UUID as UUIDType, uuid4
 import sqlalchemy as sa
 from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Integer, MetaData, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 def _json_type() -> sa.types.TypeEngine[Any]:
@@ -97,6 +97,13 @@ class Slot(Base):
         nullable=False,
         default=lambda: uuid4().hex,
     )
+    archived_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    templates: Mapped[list["SlotTemplate"]] = relationship(
+        back_populates="slot", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         CheckConstraint("id ~ '^slot-[0-9]{3}$'", name="ck_slots_id_format"),
@@ -126,6 +133,8 @@ class SlotTemplate(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=sa.func.now()
     )
+
+    slot: Mapped["Slot"] = relationship(back_populates="templates")
 
     __table_args__ = (
         UniqueConstraint("slot_id", "setting_key", name="uq_slot_templates_slot_key"),
