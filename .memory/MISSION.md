@@ -6,20 +6,20 @@ owner: product
 ---
 
 # Миссия и ценность
-- **Кому помогаем:** администраторам контента и студийным операторам, которые запускают обработку из DSLR Remote Pro, а также команде эксплуатации, контролирующей SLA и затраты провайдеров. Платформа обеспечивает единое окно управления слотами и автоматизирует доставку готовых изображений по публичным ссылкам в пределах гарантийных TTL.【F:spec/docs/blueprints/vision.md】【F:Docs/brief.md】
+- **Кому помогаем:** администраторам контента и студийным операторам, которые запускают обработку из DSLR Remote Pro, а также команде эксплуатации, контролирующей SLA и затраты провайдеров. Платформа обеспечивает единое окно управления слотами и автоматизирует доставку готовых изображений по публичным ссылкам в пределах гарантийных TTL.【F:spec/docs/blueprints/vision.md】【F:/brief.md】
 - **Почему сейчас:** бизнесу требуется консистентный серверный слой между DSLR Remote Pro и несколькими AI-провайдерами (Gemini, Turbotext) с соблюдением их лимитов, дедлайнов и требований к хранению медиа. Без этой прослойки команды тратят время на ручную маршрутизацию и рискуют нарушить SLA или потерять файлы из-за рассинхрона TTL.【F:spec/docs/blueprints/vision.md】【F:spec/docs/blueprints/constraints-risks.md】
 - **Бизнес-метрики успеха:** ≥ 95 % ingest-запросов завершаются 200 в пределах `T_sync_response`; доля таймаутов ≤ 5 %; SLA доступности ingest API ≥ 99 %; отсутствие утечек временных/итоговых файлов после наступления TTL; соблюдение квот провайдеров (Gemini/Turbotext).【F:spec/docs/blueprints/vision.md】【F:spec/docs/blueprints/nfr.md】
 
 ## Scope
 - **In-scope:**
-  - Ingest API с polling записи `Job` и возвратом 200/504 строго по `T_sync_response` (45–60 с).【F:Docs/brief.md】【F:spec/docs/blueprints/use-cases.md】
+  - Ingest API с polling записи `Job` и возвратом 200/504 строго по `T_sync_response` (45–60 с).【F:/brief.md】【F:spec/docs/blueprints/use-cases.md】
   - Очередь задач на PostgreSQL, воркеры с интеграцией Gemini и Turbotext, расчёт TTL и очистка временных/итоговых медиа (`media_object`, `Job.result_*`).【F:spec/docs/blueprints/context.md】【F:spec/docs/blueprints/domain-model.md】
-  - Административный UI/API: управление слотами (`slot-001`…`slot-015`), шаблонными медиа, глобальными настройками (ingest-пароль, `T_sync_response`), просмотр `recent_results` и статистики.【F:Docs/brief.md】【F:spec/docs/blueprints/use-cases.md】
+  - Административный UI/API: управление слотами (`slot-001`…`slot-015`), шаблонными медиа, глобальными настройками (ingest-пароль, `T_sync_response`), просмотр `recent_results` и статистики.【F:/brief.md】【F:spec/docs/blueprints/use-cases.md】
   - Безопасность и наблюдаемость: JWT для администраторов (`serg`, `igor`), логирование статусов Job, метрики таймаутов, алерты по превышению 504 и заполнению хранилищ.【F:spec/docs/blueprints/nfr.md】【F:spec/docs/blueprints/acceptance-criteria.md】
 - **Out-of-scope:**
   - Регистрация новых пользователей, self-service смена паролей и внешние IdP (MVP ограничивается статическими аккаунтами).【F:spec/docs/blueprints/context.md】
   - Автоматическое продление TTL публичных ссылок или исходных файлов; повторный доступ требует нового ingest или повторной регистрации медиа.【F:spec/docs/blueprints/constraints-risks.md】【F:spec/docs/blueprints/use-cases.md】
-- Подключение дополнительных AI-провайдеров, новых очередей (Kafka) и расширенной UI-аналитики — отдельные инициативы roadmap.【F:spec/docs/blueprints/context.md】【F:Docs/implementation_roadmap.md】
+- Подключение дополнительных AI-провайдеров, новых очередей (Kafka) и расширенной UI-аналитики — отдельные инициативы roadmap.【F:spec/docs/blueprints/context.md】【F:spec/docs/implementation_roadmap.md】
 
 ## Принципы разработки
 - Сохраняем минимальную комплексность: простота контрактов и кода ценится выше максимальной стабильности и удобства тестирования. Дополнительные механизмы вводим только если они не усложняют архитектуру и пользовательский опыт.
