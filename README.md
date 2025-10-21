@@ -31,7 +31,7 @@ AI платформа для генерации вкусных фотограф�
 ## Operations
 
 - Подробный запуск ingest и управление таймаутами описаны в
-  [Docs/operations/ingest_runbook.md](Docs/operations/ingest_runbook.md).
+  [spec/docs/operations/ingest_runbook.md](spec/docs/operations/ingest_runbook.md).
 - Настройка очереди PostgreSQL, миграций Alembic, `statement_timeout` и лимита
   `QUEUE_MAX_IN_FLIGHT_JOBS` собраны в
-  [Docs/operations/postgres_queue_runbook.md](Docs/operations/postgres_queue_runbook.md).
+  [spec/docs/operations/postgres_queue_runbook.md](spec/docs/operations/postgres_queue_runbook.md).
