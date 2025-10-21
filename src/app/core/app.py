@@ -146,12 +146,6 @@ def _configure_dependencies(
                 exc,
             )
             queue = _InMemoryJobQueue()
-    settings_service = DefaultSettingsService(
-        settings=settings, password_hash=password_hash
-    )
-    slot_service = DefaultSlotService(slots=dict(slots))
-    media_service = DefaultMediaService(media_root=media_root)
-    job_service = DefaultJobService(queue=queue)
     slot_ttl, global_ttl = load_stats_cache_settings()
     stats_engine = create_engine(config.database_url, future=True)
     stats_repository = SqlAlchemyStatsRepository(stats_engine)
@@ -160,6 +154,12 @@ def _configure_dependencies(
         slot_ttl=slot_ttl,
         global_ttl=global_ttl,
     )
+    settings_service = DefaultSettingsService(
+        settings=settings, password_hash=password_hash
+    )
+    slot_service = DefaultSlotService(slots=dict(slots))
+    media_service = DefaultMediaService(media_root=media_root)
+    job_service = DefaultJobService(queue=queue, stats_service=stats_service)
 
     registry.register_settings_service(lambda *, config=None: settings_service)
     registry.register_slot_service(lambda *, config=None: slot_service)
@@ -188,15 +188,6 @@ def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
         job_queue_override=job_queue_override,
     )
 
-    job_queue_override = extra_state.get("job_queue")
-    if job_queue_override is not None:
-        job_service_override = DefaultJobService(queue=job_queue_override)
-        registry.register_job_service(
-            lambda *, config=None: job_service_override
-        )
-        registry.register_job_repository(lambda *, config=None: job_queue_override)
-        extra_state.setdefault("job_service", job_service_override)
-
     stats_service_instance = registry.resolve_stats_service()(config=app_config)
     stats_repository_factory = registry.resolve_stats_repository()
     stats_repository_instance = stats_repository_factory(config=app_config)
@@ -205,6 +196,17 @@ def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
     extra_state.setdefault(
         "stats_unit_of_work_factory", registry.resolve_unit_of_work()
     )
+
+    job_queue_override = extra_state.get("job_queue")
+    if job_queue_override is not None:
+        job_service_override = DefaultJobService(
+            queue=job_queue_override, stats_service=stats_service_instance
+        )
+        registry.register_job_service(
+            lambda *, config=None: job_service_override
+        )
+        registry.register_job_repository(lambda *, config=None: job_queue_override)
+        extra_state.setdefault("job_service", job_service_override)
 
     facade = ApiFacade(registry=registry)
     app = FastAPI(title="PhotoChanger API", version=_read_contract_version())
@@ -254,7 +256,6 @@ def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
                 slot_service=slot_service,
                 media_service=media_service,
                 settings_service=settings_service,
-                stats_service=stats_service,
                 provider_factories=provider_factories,
                 provider_configs=provider_configs,
             )

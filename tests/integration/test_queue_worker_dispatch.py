@@ -228,6 +228,7 @@ class StubStatsService(StatsService):
 @dataclass
 class StubJobService(JobService):
     result_retention_hours: int = 72
+    stats_service: StatsService | None = None
     _queue: Deque[Job] = field(default_factory=deque)
     finalized_jobs: list[Job] = field(default_factory=list)
     failed_jobs: list[Job] = field(default_factory=list)
@@ -295,8 +296,15 @@ class StubJobService(JobService):
         self.failed_jobs.append(job)
         return job
 
-    def append_processing_logs(self, job: Job, logs: Iterable[ProcessingLog]) -> None:  # type: ignore[override]
-        self.logs.extend(logs)
+    def append_processing_logs(
+        self, job: Job, logs: Iterable[ProcessingLog]
+    ) -> None:  # type: ignore[override]
+        _ = job
+        materialized = list(logs)
+        self.logs.extend(materialized)
+        if self.stats_service is not None:
+            for log in materialized:
+                self.stats_service.record_processing_event(log)
 
 
 @pytest.fixture
@@ -442,12 +450,12 @@ def _make_worker(
     async def _advance(seconds: float) -> None:
         clock.advance(seconds)
 
+    job_service.stats_service = stats_service
     return QueueWorker(
         job_service=job_service,
         slot_service=slot_service,
         media_service=media_service,
         settings_service=settings_service,
-        stats_service=stats_service,
         provider_factories={provider_id: lambda *, config=None: provider},
         clock=clock.now,
         sleep=_advance,

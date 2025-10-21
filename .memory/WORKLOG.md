@@ -1,6 +1,6 @@
 ---
 id: worklog
-updated: 2025-11-04
+updated: 2025-11-05
 ---
 
 # Черновой журнал до checkpoint
@@ -118,6 +118,12 @@ updated: 2025-11-04
 
 ## phase4-analysis-2025-10-22
 - 2025-10-22 11:20 — прошёлся по контрактам ingest и тестовым фикстурам, выявил рассинхрон multipart ↔ JSON/base64 и несоответствие Pydantic-модели `IngestRequest` требованиям `UploadFile`.
+
+## phase4-queue-worker-stats-2025-11-05
+- 2025-11-05 09:05 — перечитал задачу 4.5.6b, сверил контекст JobService/QueueWorker/StatsService и инструкции REFLECT/CONSULT в .memory/TASKS.md.
+- 2025-11-05 10:20 — реализовал запись ProcessingLog в DefaultJobService (create/finalize/fail), добавил проксирование событий в StatsService с ретраями и логированием ошибок.
+- 2025-11-05 11:00 — переработал QueueWorker на делегирование JobService, обогатил детали логов провайдера, обновил DI create_app под новый конструктор.
+- 2025-11-05 11:40 — адаптировал интеграционные/юнит тесты (DefaultJobService, CachedStatsService, QueueWorker), подготовил запуск pytest -m unit и pytest -m integration.
 - 2025-10-22 11:40 — проверил воркер и DI: отсутствие `SlotService`/регистрации провайдеров в `ServiceRegistry` блокирует `dispatch_to_provider` и выбор адаптера.
 - 2025-10-22 12:00 — зафиксировал найденные блокеры и подготовил рекомендации/промпты для их устранения перед стартом реализации Фазы 4.
 

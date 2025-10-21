@@ -3,14 +3,23 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from typing import Iterable
 from uuid import UUID
 
 import pytest
 
 from src.app.domain import calculate_result_expires_at
-from src.app.domain.models import Job, JobFailureReason, JobStatus, MediaObject
+from src.app.domain.models import (
+    Job,
+    JobFailureReason,
+    JobStatus,
+    MediaObject,
+    ProcessingLog,
+    ProcessingStatus,
+)
 from src.app.infrastructure.queue.postgres import PostgresJobQueue
 from src.app.services.default import DefaultJobService
+from src.app.services.stats_service import StatsService
 
 
 @pytest.fixture
@@ -137,6 +146,45 @@ def test_clear_inline_preview_resets_inline_fields(
     assert cleared.result_size_bytes is None
     assert cleared.result_checksum is None
     assert service.get_job(job.id) is cleared
+
+
+class _RecordingStats(StatsService):
+    def __init__(self) -> None:
+        self.events: list[ProcessingLog] = []
+
+    def record_processing_event(self, log: ProcessingLog) -> None:  # type: ignore[override]
+        self.events.append(log)
+
+
+class _LogQueue:
+    def __init__(self) -> None:
+        self.logs: list[ProcessingLog] = []
+
+    def append_processing_logs(self, logs: Iterable[ProcessingLog]) -> None:
+        self.logs.extend(logs)
+
+
+def test_append_processing_logs_persists_and_forwards_to_stats() -> None:
+    queue = _LogQueue()
+    stats = _RecordingStats()
+    service = DefaultJobService(queue=queue, stats_service=stats)  # type: ignore[arg-type]
+    job = _build_job()
+    service.jobs[job.id] = job
+    log = ProcessingLog(
+        id=UUID("00000000-0000-0000-0000-000000000099"),
+        job_id=job.id,
+        slot_id=job.slot_id,
+        status=ProcessingStatus.RECEIVED,
+        occurred_at=datetime.now(timezone.utc),
+        message="test",
+        details=None,
+        provider_latency_ms=5,
+    )
+
+    service.append_processing_logs(job, [log])
+
+    assert queue.logs and queue.logs[0].job_id == job.id
+    assert stats.events and stats.events[0].job_id == job.id
 
 
 class _QueueStub:

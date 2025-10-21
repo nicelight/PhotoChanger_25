@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Callable, Dict, Iterable, Sequence, Tuple, cast
@@ -47,16 +49,26 @@ class CachedStatsService(StatsService):
         slot_ttl: timedelta = SLOT_CACHE_TTL,
         global_ttl: timedelta = GLOBAL_CACHE_TTL,
         clock: Callable[[], datetime] | None = None,
+        max_record_attempts: int = 3,
+        record_retry_delay: float = 0.0,
+        logger: logging.Logger | None = None,
     ) -> None:
         if slot_ttl < timedelta(0):
             raise ValueError("slot_ttl must be non-negative")
         if global_ttl < timedelta(0):
             raise ValueError("global_ttl must be non-negative")
+        if max_record_attempts < 1:
+            raise ValueError("max_record_attempts must be at least 1")
+        if record_retry_delay < 0:
+            raise ValueError("record_retry_delay cannot be negative")
         self._repository = repository
         self._slot_ttl = slot_ttl
         self._global_ttl = global_ttl
         self._clock = clock or _default_clock
         self._cache: Dict[Tuple[object, ...], _CacheEntry] = {}
+        self._max_record_attempts = max_record_attempts
+        self._record_retry_delay = record_retry_delay
+        self._logger = logger or logging.getLogger(__name__)
 
     def collect_global_stats(
         self,
@@ -80,8 +92,31 @@ class CachedStatsService(StatsService):
         return self._collect(slot, window=window, since=since, now=current_time)
 
     def record_processing_event(self, log: ProcessingLog) -> None:
-        self._repository.store_processing_log(log)
-        self._invalidate(slot_id=log.slot_id)
+        attempt = 0
+        last_error: Exception | None = None
+        while attempt < self._max_record_attempts:
+            attempt += 1
+            try:
+                self._repository.store_processing_log(log)
+            except Exception as exc:  # pragma: no cover - defensive logging
+                last_error = exc
+                self._logger.warning(
+                    "Failed to store processing log (attempt %s/%s)",
+                    attempt,
+                    self._max_record_attempts,
+                    exc_info=exc,
+                    extra={"slot_id": log.slot_id, "job_id": str(log.job_id)},
+                )
+                if attempt >= self._max_record_attempts:
+                    break
+                if self._record_retry_delay > 0:
+                    time.sleep(self._record_retry_delay * attempt)
+                continue
+            else:
+                self._invalidate(slot_id=log.slot_id)
+                return
+        if last_error is not None:
+            raise last_error
 
     def recent_results(
         self,

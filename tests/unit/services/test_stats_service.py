@@ -26,6 +26,7 @@ class StubStatsRepository:
         self.recent_results_calls: list[
             tuple[str, datetime, int, datetime]
         ] = []
+        self.store_failures: int = 0
 
     def collect_global_metrics(
         self, *, window: StatsWindow, since: datetime | None = None
@@ -40,6 +41,9 @@ class StubStatsRepository:
         return list(self.slot_data.get((slot.id, window), []))
 
     def store_processing_log(self, log: ProcessingLog) -> None:
+        if self.store_failures > 0:
+            self.store_failures -= 1
+            raise RuntimeError("transient failure")
         self.stored_logs.append(log)
 
     def load_recent_results(
@@ -228,6 +232,34 @@ def test_record_processing_event_invalidates_slot_and_global_cache() -> None:
     ]
     assert refreshed_global.summary.success == 2
     assert refreshed_slot.summary.success == 2
+
+
+@pytest.mark.unit
+def test_record_processing_event_retries_before_propagating() -> None:
+    now = datetime(2025, 3, 2, tzinfo=timezone.utc)
+    repository = StubStatsRepository()
+    repository.store_failures = 1
+    service = CachedStatsService(
+        repository,
+        slot_ttl=timedelta(seconds=60),
+        global_ttl=timedelta(seconds=60),
+        clock=lambda: now,
+        record_retry_delay=0.0,
+    )
+    log = ProcessingLog(
+        id=uuid4(),
+        job_id=uuid4(),
+        slot_id="slot-retry",
+        status=ProcessingStatus.SUCCEEDED,
+        occurred_at=now,
+        message=None,
+        details=None,
+        provider_latency_ms=10,
+    )
+
+    service.record_processing_event(log)
+
+    assert repository.stored_logs == [log]
 
 
 @pytest.mark.unit
