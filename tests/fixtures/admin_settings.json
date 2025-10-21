@@ -7,7 +7,8 @@
       "updated_by": "serg"
     },
     "value_type": "status",
-    "is_secret": false
+    "is_secret": false,
+    "etag": "cfg-etag-001"
   },
   {
     "key": "settings.ingest",
@@ -16,7 +17,8 @@
       "ingest_ttl_sec": 48
     },
     "value_type": "config",
-    "is_secret": false
+    "is_secret": false,
+    "etag": "cfg-etag-002"
   },
   {
     "key": "settings.media_cache",
@@ -25,7 +27,8 @@
       "public_link_ttl_sec": 48
     },
     "value_type": "config",
-    "is_secret": false
+    "is_secret": false,
+    "etag": "cfg-etag-003"
   },
   {
     "key": "provider_keys.gemini",
@@ -37,6 +40,7 @@
       "region": "us-central1"
     },
     "value_type": "provider_status",
-    "is_secret": true
+    "is_secret": true,
+    "etag": "cfg-etag-004"
   }
 ]
