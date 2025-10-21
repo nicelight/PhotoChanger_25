@@ -21,6 +21,7 @@ except ModuleNotFoundError:  # pragma: no cover - guard for environments without
 
 from src.app.core.app import create_app  # noqa: E402
 from src.app.services.registry import ServiceRegistry  # noqa: E402
+from tests.conftest import FakeJobQueue  # noqa: E402
 
 
 def _collect_route_signatures(app: FastAPI) -> set[Tuple[str, str]]:
@@ -37,7 +38,14 @@ def _collect_route_signatures(app: FastAPI) -> set[Tuple[str, str]]:
 def test_create_app_exposes_expected_routes() -> None:
     """The FastAPI factory should register scaffolding routers without deps."""
 
-    app = create_app()
+    queue = FakeJobQueue()
+    app = create_app(
+        extra_state={
+            "job_queue": queue,
+            "disable_worker_pool": True,
+            "disable_media_cleanup": True,
+        }
+    )
     assert isinstance(app, FastAPI)
     assert isinstance(app.state.service_registry, ServiceRegistry)
 

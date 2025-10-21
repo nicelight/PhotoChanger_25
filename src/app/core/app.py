@@ -14,7 +14,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 from uuid import UUID
 
 from fastapi import FastAPI
@@ -41,59 +41,6 @@ from ..workers import QueueWorker
 
 
 logger = logging.getLogger(__name__)
-
-
-class _InMemoryJobQueue:
-    """Minimal queue used when PostgreSQL is unavailable during scaffolding."""
-
-    def __init__(self) -> None:
-        self.jobs: dict[UUID, Job] = {}
-        self.logs: list[ProcessingLog] = []
-
-    def enqueue(self, job: Job) -> Job:
-        self.jobs[job.id] = job
-        return job
-
-    def acquire_for_processing(self, *, now: datetime) -> Job | None:
-        _ = now
-        return None
-
-    def mark_finalized(self, job: Job) -> Job:
-        self.jobs[job.id] = job
-        return job
-
-    def release_expired(self, *, now: datetime) -> list[Job]:
-        _ = now
-        return []
-
-    def append_processing_logs(self, logs: Iterable[ProcessingLog]) -> None:
-        self.logs.extend(logs)
-
-    def list_processing_logs(self, job_id: UUID) -> list[ProcessingLog]:
-        return [log for log in self.logs if log.job_id == job_id]
-
-    def list_recent_results(
-        self,
-        slot_id: str,
-        *,
-        limit: int,
-        since: datetime,
-    ) -> list[Job]:
-        jobs = [
-            job
-            for job in self.jobs.values()
-            if job.slot_id == slot_id
-            and job.is_finalized
-            and job.failure_reason is None
-            and job.finalized_at is not None
-            and job.result_file_path is not None
-            and job.result_mime_type is not None
-            and job.result_expires_at is not None
-            and job.finalized_at >= since
-        ]
-        jobs.sort(key=lambda item: item.finalized_at or item.updated_at, reverse=True)
-        return jobs[:limit]
-
 
 def _read_contract_version() -> str:
     """Return the OpenAPI version declared in ``spec/contracts``."""
@@ -141,18 +88,19 @@ def _configure_dependencies(
         try:
             queue = PostgresJobQueue(config=queue_config)
         except Exception as exc:  # pragma: no cover - depends on external Postgres
-            logger.warning(
-                "PostgreSQL queue unavailable (%s); falling back to in-memory queue",
-                exc,
+            logger.error(
+                "PostgreSQL queue unavailable; application cannot start", exc_info=exc
             )
-            queue = _InMemoryJobQueue()
-    slot_ttl, global_ttl = load_stats_cache_settings()
+            raise
+    stats_settings = load_stats_cache_settings(config)
     stats_engine = create_engine(config.database_url, future=True)
     stats_repository = SqlAlchemyStatsRepository(stats_engine)
     stats_service = CachedStatsService(
         stats_repository,
-        slot_ttl=slot_ttl,
-        global_ttl=global_ttl,
+        slot_ttl=stats_settings.slot_ttl,
+        global_ttl=stats_settings.global_ttl,
+        recent_results_retention=stats_settings.recent_results_retention,
+        recent_results_limit=stats_settings.recent_results_limit,
     )
     settings_service = DefaultSettingsService(
         settings=settings, password_hash=password_hash

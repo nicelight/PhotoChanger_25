@@ -23,6 +23,8 @@ from .registry import ServiceRegistry
 class _StatsCacheConfig:
     slot_ttl: timedelta
     global_ttl: timedelta
+    recent_results_retention: timedelta
+    recent_results_limit: int
 
 
 class SqlAlchemyUnitOfWork(UnitOfWork):
@@ -85,7 +87,12 @@ def _load_provider_configs(config_path: Path) -> Mapping[str, Mapping[str, objec
 
 
 def _load_stats_cache_config(config_path: Path) -> _StatsCacheConfig:
-    defaults = {"slot_ttl_seconds": 5 * 60, "global_ttl_seconds": 60}
+    defaults = {
+        "slot_ttl_seconds": 5 * 60,
+        "global_ttl_seconds": 60,
+        "recent_results_retention_hours": 72,
+        "recent_results_limit": 10,
+    }
     if config_path.exists():
         try:
             with config_path.open("r", encoding="utf-8") as handle:
@@ -101,9 +108,20 @@ def _load_stats_cache_config(config_path: Path) -> _StatsCacheConfig:
     )
     slot_seconds = max(0, slot_seconds)
     global_seconds = max(0, global_seconds)
+    recent_section = raw.get("recent_results", {})
+    retention_hours = int(
+        recent_section.get(
+            "retention_hours", defaults["recent_results_retention_hours"]
+        )
+    )
+    retention_hours = max(1, retention_hours)
+    limit = int(recent_section.get("limit", defaults["recent_results_limit"]))
+    limit = max(1, limit)
     return _StatsCacheConfig(
         slot_ttl=timedelta(seconds=slot_seconds),
         global_ttl=timedelta(seconds=global_seconds),
+        recent_results_retention=timedelta(hours=retention_hours),
+        recent_results_limit=limit,
     )
 
 
@@ -123,13 +141,30 @@ def _get_engine(dsn: str) -> Engine:
     return engine
 
 
-def load_stats_cache_settings(
-    config_path: Path | None = None,
-) -> tuple[timedelta, timedelta]:
-    """Return cache TTLs for slot and global aggregations."""
+def _stats_config_from_app_config(app_config: AppConfig) -> _StatsCacheConfig:
+    return _StatsCacheConfig(
+        slot_ttl=timedelta(seconds=app_config.stats_slot_cache_ttl_seconds),
+        global_ttl=timedelta(seconds=app_config.stats_global_cache_ttl_seconds),
+        recent_results_retention=timedelta(
+            hours=app_config.stats_recent_results_retention_hours
+        ),
+        recent_results_limit=app_config.stats_recent_results_limit,
+    )
 
-    stats_config = _load_stats_cache_config(config_path or Path("configs/stats.json"))
-    return stats_config.slot_ttl, stats_config.global_ttl
+
+def load_stats_cache_settings(
+    config: Mapping[str, Any] | AppConfig | None = None,
+    *,
+    config_path: Path | None = None,
+) -> _StatsCacheConfig:
+    """Return cache settings for statistics services."""
+
+    if config is not None:
+        app_config = _coerce_app_config(config)
+        return _stats_config_from_app_config(app_config)
+    if config_path is not None:
+        return _load_stats_cache_config(config_path)
+    return _stats_config_from_app_config(AppConfig.build_default())
 
 
 def build_service_registry(
@@ -137,7 +172,6 @@ def build_service_registry(
     provider_factories: Mapping[str, PluginFactory] | None = None,
     service_overrides: Mapping[PluginKey, PluginFactory] | None = None,
     provider_config_path: Path | None = None,
-    stats_config_path: Path | None = None,
 ) -> ServiceRegistry:
     """Construct a :class:`ServiceRegistry` with supplied factories.
 
@@ -154,8 +188,6 @@ def build_service_registry(
     for provider_id, config in _load_provider_configs(config_path).items():
         registry.register_provider_config(provider_id, config)
 
-    stats_config = _load_stats_cache_config(stats_config_path or Path("configs/stats.json"))
-
     def _stats_repository_factory(*, config: Mapping[str, Any] | AppConfig | None = None) -> object:
         app_config = _coerce_app_config(config)
         engine = _get_engine(app_config.database_url)
@@ -163,10 +195,14 @@ def build_service_registry(
 
     def _stats_service_factory(*, config: Mapping[str, Any] | AppConfig | None = None) -> object:
         repository = _stats_repository_factory(config=config)
+        app_config = _coerce_app_config(config)
+        stats_config = load_stats_cache_settings(app_config)
         return CachedStatsService(
             repository,
             slot_ttl=stats_config.slot_ttl,
             global_ttl=stats_config.global_ttl,
+            recent_results_retention=stats_config.recent_results_retention,
+            recent_results_limit=stats_config.recent_results_limit,
         )
 
     def _unit_of_work_factory(*, config: Mapping[str, Any] | AppConfig | None = None) -> object:

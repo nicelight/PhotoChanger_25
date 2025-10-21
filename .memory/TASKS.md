@@ -1,6 +1,6 @@
 ---
 id: tasks
-updated: 2025-11-04
+updated: 2025-11-05
 ---
 
 # Tasks (канбан)
@@ -109,9 +109,9 @@ updated: 2025-11-04
           - [x] 4.5.6b1 Дополнить `JobService` (create/finalize/fail) записью `ProcessingLog` и вызовом `StatsService.record_processing_event` с нужными атрибутами.
           - [x] 4.5.6b2 Обновить `QueueWorker` для генерации `ProcessingLog` по исходам (success/timeout/error/cancel), передачи слота/провайдера и очистки после публикации.
           - [x] 4.5.6b3 Подготовить вспомогательные методы и обработку ошибок/ретраев при недоступности StatsService (логирование, метрики, деградация).
-        - [ ] 4.5.6c Обеспечить постоянную запись `ProcessingLog` и инвалидирование кеша в дефолтной конфигурации.
-          - [ ] 4.5.6c1 Переключить DI по умолчанию на `PostgresJobQueue`/`CachedStatsService`, исключив `_InMemoryJobQueue` и `DefaultStatsService` вне тестов.
-          - [ ] 4.5.6c2 Добавить проверку и тесты, что обработанные задания фиксируются в БД и вызывают `StatsService.record_processing_event`.
+        - [x] 4.5.6c Обеспечить постоянную запись `ProcessingLog` и инвалидирование кеша в дефолтной конфигурации.
+          - [x] 4.5.6c1 Переключить DI по умолчанию на `PostgresJobQueue`/`CachedStatsService`, исключив `_InMemoryJobQueue` и `DefaultStatsService` вне тестов.
+          - [x] 4.5.6c2 Добавить проверку и тесты, что обработанные задания фиксируются в БД и вызывают `StatsService.record_processing_event`.
         - [ ] 4.5.6d Добавить smoke-тест и актуализировать конфигурацию окружений.
           - [ ] 4.5.6d1 Написать интеграционный тест FastAPI+worker, проверяющий, что события доходят до `StatsService`/`StatsRepository` и кеши инвалидируются.
           - [ ] 4.5.6d2 Обновить конфигурацию окружений (`configs/*.json`, `.env.example`, README) новыми переменными StatsService/очереди и описать порядок запуска.
