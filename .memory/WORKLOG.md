@@ -158,6 +158,11 @@ updated: 2025-11-04
 ## phase4-ingest-sync-2025-10-25
 - 2025-10-25 09:10 — изучил пользовательский запрос ASK-0013 (фаза 4.1.6–4.1.10), перечитал .memory/MISSION/CONTEXT/TASKS/ASKS/DECISIONS/USECASES и ingest спецификацию в OpenAPI/JSON Schema.
 - 2025-10-25 09:35 — осмотрел текущий код ingest маршрута, DefaultJobService, PostgresJobQueue и тестовые фикстуры, набросал план реализации polling, очистки, ошибок очереди и обновления тестов.
+
+## phase4-admin-stats-di-2025-11-04
+- 2025-11-04 10:05 — перечитал .memory/TASKS.md и контекст Фазы 4.5, проверил состояние 4.5.6 и связанных подпунктов (репозитории, StatsService, QueueWorker, JobService).
+- 2025-11-04 10:18 — изучил реализации `create_app`, `ServiceRegistry`, `QueueWorker`, `DefaultJobService`, `CachedStatsService` и интерфейсы репозиториев для оценки точек интеграции и зависимостей.
+- 2025-11-04 10:32 — декомпозировал пункт 4.5.6 на REFLECT/CONSULT и пошаговые сабтаски (DI, события, тесты/конфигурация), зафиксировал риски кеш-инвалидации и отказоустойчивости StatsService.
 - 2025-10-25 10:05 — уточнил требования к очистке payload и TTL, сверился с ADR-0002.
 
 ## phase4-media-ttl-2025-10-30
