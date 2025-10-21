@@ -22,7 +22,7 @@ owner: techlead
 - Type-check: `mypy src/` — контроль контрактов доменных сервисов и адаптеров.
 - Unit: `pytest -q -m unit` — покрытие валидации слотов, дедлайнов, расчёта TTL и state machine Job.【F:spec/docs/blueprints/test-plan.md】
 - Contract: `pytest -q -m contract` — валидация OpenAPI (`POST /ingest`, `/api/settings`, `/public/results/{job_id}`) и JSON Schema для сущностей.【F:spec/docs/blueprints/test-plan.md】
-- Сборка локально: `uvicorn src.app.main:app --reload` (или скрипт `scripts/dev.sh` после его добавления) с поднятой PostgreSQL и настройкой переменных `MEDIA_ROOT`, `DATABASE_URL`, ключей провайдеров (моки).【F:spec/docs/implementation_roadmap.md】【F:/brief.md】
+- Сборка локально: `uvicorn src.app.main:app --reload` (или скрипт `scripts/dev.sh` после его добавления) с поднятой PostgreSQL и настройкой переменных `MEDIA_ROOT`, `DATABASE_URL`, ключей провайдеров (моки).
 - Быстрые e2e/снимки (опционально): `pytest -q -m e2e` с моками Gemini/Turbotext для сценариев «успех», «504», истечение публичных ссылок и скачивание из UI; проверяет соответствие TTL и расчёт `result_inline_base64`.【F:spec/docs/blueprints/test-plan.md】
 
 ## Политики качества
@@ -37,8 +37,8 @@ owner: techlead
 
 ## Deprecation policy
 - SemVer: MAJOR — breaking изменения контрактов; MINOR — новые возможности без поломок; PATCH — фиксы и документация.【F:agents.md】
-- Любой деприкейт API получает notice минимум на один MINOR; сроки и миграции документируются в `spec/contracts/VERSION.json` и ADR (см. roadmap Фаза 0/7 для Re-Sync).【F:agents.md】【F:spec/docs/implementation_roadmap.md】【F:spec/contracts/VERSION.json】
+- Любой деприкейт API получает notice минимум на один MINOR; сроки и миграции документируются в `spec/contracts/VERSION.json` и ADR (см. roadmap Фаза 0/7 для Re-Sync).【F:agents.md】【F:spec/contracts/VERSION.json】
 
 ## Секреты/лицензии
 - Не коммитить API-ключи (Gemini, Turbotext), ingest-пароли, JWT-секреты, приватные медиа. Секреты хранятся в `secrets/runtime_credentials.json` и `app_settings`, доступ ограничен, ротация — через `/api/settings`.【F:spec/docs/blueprints/context.md】【F:spec/docs/blueprints/constraints-risks.md】
-- Перед PR проверять лицензии зависимостей и соответствие требованиям провайдеров; фиксировать нарушения в ADR/roadmap. При работе с внешними провайдерами соблюдать их SLA и rate limit (Gemini 500 rpm, Turbotext billing).【F:spec/docs/providers/gemini.md】【F:spec/docs/providers/turbotext.md】
+- Перед PR проверять лицензии зависимостей и соответствие требованиям провайдеров; фиксировать нарушения в ADR/roadmap. При работе с внешними провайдерами соблюдать их SLA и rate limit (Gemini 500 rpm, Turbotext billing).
