@@ -176,9 +176,13 @@ class ProcessingLogAggregate(Base):
     )
 
     __table_args__ = (
-        UniqueConstraint(
-            "slot_id", "granularity", "period_start", "period_end",
-            name="uq_processing_log_aggregates_scope_period",
+        Index(
+            "uq_processing_log_aggregates_scope_period",
+            sa.text("COALESCE(slot_id, 'GLOBAL')"),
+            "granularity",
+            "period_start",
+            "period_end",
+            unique=True,
         ),
         Index(
             "ix_processing_log_aggregates_slot_period",
