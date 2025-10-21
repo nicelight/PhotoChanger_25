@@ -1,0 +1,32 @@
+[
+  {
+    "id": "b1c2d3e4-f5a6-4b7c-8d9e-0a1b2c3d4e5f",
+    "slot_id": null,
+    "granularity": "day",
+    "period_start": "2025-10-30T00:00:00Z",
+    "period_end": "2025-10-30T23:59:59Z",
+    "success": 42,
+    "timeouts": 3,
+    "provider_errors": 1,
+    "cancelled": 0,
+    "errors": 4,
+    "ingest_count": 50,
+    "created_at": "2025-10-31T08:00:00Z",
+    "updated_at": "2025-10-31T08:00:00Z"
+  },
+  {
+    "id": "c2d3e4f5-a6b7-4c8d-9e0a-1b2c3d4e5f60",
+    "slot_id": "slot-001",
+    "granularity": "hour",
+    "period_start": "2025-10-30T10:00:00Z",
+    "period_end": "2025-10-30T10:59:59Z",
+    "success": 6,
+    "timeouts": 1,
+    "provider_errors": 0,
+    "cancelled": 0,
+    "errors": 1,
+    "ingest_count": 8,
+    "created_at": "2025-10-30T11:05:00Z",
+    "updated_at": "2025-10-30T11:05:00Z"
+  }
+]

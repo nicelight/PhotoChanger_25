@@ -1,0 +1,42 @@
+[
+  {
+    "key": "settings.dslr_password_status",
+    "value": {
+      "is_set": true,
+      "updated_at": "2025-10-30T09:15:00Z",
+      "updated_by": "serg"
+    },
+    "value_type": "status",
+    "is_secret": false
+  },
+  {
+    "key": "settings.ingest",
+    "value": {
+      "sync_response_timeout_sec": 48,
+      "ingest_ttl_sec": 48
+    },
+    "value_type": "config",
+    "is_secret": false
+  },
+  {
+    "key": "settings.media_cache",
+    "value": {
+      "processed_media_ttl_hours": 72,
+      "public_link_ttl_sec": 48
+    },
+    "value_type": "config",
+    "is_secret": false
+  },
+  {
+    "key": "provider_keys.gemini",
+    "value": {
+      "is_configured": true,
+      "updated_at": "2025-10-29T17:45:00Z",
+      "updated_by": "igor",
+      "project_id": "gemini-prod",
+      "region": "us-central1"
+    },
+    "value_type": "provider_status",
+    "is_secret": true
+  }
+]
