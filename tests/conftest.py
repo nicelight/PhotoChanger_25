@@ -609,7 +609,7 @@ def contract_app(
     # Reduce the synchronous response timeout to keep tests fast.
     registry: ServiceRegistry = app.state.service_registry  # type: ignore[attr-defined]
     settings_service = registry.resolve_settings_service()(config=app.state.config)
-    settings = settings_service.read_settings()
+    settings = settings_service.get_settings()
     settings.ingest.sync_response_timeout_sec = 1
     settings.ingest.ingest_ttl_sec = 1
     settings.media_cache.public_link_ttl_sec = 1

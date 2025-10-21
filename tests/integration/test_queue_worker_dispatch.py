@@ -33,10 +33,10 @@ from src.app.providers.base import ProviderAdapter
 from src.app.services import (
     JobService,
     MediaService,
-    SettingsService,
     SlotService,
     StatsService,
 )
+from src.app.services.default import DefaultSettingsService
 from src.app.workers.queue_worker import QueueWorker
 from tests.mocks.providers import (
     MockGeminiProvider,
@@ -71,12 +71,9 @@ class StubSlotService(SlotService):
         return self._slot
 
 
-class StubSettingsService(SettingsService):
+class StubSettingsService(DefaultSettingsService):
     def __init__(self, settings: Settings) -> None:
-        self._settings = settings
-
-    def read_settings(self) -> Settings:  # type: ignore[override]
-        return self._settings
+        super().__init__(settings=settings, password_hash="")
 
     def verify_ingest_password(self, password: str) -> bool:  # type: ignore[override]
         return True

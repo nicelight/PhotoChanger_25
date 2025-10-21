@@ -1,14 +1,9 @@
-"""Доменные сервисы PhotoChanger.
-
-На этой фазе определяются только интерфейсы без бизнес-логики. Реализации
-подключаются через плагины согласно ``spec/docs/blueprints`` и контрактам из
-``spec/contracts``.
-"""
+"""Доменные сервисы PhotoChanger."""
 
 from .job_service import JobService
 from .media_service import MediaService
 from .registry import ServiceRegistry
-from .settings_service import SettingsService
+from .settings import SettingsService, SettingsUpdate
 from .slot_service import SlotService
 from .stats_service import StatsService
 
@@ -17,6 +12,7 @@ __all__ = [
     "MediaService",
     "ServiceRegistry",
     "SettingsService",
+    "SettingsUpdate",
     "SlotService",
     "StatsService",
 ]

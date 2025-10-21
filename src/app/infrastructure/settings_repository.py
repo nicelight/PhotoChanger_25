@@ -20,6 +20,11 @@ class SettingsRepository:
 
         raise NotImplementedError
 
+    def get_ingest_password_hash(self) -> str | None:
+        """Return the stored DSLR ingest password hash if configured."""
+
+        raise NotImplementedError
+
     def update_ingest_password(
         self, *, rotated_at: datetime, updated_by: str, password_hash: str
     ) -> Settings:

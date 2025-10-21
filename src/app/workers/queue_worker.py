@@ -184,7 +184,7 @@ class QueueWorker:
         """Execute provider-specific logic while respecting queue deadlines."""
 
         slot = await self._run_sync(self.slot_service.get_slot, job.slot_id)
-        settings = await self._run_sync(self.settings_service.read_settings)
+        settings = await self._run_sync(self.settings_service.get_settings)
         context = self._load_job_context(job)
 
         try:
