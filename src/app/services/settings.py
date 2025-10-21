@@ -44,17 +44,12 @@ class SettingsService(SettingsServiceBase):
         self._cached_settings: Settings | None = None
         self._cached_password_hash: str | None = None
 
-    def read_settings(self, *, force_refresh: bool = False) -> Settings:
+    def get_settings(self, *, force_refresh: bool = False) -> Settings:
         """Return the latest settings snapshot, reloading from storage when required."""
 
         if force_refresh or self._cached_settings is None:
             self._cached_settings = self._repository.load()
         return self._cached_settings
-
-    def get_settings(self, *, force_refresh: bool = False) -> Settings:
-        """Backward compatible alias for :meth:`read_settings`."""
-
-        return self.read_settings(force_refresh=force_refresh)
 
     def verify_ingest_password(self, password: str) -> bool:
         """Validate DSLR ingest credentials without exposing the hash."""
