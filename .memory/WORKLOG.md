@@ -177,6 +177,12 @@ updated: 2025-11-05
 - 2025-11-04 11:45 — подготовил вопросы к тимлиду: обязательные поля `ProcessingLog`, политика ретраев/дедупликации, допустимая задержка обновления метрик после job, разделение TTL кешей. Предложил ответы по умолчанию: требуемые поля = `id/job_id/slot_id/status/occurred_at` + `provider_latency_ms`; дедупликация за счёт идемпотентного `id` и фильтра в агрегаторе, ретраи публикуют отдельные события; SLA обновления ≤1 мин для глобальных и ≤5 мин для слотов (соответствует текущему кешу); TTL кешей разделяются (1 мин глобальный, 5 мин слот) с возможностью override через конфиг.
 - 2025-11-05 11:20 — реализовал разделение TTL кеша, добавил метод `recent_results` с ретенцией 72 ч, обновил SQLAlchemy StatsRepository и unit-тесты; сабтаски 4.5.4/4.5.5 закрыты.
 
+## phase4-admin-stats-default-2025-11-05
+- 2025-11-05 13:10 — расширил `AppConfig` новыми полями (`stats_slot_cache_ttl_seconds`, `stats_global_cache_ttl_seconds`, `stats_recent_results_retention_hours`, `stats_recent_results_limit`) и обновил `CachedStatsService`, чтобы принимать ретенцию и лимит `recent_results`.
+- 2025-11-05 13:28 — переписал DI (`services/container.build_service_registry`, `create_app`) на использование `PostgresJobQueue`/`CachedStatsService` без автоматического fallback, добавил error-логирование при недоступности PostgreSQL.
+- 2025-11-05 13:45 — обновил тесты (`tests/unit/test_app_scaffolding.py`) на явный in-memory override и добавил интеграционный сценарий `tests/integration/test_default_pipeline.py`, проверяющий запись `ProcessingLog`, вызов `StatsService.record_processing_event` и сброс кеша.
+- 2025-11-05 14:05 — синхронизировал конфигурацию (`configs/stats.json`, `.env.example`) и документацию (README, ingest/postgres runbook, admin stats) с новыми переменными окружения и дефолтами кеша.
+
 ## phase4-media-ttl-2025-10-30
 - 2025-10-30 09:15 — перечитал .memory/CONTEXT.md, .memory/USECASES.md и ADR-0002 для подтверждения политики TTL/очистки (T_sync_response, T_public_link_ttl, T_result_retention 72h, фоновые очистители).
 - 2025-10-30 09:35 — сверил требования с docstring-ами `MediaService` и `JobService`: подтверждена синхронизация расчёта `expires_at`, удаления inline base64 и необходимости фонового очистителя; изменения политик не требуются, но реализация ещё отсутствует (риск задержки очистки).

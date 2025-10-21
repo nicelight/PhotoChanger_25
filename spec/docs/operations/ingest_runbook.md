@@ -15,6 +15,10 @@
 | `PHOTOCHANGER_DATABASE_URL` | DSN PostgreSQL-очереди. В локальном режиме можно использовать `postgresql://localhost:5432/photochanger`. |
 | `PHOTOCHANGER_QUEUE_STATEMENT_TIMEOUT_MS` | Таймаут SQL-запросов очереди в миллисекундах (по умолчанию 5000). Должен быть меньше `T_sync_response`. |
 | `PHOTOCHANGER_QUEUE_MAX_IN_FLIGHT_JOBS` | Верхняя граница активных задач очереди. По умолчанию 12, после превышения ingest возвращает 429 (`queue_busy`). |
+| `PHOTOCHANGER_STATS_SLOT_CACHE_TTL_SECONDS` | TTL кеша статистики для конкретного слота (по умолчанию 300 с). |
+| `PHOTOCHANGER_STATS_GLOBAL_CACHE_TTL_SECONDS` | TTL кеша глобальной статистики (по умолчанию 60 с). |
+| `PHOTOCHANGER_STATS_RECENT_RESULTS_RETENTION_HOURS` | Горизонт `recent_results` в часах (по умолчанию 72). |
+| `PHOTOCHANGER_STATS_RECENT_RESULTS_LIMIT` | Максимум записей `recent_results` (по умолчанию 10). |
 | `PHOTOCHANGER_T_SYNC_RESPONSE_SECONDS` | Значение `T_sync_response` (45–60 секунд). Используется для расчёта дедлайна job, TTL inline-результатов и лимита хранения payload. |
 | `PHOTOCHANGER_JWT_SECRET` | Секрет для административных JWT (используется для остальных API). |
 

@@ -74,6 +74,26 @@ class AppConfig(BaseSettings):
         default_factory=dict,
         description="Mapping of provider identifiers to configured API keys.",
     )
+    stats_slot_cache_ttl_seconds: int = Field(
+        default=5 * 60,
+        ge=0,
+        description="TTL for per-slot statistics cache entries in seconds.",
+    )
+    stats_global_cache_ttl_seconds: int = Field(
+        default=60,
+        ge=0,
+        description="TTL for global statistics cache entries in seconds.",
+    )
+    stats_recent_results_retention_hours: int = Field(
+        default=72,
+        ge=1,
+        description="Retention horizon for recent results cache in hours.",
+    )
+    stats_recent_results_limit: int = Field(
+        default=10,
+        ge=1,
+        description="Maximum number of recent results entries returned per slot.",
+    )
 
     @classmethod
     def build_default(cls) -> "AppConfig":

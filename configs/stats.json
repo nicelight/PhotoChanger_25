@@ -2,5 +2,9 @@
   "cache": {
     "slot_ttl_seconds": 300,
     "global_ttl_seconds": 60
+  },
+  "recent_results": {
+    "retention_hours": 72,
+    "limit": 10
   }
 }

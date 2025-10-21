@@ -38,3 +38,4 @@ updated: 2025-11-05
 - 2025-11-04: Сабтаск 4.5.2b завершён — SQLAlchemy репозитории дополнились TemplateMediaRepository, обеспечены фильтры/транзакции/обработка ошибок и синхронизированы .memory-файлы.
 - 2025-11-05: Сабтаски 4.5.4/4.5.5 подтверждены — `SlotService` и `CachedStatsService` проходят ревью, разделены TTL статистики, добавлен кеш recent_results и unit-тесты `tests/unit/services/test_stats_service.py` зелёные.
 - 2025-11-05: Сабтаски 4.5.6b1–4.5.6b3 выполнены — JobService фиксирует ProcessingLog (create/finalize/fail) и публикует события в StatsService, QueueWorker делегирует сервису и обогащает детали логов, unit/integration тесты обновлены.
+- 2025-11-05: Сабтаск 4.5.6c завершён — дефолтная конфигурация использует `PostgresJobQueue` и `CachedStatsService`, кеш настраивается через `PHOTOCHANGER_STATS_*`, добавлен интеграционный тест `test_default_pipeline` и обновлена документация.
