@@ -8,6 +8,7 @@ from uuid import uuid4
 
 import sqlalchemy as sa
 from sqlalchemy.engine import Engine
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from ...domain.models import (
     JobFailureReason,
@@ -206,38 +207,6 @@ class SqlAlchemyStatsRepository(StatsRepository):
         period_end: datetime,
         counters: Mapping[str, int],
     ) -> None:
-        conditions: list[sa.ColumnElement[bool]] = [
-            processing_log_aggregates.c.granularity == granularity,
-            processing_log_aggregates.c.period_start == period_start,
-            processing_log_aggregates.c.period_end == period_end,
-        ]
-        if slot_id is None:
-            conditions.append(processing_log_aggregates.c.slot_id.is_(None))
-        else:
-            conditions.append(processing_log_aggregates.c.slot_id == slot_id)
-
-        update_stmt = (
-            sa.update(processing_log_aggregates)
-            .where(*conditions)
-            .values(
-                success=processing_log_aggregates.c.success + counters["success"],
-                timeouts=processing_log_aggregates.c.timeouts + counters["timeouts"],
-                provider_errors=
-                    processing_log_aggregates.c.provider_errors
-                    + counters["provider_errors"],
-                cancelled=
-                    processing_log_aggregates.c.cancelled + counters["cancelled"],
-                errors=processing_log_aggregates.c.errors + counters["errors"],
-                ingest_count=
-                    processing_log_aggregates.c.ingest_count
-                    + counters["ingest_count"],
-                updated_at=sa.func.now(),
-            )
-        )
-        result = conn.execute(update_stmt)
-        if result.rowcount:
-            return
-
         insert_values = {
             "id": uuid4(),
             "slot_id": slot_id,
@@ -251,7 +220,27 @@ class SqlAlchemyStatsRepository(StatsRepository):
             "errors": counters["errors"],
             "ingest_count": counters["ingest_count"],
         }
-        conn.execute(sa.insert(processing_log_aggregates).values(insert_values))
+        insert_stmt = pg_insert(processing_log_aggregates).values(insert_values)
+        excluded = insert_stmt.excluded
+        conn.execute(
+            insert_stmt.on_conflict_do_update(
+                constraint="uq_processing_log_aggregates_scope_period",
+                set_={
+                    "success": processing_log_aggregates.c.success
+                    + excluded.success,
+                    "timeouts": processing_log_aggregates.c.timeouts
+                    + excluded.timeouts,
+                    "provider_errors": processing_log_aggregates.c.provider_errors
+                    + excluded.provider_errors,
+                    "cancelled": processing_log_aggregates.c.cancelled
+                    + excluded.cancelled,
+                    "errors": processing_log_aggregates.c.errors + excluded.errors,
+                    "ingest_count": processing_log_aggregates.c.ingest_count
+                    + excluded.ingest_count,
+                    "updated_at": sa.func.now(),
+                },
+            )
+        )
 
     @staticmethod
     def _as_utc(value: datetime) -> datetime:
