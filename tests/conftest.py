@@ -967,6 +967,21 @@ def sample_settings(sample_job: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @pytest.fixture
+def sample_auth_token() -> Dict[str, Any]:
+    """Return a canonical AuthToken payload for contract tests."""
+
+    return {
+        "access_token": (
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
+            "eyJzdWIiOiJzZXJnIiwicGVybWlzc2lvbnMiOlsic2V0dGluZ3M6d3JpdGUiLCJzbG90czp3cml0ZSIsInN0YXRzOnJlYWQiXSwiZXhwIjoxNzAwMDAwMDAwLCJpYXQiOjE3MDAwMDAwMDB9."
+            "c2lnbmF0dXJlLWV4YW1wbGU"
+        ),
+        "token_type": "bearer",
+        "expires_in_sec": 3600,
+    }
+
+
+@pytest.fixture
 def sample_slot_stats() -> Dict[str, Any]:
     """Return slot-scoped statistics for the default slot."""
 

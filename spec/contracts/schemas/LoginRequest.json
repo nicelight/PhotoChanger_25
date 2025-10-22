@@ -6,13 +6,17 @@
   "properties": {
     "username": {
       "type": "string",
-      "minLength": 1,
-      "description": "Имя предустановленного пользователя"
+      "minLength": 3,
+      "maxLength": 64,
+      "pattern": "^[a-z0-9._-]+$",
+      "description": "Имя предустановленного администратора (например, `serg`, `igor`)."
     },
     "password": {
       "type": "string",
-      "minLength": 1,
-      "description": "Пароль пользователя"
+      "minLength": 12,
+      "maxLength": 128,
+      "format": "password",
+      "description": "Пароль администратора. Минимум 12 символов, допускаются латиница, цифры и базовые спецсимволы ASCII."
     }
   },
   "additionalProperties": false
