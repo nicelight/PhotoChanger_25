@@ -347,6 +347,7 @@ updated: 2025-11-06
   подтвердил `pytest -m unit`/`pytest -m contract` зелёные.【F:tests/unit/repositories/conftest.py†L1-L38】【F:src/app/core/app.py†L14-L120】【F:src/app/ui/views.py†L1-L90】【F:tests/conftest.py†L1-L541】【2fb74b†L1-L13】【2bf0d0†L1-L16】
 
 
+
 ## ops-postgres-2025-11-06
 - 2025-11-06 09:10 — проанализировал задачу по отказу от SQLite, проверил `_configure_dependencies` и фикстуры репозиториев.
 - 2025-11-06 09:25 — удалил fallback на in-memory SQLite, обновил модели на `JSONB` и убедился, что миграция 202511010001 уже
