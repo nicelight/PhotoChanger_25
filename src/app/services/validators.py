@@ -3,10 +3,11 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
-from jsonschema import Draft202012Validator
+if TYPE_CHECKING:  # pragma: no cover - type-checking only import
+    from jsonschema import Draft202012Validator
 
 from ..domain.models import ProcessingLog
 
@@ -47,12 +48,35 @@ class ProcessingLogValidator:
     """Validate :class:`ProcessingLog` instances against the public contract."""
 
     def __init__(self, schema_path: Path | None = None) -> None:
-        path = schema_path or _SCHEMA_PATH
-        schema = json.loads(path.read_text(encoding="utf-8"))
-        self._validator = Draft202012Validator(schema)
+        self._schema_path = schema_path or _SCHEMA_PATH
+        self._validator: Draft202012Validator | None = None
+
+    def _ensure_validator(self) -> None:
+        if self._validator is not None:
+            return
+
+        try:
+            from jsonschema import Draft202012Validator as _Draft202012Validator
+        except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency
+            raise RuntimeError(
+                "jsonschema is required to validate ProcessingLog contracts"
+            ) from exc
+
+        try:
+            raw_schema = self._schema_path.read_text(encoding="utf-8")
+        except FileNotFoundError as exc:
+            raise RuntimeError(
+                "ProcessingLog contract schema is not available; "
+                "ensure spec/contracts artefacts are installed."
+            ) from exc
+
+        schema = json.loads(raw_schema)
+        self._validator = _Draft202012Validator(schema)
 
     def validate(self, log: ProcessingLog) -> None:
+        self._ensure_validator()
         payload = _to_contract_payload(log)
+        assert self._validator is not None  # satisfy type-checkers
         errors = sorted(self._validator.iter_errors(payload), key=lambda err: err.path)
         if errors:
             first = errors[0]
