@@ -60,6 +60,10 @@ async def login_user(
             "token_type": "bearer",
             "expires_in_sec": ttl,
         },
+        headers={
+            "Cache-Control": "no-store",
+            "Pragma": "no-cache",
+        },
     )
 
 

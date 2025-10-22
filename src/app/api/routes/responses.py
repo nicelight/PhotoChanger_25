@@ -31,8 +31,8 @@ def login_invalid_credentials() -> JSONResponse:
         status_code=status.HTTP_401_UNAUTHORIZED,
         content={
             "error": {
-                "code": "invalid_credentials",
-                "message": "Invalid username or password",
+                "code": "unauthorized",
+                "message": "Неверный логин или пароль",
             }
         },
     )
@@ -45,8 +45,8 @@ def login_throttled() -> JSONResponse:
         status_code=status.HTTP_429_TOO_MANY_REQUESTS,
         content={
             "error": {
-                "code": "login_throttled",
-                "message": "Too many login attempts. Try again later.",
+                "code": "too_many_requests",
+                "message": "Превышено количество попыток входа. Попробуйте позже.",
             }
         },
     )

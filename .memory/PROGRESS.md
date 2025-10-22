@@ -43,3 +43,5 @@ updated: 2025-11-06
 - 2025-11-05: Сабтаски 4.5.6e завершены — утверждён контракт ProcessingLog (JSON Schema/OpenAPI), StatsService валидирует события и добавлены contract/unit тесты.
 - 2025-11-06: Убрали SQLite-фоллбек, stats репозиторий теперь требует PostgreSQL/psycopg; unit-тесты репозиториев переведены на
   postgres_dsn, README/runbook/tests/HOWTO обновлены инструкциями по локальной БД.
+- 2025-11-08: Сабтаск 4.5.7b закрыт — `/api/login` читает PBKDF2-хэши `serg`/`igor`, выдаёт JWT с claim `sub`/`permissions`/`exp`,
+  возвращает 401/429 с кодами `unauthorized`/`too_many_requests`; `pytest tests/unit/test_authentication_service.py -q` зелёный.
