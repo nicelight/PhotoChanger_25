@@ -11,6 +11,7 @@ import sqlalchemy as sa
 
 from tests.conftest import (
     PSYCOPG_MISSING_REASON,
+    _apply_queue_migrations,
     _truncate_postgres_tables,
     psycopg,
 )
@@ -20,7 +21,7 @@ from src.app.domain.models import (
     ProcessingLog,
     ProcessingStatus,
 )
-from src.app.infrastructure.queue.schema import jobs, metadata as queue_metadata
+from src.app.infrastructure.queue.schema import jobs
 from src.app.infrastructure.sqlalchemy.stats_repository import (
     SqlAlchemyStatsRepository,
     processing_log_aggregates,
@@ -76,10 +77,11 @@ def test_store_processing_log_updates_aggregates(postgres_dsn: str) -> None:
     if psycopg is None:
         pytest.skip(PSYCOPG_MISSING_REASON)
 
-    engine = sa.create_engine(postgres_dsn, future=True)
-    queue_metadata.create_all(engine)
-    processing_log_aggregates.metadata.create_all(engine)
+    _apply_queue_migrations(postgres_dsn)
     _truncate_postgres_tables(postgres_dsn)
+
+    engine = sa.create_engine(postgres_dsn, future=True)
+    slots_table = sa.Table("slots", sa.MetaData(), autoload_with=engine)
 
     repository = SqlAlchemyStatsRepository(engine)
 
@@ -88,6 +90,16 @@ def test_store_processing_log_updates_aggregates(postgres_dsn: str) -> None:
 
     try:
         with engine.begin() as conn:
+            conn.execute(
+                sa.insert(slots_table).values(
+                    id=slot_id,
+                    name="Test Slot",
+                    provider_id="gemini",
+                    operation_id="ingest",
+                    settings_json={"limits": {}},
+                    etag="test-etag",
+                )
+            )
             # Successful job
             job_success = uuid4()
             _insert_job(
@@ -298,5 +310,10 @@ def test_store_processing_log_updates_aggregates(postgres_dsn: str) -> None:
             assert week_slot["ingest_count"] == 4
     finally:
         _truncate_postgres_tables(postgres_dsn)
+        with engine.begin() as conn:
+            conn.execute(
+                sa.text("DELETE FROM slots WHERE id = :slot_id"),
+                {"slot_id": slot_id},
+            )
         engine.dispose()
 
