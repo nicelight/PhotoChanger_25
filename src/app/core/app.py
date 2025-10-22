@@ -93,7 +93,8 @@ def _configure_dependencies(
             )
             raise
     stats_settings = load_stats_cache_settings(config)
-    stats_engine = create_engine(config.database_url, future=True)
+    stats_dsn = config.stats_database_url or config.database_url
+    stats_engine = create_engine(stats_dsn, future=True)
     stats_repository = SqlAlchemyStatsRepository(stats_engine)
     stats_service = CachedStatsService(
         stats_repository,
@@ -198,6 +199,9 @@ def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
         shutdown_event = asyncio.Event()
         workers: list[QueueWorker] = []
         tasks: list[asyncio.Task[None]] = []
+        poll_interval = max(config.worker_poll_interval_ms / 1000.0, 0.001)
+        retry_delay = max(float(config.worker_retry_backoff_seconds), 0.0)
+        request_timeout = max(float(config.worker_request_timeout_seconds), 0.1)
         for index in range(worker_count):
             worker = QueueWorker(
                 job_service=job_service,
@@ -206,6 +210,11 @@ def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
                 settings_service=settings_service,
                 provider_factories=provider_factories,
                 provider_configs=provider_configs,
+                poll_interval=poll_interval,
+                max_poll_attempts=config.worker_max_poll_attempts,
+                retry_attempts=config.worker_retry_attempts,
+                retry_delay_seconds=retry_delay,
+                request_timeout_seconds=request_timeout,
             )
             task = asyncio.create_task(
                 worker.run_forever(worker_id=index, shutdown_event=shutdown_event),

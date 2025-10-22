@@ -43,6 +43,10 @@ class AppConfig(BaseSettings):
         default="postgresql://localhost:5432/photochanger",
         description="Connection string for the primary PostgreSQL queue",
     )
+    stats_database_url: str | None = Field(
+        default=None,
+        description="Optional dedicated PostgreSQL DSN for statistics aggregation.",
+    )
     queue_statement_timeout_ms: int = Field(
         default=5_000,
         ge=1_000,
@@ -93,6 +97,31 @@ class AppConfig(BaseSettings):
         default=10,
         ge=1,
         description="Maximum number of recent results entries returned per slot.",
+    )
+    worker_poll_interval_ms: int = Field(
+        default=1_000,
+        ge=10,
+        description="Polling interval for QueueWorker.run_forever in milliseconds.",
+    )
+    worker_max_poll_attempts: int = Field(
+        default=10,
+        ge=1,
+        description="Maximum sequential polling attempts before the worker idles.",
+    )
+    worker_retry_attempts: int = Field(
+        default=5,
+        ge=1,
+        description="Number of retry attempts for provider dispatch failures.",
+    )
+    worker_retry_backoff_seconds: float = Field(
+        default=3.0,
+        ge=0.0,
+        description="Base delay between provider retry attempts in seconds.",
+    )
+    worker_request_timeout_seconds: float = Field(
+        default=5.0,
+        ge=0.1,
+        description="Timeout applied to provider requests in seconds.",
     )
 
     @classmethod
