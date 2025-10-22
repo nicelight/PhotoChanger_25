@@ -115,8 +115,8 @@ def test_login_invalid_credentials_return_unauthorized(
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     payload = response.json()
-    assert payload["error"]["code"] == "unauthorized"
-    assert payload["error"]["message"] == "Неверный логин или пароль"
+    assert payload["error"]["code"] == "invalid_credentials"
+    assert payload["error"]["message"] == "Invalid username or password"
 
 
 @pytest.mark.integration
@@ -152,23 +152,23 @@ def test_login_throttling_blocks_and_unlocks_after_lockout(
 
     first = _login("wrong-pass")
     assert first.status_code == status.HTTP_401_UNAUTHORIZED
-    assert first.json()["error"]["code"] == "unauthorized"
-    assert first.json()["error"]["message"] == "Неверный логин или пароль"
+    assert first.json()["error"]["code"] == "invalid_credentials"
+    assert first.json()["error"]["message"] == "Invalid username or password"
 
     second = _login("wrong-pass")
     assert second.status_code == status.HTTP_429_TOO_MANY_REQUESTS
-    assert second.json()["error"]["code"] == "too_many_requests"
+    assert second.json()["error"]["code"] == "login_throttled"
     assert (
         second.json()["error"]["message"]
-        == "Превышено количество попыток входа. Попробуйте позже."
+        == "Too many login attempts. Try again later."
     )
 
     third = _login("serg-test-pass")
     assert third.status_code == status.HTTP_429_TOO_MANY_REQUESTS
-    assert third.json()["error"]["code"] == "too_many_requests"
+    assert third.json()["error"]["code"] == "login_throttled"
     assert (
         third.json()["error"]["message"]
-        == "Превышено количество попыток входа. Попробуйте позже."
+        == "Too many login attempts. Try again later."
     )
 
     fourth = _login("serg-test-pass")
@@ -176,5 +176,5 @@ def test_login_throttling_blocks_and_unlocks_after_lockout(
 
     fifth = _login("wrong-pass")
     assert fifth.status_code == status.HTTP_401_UNAUTHORIZED
-    assert fifth.json()["error"]["code"] == "unauthorized"
-    assert fifth.json()["error"]["message"] == "Неверный логин или пароль"
+    assert fifth.json()["error"]["code"] == "invalid_credentials"
+    assert fifth.json()["error"]["message"] == "Invalid username or password"
