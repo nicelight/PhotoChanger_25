@@ -23,6 +23,8 @@ from ..stats_repository import StatsRepository
 
 _metadata = sa.MetaData()
 
+_GLOBAL_SCOPE_SENTINEL = "GLOBAL"
+
 processing_log_aggregates = sa.Table(
     "processing_log_aggregates",
     _metadata,
@@ -222,9 +224,18 @@ class SqlAlchemyStatsRepository(StatsRepository):
         }
         insert_stmt = pg_insert(processing_log_aggregates).values(insert_values)
         excluded = insert_stmt.excluded
+        coalesced_slot_id = sa.func.coalesce(
+            processing_log_aggregates.c.slot_id,
+            sa.literal_column(f"'{_GLOBAL_SCOPE_SENTINEL}'"),
+        )
         conn.execute(
             insert_stmt.on_conflict_do_update(
-                constraint="uq_processing_log_aggregates_scope_period",
+                index_elements=[
+                    coalesced_slot_id,
+                    processing_log_aggregates.c.granularity,
+                    processing_log_aggregates.c.period_start,
+                    processing_log_aggregates.c.period_end,
+                ],
                 set_={
                     "success": processing_log_aggregates.c.success
                     + excluded.success,
