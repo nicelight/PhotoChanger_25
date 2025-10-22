@@ -880,12 +880,23 @@ class QueueWorker:
                 raise
             except Exception as exc:
                 last_exc = exc
-                if attempt >= self._retry_attempts:
+                if not self._should_retry_provider_submission(exc) or attempt >= self._retry_attempts:
                     raise
                 await self._sleep(self._retry_delay_seconds)
         if last_exc is not None:  # pragma: no cover - defensive guard
             raise last_exc
         raise RuntimeError("submit_job retries exhausted without exception")
+
+    def _should_retry_provider_submission(self, exc: Exception) -> bool:
+        """Return ``True`` when ``exc`` indicates a transient provider failure."""
+
+        if isinstance(exc, TimeoutError):
+            return True
+        if isinstance(exc, (ConnectionError, OSError)):
+            return True
+        if isinstance(exc, urllib.error.URLError):
+            return True
+        return False
 
     async def _call_with_timeout(self, awaitable: Awaitable[T], *, label: str) -> T:
         try:
