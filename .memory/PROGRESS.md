@@ -45,5 +45,5 @@ updated: 2025-11-09
   postgres_dsn, README/runbook/tests/HOWTO обновлены инструкциями по локальной БД.
 - 2025-11-08: Сабтаск 4.5.7b закрыт — `/api/login` читает PBKDF2-хэши `serg`/`igor`, выдаёт JWT с claim `sub`/`permissions`/`exp`,
   возвращает 401/429 с кодами `unauthorized`/`too_many_requests`; `pytest tests/unit/test_authentication_service.py -q` зелёный.
-- 2025-11-09: Подтвердили реализацию 4.5.7b, устранили пропущенный импорт `hashlib` в `AuthenticationService` и синхронизировали `.memory/TASKS.md`.
-- 2025-11-09: Сабтаск 4.5.7c закрыт — `/api/login` покрыт интеграционными тестами (JWT/401/429), фикстура создаёт runtime_credentials, TTL приведён к 3600 с, добавлен встроенный `security.jwt`; `pytest tests/api/admin/test_login.py tests/unit/test_authentication_service.py -q` зелёный.
+- 2025-11-08: Сабтаск 4.5.7c завершён — добавлены интеграционные тесты `/api/login` (успешный JWT, ошибки 401, троттлинг 429/lockout),
+  внедрена фабрика credentials; `pytest tests/api/test_auth.py -q` сообщает skip из-за отсутствия fastapi/jwt в окружении.
