@@ -4,22 +4,30 @@ import asyncio
 from dataclasses import dataclass
 
 import pytest
-
-pytest.importorskip(
-    "aiosqlite", reason="aiosqlite is required for async SQLAlchemy tests"
-)
-
+from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from src.app.db.models import Base
 
 
+def _async_postgres_url(dsn: str) -> str:
+    """Return a SQLAlchemy async URL using the psycopg driver."""
+
+    url = make_url(dsn)
+    driver = url.drivername
+    if "+" in driver:
+        base_driver = driver.split("+", 1)[0]
+    else:
+        base_driver = driver
+    return str(url.set(drivername=f"{base_driver}+psycopg"))
+
+
 @dataclass
 class DatabaseFixture:
-    engine_url: str = "sqlite+aiosqlite:///:memory:"
+    sync_dsn: str
 
     def __post_init__(self) -> None:
-        self.engine = create_async_engine(self.engine_url, future=True)
+        self.engine = create_async_engine(_async_postgres_url(self.sync_dsn), future=True)
         self._sessionmaker = async_sessionmaker(
             self.engine, class_=AsyncSession, expire_on_commit=False
         )
@@ -41,9 +49,8 @@ class DatabaseFixture:
 
 
 @pytest.fixture(scope="module")
-def database() -> DatabaseFixture:
-    fixture = DatabaseFixture()
+def database(postgres_dsn: str) -> DatabaseFixture:
+    fixture = DatabaseFixture(sync_dsn=postgres_dsn)
     asyncio.run(fixture.init_models())
     yield fixture
     asyncio.run(fixture.dispose())
-

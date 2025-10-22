@@ -98,10 +98,10 @@ def _configure_dependencies(
     try:
         stats_engine = create_engine(stats_dsn, future=True)
     except (ModuleNotFoundError, NoSuchModuleError) as exc:
-        logger.warning(
-            "Falling back to in-memory SQLite stats repository: %s", exc,
+        logger.error(
+            "psycopg driver is required for PostgreSQL stats repository", exc_info=exc
         )
-        stats_engine = create_engine("sqlite:///:memory:", future=True)
+        raise
     stats_repository = SqlAlchemyStatsRepository(stats_engine)
     stats_service = CachedStatsService(
         stats_repository,
