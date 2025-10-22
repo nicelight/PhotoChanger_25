@@ -20,8 +20,12 @@ from ..schemas import (
     TemplateMediaObject,
     TemplateMediaRegisterRequest,
 )
-from .dependencies import require_bearer_authentication
-from .responses import authentication_not_configured, endpoint_not_implemented
+from .dependencies import (
+    AdminPrincipal,
+    ensure_permissions,
+    require_bearer_authentication,
+)
+from .responses import endpoint_not_implemented
 
 router = APIRouter(prefix="/api", tags=["Media"])
 
@@ -32,14 +36,13 @@ router = APIRouter(prefix="/api", tags=["Media"])
     status_code=status.HTTP_201_CREATED,
 )
 async def register_media(
-    authenticated: Annotated[bool, Depends(require_bearer_authentication)],
+    principal: Annotated[AdminPrincipal, Depends(require_bearer_authentication)],
     payload: MediaRegisterRequest,
 ) -> JSONResponse:
     """Зарегистрировать временное медиа и получить публичную ссылку."""
 
     _ = payload
-    if not authenticated:
-        return authentication_not_configured()
+    ensure_permissions(principal, "slots:write")
     return endpoint_not_implemented("registerMedia")
 
 
@@ -49,14 +52,13 @@ async def register_media(
     status_code=status.HTTP_201_CREATED,
 )
 async def register_template_media(
-    authenticated: Annotated[bool, Depends(require_bearer_authentication)],
+    principal: Annotated[AdminPrincipal, Depends(require_bearer_authentication)],
     payload: TemplateMediaRegisterRequest,
 ) -> JSONResponse:
     """Загрузить шаблон и привязать его к слоту."""
 
     _ = payload
-    if not authenticated:
-        return authentication_not_configured()
+    ensure_permissions(principal, "slots:write")
     return endpoint_not_implemented("registerTemplateMedia")
 
 
@@ -65,7 +67,7 @@ async def register_template_media(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_template_media(
-    authenticated: Annotated[bool, Depends(require_bearer_authentication)],
+    principal: Annotated[AdminPrincipal, Depends(require_bearer_authentication)],
     media_id: Annotated[UUID, Path(description="Идентификатор шаблонного медиа")],
     slot_id: Annotated[
         SlotIdentifier,
@@ -82,8 +84,7 @@ async def delete_template_media(
     """Удалить шаблонное медиа и отвязать от слота."""
 
     _ = (media_id, slot_id, setting_key, force)
-    if not authenticated:
-        return authentication_not_configured()
+    ensure_permissions(principal, "slots:write")
     return endpoint_not_implemented("deleteTemplateMedia")
 
 

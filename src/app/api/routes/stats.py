@@ -13,8 +13,12 @@ from fastapi import APIRouter, Depends, Path, Query, status
 from fastapi.responses import JSONResponse
 
 from ..schemas import GlobalStatsResponse, SlotIdentifier, SlotStatsResponse
-from .dependencies import require_bearer_authentication
-from .responses import authentication_not_configured, endpoint_not_implemented
+from .dependencies import (
+    AdminPrincipal,
+    ensure_permissions,
+    require_bearer_authentication,
+)
+from .responses import endpoint_not_implemented
 
 router = APIRouter(prefix="/api", tags=["Stats"])
 
@@ -25,7 +29,7 @@ router = APIRouter(prefix="/api", tags=["Stats"])
     status_code=status.HTTP_200_OK,
 )
 async def get_slot_stats(
-    authenticated: Annotated[bool, Depends(require_bearer_authentication)],
+    principal: Annotated[AdminPrincipal, Depends(require_bearer_authentication)],
     slot_id: Annotated[SlotIdentifier, Path(description="Идентификатор слота")],
     from_dt: Annotated[
         Optional[datetime],
@@ -46,8 +50,7 @@ async def get_slot_stats(
     """Получить статистику по слоту."""
 
     _ = (slot_id, from_dt, to_dt, group_by)
-    if not authenticated:
-        return authentication_not_configured()
+    ensure_permissions(principal, "stats:read")
     return endpoint_not_implemented("getSlotStats")
 
 
@@ -57,7 +60,7 @@ async def get_slot_stats(
     status_code=status.HTTP_200_OK,
 )
 async def get_global_stats(
-    authenticated: Annotated[bool, Depends(require_bearer_authentication)],
+    principal: Annotated[AdminPrincipal, Depends(require_bearer_authentication)],
     from_dt: Annotated[
         Optional[datetime],
         Query(alias="from", description="Начало диапазона (UTC). Максимум 90 дней."),
@@ -105,8 +108,7 @@ async def get_global_stats(
         provider_id,
         slot_id,
     )
-    if not authenticated:
-        return authentication_not_configured()
+    ensure_permissions(principal, "stats:read")
     return endpoint_not_implemented("getGlobalStats")
 
 
