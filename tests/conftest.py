@@ -694,7 +694,45 @@ def contract_app(
     _require_app_config()
     if create_app is None:
         pytest.skip(FASTAPI_MISSING_REASON or "FastAPI create_app unavailable")
-    app_config = AppConfig(media_root=tmp_path / "media")
+    credentials_path = tmp_path / "runtime_credentials.json"
+    credentials_payload = {
+        "admins": [
+            {
+                "username": "serg",
+                "password_hash": (
+                    "pbkdf2_sha256$390000$5468b98e343193bd674fdcc63e24c74f$"
+                    "b78b20878e016f947147690703fe28bd63b7f6ed1f218a30580dc888f4f6a8cd"
+                ),
+                "permissions": [
+                    "settings:write",
+                    "slots:write",
+                    "stats:read",
+                ],
+            },
+            {
+                "username": "igor",
+                "password_hash": (
+                    "pbkdf2_sha256$390000$4e2f76851d2db157306966d84d1578ef$"
+                    "194c160e1f13e8213dac3348a4a3413f06ab08b050f9b496531be0a50f68af30"
+                ),
+                "permissions": [
+                    "settings:write",
+                    "slots:write",
+                    "stats:read",
+                ],
+            },
+        ],
+        "throttling": {
+            "max_attempts": 5,
+            "window_seconds": 60,
+            "lockout_seconds": 300,
+        },
+    }
+    credentials_path.write_text(json.dumps(credentials_payload), encoding="utf-8")
+    app_config = AppConfig(
+        media_root=tmp_path / "media",
+        admin_credentials_path=credentials_path,
+    )
     extra_state = {
         "job_queue": fake_job_queue,
         "result_store": fake_result_store,

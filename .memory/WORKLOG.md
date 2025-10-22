@@ -387,3 +387,9 @@ updated: 2025-11-06
 - 2025-11-08 13:40 — доработал ответы 401/429 (`code=unauthorized`/`too_many_requests`, сообщения на русском), добавил заголовки
   `Cache-Control: no-store`/`Pragma: no-cache` в успешном логине, убедился, что `secrets/runtime_credentials.json` загружается
   через конфиг и реальный файл создаётся только на деплое. `pytest tests/unit/test_authentication_service.py -q` зелёный.
+## phase4-admin-auth-2025-11-09
+- 2025-11-09 09:10 — перепроверил требования 4.5.7b, перечитал реализацию аутентификации и убедился, что конфигурация JWT и DI соответствуют контракту.
+- 2025-11-09 09:25 — устранил пропуск импорта `hashlib` в `AuthenticationService`, ещё раз проверил генерацию JWT/TTL и обработку 401/429.
+- 2025-11-09 09:40 — обновил `.memory/TASKS.md` (отметил 4.5.7b и подпункты), подготовил фиксацию прогресса для PR.
+- 2025-11-09 10:15 — синхронизировал коды ошибок login (`invalid_credentials`, `login_throttled`), поднял TTL до 3600 с в AppConfig и `configs/app.*.json`, уточнил схему `LoginResponse`, заменил зависимость PyJWT на внутренний `security.jwt`.
+- 2025-11-09 10:40 — подготовил фикстуру `contract_app` с реальным runtime_credentials, добавил интеграционные тесты `/api/login` (200/401/429), починил unit-тест импорт `json`, прогнал `pytest tests/api/admin/test_login.py tests/unit/test_authentication_service.py -q` (зелёный).

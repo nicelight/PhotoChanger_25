@@ -75,7 +75,7 @@ class AppConfig(BaseSettings):
         description="Placeholder secret used for JWT generation during scaffolding.",
     )
     jwt_access_ttl_seconds: int = Field(
-        default=900,
+        default=3600,
         ge=60,
         description="Lifetime of issued JWT access tokens in seconds.",
     )
