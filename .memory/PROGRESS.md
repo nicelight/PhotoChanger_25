@@ -47,3 +47,4 @@ updated: 2025-11-09
   возвращает 401/429 с кодами `unauthorized`/`too_many_requests`; `pytest tests/unit/test_authentication_service.py -q` зелёный.
 - 2025-11-08: Сабтаск 4.5.7c завершён — добавлены интеграционные тесты `/api/login` (успешный JWT, ошибки 401, троттлинг 429/lockout),
   внедрена фабрика credentials; `pytest tests/api/test_auth.py -q` сообщает skip из-за отсутствия fastapi/jwt в окружении.
+- 2025-11-09: Сабтаски 4.5.8a–4.5.8c выполнены — реализована проверка Bearer JWT, матрица прав admin API, унифицированные ответы 401/403 и интеграционные тесты на отсутствие токена/доступов.

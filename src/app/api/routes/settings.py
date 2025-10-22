@@ -17,8 +17,12 @@ from ..schemas import (
     Settings,
     SettingsUpdateRequest,
 )
-from .dependencies import require_bearer_authentication
-from .responses import authentication_not_configured, endpoint_not_implemented
+from .dependencies import (
+    AdminPrincipal,
+    ensure_permissions,
+    require_bearer_authentication,
+)
+from .responses import endpoint_not_implemented
 
 router = APIRouter(prefix="/api", tags=["Settings"])
 
@@ -29,12 +33,11 @@ router = APIRouter(prefix="/api", tags=["Settings"])
     status_code=status.HTTP_200_OK,
 )
 async def get_platform_settings(
-    authenticated: Annotated[bool, Depends(require_bearer_authentication)],
+    principal: Annotated[AdminPrincipal, Depends(require_bearer_authentication)],
 ) -> JSONResponse:
     """Получить глобальные настройки платформы."""
 
-    if not authenticated:
-        return authentication_not_configured()
+    ensure_permissions(principal, "settings:read")
     return endpoint_not_implemented("getPlatformSettings")
 
 
@@ -44,14 +47,13 @@ async def get_platform_settings(
     status_code=status.HTTP_200_OK,
 )
 async def update_platform_settings(
-    authenticated: Annotated[bool, Depends(require_bearer_authentication)],
+    principal: Annotated[AdminPrincipal, Depends(require_bearer_authentication)],
     payload: SettingsUpdateRequest,
 ) -> JSONResponse:
     """Обновить глобальные настройки и секреты."""
 
     _ = payload
-    if not authenticated:
-        return authentication_not_configured()
+    ensure_permissions(principal, "settings:write")
     return endpoint_not_implemented("updatePlatformSettings")
 
 
@@ -61,14 +63,13 @@ async def update_platform_settings(
     status_code=status.HTTP_202_ACCEPTED,
 )
 async def enqueue_media_cache_purge(
-    authenticated: Annotated[bool, Depends(require_bearer_authentication)],
+    principal: Annotated[AdminPrincipal, Depends(require_bearer_authentication)],
     payload: Optional[MediaCachePurgeRequest] = None,
 ) -> JSONResponse:
     """Поставить задачу очистки медиа-кеша."""
 
     _ = payload
-    if not authenticated:
-        return authentication_not_configured()
+    ensure_permissions(principal, "settings:write")
     return endpoint_not_implemented("enqueueMediaCachePurge")
 
 

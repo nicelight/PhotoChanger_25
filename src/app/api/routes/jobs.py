@@ -9,8 +9,12 @@ from fastapi import APIRouter, Depends, Path, Query, status
 from fastapi.responses import JSONResponse
 
 from ..schemas import JobDetailResponse, JobListResponse, SlotIdentifier
-from .dependencies import require_bearer_authentication
-from .responses import authentication_not_configured, endpoint_not_implemented
+from .dependencies import (
+    AdminPrincipal,
+    ensure_permissions,
+    require_bearer_authentication,
+)
+from .responses import endpoint_not_implemented
 
 router = APIRouter(prefix="/api", tags=["Jobs"])
 
@@ -21,7 +25,7 @@ router = APIRouter(prefix="/api", tags=["Jobs"])
     status_code=status.HTTP_200_OK,
 )
 async def list_jobs(
-    authenticated: Annotated[bool, Depends(require_bearer_authentication)],
+    principal: Annotated[AdminPrincipal, Depends(require_bearer_authentication)],
     status_filter: Annotated[
         Optional[Literal["pending", "processing"]],
         Query(
@@ -71,8 +75,7 @@ async def list_jobs(
         sort_by,
         sort_order,
     )
-    if not authenticated:
-        return authentication_not_configured()
+    ensure_permissions(principal, "stats:read")
     return endpoint_not_implemented("listJobs")
 
 
@@ -82,13 +85,12 @@ async def list_jobs(
     status_code=status.HTTP_200_OK,
 )
 async def get_job(
-    authenticated: Annotated[bool, Depends(require_bearer_authentication)],
+    principal: Annotated[AdminPrincipal, Depends(require_bearer_authentication)],
     job_id: Annotated[UUID, Path(description="Идентификатор задачи")],
 ) -> JSONResponse:
     """Получить подробную информацию о задаче."""
 
-    if not authenticated:
-        return authentication_not_configured()
+    ensure_permissions(principal, "stats:read")
     return endpoint_not_implemented("getJob")
 
 

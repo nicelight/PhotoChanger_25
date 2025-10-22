@@ -22,6 +22,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import NoSuchModuleError
 
 from ..api import ApiFacade
+from ..api.errors import ApiError, api_error_handler
 from ..core.config import AppConfig
 from ..domain.models import Job, ProcessingLog
 from ..infrastructure.queue.postgres import PostgresJobQueue, PostgresQueueConfig
@@ -172,6 +173,7 @@ def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
 
     facade = ApiFacade(registry=registry)
     app = FastAPI(title="PhotoChanger API", version=_read_contract_version())
+    app.add_exception_handler(ApiError, api_error_handler)
     app.state.service_registry = registry
     app.state.config = app_config
     try:

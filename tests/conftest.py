@@ -1173,8 +1173,17 @@ def patch_authentication_response(
 def allow_bearer_auth(contract_app) -> Callable[[Iterable[str]], None]:
     """Override bearer auth dependencies to return ``True`` for tests."""
 
-    async def _allow() -> bool:
-        return True
+    async def _allow() -> "AdminPrincipal":
+        from src.app.api.routes.dependencies import AdminPrincipal
+
+        return AdminPrincipal(
+            username="contract-admin",
+            permissions=frozenset({
+                "settings:write",
+                "slots:write",
+                "stats:read",
+            }),
+        )
 
     def _apply(modules: Iterable[str]) -> None:
         from src.app.api.routes import dependencies as base_dependencies

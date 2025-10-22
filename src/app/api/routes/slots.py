@@ -18,8 +18,12 @@ from ..schemas import (
     SlotUpdateRequest,
     SlotUpdateResponse,
 )
-from .dependencies import require_bearer_authentication
-from .responses import authentication_not_configured, endpoint_not_implemented
+from .dependencies import (
+    AdminPrincipal,
+    ensure_permissions,
+    require_bearer_authentication,
+)
+from .responses import endpoint_not_implemented
 
 router = APIRouter(prefix="/api", tags=["Slots"])
 
@@ -30,7 +34,7 @@ router = APIRouter(prefix="/api", tags=["Slots"])
     status_code=status.HTTP_200_OK,
 )
 async def list_slots(
-    authenticated: Annotated[bool, Depends(require_bearer_authentication)],
+    principal: Annotated[AdminPrincipal, Depends(require_bearer_authentication)],
     provider_id: Annotated[
         Optional[str], Query(description="Фильтр по провайдеру")
     ] = None,
@@ -41,8 +45,7 @@ async def list_slots(
 ) -> JSONResponse:
     """Получить список статических ingest-слотов."""
 
-    if not authenticated:
-        return authentication_not_configured()
+    ensure_permissions(principal, "slots:write")
     return endpoint_not_implemented("listSlots")
 
 
@@ -52,15 +55,14 @@ async def list_slots(
     status_code=status.HTTP_200_OK,
 )
 async def get_slot(
-    authenticated: Annotated[bool, Depends(require_bearer_authentication)],
+    principal: Annotated[AdminPrincipal, Depends(require_bearer_authentication)],
     slot_id: Annotated[
         SlotIdentifier, Path(description="Идентификатор статического ingest-слота")
     ],
 ) -> JSONResponse:
     """Получить данные конкретного слота вместе с последними результатами."""
 
-    if not authenticated:
-        return authentication_not_configured()
+    ensure_permissions(principal, "slots:write")
     return endpoint_not_implemented("getSlot")
 
 
@@ -70,7 +72,7 @@ async def get_slot(
     status_code=status.HTTP_200_OK,
 )
 async def update_slot(
-    authenticated: Annotated[bool, Depends(require_bearer_authentication)],
+    principal: Annotated[AdminPrincipal, Depends(require_bearer_authentication)],
     slot_id: Annotated[
         SlotIdentifier, Path(description="Идентификатор статического ingest-слота")
     ],
@@ -83,8 +85,7 @@ async def update_slot(
     """Обновить настройки слота с учётом проверки версии."""
 
     _ = (slot_id, payload, if_match)
-    if not authenticated:
-        return authentication_not_configured()
+    ensure_permissions(principal, "slots:write")
     return endpoint_not_implemented("updateSlot")
 
 
@@ -93,7 +94,7 @@ async def update_slot(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def reset_slot_stats(
-    authenticated: Annotated[bool, Depends(require_bearer_authentication)],
+    principal: Annotated[AdminPrincipal, Depends(require_bearer_authentication)],
     slot_id: Annotated[
         SlotIdentifier, Path(description="Идентификатор статического ingest-слота")
     ],
@@ -101,8 +102,7 @@ async def reset_slot_stats(
     """Сбросить статистику указанного слота."""
 
     _ = slot_id
-    if not authenticated:
-        return authentication_not_configured()
+    ensure_permissions(principal, "slots:write")
     return endpoint_not_implemented("resetSlotStats")
 
 
