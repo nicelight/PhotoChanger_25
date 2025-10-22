@@ -407,3 +407,6 @@ updated: 2025-11-09
 - 2025-11-09 11:05 — изучил реализацию `SettingsService`/роутера и существующие contract/unit тесты, уточнил критерии 4.5.9c1–4.5.9c3.
 - 2025-11-09 11:22 — реализовал интеграционные тесты `tests/api/admin/test_settings.py` (GET/PUT `/api/settings`, пересчёт TTL, ротация пароля, ошибки прав/валидации).
 - 2025-11-09 11:35 — запустил `pytest tests/api/admin/test_settings.py` (skip без FastAPI), обновил `.memory/TASKS.md` и подготовил фиксацию прогресса.
+## task-4.5.9-review-2025-11-09
+- 2025-11-09 12:10 — ревьюировал `src/app/api/routes/settings.py` и `src/app/services/settings.py`, подтвердил маппинг доменных моделей, обработку ошибок и пересчёт таймаутов ingest и TTL публичных ссылок.
+- 2025-11-09 12:25 — проверил схемы `Settings*` и записи в `.memory/TASKS.md`, зафиксировал в PROGRESS ревизию 4.5.9, подтвердил, что тесты `tests/api/admin/test_settings.py` покрывают ротацию DSLR-пароля и обновление таймаутов.
