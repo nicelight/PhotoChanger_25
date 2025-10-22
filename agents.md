@@ -41,7 +41,7 @@
 2) Добавь/обнови unit + contract-тесты; прогон pre-commit чек-листа (см. CONTEXT).
 3) Внеси минимально достаточные изменения кода.
 4) Если принято архитектурное решение — оформи ADR в `spec/adr/ADR-XXXX.md` и обнови индекс `.memory/DECISIONS.md`.
-5) Обнови прогресс (после checkpoint): `.memory/PROGRESS.md` (1 строка), `.memory/ASKS.md` (фиксируй выполненный запрос) и статус в `.memory/TASKS.md`.
+5) Обнови прогресс (после checkpoint): `.memory/PROGRESS.md` (1 строка), `.memory/ASKS.md` (фиксируй выполненный запрос) и статус задачи в `.memory/TASKS.md`.
 
 ## 4) Checkpoints (минимум)
 Считается пройденным, если одновременно:
