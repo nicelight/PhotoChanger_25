@@ -496,7 +496,7 @@ class DefaultJobService(JobService):
         job.updated_at = finalized_at
         job.is_finalized = True
         job.failure_reason = None
-        job.result_inline_base64 = None
+        job.result_inline_base64 = inline_preview
 
         retention_expires_at = calculate_result_expires_at(
             finalized_at, result_retention_hours=self.result_retention_hours
