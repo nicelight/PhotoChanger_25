@@ -355,3 +355,16 @@ updated: 2025-11-06
 - 2025-11-06 09:40 — переписал `tests/unit/repositories/conftest.py` на PostgreSQL-движок через `psycopg`, обновил README, runbook
   и tests/HOWTO про обязательность PostgreSQL и способ запуска через Docker.
 - 2025-11-06 09:55 — синхронизировал .memory/TASKS.md и подготовил записи для PROGRESS/REPORT.
+
+## phase4-admin-auth-2025-11-07
+- 2025-11-07 10:05 — перечитал требования `.memory/TASKS.md` (Issue 4.5.7a), OpenAPI и LoginRequest/AuthToken схемы, чтобы уточнить
+  обязательные поля, ожидаемые claim'ы и границы TTL перед обновлением контракта.
+- 2025-11-07 10:32 — обновил `spec/contracts/openapi.yaml`: добавил описание JWT claim'ов (`sub`, `permissions`, `exp`),
+  зафиксировал диапазон TTL 300–7200 с (дефолт 3600), примеры успешного ответа и ошибок 401/429, требования к заголовкам no-store
+  и собственные коды ошибок `invalid_credentials`/`login_throttled`.
+- 2025-11-07 10:45 — уточнил JSON Schema `LoginRequest` (паттерн логина, длина пароля, формат) и `AuthToken`
+  (паттерн JWT, границы `expires_in_sec`), поднял версию контрактов до 0.5.0 и задокументировал изменения в `VERSION.json`.
+- 2025-11-07 11:05 — добавил документацию `spec/docs/admin/auth.md`: описал поток логина, набор claim'ов, алгоритм HS256,
+  конфигурацию `jwt_secret`/`jwt_access_ttl_seconds`, правила троттлинга (5 попыток за 10 минут) и требования к журналированию.
+- 2025-11-07 11:20 — расширил контрактные тесты (`tests/contract/test_admin.py`) проверками `POST /api/login` (успех, 401, 429)
+  и подготовил фикстуру `sample_auth_token` с валидным JWT шаблоном для валидации схемы.
