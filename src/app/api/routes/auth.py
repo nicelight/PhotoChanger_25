@@ -5,11 +5,11 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
-import jwt
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 
 from ...core.config import AppConfig
+from ...security.jwt import encode_jwt
 from ...security.service import (
     AuthenticationError,
     AuthenticationService,
@@ -52,7 +52,7 @@ async def login_user(
         "iat": int(issued_at.timestamp()),
         "exp": int(expires_at.timestamp()),
     }
-    token = jwt.encode(claims, config.jwt_secret, algorithm="HS256")
+    token = encode_jwt(claims, config.jwt_secret, algorithm="HS256")
     return JSONResponse(
         status_code=status.HTTP_200_OK,
         content={

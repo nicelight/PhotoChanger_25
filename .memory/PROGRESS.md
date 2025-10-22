@@ -1,6 +1,6 @@
 ---
 id: progress
-updated: 2025-11-06
+updated: 2025-11-09
 ---
 
 # Progress (changelog — одна строка на событие)

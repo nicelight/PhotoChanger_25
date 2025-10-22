@@ -21,7 +21,7 @@
     "recent_results_limit": 10
   },
   "auth": {
-    "jwt_access_ttl_seconds": 900,
+    "jwt_access_ttl_seconds": 3600,
     "admin_credentials_path": "secrets/runtime_credentials.json"
   }
 }

@@ -1,5 +1,4 @@
 """High level security helpers used by application services."""
-
 from __future__ import annotations
 
 import hashlib

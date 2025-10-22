@@ -331,8 +331,8 @@ class LoginRequest(BaseModel):
     password: str = Field(..., description="Пароль пользователя", min_length=1)
 
 
-class LoginResponse(BaseModel):
-    """Ответ авторизации повторно использует контракт AuthToken"""
+class LoginResponse(AuthToken):
+    """Ответ авторизации повторно использует контракт AuthToken."""
 
 
 class MediaCachePurgeRequest(BaseModel):
