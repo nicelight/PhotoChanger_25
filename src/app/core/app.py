@@ -35,6 +35,7 @@ from ..services.default import (
     bootstrap_settings,
     bootstrap_slots,
 )
+from ..security.service import AuthenticationService
 from ..services.stats import CachedStatsService
 from ..services.registry import ServiceRegistry
 from ..services.container import load_stats_cache_settings, SqlAlchemyUnitOfWork
@@ -43,6 +44,7 @@ from ..utils.postgres_dsn import normalize_postgres_dsn
 
 
 logger = logging.getLogger(__name__)
+
 
 def _read_contract_version() -> str:
     """Return the OpenAPI version declared in ``spec/contracts``."""
@@ -164,9 +166,7 @@ def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
         job_service_override = DefaultJobService(
             queue=job_queue_override, stats_service=stats_service_instance
         )
-        registry.register_job_service(
-            lambda *, config=None: job_service_override
-        )
+        registry.register_job_service(lambda *, config=None: job_service_override)
         registry.register_job_repository(lambda *, config=None: job_queue_override)
         extra_state.setdefault("job_service", job_service_override)
 
@@ -174,6 +174,25 @@ def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
     app = FastAPI(title="PhotoChanger API", version=_read_contract_version())
     app.state.service_registry = registry
     app.state.config = app_config
+    try:
+        auth_service = AuthenticationService.load_from_file(
+            app_config.admin_credentials_path
+        )
+    except FileNotFoundError:
+        logger.warning(
+            "Admin credentials file not found; admin login disabled",
+            extra={"credentials_path": str(app_config.admin_credentials_path)},
+        )
+        auth_service = AuthenticationService.empty()
+    except ValueError as exc:
+        logger.error(
+            "Failed to load admin credentials",
+            extra={"credentials_path": str(app_config.admin_credentials_path)},
+            exc_info=exc,
+        )
+        raise
+    app.state.auth_service = auth_service
+    app.state.jwt_access_ttl_seconds = app_config.jwt_access_ttl_seconds
     if "job_queue" not in extra_state:
         extra_state["job_queue"] = registry.resolve_job_repository()(config=None)
     if extra_state:
@@ -193,9 +212,7 @@ def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
             return
         provider_factories = registry.provider_snapshot()
         if not provider_factories:
-            logger.info(
-                "Worker pool startup skipped: no provider adapters registered"
-            )
+            logger.info("Worker pool startup skipped: no provider adapters registered")
             return
         job_service = registry.resolve_job_service()(config=app_config)
         slot_service = registry.resolve_slot_service()(config=app_config)
