@@ -334,7 +334,7 @@ def _resolve_postgres_dsn() -> str:
 
     database_url = os.getenv("PHOTOCHANGER_DATABASE_URL")
     if database_url:
-        if os.getenv("PYTEST_ALLOW_PRODUCTION_DSN"):
+        if _is_truthy(os.getenv("PYTEST_ALLOW_PRODUCTION_DSN")):
             return database_url
         raise RuntimeError(
             "PHOTOCHANGER_DATABASE_URL is set but pytest refuses to use it. "
@@ -349,6 +349,12 @@ def _resolve_postgres_dsn() -> str:
         "password": os.getenv("TEST_POSTGRES_PASSWORD", "postgres"),
     }
     return conninfo.make_conninfo(**params)
+
+
+def _is_truthy(value: str | None) -> bool:
+    if value is None:
+        return False
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _ensure_database_exists(dsn: str) -> None:
