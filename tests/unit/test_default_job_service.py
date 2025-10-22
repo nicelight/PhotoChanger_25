@@ -87,12 +87,12 @@ def test_finalize_job_with_media_sets_result_fields(
         job,
         finalized_at=finalized_at,
         result_media=media,
-        inline_preview="ignored",
+        inline_preview="Zm9v",
         result_checksum="sha256:d34db33f",
     )
 
     assert persisted.is_finalized is True
-    assert persisted.result_inline_base64 is None
+    assert persisted.result_inline_base64 == "Zm9v"
     assert persisted.result_file_path == "results/final.png"
     assert persisted.result_mime_type == "image/png"
     assert persisted.result_size_bytes == 1024
