@@ -332,3 +332,14 @@ updated: 2025-11-05
 - 2025-11-05 12:10 — собрал интеграционный smoke-тест `tests/integration/test_stats_pipeline.py`, который поднимает FastAPI с реальными DI-зависимостями, прогоняет сценарии success/timeout и проверяет запись `processing_logs` + инвалидацию кеша `CachedStatsService`.【F:tests/integration/test_stats_pipeline.py†L1-L200】
 - 2025-11-05 12:25 — добавил параметры stats/worker в конфигурации (`AppConfig`, `create_app`, `load_stats_cache_settings`), расширил `.env.example`, README и runbook; подготовил `configs/app.{dev,staging,prod}.json` и обновил `configs/stats.json` с DSN воркера/статистики.【F:src/app/core/config.py†L37-L125】【F:src/app/core/app.py†L95-L218】【F:src/app/services/container.py†L191-L217】【F:.env.example†L1-L11】【F:README.md†L10-L20】【F:configs/app.dev.json†L1-L17】【F:configs/app.staging.json†L1-L17】【F:configs/app.prod.json†L1-L17】【F:configs/stats.json†L1-L15】【F:spec/docs/operations/ingest_runbook.md†L11-L27】
 - 2025-11-05 12:35 — запустил `pytest tests/integration/test_stats_pipeline.py`; тест скипнут из-за отсутствия psycopg/PostgreSQL в окружении, что задокументировано для CI.【08c22f†L1-L7】
+## phase4-processing-log-contract-2025-11-05
+- 2025-11-05 12:10 — собрал фактические поля ProcessingLog из JobService/QueueWorker и статистических репозиториев, зафиксировал требования к details/provider_latency.
+- 2025-11-05 12:32 — подготовил JSON Schema processing_log.json, подключил компоненты в OpenAPI и обновил domain-model/admin stats документацию.
+- 2025-11-05 12:55 — добавил валидатор stats-сервиса на jsonschema, обновил CachedStatsService и unit-тесты для проверки валидации и ошибок.
+- 2025-11-05 13:20 — создал contract тест processing_log_schema, прогнал pytest -m unit и pytest -m contract (зелёные).
+
+- 2025-11-06 09:40 — адаптировал тестовое окружение под отсутствие optional deps: добавил пропуск sqlite-тестов без `aiosqlite`,
+  фоллбек SQLite для stats репозитория при отсутствии psycopg/psycopg2, ленивую инициализацию Jinja2-шаблонов в UI и фикстуру
+  `anyio_backend` для запуска async-тестов только на asyncio; обновил FakeJobQueue под новый контракт `append_processing_logs` и
+  подтвердил `pytest -m unit`/`pytest -m contract` зелёные.【F:tests/unit/repositories/conftest.py†L1-L38】【F:src/app/core/app.py†L14-L120】【F:src/app/ui/views.py†L1-L90】【F:tests/conftest.py†L1-L541】【2fb74b†L1-L13】【2bf0d0†L1-L16】
+

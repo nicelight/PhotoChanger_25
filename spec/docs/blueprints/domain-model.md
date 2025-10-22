@@ -38,6 +38,16 @@
 - `path`, `mime`, `size_bytes`, `checksum`.
 - `label`, `uploaded_by`, `created_at`.
 
+### ProcessingLog
+- `id` (`UUID`) — уникальный идентификатор события журнала.
+- `job_id`, `slot_id` — связь с задачей и статическим слотом; идентификатор слота повторяется в `details.slot_id` для обратной совместимости с ранними выгрузками.
+- `status` — одно из состояний `received`, `dispatched`, `provider_responded`, `timeout`, `failed`, `succeeded` (см. `ProcessingStatus`).
+- `occurred_at` — метка времени UTC, используется для сортировки и расчёта задержек.
+- `message` — краткое описание события (опционально, до 1 КБ).
+- `provider_latency_ms` — латентность вызова провайдера в миллисекундах; отсутствует для синхронных внутренних шагов (`received`, `failed` при ingest).
+- `details` — словарь доп. метаданных: `provider_id`, `provider_reference`, `attempt`, `error`, `expires_at`, `payload_path`, `result_file_path`, `result_checksum`, `inline_preview`, `failure_reason` и произвольные скалярные поля для аналитики. Формат зафиксирован в `spec/contracts/schemas/processing_log.json`.
+
+
 ### ProviderAdapter
 - Абстракция над внешним API.
 - Связывает `Job` c конкретной реализацией (Gemini через `models.generateContent`, Turbotext через `api_ai`).

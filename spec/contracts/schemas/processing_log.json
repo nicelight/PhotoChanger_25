@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProcessingLog",
+  "description": "Журнал события обработки задачи очереди и взаимодействия с провайдером.",
+  "type": "object",
+  "required": [
+    "id",
+    "job_id",
+    "slot_id",
+    "status",
+    "occurred_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Уникальный идентификатор записи журнала."
+    },
+    "job_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Идентификатор задачи, к которой относится событие."
+    },
+    "slot_id": {
+      "type": "string",
+      "description": "Статический идентификатор ingest-слота.",
+      "pattern": "^slot-[0-9]{3}$"
+    },
+    "status": {
+      "type": "string",
+      "description": "Состояние обработки на момент фиксации события.",
+      "enum": [
+        "received",
+        "dispatched",
+        "provider_responded",
+        "timeout",
+        "failed",
+        "succeeded"
+      ]
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Метка времени события в UTC."
+    },
+    "message": {
+      "type": ["string", "null"],
+      "description": "Человеко-читаемое пояснение (если доступно).",
+      "maxLength": 1024
+    },
+    "details": {
+      "type": ["object", "null"],
+      "description": "Дополнительные метаданные события для аналитики и отладки.",
+      "properties": {
+        "provider_id": {
+          "type": "string",
+          "description": "Ключ провайдера, обработавшего задачу.",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "provider_reference": {
+          "type": "string",
+          "description": "Идентификатор задачи во внешнем провайдере.",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "attempt": {
+          "type": "integer",
+          "description": "Номер попытки обращения к провайдеру (начиная с 1).",
+          "minimum": 1
+        },
+        "error": {
+          "type": "string",
+          "description": "Сериализованное представление исключения/ошибки провайдера.",
+          "maxLength": 2048
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Предельный дедлайн задачи или связанного артефакта."
+        },
+        "payload_path": {
+          "type": "string",
+          "description": "Путь к исходному ingest-пейлоаду во временном хранилище.",
+          "maxLength": 512
+        },
+        "result_file_path": {
+          "type": "string",
+          "description": "Путь к итоговому файлу результата.",
+          "maxLength": 512
+        },
+        "result_checksum": {
+          "type": "string",
+          "description": "Контрольная сумма итогового файла.",
+          "maxLength": 128
+        },
+        "inline_preview": {
+          "type": "boolean",
+          "description": "Признак того, что результат содержал inline preview."
+        },
+        "failure_reason": {
+          "type": "string",
+          "description": "Причина финального провала задачи.",
+          "enum": ["timeout", "provider_error", "cancelled"]
+        },
+        "slot_id": {
+          "type": "string",
+          "description": "Дублированный идентификатор слота (для audit совместимости).",
+          "pattern": "^slot-[0-9]{3}$"
+        }
+      },
+      "additionalProperties": {
+        "description": "Произвольные скалярные значения для совместимости с расширениями.",
+        "type": ["string", "number", "integer", "boolean", "null"]
+      }
+    },
+    "provider_latency_ms": {
+      "type": ["integer", "null"],
+      "description": "Латентность обращения к провайдеру в миллисекундах.",
+      "minimum": 0
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": "11111111-2222-3333-4444-555555555555",
+      "job_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "slot_id": "slot-001",
+      "status": "provider_responded",
+      "occurred_at": "2025-11-05T10:15:30Z",
+      "message": "Provider returned payload",
+      "provider_latency_ms": 1200,
+      "details": {
+        "provider_id": "gemini",
+        "provider_reference": "gemini-job-123",
+        "attempt": 1
+      }
+    }
+  ]
+}

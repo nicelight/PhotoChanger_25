@@ -105,7 +105,7 @@ def test_media_cleanup_once_collects_expired_entities() -> None:
 
 
 @pytest.mark.unit
-@pytest.mark.asyncio
+@pytest.mark.anyio("asyncio")
 async def test_periodic_media_cleanup_stops_on_shutdown() -> None:
     now = datetime.now(timezone.utc)
     media_service = _StubMediaService([])

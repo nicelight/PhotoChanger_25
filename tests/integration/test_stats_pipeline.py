@@ -31,7 +31,7 @@ from tests.mocks.providers import MockGeminiProvider, MockProviderConfig, MockPr
 
 
 @pytest.mark.integration
-@pytest.mark.asyncio
+@pytest.mark.anyio("asyncio")
 async def test_stats_pipeline_smoke(postgres_dsn, tmp_path):
     if psycopg is None:
         pytest.skip(PSYCOPG_MISSING_REASON)

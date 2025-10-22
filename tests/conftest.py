@@ -48,6 +48,13 @@ def _require_psycopg() -> None:
     if psycopg is None or conninfo is None or sql is None:
         pytest.skip(PSYCOPG_MISSING_REASON, allow_module_level=True)
 
+
+@pytest.fixture
+def anyio_backend() -> str:
+    """Force AnyIO-based tests to run on asyncio without requiring trio."""
+
+    return "asyncio"
+
 try:  # noqa: E402  (import after sys.path update)
     from alembic import command as alembic_command
     from alembic.config import Config as AlembicConfig
@@ -468,7 +475,7 @@ except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency
     if exc.name != "pydantic":
         raise
     AppConfig = None  # type: ignore[assignment]
-from src.app.domain.models import Job  # noqa: E402
+from src.app.domain.models import Job, ProcessingLog  # noqa: E402
 from src.app.services.job_service import QueueBusyError, QueueUnavailableError  # noqa: E402
 from src.app.services.registry import ServiceRegistry  # noqa: E402
 
@@ -484,6 +491,7 @@ class FakeJobQueue:
 
     jobs: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     domain_jobs: Dict[str, Job] = field(default_factory=dict)
+    processing_logs: Dict[str, list[ProcessingLog]] = field(default_factory=dict)
     raise_busy: bool = False
     raise_unavailable: bool = False
     auto_finalize_inline: bytes | None = None
@@ -588,6 +596,13 @@ class FakeJobQueue:
         job.updated_at = datetime.now(timezone.utc)
         job.finalized_at = job.updated_at
         self._store(job)
+
+    def append_processing_logs(
+        self, entries: Iterable[ProcessingLog]
+    ) -> None:  # pragma: no cover - simple storage
+        for entry in entries:
+            job_id = str(entry.job_id)
+            self.processing_logs.setdefault(job_id, []).append(entry)
 
 
 @dataclass
