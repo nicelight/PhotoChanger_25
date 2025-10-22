@@ -133,19 +133,37 @@ def test_clear_inline_preview_resets_inline_fields(
 ) -> None:
     service = job_service
     job = _build_job()
-    job.result_inline_base64 = "Zm9v"
-    job.result_mime_type = "image/png"
-    job.result_size_bytes = 42
-    job.result_checksum = "deadbeef"
+    service.queue.enqueue(job)
     service.jobs[job.id] = job
 
-    cleared = service.clear_inline_preview(job)
+    finalized_at = datetime.now(timezone.utc)
+    finalized = service.finalize_job(
+        job,
+        finalized_at=finalized_at,
+        result_media=None,
+        inline_preview="Zm9v",
+        result_checksum="deadbeef",
+    )
+
+    cleared = service.clear_inline_preview(finalized)
 
     assert cleared.result_inline_base64 is None
     assert cleared.result_mime_type is None
     assert cleared.result_size_bytes is None
     assert cleared.result_checksum is None
     assert service.get_job(job.id) is cleared
+
+    backend = getattr(service.queue, "_backend", None)
+    connection = getattr(backend, "_conn", None)
+    if connection is not None:  # pragma: no branch - optional verification
+        with connection.cursor() as cur:
+            cur.execute(
+                "SELECT result_inline_base64 FROM jobs WHERE id = %(id)s",
+                {"id": job.id},
+            )
+            row = cur.fetchone()
+        assert row is not None
+        assert row["result_inline_base64"] is None
 
 
 class _RecordingStats(StatsService):
