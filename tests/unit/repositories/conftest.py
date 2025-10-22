@@ -4,6 +4,11 @@ import asyncio
 from dataclasses import dataclass
 
 import pytest
+
+pytest.importorskip(
+    "aiosqlite", reason="aiosqlite is required for async SQLAlchemy tests"
+)
+
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from src.app.db.models import Base

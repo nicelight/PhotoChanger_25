@@ -1,6 +1,6 @@
 {
-  "version": "0.3.0",
-  "released_at": "2025-10-31",
+  "version": "0.4.0",
+  "released_at": "2025-11-05",
   "changes": [
     {
       "scope": "api",
@@ -31,6 +31,11 @@
       "scope": "api",
       "type": "minor",
       "description": "Unified SlotStatsMetric и GlobalStatsMetric через общую StatsMetricBase для консистентного набора счётчиков"
+    },
+    {
+      "scope": "stats",
+      "type": "minor",
+      "description": "Добавлен контракт ProcessingLog, синхронизированы OpenAPI, документация и валидаторы stats-сервиса."
     }
   ],
   "semver_policy": {

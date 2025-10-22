@@ -332,7 +332,7 @@ def _result_job(slot_id: str, *, finalized_at: datetime, size: int = 1024) -> Jo
     )
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio("asyncio")
 async def test_create_and_get_slot(service: SlotManagementService) -> None:
     created = await service.create_slot(_slot())
     assert created.id == "slot-001"
@@ -342,7 +342,7 @@ async def test_create_and_get_slot(service: SlotManagementService) -> None:
     assert [slot.id for slot in listed] == ["slot-001"]
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio("asyncio")
 async def test_update_slot_with_template_reference(
     service: SlotManagementService,
 ) -> None:
@@ -371,7 +371,7 @@ async def test_update_slot_with_template_reference(
     assert persisted.settings_json["template_media"] == ["background"]
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio("asyncio")
 async def test_update_slot_missing_template_fails(
     service: SlotManagementService,
 ) -> None:
@@ -384,14 +384,14 @@ async def test_update_slot_missing_template_fails(
         await service.update_slot(pending, expected_etag=created.etag or "")
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio("asyncio")
 async def test_missing_required_field_raises(service: SlotManagementService) -> None:
     slot = _slot(settings={})
     with pytest.raises(SlotValidationError):
         await service.create_slot(slot)
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio("asyncio")
 async def test_unknown_provider_rejected(
     service: SlotManagementService,
 ) -> None:
@@ -400,7 +400,7 @@ async def test_unknown_provider_rejected(
         await service.create_slot(slot)
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio("asyncio")
 async def test_unknown_operation_rejected(
     service: SlotManagementService,
 ) -> None:
@@ -409,7 +409,7 @@ async def test_unknown_operation_rejected(
         await service.create_slot(slot)
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio("asyncio")
 async def test_archive_slot_hidden_from_listing(service: SlotManagementService) -> None:
     created = await service.create_slot(_slot())
     archived = await service.archive_slot(created.id, expected_etag=created.etag or "")
@@ -419,14 +419,14 @@ async def test_archive_slot_hidden_from_listing(service: SlotManagementService) 
     assert [slot.id for slot in archived_items] == [created.id]
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio("asyncio")
 async def test_etag_conflict_propagates(service: SlotManagementService) -> None:
     created = await service.create_slot(_slot())
     with pytest.raises(ETagMismatchError):
         await service.update_slot(created, expected_etag="invalid")
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio("asyncio")
 async def test_provider_requires_configuration(
     slot_repository: InMemorySlotRepository,
     template_repository: InMemoryTemplateRepository,
@@ -458,7 +458,7 @@ async def test_provider_requires_configuration(
         await service.create_slot(_slot())
 
 
-@pytest.mark.asyncio
+@pytest.mark.anyio("asyncio")
 async def test_recent_results_sorted_and_limited(
     slot_repository: InMemorySlotRepository,
     template_repository: InMemoryTemplateRepository,

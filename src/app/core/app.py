@@ -19,6 +19,7 @@ from uuid import UUID
 
 from fastapi import FastAPI
 from sqlalchemy import create_engine
+from sqlalchemy.exc import NoSuchModuleError
 
 from ..api import ApiFacade
 from ..core.config import AppConfig
@@ -94,7 +95,13 @@ def _configure_dependencies(
             raise
     stats_settings = load_stats_cache_settings(config)
     stats_dsn = config.stats_database_url or config.database_url
-    stats_engine = create_engine(stats_dsn, future=True)
+    try:
+        stats_engine = create_engine(stats_dsn, future=True)
+    except (ModuleNotFoundError, NoSuchModuleError) as exc:
+        logger.warning(
+            "Falling back to in-memory SQLite stats repository: %s", exc,
+        )
+        stats_engine = create_engine("sqlite:///:memory:", future=True)
     stats_repository = SqlAlchemyStatsRepository(stats_engine)
     stats_service = CachedStatsService(
         stats_repository,

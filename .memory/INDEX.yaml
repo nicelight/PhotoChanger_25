@@ -1,8 +1,8 @@
 # Машиночитаемый индекс актуальности артефактов
 updated: 2025-11-05
 'spec/contracts':
-  version: "0.3.0"
-  released_at: "2025-10-31"
+  version: "0.4.0"
+  released_at: "2025-11-05"
 'spec/adr':
   count: 2
   last_id: "ADR-0002"

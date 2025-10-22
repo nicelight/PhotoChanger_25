@@ -818,6 +818,35 @@ components:
         - slot-014
         - slot-015
       description: Допустимый статический идентификатор ingest-слота.
+    ProcessingLog:
+      $ref: ./schemas/processing_log.json
+    ProcessingLogList:
+      type: object
+      description: Коллекция событий журнала обработки.
+      required: [data]
+      properties:
+        data:
+          type: array
+          description: Хронологический список событий (сначала старые).
+          items:
+            $ref: ./schemas/processing_log.json
+        meta:
+          type: object
+          description: Дополнительные параметры выборки.
+          properties:
+            job_id:
+              type: [string, 'null']
+              format: uuid
+            slot_id:
+              type: [string, 'null']
+              pattern: ^slot-[0-9]{3}$
+            total:
+              type: [integer, 'null']
+              minimum: 0
+            version:
+              type: string
+              description: Версия контракта ProcessingLog.
+          additionalProperties: false
   parameters:
     SlotId:
       name: slot_id

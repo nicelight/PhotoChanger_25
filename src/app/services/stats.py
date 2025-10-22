@@ -11,6 +11,7 @@ from typing import Callable, Dict, Iterable, Sequence, Tuple, cast
 from ..domain.models import ProcessingLog, Slot, SlotRecentResult
 from ..infrastructure.stats_repository import StatsRepository
 from ..schemas.stats import StatsAggregation, StatsMetric, StatsWindow
+from .validators import ProcessingLogValidator, default_processing_log_validator
 from .stats_service import StatsService
 
 
@@ -54,6 +55,7 @@ class CachedStatsService(StatsService):
         max_record_attempts: int = 3,
         record_retry_delay: float = 0.0,
         logger: logging.Logger | None = None,
+        processing_log_validator: ProcessingLogValidator | None = None,
     ) -> None:
         if slot_ttl < timedelta(0):
             raise ValueError("slot_ttl must be non-negative")
@@ -77,6 +79,7 @@ class CachedStatsService(StatsService):
         self._max_record_attempts = max_record_attempts
         self._record_retry_delay = record_retry_delay
         self._logger = logger or logging.getLogger(__name__)
+        self._processing_log_validator = processing_log_validator or default_processing_log_validator
 
     def collect_global_stats(
         self,
@@ -100,6 +103,7 @@ class CachedStatsService(StatsService):
         return self._collect(slot, window=window, since=since, now=current_time)
 
     def record_processing_event(self, log: ProcessingLog) -> None:
+        self._processing_log_validator.validate(log)
         attempt = 0
         last_error: Exception | None = None
         while attempt < self._max_record_attempts:
