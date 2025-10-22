@@ -388,7 +388,7 @@ def _truncate_postgres_tables(dsn: str) -> None:
                 SELECT tablename
                 FROM pg_tables
                 WHERE schemaname = 'public'
-                  AND tablename IN ('processing_logs', 'jobs')
+                  AND tablename IN ('processing_logs', 'processing_log_aggregates', 'jobs')
                 ORDER BY tablename
                 """
             )
