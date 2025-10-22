@@ -328,21 +328,27 @@ from src.app.utils.postgres_dsn import normalize_postgres_dsn  # noqa: E402
 
 def _resolve_postgres_dsn() -> str:
     _require_psycopg()
-    env_dsn = os.getenv("TEST_POSTGRES_DSN") or os.getenv("PHOTOCHANGER_DATABASE_URL")
+    env_dsn = os.getenv("TEST_POSTGRES_DSN")
     if env_dsn:
         return env_dsn
 
-    prod_config_path = PROJECT_ROOT / "configs" / "app.prod.json"
-    try:
-        prod_config = json.loads(prod_config_path.read_text(encoding="utf-8"))
-        database_section = prod_config.get("database") or {}
-        queue_dsn = database_section["queue_dsn"]
-    except (FileNotFoundError, KeyError, json.JSONDecodeError) as exc:
+    database_url = os.getenv("PHOTOCHANGER_DATABASE_URL")
+    if database_url:
+        if os.getenv("PYTEST_ALLOW_PRODUCTION_DSN"):
+            return database_url
         raise RuntimeError(
-            "Production queue DSN is not configured for tests"
-        ) from exc
+            "PHOTOCHANGER_DATABASE_URL is set but pytest refuses to use it. "
+            "Set PYTEST_ALLOW_PRODUCTION_DSN=1 to opt in explicitly."
+        )
 
-    return str(queue_dsn)
+    params: dict[str, object] = {
+        "host": os.getenv("TEST_POSTGRES_HOST", "localhost"),
+        "port": os.getenv("TEST_POSTGRES_PORT", "5432"),
+        "dbname": os.getenv("TEST_POSTGRES_DB", "photochanger_test"),
+        "user": os.getenv("TEST_POSTGRES_USER", "postgres"),
+        "password": os.getenv("TEST_POSTGRES_PASSWORD", "postgres"),
+    }
+    return conninfo.make_conninfo(**params)
 
 
 def _ensure_database_exists(dsn: str) -> None:
