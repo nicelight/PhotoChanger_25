@@ -190,7 +190,8 @@ def build_service_registry(
 
     def _stats_repository_factory(*, config: Mapping[str, Any] | AppConfig | None = None) -> object:
         app_config = _coerce_app_config(config)
-        engine = _get_engine(app_config.database_url)
+        dsn = app_config.stats_database_url or app_config.database_url
+        engine = _get_engine(dsn)
         return SqlAlchemyStatsRepository(engine)
 
     def _stats_service_factory(*, config: Mapping[str, Any] | AppConfig | None = None) -> object:
@@ -207,7 +208,8 @@ def build_service_registry(
 
     def _unit_of_work_factory(*, config: Mapping[str, Any] | AppConfig | None = None) -> object:
         app_config = _coerce_app_config(config)
-        engine = _get_engine(app_config.database_url)
+        dsn = app_config.stats_database_url or app_config.database_url
+        engine = _get_engine(dsn)
         return SqlAlchemyUnitOfWork(engine)
 
     registry.register_stats_repository(_stats_repository_factory)

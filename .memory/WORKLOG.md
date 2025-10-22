@@ -327,3 +327,8 @@ updated: 2025-11-05
 - 2025-11-04 15:05 — пересмотрел подпункт 4.5.2b в `.memory/TASKS.md` и текущие SQLAlchemy репозитории (settings/slots/stats), уточнил требования к фильтрам, транзакциям и обработке ошибок.
 - 2025-11-04 15:30 — реализовал `SQLAlchemyTemplateMediaRepository` (методы `list_for_slot`/`list_by_ids`) и экспортировал его из пакета `src/app/repositories/sqlalchemy/__init__.py`.
 - 2025-11-04 15:45 — попытался прогнать `pytest tests/unit/repositories -q`; выполнение упало из-за PostgreSQL-специфичного CHECK (оператор `~`) в SQLite (`sqlalchemy.exc.OperationalError`).
+
+## phase4-admin-stats-2025-11-05
+- 2025-11-05 12:10 — собрал интеграционный smoke-тест `tests/integration/test_stats_pipeline.py`, который поднимает FastAPI с реальными DI-зависимостями, прогоняет сценарии success/timeout и проверяет запись `processing_logs` + инвалидацию кеша `CachedStatsService`.【F:tests/integration/test_stats_pipeline.py†L1-L200】
+- 2025-11-05 12:25 — добавил параметры stats/worker в конфигурации (`AppConfig`, `create_app`, `load_stats_cache_settings`), расширил `.env.example`, README и runbook; подготовил `configs/app.{dev,staging,prod}.json` и обновил `configs/stats.json` с DSN воркера/статистики.【F:src/app/core/config.py†L37-L125】【F:src/app/core/app.py†L95-L218】【F:src/app/services/container.py†L191-L217】【F:.env.example†L1-L11】【F:README.md†L10-L20】【F:configs/app.dev.json†L1-L17】【F:configs/app.staging.json†L1-L17】【F:configs/app.prod.json†L1-L17】【F:configs/stats.json†L1-L15】【F:spec/docs/operations/ingest_runbook.md†L11-L27】
+- 2025-11-05 12:35 — запустил `pytest tests/integration/test_stats_pipeline.py`; тест скипнут из-за отсутствия psycopg/PostgreSQL в окружении, что задокументировано для CI.【08c22f†L1-L7】
