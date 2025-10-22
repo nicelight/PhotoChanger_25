@@ -14,11 +14,28 @@ from src.app.domain.models import (
     ProcessingLog,
     ProcessingStatus,
 )
-from src.app.infrastructure.queue.schema import jobs, metadata as queue_metadata
+from src.app.infrastructure.queue.schema import jobs
 from src.app.infrastructure.sqlalchemy.stats_repository import (
     SqlAlchemyStatsRepository,
     processing_log_aggregates,
 )
+from tests.conftest import _apply_queue_migrations, _truncate_postgres_tables
+
+
+@pytest.fixture
+def stats_engine(postgres_dsn: str) -> sa.Engine:
+    _apply_queue_migrations(postgres_dsn)
+    engine = sa.create_engine(
+        "postgresql+psycopg://",
+        future=True,
+        connect_args={"conninfo": postgres_dsn},
+    )
+    _truncate_postgres_tables(postgres_dsn)
+    try:
+        yield engine
+    finally:
+        _truncate_postgres_tables(postgres_dsn)
+        engine.dispose()
 
 
 def _insert_job(conn: sa.Connection, *, job_id, slot_id: str, created_at: datetime) -> None:
@@ -65,17 +82,14 @@ def _select_aggregate(
     )
 
 
-@pytest.mark.unit
-def test_store_processing_log_updates_aggregates() -> None:
-    engine = sa.create_engine("sqlite:///:memory:", future=True)
-    queue_metadata.create_all(engine)
-    processing_log_aggregates.metadata.create_all(engine)
-    repository = SqlAlchemyStatsRepository(engine)
+@pytest.mark.integration
+def test_store_processing_log_updates_aggregates(stats_engine: sa.Engine) -> None:
+    repository = SqlAlchemyStatsRepository(stats_engine)
 
     slot_id = "slot-001"
     base_time = datetime(2025, 1, 1, 12, tzinfo=timezone.utc)
 
-    with engine.begin() as conn:
+    with stats_engine.begin() as conn:
         # Successful job
         job_success = uuid4()
         _insert_job(conn, job_id=job_success, slot_id=slot_id, created_at=base_time)
@@ -256,7 +270,7 @@ def test_store_processing_log_updates_aggregates() -> None:
             )
         )
 
-    with engine.connect() as conn:
+    with stats_engine.connect() as conn:
         day_slot = _select_aggregate(conn, slot_id=slot_id, granularity="day")
         assert day_slot["success"] == 1
         assert day_slot["timeouts"] == 1
@@ -281,3 +295,10 @@ def test_store_processing_log_updates_aggregates() -> None:
         assert week_slot["errors"] == 0
         assert week_slot["ingest_count"] == 4
 
+        week_global = _select_aggregate(conn, slot_id=None, granularity="week")
+        assert week_global["success"] == 1
+        assert week_global["timeouts"] == 1
+        assert week_global["provider_errors"] == 1
+        assert week_global["cancelled"] == 1
+        assert week_global["errors"] == 0
+        assert week_global["ingest_count"] == 4
