@@ -19,6 +19,7 @@ from src.app.infrastructure.sqlalchemy.stats_repository import (
     SqlAlchemyStatsRepository,
     processing_log_aggregates,
 )
+from src.app.schemas.stats import StatsWindow
 
 
 def _insert_job(conn: sa.Connection, *, job_id, slot_id: str, created_at: datetime) -> None:
@@ -198,6 +199,8 @@ def test_store_processing_log_updates_aggregates() -> None:
                 provider_latency_ms=None,
             )
         )
+
+
         repository.store_processing_log(
             ProcessingLog(
                 id=uuid4(),
@@ -280,4 +283,66 @@ def test_store_processing_log_updates_aggregates() -> None:
         assert week_slot["cancelled"] == 1
         assert week_slot["errors"] == 0
         assert week_slot["ingest_count"] == 4
+
+
+@pytest.mark.unit
+def test_store_processing_log_updates_global_scope_with_null_slot_conflict() -> None:
+    engine = sa.create_engine("sqlite:///:memory:", future=True)
+    queue_metadata.create_all(engine)
+    processing_log_aggregates.metadata.create_all(engine)
+    repository = SqlAlchemyStatsRepository(engine)
+
+    slot_id = "slot-aggregate"
+    base_time = datetime(2025, 2, 2, 9, tzinfo=timezone.utc)
+
+    with engine.begin() as conn:
+        job_id = uuid4()
+        _insert_job(conn, job_id=job_id, slot_id=slot_id, created_at=base_time)
+
+    repository.store_processing_log(
+        ProcessingLog(
+            id=uuid4(),
+            job_id=job_id,
+            slot_id=slot_id,
+            status=ProcessingStatus.RECEIVED,
+            occurred_at=base_time,
+            message="received",
+            details={"provider_id": "gemini"},
+            provider_latency_ms=0,
+        )
+    )
+    repository.store_processing_log(
+        ProcessingLog(
+            id=uuid4(),
+            job_id=job_id,
+            slot_id=slot_id,
+            status=ProcessingStatus.SUCCEEDED,
+            occurred_at=base_time + timedelta(minutes=5),
+            message="completed",
+            details={
+                "result_file_path": "media/result.png",
+                "result_checksum": "checksum",
+                "inline_preview": False,
+            },
+            provider_latency_ms=None,
+        )
+    )
+
+    with engine.begin() as conn:
+        rows = (
+            conn.execute(
+                sa.select(processing_log_aggregates)
+                .where(
+                    processing_log_aggregates.c.slot_id.is_(None),
+                    processing_log_aggregates.c.granularity == StatsWindow.DAY.value,
+                )
+                .mappings()
+                .all()
+            )
+        )
+
+    assert len(rows) == 1
+    aggregate = rows[0]
+    assert aggregate["ingest_count"] == 1
+    assert aggregate["success"] == 1
 
