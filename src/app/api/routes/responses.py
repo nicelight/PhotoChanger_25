@@ -31,8 +31,8 @@ def login_invalid_credentials() -> JSONResponse:
         status_code=status.HTTP_401_UNAUTHORIZED,
         content={
             "error": {
-                "code": "unauthorized",
-                "message": "Неверный логин или пароль",
+                "code": "invalid_credentials",
+                "message": "Invalid username or password",
             }
         },
     )
