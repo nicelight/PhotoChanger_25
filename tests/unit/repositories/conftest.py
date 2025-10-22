@@ -4,7 +4,7 @@ import asyncio
 from dataclasses import dataclass
 
 import pytest
-from sqlalchemy.engine import make_url
+from sqlalchemy.engine import URL, make_url
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from src.app.db.models import Base
@@ -13,13 +13,36 @@ from src.app.db.models import Base
 def _async_postgres_url(dsn: str) -> str:
     """Return a SQLAlchemy async URL using the psycopg driver."""
 
-    url = make_url(dsn)
-    driver = url.drivername
-    if "+" in driver:
-        base_driver = driver.split("+", 1)[0]
-    else:
-        base_driver = driver
-    return str(url.set(drivername=f"{base_driver}+psycopg"))
+    if "://" in dsn:
+        url = make_url(dsn)
+        driver = url.drivername
+        if "+" in driver:
+            base_driver = driver.split("+", 1)[0]
+        else:
+            base_driver = driver
+        return str(url.set(drivername=f"{base_driver}+psycopg"))
+
+    from psycopg.conninfo import conninfo_to_dict
+
+    info = conninfo_to_dict(dsn)
+    user = info.pop("user", None)
+    password = info.pop("password", None)
+    host = info.pop("host", None)
+    port = info.pop("port", None)
+    database = info.pop("dbname", None)
+    query = info or None
+
+    return str(
+        URL.create(
+            drivername="postgresql+psycopg",
+            username=user,
+            password=password,
+            host=host,
+            port=int(port) if port is not None else None,
+            database=database,
+            query=query,
+        )
+    )
 
 
 @dataclass
