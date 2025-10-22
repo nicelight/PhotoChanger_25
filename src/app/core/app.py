@@ -66,8 +66,8 @@ def _configure_dependencies(
 ) -> AppConfig:
     """Register infrastructure adapters and domain services."""
 
-    config = app_config or AppConfig.build_default()
-    media_root = config.media_root
+    app_config = app_config or AppConfig.build_default()
+    media_root = app_config.media_root
     media_root.mkdir(parents=True, exist_ok=True)
     (media_root / "payloads").mkdir(parents=True, exist_ok=True)
 
@@ -75,16 +75,16 @@ def _configure_dependencies(
         "pbkdf2_sha256$390000$70686f746f6368616e6765722d696e676573742d73616c74$"
         "4fb957db11f5dc3c987b7dd81e5ce44a25fd9c4601093921d9a48df767fdcb0a"
     )
-    settings = bootstrap_settings(config, password_hash=password_hash)
-    slots = bootstrap_slots(config)
+    settings = bootstrap_settings(app_config, password_hash=password_hash)
+    slots = bootstrap_slots(app_config)
 
     if job_queue_override is not None:
         queue = job_queue_override
     else:
         queue_config = PostgresQueueConfig(
-            dsn=config.database_url,
-            statement_timeout_ms=config.queue_statement_timeout_ms,
-            max_in_flight_jobs=config.queue_max_in_flight_jobs,
+            dsn=app_config.database_url,
+            statement_timeout_ms=app_config.queue_statement_timeout_ms,
+            max_in_flight_jobs=app_config.queue_max_in_flight_jobs,
         )
         try:
             queue = PostgresJobQueue(config=queue_config)
@@ -93,8 +93,8 @@ def _configure_dependencies(
                 "PostgreSQL queue unavailable; application cannot start", exc_info=exc
             )
             raise
-    stats_settings = load_stats_cache_settings(config)
-    stats_dsn = config.stats_database_url or config.database_url
+    stats_settings = load_stats_cache_settings(app_config)
+    stats_dsn = app_config.stats_database_url or app_config.database_url
     try:
         stats_engine = create_engine(stats_dsn, future=True)
     except (ModuleNotFoundError, NoSuchModuleError) as exc:
@@ -128,7 +128,7 @@ def _configure_dependencies(
         lambda *, config=None: SqlAlchemyUnitOfWork(stats_engine)
     )
 
-    return config
+    return app_config
 
 
 def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
