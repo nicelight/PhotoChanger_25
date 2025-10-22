@@ -346,3 +346,7 @@ updated: 2025-11-05
   `anyio_backend` для запуска async-тестов только на asyncio; обновил FakeJobQueue под новый контракт `append_processing_logs` и
   подтвердил `pytest -m unit`/`pytest -m contract` зелёные.【F:tests/unit/repositories/conftest.py†L1-L38】【F:src/app/core/app.py†L14-L120】【F:src/app/ui/views.py†L1-L90】【F:tests/conftest.py†L1-L541】【2fb74b†L1-L13】【2bf0d0†L1-L16】
 
+
+## phase4-admin-template-media-2025-11-06
+- 2025-11-06 10:05 — проанализировал подпункт 4.5.11 в `.memory/TASKS.md`, оценил объём работ по репозиторию/сервису/эндпоинтам и проверкам использования медиа.
+- 2025-11-06 10:20 — добавил сабтаски 4.5.11b1–b3 и 4.5.11c1–c2 в `.memory/TASKS.md`, чтобы отдельно отследить расширение репозитория, сервисный слой, интеграцию FastAPI и тестирование force/delete сценариев.
