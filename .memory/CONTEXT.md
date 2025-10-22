@@ -32,7 +32,6 @@ owner: techlead
 - Перед предложением увеличить комплексность кода, контрактов или архитектуры обязательно консультируемся с тимлидом и получаем подтверждение на изменение курса.
 
 - Покрытие: ≥ 80 % unit-тестами (критичные доменные функции, расчёт TTL) и 100 % контрактами на публичные API, как закреплено в test-plan и NFR. Провалы фиксируются до merge.【F:spec/docs/blueprints/test-plan.md】【F:spec/docs/blueprints/nfr.md】
-- Error budgets/latency: ingest удерживает p95 в пределах `T_sync_response`, доля `failure_reason = 'timeout'` ≤ 5 %; превышение триггерит алерты и расследование (SLA ≥ 99 %).【F:spec/docs/blueprints/vision.md】【F:spec/docs/blueprints/nfr.md】
 - Security: запрещено логировать бинарные изображения и секреты; JWT выдаётся только статическим администраторам; ingest-пароль хранится в виде хэша, ротация требует права `settings:write`. Секреты провайдеров — только в секрет-хранилищах/окружении. Регулярные проверки лицензий зависимостей перед релизом.【F:spec/docs/blueprints/nfr.md】【F:spec/docs/blueprints/acceptance-criteria.md】
 
 ## Deprecation policy
