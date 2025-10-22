@@ -8,11 +8,13 @@ import pytest
 from alembic import command
 from alembic.config import Config
 
+from src.app.utils.postgres_dsn import normalize_postgres_dsn
+
 psycopg = pytest.importorskip(
     "psycopg", reason="psycopg is required for database migration tests"
 )
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[4]
 
 
 @pytest.mark.integration
@@ -20,9 +22,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 def test_upgrade_head_creates_admin_tables(postgres_dsn: str) -> None:
     """Upgrade to head and verify key tables, indexes and constraints exist."""
 
+    normalized = normalize_postgres_dsn(postgres_dsn)
     config = Config(str(PROJECT_ROOT / "alembic.ini"))
     config.set_main_option("script_location", str(PROJECT_ROOT / "alembic"))
-    config.set_main_option("sqlalchemy.url", postgres_dsn)
+    config.set_main_option("sqlalchemy.url", normalized.sqlalchemy)
 
     # Reset to a clean slate before applying head migrations.
     command.downgrade(config, "base")
@@ -37,7 +40,7 @@ def test_upgrade_head_creates_admin_tables(postgres_dsn: str) -> None:
         "processing_logs",
     }
 
-    with psycopg.connect(postgres_dsn) as conn:
+    with psycopg.connect(normalized.libpq) as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """

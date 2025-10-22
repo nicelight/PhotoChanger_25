@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Callable, Dict, Iterable, Sequence, Tuple, cast
@@ -9,6 +11,7 @@ from typing import Callable, Dict, Iterable, Sequence, Tuple, cast
 from ..domain.models import ProcessingLog, Slot, SlotRecentResult
 from ..infrastructure.stats_repository import StatsRepository
 from ..schemas.stats import StatsAggregation, StatsMetric, StatsWindow
+from .validators import ProcessingLogValidator, default_processing_log_validator
 from .stats_service import StatsService
 
 
@@ -46,17 +49,37 @@ class CachedStatsService(StatsService):
         *,
         slot_ttl: timedelta = SLOT_CACHE_TTL,
         global_ttl: timedelta = GLOBAL_CACHE_TTL,
+        recent_results_retention: timedelta = RECENT_RESULTS_RETENTION,
+        recent_results_limit: int = RECENT_RESULTS_LIMIT,
         clock: Callable[[], datetime] | None = None,
+        max_record_attempts: int = 3,
+        record_retry_delay: float = 0.0,
+        logger: logging.Logger | None = None,
+        processing_log_validator: ProcessingLogValidator | None = None,
     ) -> None:
         if slot_ttl < timedelta(0):
             raise ValueError("slot_ttl must be non-negative")
         if global_ttl < timedelta(0):
             raise ValueError("global_ttl must be non-negative")
+        if recent_results_retention <= timedelta(0):
+            raise ValueError("recent_results_retention must be positive")
+        if recent_results_limit < 1:
+            raise ValueError("recent_results_limit must be at least 1")
+        if max_record_attempts < 1:
+            raise ValueError("max_record_attempts must be at least 1")
+        if record_retry_delay < 0:
+            raise ValueError("record_retry_delay cannot be negative")
         self._repository = repository
         self._slot_ttl = slot_ttl
         self._global_ttl = global_ttl
+        self._recent_results_retention = recent_results_retention
+        self._recent_results_limit = recent_results_limit
         self._clock = clock or _default_clock
         self._cache: Dict[Tuple[object, ...], _CacheEntry] = {}
+        self._max_record_attempts = max_record_attempts
+        self._record_retry_delay = record_retry_delay
+        self._logger = logger or logging.getLogger(__name__)
+        self._processing_log_validator = processing_log_validator or default_processing_log_validator
 
     def collect_global_stats(
         self,
@@ -80,8 +103,32 @@ class CachedStatsService(StatsService):
         return self._collect(slot, window=window, since=since, now=current_time)
 
     def record_processing_event(self, log: ProcessingLog) -> None:
-        self._repository.store_processing_log(log)
-        self._invalidate(slot_id=log.slot_id)
+        self._processing_log_validator.validate(log)
+        attempt = 0
+        last_error: Exception | None = None
+        while attempt < self._max_record_attempts:
+            attempt += 1
+            try:
+                self._repository.store_processing_log(log)
+            except Exception as exc:  # pragma: no cover - defensive logging
+                last_error = exc
+                self._logger.warning(
+                    "Failed to store processing log (attempt %s/%s)",
+                    attempt,
+                    self._max_record_attempts,
+                    exc_info=exc,
+                    extra={"slot_id": log.slot_id, "job_id": str(log.job_id)},
+                )
+                if attempt >= self._max_record_attempts:
+                    break
+                if self._record_retry_delay > 0:
+                    time.sleep(self._record_retry_delay * attempt)
+                continue
+            else:
+                self._invalidate(slot_id=log.slot_id)
+                return
+        if last_error is not None:
+            raise last_error
 
     def recent_results(
         self,
@@ -97,12 +144,12 @@ class CachedStatsService(StatsService):
             cached = cast(Sequence[SlotRecentResult], entry.value)
             return [self._clone_recent(item) for item in cached]
 
-        since = current_time - RECENT_RESULTS_RETENTION
+        since = current_time - self._recent_results_retention
         results = list(
             self._repository.load_recent_results(
                 slot,
                 since=since,
-                limit=RECENT_RESULTS_LIMIT,
+                limit=self._recent_results_limit,
                 now=current_time,
             )
         )
@@ -113,7 +160,7 @@ class CachedStatsService(StatsService):
             and item["result_expires_at"] > current_time
         ]
         normalized.sort(key=lambda item: item["completed_at"], reverse=True)
-        limited = normalized[:RECENT_RESULTS_LIMIT]
+        limited = normalized[: self._recent_results_limit]
         if ttl > timedelta(0):
             self._cache[key] = _CacheEntry(
                 value=tuple(limited),

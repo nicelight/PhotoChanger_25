@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: PhotoChanger Platform API
-  version: 0.1.2
+  version: 0.5.0
   description: |
     Контракт REST API платформы PhotoChanger, включающий ingest-эндпоинт для DSLR Remote Pro
     и внутренние операции для UI управления слотами, медиа и статистикой. Основан на утверждённых
@@ -37,12 +37,26 @@ paths:
       security: []
       tags: [Auth]
       summary: Вход пользователя и выдача JWT
+      description: |-
+        Аутентифицирует статического администратора (`serg`, `igor`) по логину и паролю
+        и выдаёт access-токен для Admin API. Токен подписывается алгоритмом HS256 и
+        включает обязательные claim'ы `sub` (имя администратора), `permissions`
+        (массив прав, например `settings:write`, `slots:write`, `stats:read`) и `exp`
+        (время истечения). В ответе также возвращается `expires_in_sec`, совпадающий с
+        конфигурацией `jwt_access_ttl_seconds` (по умолчанию 3600 секунд, допустимый
+        диапазон 300–7200). Успешные ответы помечаются заголовками `Cache-Control: no-store`
+        и `Pragma: no-cache`.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: ./schemas/LoginRequest.json
+            examples:
+              default:
+                value:
+                  username: serg
+                  password: "P@ssw0rd-Example"
       responses:
         '200':
           description: Успешная аутентификация
@@ -50,12 +64,49 @@ paths:
             application/json:
               schema:
                 $ref: ./schemas/AuthToken.json
+              examples:
+                default:
+                  value:
+                    access_token: >-
+                      eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzZXJnIiwicGVybWlzc2lvbnMiOlsic2V0dGluZ3M6d3JpdGUiLCJzbG90czp3cml0ZSIsInN0YXRzOnJlYWQiXSwiZXhwIjoxNzAwMDAwMDAwfQ.
+                      dGVzdC1zaWduYXR1cmU
+                    token_type: bearer
+                    expires_in_sec: 3600
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+              description: no-store
+            Pragma:
+              schema:
+                type: string
+              description: no-cache
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          description: Неверный логин или пароль
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/Error.json
+              examples:
+                invalidCredentials:
+                  value:
+                    error:
+                      code: invalid_credentials
+                      message: Invalid username or password
         '429':
-          $ref: '#/components/responses/TooManyRequests'
+          description: Превышен лимит попыток входа
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/Error.json
+              examples:
+                throttled:
+                  value:
+                    error:
+                      code: login_throttled
+                      message: Too many login attempts. Try again later.
   /api/providers:
     get:
       operationId: listProviders
@@ -818,6 +869,35 @@ components:
         - slot-014
         - slot-015
       description: Допустимый статический идентификатор ingest-слота.
+    ProcessingLog:
+      $ref: ./schemas/processing_log.json
+    ProcessingLogList:
+      type: object
+      description: Коллекция событий журнала обработки.
+      required: [data]
+      properties:
+        data:
+          type: array
+          description: Хронологический список событий (сначала старые).
+          items:
+            $ref: ./schemas/processing_log.json
+        meta:
+          type: object
+          description: Дополнительные параметры выборки.
+          properties:
+            job_id:
+              type: [string, 'null']
+              format: uuid
+            slot_id:
+              type: [string, 'null']
+              pattern: ^slot-[0-9]{3}$
+            total:
+              type: [integer, 'null']
+              minimum: 0
+            version:
+              type: string
+              description: Версия контракта ProcessingLog.
+          additionalProperties: false
   parameters:
     SlotId:
       name: slot_id

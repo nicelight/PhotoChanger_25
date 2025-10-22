@@ -2,13 +2,20 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Iterable, Mapping, Sequence
+from uuid import uuid4
 
 import sqlalchemy as sa
 from sqlalchemy.engine import Engine
 
-from ...domain.models import ProcessingLog, Slot, SlotRecentResult
+from ...domain.models import (
+    JobFailureReason,
+    ProcessingLog,
+    ProcessingStatus,
+    Slot,
+    SlotRecentResult,
+)
 from ...schemas.stats import StatsCounters, StatsMetric, StatsWindow
 from ..queue.schema import jobs, processing_logs
 from ..stats_repository import StatsRepository
@@ -32,6 +39,19 @@ processing_log_aggregates = sa.Table(
     sa.Column("errors", sa.Integer, nullable=False, server_default=sa.text("0")),
     sa.Column(
         "ingest_count", sa.Integer, nullable=False, server_default=sa.text("0")
+    ),
+    sa.Column(
+        "created_at",
+        sa.DateTime(timezone=True),
+        nullable=False,
+        server_default=sa.func.now(),
+    ),
+    sa.Column(
+        "updated_at",
+        sa.DateTime(timezone=True),
+        nullable=False,
+        server_default=sa.func.now(),
+        server_onupdate=sa.func.now(),
     ),
 )
 
@@ -70,8 +90,11 @@ class SqlAlchemyStatsRepository(StatsRepository):
             "details": dict(log.details) if log.details is not None else None,
             "provider_latency_ms": log.provider_latency_ms,
         }
+        counters = self._derive_counters(log)
         with self._engine.begin() as conn:
             conn.execute(sa.insert(processing_logs).values(payload))
+            if any(counters.values()):
+                self._update_aggregates(conn, log, counters)
 
     def load_recent_results(
         self,
@@ -153,6 +176,156 @@ class SqlAlchemyStatsRepository(StatsRepository):
         with self._engine.connect() as conn:
             rows = conn.execute(stmt).mappings().all()
         return [self._row_to_metric(row) for row in rows]
+
+    def _update_aggregates(
+        self,
+        conn: sa.Connection,
+        log: ProcessingLog,
+        counters: Mapping[str, int],
+    ) -> None:
+        occurred_at = self._as_utc(log.occurred_at)
+        for window in StatsWindow:
+            start, end = self._period_bounds(occurred_at, window)
+            for scope in (None, log.slot_id):
+                self._upsert_aggregate(
+                    conn,
+                    slot_id=scope,
+                    granularity=window.value,
+                    period_start=start,
+                    period_end=end,
+                    counters=counters,
+                )
+
+    def _upsert_aggregate(
+        self,
+        conn: sa.Connection,
+        *,
+        slot_id: str | None,
+        granularity: str,
+        period_start: datetime,
+        period_end: datetime,
+        counters: Mapping[str, int],
+    ) -> None:
+        conditions: list[sa.ColumnElement[bool]] = [
+            processing_log_aggregates.c.granularity == granularity,
+            processing_log_aggregates.c.period_start == period_start,
+            processing_log_aggregates.c.period_end == period_end,
+        ]
+        if slot_id is None:
+            conditions.append(processing_log_aggregates.c.slot_id.is_(None))
+        else:
+            conditions.append(processing_log_aggregates.c.slot_id == slot_id)
+
+        update_stmt = (
+            sa.update(processing_log_aggregates)
+            .where(*conditions)
+            .values(
+                success=processing_log_aggregates.c.success + counters["success"],
+                timeouts=processing_log_aggregates.c.timeouts + counters["timeouts"],
+                provider_errors=
+                    processing_log_aggregates.c.provider_errors
+                    + counters["provider_errors"],
+                cancelled=
+                    processing_log_aggregates.c.cancelled + counters["cancelled"],
+                errors=processing_log_aggregates.c.errors + counters["errors"],
+                ingest_count=
+                    processing_log_aggregates.c.ingest_count
+                    + counters["ingest_count"],
+                updated_at=sa.func.now(),
+            )
+        )
+        result = conn.execute(update_stmt)
+        if result.rowcount:
+            return
+
+        insert_values = {
+            "id": uuid4(),
+            "slot_id": slot_id,
+            "granularity": granularity,
+            "period_start": period_start,
+            "period_end": period_end,
+            "success": counters["success"],
+            "timeouts": counters["timeouts"],
+            "provider_errors": counters["provider_errors"],
+            "cancelled": counters["cancelled"],
+            "errors": counters["errors"],
+            "ingest_count": counters["ingest_count"],
+        }
+        conn.execute(sa.insert(processing_log_aggregates).values(insert_values))
+
+    @staticmethod
+    def _as_utc(value: datetime) -> datetime:
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc)
+
+    @staticmethod
+    def _period_bounds(
+        occurred_at: datetime, window: StatsWindow
+    ) -> tuple[datetime, datetime]:
+        if window is StatsWindow.DAY:
+            start = occurred_at.replace(hour=0, minute=0, second=0, microsecond=0)
+            end = start + timedelta(days=1)
+            return start, end
+        if window is StatsWindow.WEEK:
+            day_start = occurred_at.replace(hour=0, minute=0, second=0, microsecond=0)
+            start = day_start - timedelta(days=day_start.weekday())
+            end = start + timedelta(days=7)
+            return start, end
+        raise ValueError(f"Unsupported stats window: {window}")
+
+    @staticmethod
+    def _derive_counters(log: ProcessingLog) -> dict[str, int]:
+        counters = {
+            "success": 0,
+            "timeouts": 0,
+            "provider_errors": 0,
+            "cancelled": 0,
+            "errors": 0,
+            "ingest_count": 0,
+        }
+
+        details: Mapping[str, object] = {}
+        if log.details is not None and isinstance(log.details, Mapping):
+            details = dict(log.details)
+
+        failure_reason_raw = details.get("failure_reason") if details else None
+        failure_reason = (
+            str(failure_reason_raw)
+            if failure_reason_raw is not None
+            else None
+        )
+
+        if log.status is ProcessingStatus.RECEIVED:
+            counters["ingest_count"] = 1
+            return counters
+
+        if log.status is ProcessingStatus.SUCCEEDED:
+            if {
+                "result_file_path",
+                "result_checksum",
+                "inline_preview",
+            } & details.keys():
+                counters["success"] = 1
+            return counters
+
+        if log.status is ProcessingStatus.TIMEOUT:
+            if failure_reason is not None:
+                counters["timeouts"] = 1
+            return counters
+
+        if log.status is ProcessingStatus.FAILED:
+            if failure_reason == JobFailureReason.CANCELLED.value:
+                counters["cancelled"] = 1
+            elif failure_reason == JobFailureReason.PROVIDER_ERROR.value:
+                counters["provider_errors"] = 1
+            elif failure_reason == JobFailureReason.TIMEOUT.value:
+                counters["timeouts"] = 1
+            elif failure_reason is not None:
+                counters["errors"] = 1
+            return counters
+
+        return counters
 
     @staticmethod
     def _row_to_metric(row: Mapping[str, object]) -> StatsMetric:

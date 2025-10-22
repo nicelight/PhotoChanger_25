@@ -7,7 +7,8 @@
   "properties": {
     "access_token": {
       "type": "string",
-      "description": "JWT токен доступа"
+      "pattern": "^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$",
+      "description": "Подписанный JWT (формат base64url.header.base64url.payload.base64url.signature)."
     },
     "token_type": {
       "type": "string",
@@ -16,8 +17,9 @@
     },
     "expires_in_sec": {
       "type": "integer",
-      "minimum": 1,
-      "description": "Время жизни токена в секундах"
+      "minimum": 300,
+      "maximum": 7200,
+      "description": "Время жизни токена в секундах (по умолчанию 3600, настраивается в допустимых пределах)."
     }
   },
   "additionalProperties": false

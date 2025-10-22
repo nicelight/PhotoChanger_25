@@ -14,11 +14,12 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 from uuid import UUID
 
 from fastapi import FastAPI
 from sqlalchemy import create_engine
+from sqlalchemy.exc import NoSuchModuleError
 
 from ..api import ApiFacade
 from ..core.config import AppConfig
@@ -38,62 +39,10 @@ from ..services.stats import CachedStatsService
 from ..services.registry import ServiceRegistry
 from ..services.container import load_stats_cache_settings, SqlAlchemyUnitOfWork
 from ..workers import QueueWorker
+from ..utils.postgres_dsn import normalize_postgres_dsn
 
 
 logger = logging.getLogger(__name__)
-
-
-class _InMemoryJobQueue:
-    """Minimal queue used when PostgreSQL is unavailable during scaffolding."""
-
-    def __init__(self) -> None:
-        self.jobs: dict[UUID, Job] = {}
-        self.logs: list[ProcessingLog] = []
-
-    def enqueue(self, job: Job) -> Job:
-        self.jobs[job.id] = job
-        return job
-
-    def acquire_for_processing(self, *, now: datetime) -> Job | None:
-        _ = now
-        return None
-
-    def mark_finalized(self, job: Job) -> Job:
-        self.jobs[job.id] = job
-        return job
-
-    def release_expired(self, *, now: datetime) -> list[Job]:
-        _ = now
-        return []
-
-    def append_processing_logs(self, logs: Iterable[ProcessingLog]) -> None:
-        self.logs.extend(logs)
-
-    def list_processing_logs(self, job_id: UUID) -> list[ProcessingLog]:
-        return [log for log in self.logs if log.job_id == job_id]
-
-    def list_recent_results(
-        self,
-        slot_id: str,
-        *,
-        limit: int,
-        since: datetime,
-    ) -> list[Job]:
-        jobs = [
-            job
-            for job in self.jobs.values()
-            if job.slot_id == slot_id
-            and job.is_finalized
-            and job.failure_reason is None
-            and job.finalized_at is not None
-            and job.result_file_path is not None
-            and job.result_mime_type is not None
-            and job.result_expires_at is not None
-            and job.finalized_at >= since
-        ]
-        jobs.sort(key=lambda item: item.finalized_at or item.updated_at, reverse=True)
-        return jobs[:limit]
-
 
 def _read_contract_version() -> str:
     """Return the OpenAPI version declared in ``spec/contracts``."""
@@ -118,8 +67,8 @@ def _configure_dependencies(
 ) -> AppConfig:
     """Register infrastructure adapters and domain services."""
 
-    config = app_config or AppConfig.build_default()
-    media_root = config.media_root
+    app_config = app_config or AppConfig.build_default()
+    media_root = app_config.media_root
     media_root.mkdir(parents=True, exist_ok=True)
     (media_root / "payloads").mkdir(parents=True, exist_ok=True)
 
@@ -127,39 +76,52 @@ def _configure_dependencies(
         "pbkdf2_sha256$390000$70686f746f6368616e6765722d696e676573742d73616c74$"
         "4fb957db11f5dc3c987b7dd81e5ce44a25fd9c4601093921d9a48df767fdcb0a"
     )
-    settings = bootstrap_settings(config, password_hash=password_hash)
-    slots = bootstrap_slots(config)
+    settings = bootstrap_settings(app_config, password_hash=password_hash)
+    slots = bootstrap_slots(app_config)
 
+    normalized_database_dsn = normalize_postgres_dsn(app_config.database_url)
     if job_queue_override is not None:
         queue = job_queue_override
     else:
         queue_config = PostgresQueueConfig(
-            dsn=config.database_url,
-            statement_timeout_ms=config.queue_statement_timeout_ms,
-            max_in_flight_jobs=config.queue_max_in_flight_jobs,
+            dsn=normalized_database_dsn.libpq,
+            statement_timeout_ms=app_config.queue_statement_timeout_ms,
+            max_in_flight_jobs=app_config.queue_max_in_flight_jobs,
         )
         try:
             queue = PostgresJobQueue(config=queue_config)
         except Exception as exc:  # pragma: no cover - depends on external Postgres
-            logger.warning(
-                "PostgreSQL queue unavailable (%s); falling back to in-memory queue",
-                exc,
+            logger.error(
+                "PostgreSQL queue unavailable; application cannot start", exc_info=exc
             )
-            queue = _InMemoryJobQueue()
+            raise
+    stats_settings = load_stats_cache_settings(app_config)
+    stats_source_dsn = app_config.stats_database_url
+    if stats_source_dsn is None:
+        stats_normalized_dsn = normalized_database_dsn
+    else:
+        stats_normalized_dsn = normalize_postgres_dsn(stats_source_dsn)
+    try:
+        stats_engine = create_engine(stats_normalized_dsn.sqlalchemy, future=True)
+    except (ModuleNotFoundError, NoSuchModuleError) as exc:
+        logger.error(
+            "psycopg driver is required for PostgreSQL stats repository", exc_info=exc
+        )
+        raise
+    stats_repository = SqlAlchemyStatsRepository(stats_engine)
+    stats_service = CachedStatsService(
+        stats_repository,
+        slot_ttl=stats_settings.slot_ttl,
+        global_ttl=stats_settings.global_ttl,
+        recent_results_retention=stats_settings.recent_results_retention,
+        recent_results_limit=stats_settings.recent_results_limit,
+    )
     settings_service = DefaultSettingsService(
         settings=settings, password_hash=password_hash
     )
     slot_service = DefaultSlotService(slots=dict(slots))
     media_service = DefaultMediaService(media_root=media_root)
-    job_service = DefaultJobService(queue=queue)
-    slot_ttl, global_ttl = load_stats_cache_settings()
-    stats_engine = create_engine(config.database_url, future=True)
-    stats_repository = SqlAlchemyStatsRepository(stats_engine)
-    stats_service = CachedStatsService(
-        stats_repository,
-        slot_ttl=slot_ttl,
-        global_ttl=global_ttl,
-    )
+    job_service = DefaultJobService(queue=queue, stats_service=stats_service)
 
     registry.register_settings_service(lambda *, config=None: settings_service)
     registry.register_slot_service(lambda *, config=None: slot_service)
@@ -172,7 +134,7 @@ def _configure_dependencies(
         lambda *, config=None: SqlAlchemyUnitOfWork(stats_engine)
     )
 
-    return config
+    return app_config
 
 
 def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
@@ -188,15 +150,6 @@ def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
         job_queue_override=job_queue_override,
     )
 
-    job_queue_override = extra_state.get("job_queue")
-    if job_queue_override is not None:
-        job_service_override = DefaultJobService(queue=job_queue_override)
-        registry.register_job_service(
-            lambda *, config=None: job_service_override
-        )
-        registry.register_job_repository(lambda *, config=None: job_queue_override)
-        extra_state.setdefault("job_service", job_service_override)
-
     stats_service_instance = registry.resolve_stats_service()(config=app_config)
     stats_repository_factory = registry.resolve_stats_repository()
     stats_repository_instance = stats_repository_factory(config=app_config)
@@ -205,6 +158,17 @@ def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
     extra_state.setdefault(
         "stats_unit_of_work_factory", registry.resolve_unit_of_work()
     )
+
+    job_queue_override = extra_state.get("job_queue")
+    if job_queue_override is not None:
+        job_service_override = DefaultJobService(
+            queue=job_queue_override, stats_service=stats_service_instance
+        )
+        registry.register_job_service(
+            lambda *, config=None: job_service_override
+        )
+        registry.register_job_repository(lambda *, config=None: job_queue_override)
+        extra_state.setdefault("job_service", job_service_override)
 
     facade = ApiFacade(registry=registry)
     app = FastAPI(title="PhotoChanger API", version=_read_contract_version())
@@ -248,15 +212,22 @@ def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
         shutdown_event = asyncio.Event()
         workers: list[QueueWorker] = []
         tasks: list[asyncio.Task[None]] = []
+        poll_interval = max(app_config.worker_poll_interval_ms / 1000.0, 0.001)
+        retry_delay = max(float(app_config.worker_retry_backoff_seconds), 0.0)
+        request_timeout = max(float(app_config.worker_request_timeout_seconds), 0.1)
         for index in range(worker_count):
             worker = QueueWorker(
                 job_service=job_service,
                 slot_service=slot_service,
                 media_service=media_service,
                 settings_service=settings_service,
-                stats_service=stats_service,
                 provider_factories=provider_factories,
                 provider_configs=provider_configs,
+                poll_interval=poll_interval,
+                max_poll_attempts=app_config.worker_max_poll_attempts,
+                retry_attempts=app_config.worker_retry_attempts,
+                retry_delay_seconds=retry_delay,
+                request_timeout_seconds=request_timeout,
             )
             task = asyncio.create_task(
                 worker.run_forever(worker_id=index, shutdown_event=shutdown_event),

@@ -58,7 +58,6 @@ class InstrumentedWorker(QueueWorker):
         job_service: DefaultJobService,
         media_service: Mock,
         settings_service: Mock,
-        stats_service: Mock,
         provider: ProviderAdapter,
     ) -> None:
         super().__init__(
@@ -66,7 +65,6 @@ class InstrumentedWorker(QueueWorker):
             slot_service=Mock(name="slot_service"),
             media_service=media_service,
             settings_service=settings_service,
-            stats_service=stats_service,
             provider_factories={},
         )
         self.provider = provider
@@ -195,7 +193,6 @@ def worker(
         job_service=job_service,
         media_service=Mock(name="media_service"),
         settings_service=Mock(name="settings_service"),
-        stats_service=Mock(name="stats_service"),
         provider=provider,
     )
 

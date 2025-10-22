@@ -21,6 +21,83 @@ ADMIN_MODULES = (
 
 
 @pytest.mark.contract
+def test_login_success(
+    contract_client,
+    patch_endpoint_response,
+    sample_auth_token,
+    validate_with_schema,
+):
+    """``POST /api/login`` returns a signed JWT and TTL metadata."""
+
+    def _response() -> JSONResponse:
+        return JSONResponse(status_code=status.HTTP_200_OK, content=sample_auth_token)
+
+    patch_endpoint_response("src.app.api.routes.auth", "loginUser", _response)
+
+    response = contract_client.post(
+        "/api/login",
+        json={"username": "serg", "password": "CorrectHorseBattery"},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    payload = response.json()
+    validate_with_schema(payload, "AuthToken.json")
+    assert payload["expires_in_sec"] == sample_auth_token["expires_in_sec"]
+
+
+@pytest.mark.contract
+def test_login_invalid_credentials(contract_client, patch_endpoint_response):
+    """Invalid credentials trigger a 401 error with canonical payload."""
+
+    def _response() -> JSONResponse:
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={
+                "error": {
+                    "code": "invalid_credentials",
+                    "message": "Invalid username or password",
+                }
+            },
+        )
+
+    patch_endpoint_response("src.app.api.routes.auth", "loginUser", _response)
+
+    response = contract_client.post(
+        "/api/login", json={"username": "serg", "password": "wrong"}
+    )
+
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    payload = response.json()
+    assert payload["error"]["code"] == "invalid_credentials"
+
+
+@pytest.mark.contract
+def test_login_throttled(contract_client, patch_endpoint_response):
+    """Excessive login attempts result in a throttling error."""
+
+    def _response() -> JSONResponse:
+        return JSONResponse(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            content={
+                "error": {
+                    "code": "login_throttled",
+                    "message": "Too many login attempts. Try again later.",
+                }
+            },
+        )
+
+    patch_endpoint_response("src.app.api.routes.auth", "loginUser", _response)
+
+    response = contract_client.post(
+        "/api/login", json={"username": "serg", "password": "wrong"}
+    )
+
+    assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
+    payload = response.json()
+    assert payload["error"]["code"] == "login_throttled"
+
+
+@pytest.mark.contract
 def test_list_slots_success(
     contract_client,
     allow_bearer_auth,

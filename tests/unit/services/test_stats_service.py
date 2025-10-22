@@ -26,6 +26,9 @@ class StubStatsRepository:
         self.recent_results_calls: list[
             tuple[str, datetime, int, datetime]
         ] = []
+        self.store_failures: int = 0
+
+
 
     def collect_global_metrics(
         self, *, window: StatsWindow, since: datetime | None = None
@@ -40,6 +43,9 @@ class StubStatsRepository:
         return list(self.slot_data.get((slot.id, window), []))
 
     def store_processing_log(self, log: ProcessingLog) -> None:
+        if self.store_failures > 0:
+            self.store_failures -= 1
+            raise RuntimeError("transient failure")
         self.stored_logs.append(log)
 
     def load_recent_results(
@@ -52,6 +58,23 @@ class StubStatsRepository:
     ) -> list[SlotRecentResult]:
         self.recent_results_calls.append((slot.id, since, limit, now))
         return list(self.recent_results_data.get(slot.id, []))
+
+class _RecordingValidator:
+    def __init__(self) -> None:
+        self.validated: list[ProcessingLog] = []
+
+    def validate(self, log: ProcessingLog) -> None:
+        self.validated.append(log)
+
+
+class _FailingValidator:
+    def __init__(self, error: Exception) -> None:
+        self.error = error
+
+    def validate(self, log: ProcessingLog) -> None:  # type: ignore[no-untyped-def]
+        raise self.error
+
+
 
 
 def _build_metric(
@@ -228,6 +251,93 @@ def test_record_processing_event_invalidates_slot_and_global_cache() -> None:
     ]
     assert refreshed_global.summary.success == 2
     assert refreshed_slot.summary.success == 2
+
+
+@pytest.mark.unit
+def test_record_processing_event_validates_payload() -> None:
+    now = datetime(2025, 3, 1, tzinfo=timezone.utc)
+    repository = StubStatsRepository()
+    validator = _RecordingValidator()
+    service = CachedStatsService(
+        repository,
+        slot_ttl=timedelta(seconds=60),
+        global_ttl=timedelta(seconds=60),
+        clock=lambda: now,
+        processing_log_validator=validator,
+    )
+    log = ProcessingLog(
+        id=uuid4(),
+        job_id=uuid4(),
+        slot_id="slot-010",
+        status=ProcessingStatus.SUCCEEDED,
+        occurred_at=now,
+        message="ok",
+        details={"provider_id": "gemini", "attempt": 1},
+        provider_latency_ms=5,
+    )
+
+    service.record_processing_event(log)
+
+    assert validator.validated == [log]
+    assert repository.stored_logs == [log]
+
+
+@pytest.mark.unit
+def test_record_processing_event_raises_on_invalid_payload() -> None:
+    now = datetime(2025, 3, 1, tzinfo=timezone.utc)
+    repository = StubStatsRepository()
+    error = ValueError("invalid log")
+    service = CachedStatsService(
+        repository,
+        slot_ttl=timedelta(seconds=60),
+        global_ttl=timedelta(seconds=60),
+        clock=lambda: now,
+        processing_log_validator=_FailingValidator(error),
+    )
+    log = ProcessingLog(
+        id=uuid4(),
+        job_id=uuid4(),
+        slot_id="slot-011",
+        status=ProcessingStatus.SUCCEEDED,
+        occurred_at=now,
+        message=None,
+        details=None,
+        provider_latency_ms=1,
+    )
+
+    with pytest.raises(ValueError) as captured:
+        service.record_processing_event(log)
+
+    assert captured.value is error
+    assert repository.stored_logs == []
+
+
+@pytest.mark.unit
+def test_record_processing_event_retries_before_propagating() -> None:
+    now = datetime(2025, 3, 2, tzinfo=timezone.utc)
+    repository = StubStatsRepository()
+    repository.store_failures = 1
+    service = CachedStatsService(
+        repository,
+        slot_ttl=timedelta(seconds=60),
+        global_ttl=timedelta(seconds=60),
+        clock=lambda: now,
+        record_retry_delay=0.0,
+    )
+    log = ProcessingLog(
+        id=uuid4(),
+        job_id=uuid4(),
+        slot_id="slot-012",
+        status=ProcessingStatus.SUCCEEDED,
+        occurred_at=now,
+        message=None,
+        details=None,
+        provider_latency_ms=10,
+    )
+
+    service.record_processing_event(log)
+
+    assert repository.stored_logs == [log]
 
 
 @pytest.mark.unit

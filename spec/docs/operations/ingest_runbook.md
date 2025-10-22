@@ -15,6 +15,16 @@
 | `PHOTOCHANGER_DATABASE_URL` | DSN PostgreSQL-очереди. В локальном режиме можно использовать `postgresql://localhost:5432/photochanger`. |
 | `PHOTOCHANGER_QUEUE_STATEMENT_TIMEOUT_MS` | Таймаут SQL-запросов очереди в миллисекундах (по умолчанию 5000). Должен быть меньше `T_sync_response`. |
 | `PHOTOCHANGER_QUEUE_MAX_IN_FLIGHT_JOBS` | Верхняя граница активных задач очереди. По умолчанию 12, после превышения ingest возвращает 429 (`queue_busy`). |
+| `PHOTOCHANGER_STATS_DATABASE_URL` | Отдельный DSN PostgreSQL для статистики. Если не задан, используется основная база очереди. |
+| `PHOTOCHANGER_STATS_SLOT_CACHE_TTL_SECONDS` | TTL кеша статистики для конкретного слота (по умолчанию 300 с). |
+| `PHOTOCHANGER_STATS_GLOBAL_CACHE_TTL_SECONDS` | TTL кеша глобальной статистики (по умолчанию 60 с). |
+| `PHOTOCHANGER_STATS_RECENT_RESULTS_RETENTION_HOURS` | Горизонт `recent_results` в часах (по умолчанию 72). |
+| `PHOTOCHANGER_STATS_RECENT_RESULTS_LIMIT` | Максимум записей `recent_results` (по умолчанию 10). |
+| `PHOTOCHANGER_WORKER_POLL_INTERVAL_MS` | Интервал опроса очереди одним воркером в миллисекундах (по умолчанию 1000). |
+| `PHOTOCHANGER_WORKER_MAX_POLL_ATTEMPTS` | Количество последовательных попыток опроса перед паузой (по умолчанию 10). |
+| `PHOTOCHANGER_WORKER_RETRY_ATTEMPTS` | Число повторов при ошибках провайдера (по умолчанию 5). |
+| `PHOTOCHANGER_WORKER_RETRY_BACKOFF_SECONDS` | Базовая задержка между повторами провайдера (по умолчанию 3 секунды). |
+| `PHOTOCHANGER_WORKER_REQUEST_TIMEOUT_SECONDS` | Таймаут отдельного запроса к провайдеру (по умолчанию 5 секунд). |
 | `PHOTOCHANGER_T_SYNC_RESPONSE_SECONDS` | Значение `T_sync_response` (45–60 секунд). Используется для расчёта дедлайна job, TTL inline-результатов и лимита хранения payload. |
 | `PHOTOCHANGER_JWT_SECRET` | Секрет для административных JWT (используется для остальных API). |
 

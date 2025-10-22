@@ -48,6 +48,13 @@ def _require_psycopg() -> None:
     if psycopg is None or conninfo is None or sql is None:
         pytest.skip(PSYCOPG_MISSING_REASON, allow_module_level=True)
 
+
+@pytest.fixture
+def anyio_backend() -> str:
+    """Force AnyIO-based tests to run on asyncio without requiring trio."""
+
+    return "asyncio"
+
 try:  # noqa: E402  (import after sys.path update)
     from alembic import command as alembic_command
     from alembic.config import Config as AlembicConfig
@@ -316,26 +323,32 @@ from src.app.infrastructure.queue.postgres import (  # noqa: E402
     PostgresJobQueue,
     PostgresQueueConfig,
 )
+from src.app.utils.postgres_dsn import normalize_postgres_dsn  # noqa: E402
 
 
 def _resolve_postgres_dsn() -> str:
     _require_psycopg()
-    env_dsn = os.getenv("TEST_POSTGRES_DSN")
+    env_dsn = os.getenv("TEST_POSTGRES_DSN") or os.getenv("PHOTOCHANGER_DATABASE_URL")
     if env_dsn:
         return env_dsn
-    params: dict[str, object] = {
-        "host": os.getenv("TEST_POSTGRES_HOST", "localhost"),
-        "port": os.getenv("TEST_POSTGRES_PORT", "5432"),
-        "dbname": os.getenv("TEST_POSTGRES_DB", "photochanger_test"),
-        "user": os.getenv("TEST_POSTGRES_USER", "postgres"),
-        "password": os.getenv("TEST_POSTGRES_PASSWORD", "postgres"),
-    }
-    return conninfo.make_conninfo(**params)
+
+    prod_config_path = PROJECT_ROOT / "configs" / "app.prod.json"
+    try:
+        prod_config = json.loads(prod_config_path.read_text(encoding="utf-8"))
+        database_section = prod_config.get("database") or {}
+        queue_dsn = database_section["queue_dsn"]
+    except (FileNotFoundError, KeyError, json.JSONDecodeError) as exc:
+        raise RuntimeError(
+            "Production queue DSN is not configured for tests"
+        ) from exc
+
+    return str(queue_dsn)
 
 
 def _ensure_database_exists(dsn: str) -> None:
     _require_psycopg()
-    params = conninfo.conninfo_to_dict(dsn)
+    normalized = normalize_postgres_dsn(dsn)
+    params = conninfo.conninfo_to_dict(normalized.libpq)
     dbname = params.get("dbname")
     if not dbname:
         raise RuntimeError("PostgreSQL DSN must include a database name")
@@ -363,25 +376,28 @@ def _apply_queue_migrations(dsn: str) -> None:
         import pytest
 
         pytest.skip("Alembic is required for PostgreSQL queue tests")
-    if dsn in _applied_migrations:
+    _require_psycopg()
+    normalized = normalize_postgres_dsn(dsn)
+    if normalized.sqlalchemy in _applied_migrations:
         return
     config = AlembicConfig(str(PROJECT_ROOT / "alembic.ini"))
     config.set_main_option("script_location", str(PROJECT_ROOT / "alembic"))
-    config.set_main_option("sqlalchemy.url", dsn)
+    config.set_main_option("sqlalchemy.url", normalized.sqlalchemy)
     alembic_command.upgrade(config, "head")
-    _applied_migrations.add(dsn)
+    _applied_migrations.add(normalized.sqlalchemy)
 
 
 def _truncate_postgres_tables(dsn: str) -> None:
     _require_psycopg()
-    with psycopg.connect(dsn, autocommit=True) as conn:
+    normalized = normalize_postgres_dsn(dsn)
+    with psycopg.connect(normalized.libpq, autocommit=True) as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
                 SELECT tablename
                 FROM pg_tables
                 WHERE schemaname = 'public'
-                  AND tablename IN ('processing_logs', 'jobs')
+                  AND tablename IN ('processing_logs', 'processing_log_aggregates', 'jobs')
                 ORDER BY tablename
                 """
             )
@@ -399,11 +415,12 @@ def _truncate_postgres_tables(dsn: str) -> None:
 def postgres_dsn() -> Iterator[str]:
     _require_psycopg()
     dsn = _resolve_postgres_dsn()
+    normalized = normalize_postgres_dsn(dsn)
     try:
-        _ensure_database_exists(dsn)
+        _ensure_database_exists(normalized.libpq)
     except psycopg.OperationalError as exc:  # pragma: no cover - environment guard
         pytest.skip(f"PostgreSQL unavailable for tests: {exc}")
-    yield dsn
+    yield normalized.libpq
 
 
 @pytest.fixture
@@ -415,6 +432,9 @@ def postgres_queue_factory(postgres_dsn: str) -> Iterator[Callable[..., Postgres
         _apply_queue_migrations(postgres_dsn)
         config_kwargs: dict[str, object] = {"dsn": postgres_dsn}
         config_kwargs.update(overrides)
+        override_dsn = config_kwargs.get("dsn")
+        if isinstance(override_dsn, str):
+            config_kwargs["dsn"] = normalize_postgres_dsn(override_dsn).libpq
         config = PostgresQueueConfig(**config_kwargs)
         queue = PostgresJobQueue(config=config)
         created.append(queue)
@@ -468,7 +488,7 @@ except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency
     if exc.name != "pydantic":
         raise
     AppConfig = None  # type: ignore[assignment]
-from src.app.domain.models import Job  # noqa: E402
+from src.app.domain.models import Job, ProcessingLog  # noqa: E402
 from src.app.services.job_service import QueueBusyError, QueueUnavailableError  # noqa: E402
 from src.app.services.registry import ServiceRegistry  # noqa: E402
 
@@ -484,6 +504,7 @@ class FakeJobQueue:
 
     jobs: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     domain_jobs: Dict[str, Job] = field(default_factory=dict)
+    processing_logs: Dict[str, list[ProcessingLog]] = field(default_factory=dict)
     raise_busy: bool = False
     raise_unavailable: bool = False
     auto_finalize_inline: bytes | None = None
@@ -588,6 +609,13 @@ class FakeJobQueue:
         job.updated_at = datetime.now(timezone.utc)
         job.finalized_at = job.updated_at
         self._store(job)
+
+    def append_processing_logs(
+        self, entries: Iterable[ProcessingLog]
+    ) -> None:  # pragma: no cover - simple storage
+        for entry in entries:
+            job_id = str(entry.job_id)
+            self.processing_logs.setdefault(job_id, []).append(entry)
 
 
 @dataclass
@@ -935,6 +963,21 @@ def sample_settings(sample_job: Dict[str, Any]) -> Dict[str, Any]:
             "processed_media_ttl_hours": 72,
             "public_link_ttl_sec": sync_timeout,
         },
+    }
+
+
+@pytest.fixture
+def sample_auth_token() -> Dict[str, Any]:
+    """Return a canonical AuthToken payload for contract tests."""
+
+    return {
+        "access_token": (
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
+            "eyJzdWIiOiJzZXJnIiwicGVybWlzc2lvbnMiOlsic2V0dGluZ3M6d3JpdGUiLCJzbG90czp3cml0ZSIsInN0YXRzOnJlYWQiXSwiZXhwIjoxNzAwMDAwMDAwLCJpYXQiOjE3MDAwMDAwMDB9."
+            "c2lnbmF0dXJlLWV4YW1wbGU"
+        ),
+        "token_type": "bearer",
+        "expires_in_sec": 3600,
     }
 
 
