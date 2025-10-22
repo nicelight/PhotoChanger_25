@@ -16,6 +16,7 @@ from ..core.config import AppConfig
 from ..services.stats import CachedStatsService
 from ..infrastructure.sqlalchemy import SqlAlchemyStatsRepository
 from ..infrastructure.unit_of_work import UnitOfWork
+from ..utils.postgres_dsn import normalize_postgres_dsn
 from .registry import ServiceRegistry
 
 
@@ -134,10 +135,12 @@ def _coerce_app_config(config: Mapping[str, Any] | AppConfig | None) -> AppConfi
 
 
 def _get_engine(dsn: str) -> Engine:
-    engine = _ENGINE_CACHE.get(dsn)
+    normalized = normalize_postgres_dsn(dsn)
+    cache_key = normalized.sqlalchemy
+    engine = _ENGINE_CACHE.get(cache_key)
     if engine is None:
-        engine = create_engine(dsn, future=True)
-        _ENGINE_CACHE[dsn] = engine
+        engine = create_engine(cache_key, future=True)
+        _ENGINE_CACHE[cache_key] = engine
     return engine
 
 

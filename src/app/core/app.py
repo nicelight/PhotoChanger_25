@@ -39,6 +39,7 @@ from ..services.stats import CachedStatsService
 from ..services.registry import ServiceRegistry
 from ..services.container import load_stats_cache_settings, SqlAlchemyUnitOfWork
 from ..workers import QueueWorker
+from ..utils.postgres_dsn import normalize_postgres_dsn
 
 
 logger = logging.getLogger(__name__)
@@ -78,11 +79,12 @@ def _configure_dependencies(
     settings = bootstrap_settings(app_config, password_hash=password_hash)
     slots = bootstrap_slots(app_config)
 
+    normalized_database_dsn = normalize_postgres_dsn(app_config.database_url)
     if job_queue_override is not None:
         queue = job_queue_override
     else:
         queue_config = PostgresQueueConfig(
-            dsn=app_config.database_url,
+            dsn=normalized_database_dsn.libpq,
             statement_timeout_ms=app_config.queue_statement_timeout_ms,
             max_in_flight_jobs=app_config.queue_max_in_flight_jobs,
         )
@@ -94,9 +96,13 @@ def _configure_dependencies(
             )
             raise
     stats_settings = load_stats_cache_settings(app_config)
-    stats_dsn = app_config.stats_database_url or app_config.database_url
+    stats_source_dsn = app_config.stats_database_url
+    if stats_source_dsn is None:
+        stats_normalized_dsn = normalized_database_dsn
+    else:
+        stats_normalized_dsn = normalize_postgres_dsn(stats_source_dsn)
     try:
-        stats_engine = create_engine(stats_dsn, future=True)
+        stats_engine = create_engine(stats_normalized_dsn.sqlalchemy, future=True)
     except (ModuleNotFoundError, NoSuchModuleError) as exc:
         logger.error(
             "psycopg driver is required for PostgreSQL stats repository", exc_info=exc
