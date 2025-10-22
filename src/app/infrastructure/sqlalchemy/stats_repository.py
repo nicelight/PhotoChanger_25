@@ -58,6 +58,18 @@ processing_log_aggregates = sa.Table(
     ),
 )
 
+sa.Index(
+    "uq_processing_log_aggregates_scope_period",
+    sa.func.coalesce(
+        processing_log_aggregates.c.slot_id,
+        sa.literal_column(f"'{_GLOBAL_SCOPE_SENTINEL}'"),
+    ),
+    processing_log_aggregates.c.granularity,
+    processing_log_aggregates.c.period_start,
+    processing_log_aggregates.c.period_end,
+    unique=True,
+)
+
 
 class SqlAlchemyStatsRepository(StatsRepository):
     """Load statistics and recent results using SQLAlchemy Core."""
