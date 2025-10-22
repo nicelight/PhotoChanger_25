@@ -10,6 +10,8 @@ import inspect
 import json
 import logging
 import mimetypes
+import importlib
+import importlib.util
 import urllib.error
 import urllib.request
 from collections.abc import Awaitable, Callable, Mapping
@@ -37,6 +39,42 @@ from ..services.media_helpers import persist_base64_result
 
 
 T = TypeVar("T")
+
+
+def _collect_optional_transient_exceptions() -> tuple[type[BaseException], ...]:
+    """Collect transient HTTP client exceptions from optional dependencies."""
+
+    exception_specs: tuple[tuple[str, tuple[str, ...]], ...] = (
+        ("httpx", ("ConnectError", "ReadError", "WriteError")),
+        ("aiohttp", ("ClientError", "ClientConnectorError")),
+        ("requests", ("exceptions.ConnectionError", "exceptions.Timeout")),
+    )
+    collected: list[type[BaseException]] = []
+    for module_name, exception_names in exception_specs:
+        if importlib.util.find_spec(module_name) is None:
+            continue
+        module = importlib.import_module(module_name)
+        for qualname in exception_names:
+            attr = module
+            for part in qualname.split("."):
+                attr = getattr(attr, part, None)
+                if attr is None:
+                    break
+            if isinstance(attr, type) and issubclass(attr, BaseException):
+                collected.append(attr)
+    return tuple(collected)
+
+
+_BASE_TRANSIENT_PROVIDER_EXCEPTIONS: tuple[type[BaseException], ...] = (
+    TimeoutError,
+    ConnectionError,
+    OSError,
+    urllib.error.URLError,
+)
+_OPTIONAL_TRANSIENT_PROVIDER_EXCEPTIONS = _collect_optional_transient_exceptions()
+_TRANSIENT_PROVIDER_EXCEPTIONS = (
+    _BASE_TRANSIENT_PROVIDER_EXCEPTIONS + _OPTIONAL_TRANSIENT_PROVIDER_EXCEPTIONS
+)
 
 
 class ProviderDispatchOutcome(str, Enum):
@@ -890,11 +928,7 @@ class QueueWorker:
     def _should_retry_provider_submission(self, exc: Exception) -> bool:
         """Return ``True`` when ``exc`` indicates a transient provider failure."""
 
-        if isinstance(exc, TimeoutError):
-            return True
-        if isinstance(exc, (ConnectionError, OSError)):
-            return True
-        if isinstance(exc, urllib.error.URLError):
+        if isinstance(exc, _TRANSIENT_PROVIDER_EXCEPTIONS):
             return True
         return False
 
