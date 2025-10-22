@@ -22,3 +22,31 @@ def endpoint_not_implemented(operation: str) -> JSONResponse:
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
         content={"detail": f"Endpoint '{operation}' is not implemented."},
     )
+
+
+def login_invalid_credentials() -> JSONResponse:
+    """Return an ErrorResponse payload for invalid login attempts."""
+
+    return JSONResponse(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        content={
+            "error": {
+                "code": "invalid_credentials",
+                "message": "Invalid username or password",
+            }
+        },
+    )
+
+
+def login_throttled() -> JSONResponse:
+    """Return an ErrorResponse payload for throttled login attempts."""
+
+    return JSONResponse(
+        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        content={
+            "error": {
+                "code": "login_throttled",
+                "message": "Too many login attempts. Try again later.",
+            }
+        },
+    )

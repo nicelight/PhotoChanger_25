@@ -19,5 +19,9 @@
     "global_cache_ttl_seconds": 60,
     "recent_results_retention_hours": 72,
     "recent_results_limit": 10
+  },
+  "auth": {
+    "jwt_access_ttl_seconds": 900,
+    "admin_credentials_path": "secrets/runtime_credentials.json"
   }
 }

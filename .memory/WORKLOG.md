@@ -368,3 +368,19 @@ updated: 2025-11-06
   конфигурацию `jwt_secret`/`jwt_access_ttl_seconds`, правила троттлинга (5 попыток за 10 минут) и требования к журналированию.
 - 2025-11-07 11:20 — расширил контрактные тесты (`tests/contract/test_admin.py`) проверками `POST /api/login` (успех, 401, 429)
   и подготовил фикстуру `sample_auth_token` с валидным JWT шаблоном для валидации схемы.
+
+## phase4-admin-auth-2025-11-08
+- 2025-11-08 09:05 — 4.5.7b `/api/login` (ограничения: claims `sub`/`permissions`/`exp`, TTL из конфига, троттлинг 5/60/300;
+  решения: загрузка учёток из `secrets/runtime_credentials.json`, in-memory окно попыток, JWT HS256). План: перечитать блюпринты,
+  подготовить тесты AuthenticationService, реализовать сервис/DI/роутер, добавить конфиги и README.
+- 2025-11-08 09:20 — перечитал `spec/contracts/openapi.yaml`, acceptance criteria и constraints; подтвердил, что коды ошибок
+  `invalid_credentials`/`login_throttled` и TTL ≥60 секунд обязательны.
+- 2025-11-08 10:05 — добавил конфигурацию JWT (`jwt_access_ttl_seconds`, `admin_credentials_path`) и примеры в `configs/app.*`,
+  подготовил `secrets/runtime_credentials.json.example` с PBKDF2-хэшами `serg`/`igor` и README/.env инструкции по перегенерации.
+- 2025-11-08 11:10 — реализовал `AuthenticationService` (загрузка JSON, in-memory троттлинг, логирование), DI-интеграцию в
+  `create_app` и зависимости роутера; собрал фабрики ошибок и финальную реализацию `/api/login` с JWT HS256 и claim'ами.
+- 2025-11-08 11:45 — написал unit-тест `test_authentication_service` (успех, неверный пароль, блокировка/разблокировка),
+  прогнал `ruff check`/`mypy`/`pytest` — все падают из-за отсутствующих глобальных зависимостей (`fastapi`, `sqlalchemy`,
+  `pydantic`, `alembic`), что зафиксировано для отчёта.
+- 2025-11-08 12:00 — зафиксировал итоги: `/api/login` выдаёт JWT для `serg`/`igor`, ошибки 401/429 соответствуют контракту,
+  троттлинг хранится в памяти; задача закрыта.

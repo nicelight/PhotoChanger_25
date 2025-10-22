@@ -74,6 +74,18 @@ class AppConfig(BaseSettings):
         min_length=1,
         description="Placeholder secret used for JWT generation during scaffolding.",
     )
+    jwt_access_ttl_seconds: int = Field(
+        default=900,
+        ge=60,
+        description="Lifetime of issued JWT access tokens in seconds.",
+    )
+    admin_credentials_path: Path = Field(
+        default=Path("secrets/runtime_credentials.json"),
+        description=(
+            "Filesystem path to the runtime_credentials.json file containing "
+            "admin accounts."
+        ),
+    )
     provider_keys: Dict[str, str] = Field(
         default_factory=dict,
         description="Mapping of provider identifiers to configured API keys.",
