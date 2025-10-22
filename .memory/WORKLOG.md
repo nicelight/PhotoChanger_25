@@ -1,6 +1,6 @@
 ---
 id: worklog
-updated: 2025-11-05
+updated: 2025-11-06
 ---
 
 # Черновой журнал до checkpoint
@@ -346,3 +346,11 @@ updated: 2025-11-05
   `anyio_backend` для запуска async-тестов только на asyncio; обновил FakeJobQueue под новый контракт `append_processing_logs` и
   подтвердил `pytest -m unit`/`pytest -m contract` зелёные.【F:tests/unit/repositories/conftest.py†L1-L38】【F:src/app/core/app.py†L14-L120】【F:src/app/ui/views.py†L1-L90】【F:tests/conftest.py†L1-L541】【2fb74b†L1-L13】【2bf0d0†L1-L16】
 
+
+## ops-postgres-2025-11-06
+- 2025-11-06 09:10 — проанализировал задачу по отказу от SQLite, проверил `_configure_dependencies` и фикстуры репозиториев.
+- 2025-11-06 09:25 — удалил fallback на in-memory SQLite, обновил модели на `JSONB` и убедился, что миграция 202511010001 уже
+  создаёт нужные типы.
+- 2025-11-06 09:40 — переписал `tests/unit/repositories/conftest.py` на PostgreSQL-движок через `psycopg`, обновил README, runbook
+  и tests/HOWTO про обязательность PostgreSQL и способ запуска через Docker.
+- 2025-11-06 09:55 — синхронизировал .memory/TASKS.md и подготовил записи для PROGRESS/REPORT.

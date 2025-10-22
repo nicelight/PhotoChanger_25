@@ -7,16 +7,19 @@ from typing import Any, Optional
 from uuid import UUID as UUIDType, uuid4
 
 import sqlalchemy as sa
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Integer, MetaData, String, Text, UniqueConstraint
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    MetaData,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-
-
-def _json_type() -> sa.types.TypeEngine[Any]:
-    """Return JSON/JSONB type compatible with PostgreSQL and SQLite."""
-
-    json = sa.JSON().with_variant(JSONB(astext_type=Text()), "postgresql")
-    return json
 
 
 NAMING_CONVENTION = {
@@ -34,7 +37,8 @@ class Base(DeclarativeBase):
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
 
-JSONType = _json_type()
+JSONType = JSONB(astext_type=Text())
+"""Canonical JSONB column type for PostgreSQL-backed tables."""
 
 
 class AdminSetting(Base):
