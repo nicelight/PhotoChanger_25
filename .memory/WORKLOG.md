@@ -387,3 +387,6 @@ updated: 2025-11-06
 - 2025-11-08 13:40 — доработал ответы 401/429 (`code=unauthorized`/`too_many_requests`, сообщения на русском), добавил заголовки
   `Cache-Control: no-store`/`Pragma: no-cache` в успешном логине, убедился, что `secrets/runtime_credentials.json` загружается
   через конфиг и реальный файл создаётся только на деплое. `pytest tests/unit/test_authentication_service.py -q` зелёный.
+- 2025-11-08 15:45 — 4.5.7c: написал интеграционные тесты `/api/login` (успех с валидацией JWT claim'ов, ошибки 401 для неизвестного
+  пользователя и неверного пароля, сценарий блокировки/разблокировки после lockout), добавил фабрику runtime credentials и запуск
+  `pytest tests/api/test_auth.py -q` (skip — отсутствует fastapi/jwt в окружении).
