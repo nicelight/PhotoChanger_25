@@ -1,6 +1,6 @@
 ---
 id: progress
-updated: 2025-11-05
+updated: 2025-11-06
 ---
 
 # Progress (changelog — одна строка на событие)
@@ -41,3 +41,5 @@ updated: 2025-11-05
 - 2025-11-05: Сабтаск 4.5.6c завершён — дефолтная конфигурация использует `PostgresJobQueue` и `CachedStatsService`, кеш настраивается через `PHOTOCHANGER_STATS_*`, добавлен интеграционный тест `test_default_pipeline` и обновлена документация.
 - 2025-11-05: Сабтаск 4.5.6d закрыт — добавлен smoke-тест stats-пайплайна, обновлены AppConfig/README/.env и шаблоны конфигураций для dev/staging/prod, описаны новые переменные окружения в runbook.【F:tests/integration/test_stats_pipeline.py†L1-L200】【F:src/app/core/config.py†L37-L125】【F:configs/app.prod.json†L1-L17】【F:README.md†L10-L20】【F:spec/docs/operations/ingest_runbook.md†L11-L27】
 - 2025-11-05: Сабтаски 4.5.6e завершены — утверждён контракт ProcessingLog (JSON Schema/OpenAPI), StatsService валидирует события и добавлены contract/unit тесты.
+- 2025-11-06: Убрали SQLite-фоллбек, stats репозиторий теперь требует PostgreSQL/psycopg; unit-тесты репозиториев переведены на
+  postgres_dsn, README/runbook/tests/HOWTO обновлены инструкциями по локальной БД.
