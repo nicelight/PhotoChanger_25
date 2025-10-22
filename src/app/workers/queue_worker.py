@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import binascii
+import codecs
 import contextlib
 import inspect
 import json
@@ -680,11 +681,42 @@ class QueueWorker:
     def _load_job_context(self, job: Job) -> Mapping[str, Any]:
         if job.payload_path is None:
             return {}
+        payload_path = Path(job.payload_path)
         try:
-            with open(job.payload_path, "r", encoding="utf-8") as handle:
-                data = json.load(handle)
+            with open(payload_path, "rb") as handle:
+                payload_bytes = handle.read()
         except FileNotFoundError:
             return {}
+        except OSError as exc:  # pragma: no cover - defensive
+            self._logger.warning(
+                "Failed to read payload for job %s: %s", job.id, exc
+            )
+            return {}
+
+        if not self._is_probably_json_payload(payload_path, payload_bytes):
+            return {}
+
+        decoded_text: str | None = None
+        last_decode_error: UnicodeDecodeError | None = None
+        for encoding in ("utf-8", "utf-8-sig"):
+            try:
+                decoded_text = payload_bytes.decode(encoding)
+            except UnicodeDecodeError as exc:
+                last_decode_error = exc
+                continue
+            else:
+                break
+
+        if decoded_text is None:
+            self._logger.warning(
+                "Failed to decode payload text for job %s: %s",
+                job.id,
+                last_decode_error,
+            )
+            return {}
+
+        try:
+            data = json.loads(decoded_text)
         except json.JSONDecodeError as exc:  # pragma: no cover - defensive
             self._logger.warning(
                 "Failed to decode payload JSON for job %s: %s", job.id, exc
@@ -696,6 +728,21 @@ class QueueWorker:
         if isinstance(context, Mapping):
             return dict(context)
         return {}
+
+    @staticmethod
+    def _is_probably_json_payload(path: Path, payload: bytes) -> bool:
+        suffix = path.suffix.lower()
+        if suffix == ".json":
+            return True
+        mime, _ = mimetypes.guess_type(str(path))
+        if mime in {"application/json", "text/json"}:
+            return True
+        if payload.startswith(codecs.BOM_UTF8):
+            stripped = payload[len(codecs.BOM_UTF8) :].lstrip()
+            if stripped.startswith((b"{", b"[")):
+                return True
+        stripped_payload = payload.lstrip()
+        return stripped_payload.startswith((b"{", b"["))
 
     async def _materialize_provider_result(
         self,
