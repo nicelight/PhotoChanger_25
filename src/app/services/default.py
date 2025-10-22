@@ -687,6 +687,18 @@ class DefaultJobService(JobService):
         job.result_size_bytes = None
         job.result_checksum = None
         job.updated_at = _utcnow()
+
+        persist = getattr(self.queue, "mark_finalized", None)
+        if callable(persist):
+            try:
+                persisted = persist(job)
+            except QueueUnavailableError:
+                self.jobs[job.id] = job
+                return job
+            else:
+                self.jobs[persisted.id] = persisted
+                return persisted
+
         self.jobs[job.id] = job
         return job
 
