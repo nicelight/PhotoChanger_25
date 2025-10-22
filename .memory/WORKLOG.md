@@ -23,20 +23,35 @@ updated: 2025-11-09
 
 ## phase1-contracts-2025-10-16
 - 2025-10-16 11:10 — ознакомился с spec/docs/providers/gemini.md и spec/docs/providers/turbotext.md, сравнил с текущими provider-контрактами
+
+## phase1-spec-review-2025-10-16
+- 2025-10-16 11:10 — изучил инструкции agents.md и актуальные артефакты .memory (MISSION, CONTEXT, TASKS, ASKS)
+- 2025-10-16 11:18 — провёл первичное чтение spec/contracts/openapi.yaml для оценки покрытия эндпоинтов и статусов
+
+## phase1-contracts-2025-10-16
 - 2025-10-16 11:22 — проверил spec/contracts/openapi.yaml и domain-model на требования TTL/очистки
+
+## phase1-spec-review-2025-10-16
+- 2025-10-16 11:25 — зафиксировал перечень JSON Schema в spec/contracts/schemas для последующего сопоставления
+
+## phase1-contracts-2025-10-16
 - 2025-10-16 11:35 — зафиксировал расхождения (эндпоинты Gemini, лимиты Turbotext, отсутствие ADR по TTL)
+
+## phase1-spec-review-2025-10-16
+- 2025-10-16 11:40 — выявил отсутствие базовых схем AuthToken/Settings/Result и расхождения TTL описаний в MediaObject/TemplateMedia
+- 2025-10-16 11:55 — обновил openapi.yaml и JSON Schema: добавил канонические объекты, уточнил TTL и метаданные, устранил устаревший SlotResultPreview
+
+## phase1-contracts-2025-10-16
 - 2025-10-16 11:58 — обновил spec/contracts/providers/gemini.md и turbotext.md, подготовил протокол ревью spec/docs/reviews/2025-10-16-provider-contract-review.md
+
+## phase1-spec-review-2025-10-16
+- 2025-10-16 12:05 — пересчитал версию контрактов до 0.1.1 и подготовил фиксацию изменений для PR
+
+## phase1-contracts-2025-10-16
 - 2025-10-16 12:08 — оформил ADR-0002 по TTL/очистке, синхронизировал VERSION.json
 - 2025-10-16 12:15 — обновил .memory/TASKS.md, PROGRESS.md, DECISIONS.md, INDEX.yaml (статусы 1.3–1.4 выполнены)
 - 2025-10-16 15:20 — пересмотрел провайдерские контракты и ADR-0002, убрал неподтверждённые лимиты (20 МБ, 15 МБ, фиксированный параллелизм)
 - 2025-10-16 15:32 — синхронизировал spec/docs/reviews/2025-10-16-provider-contract-review.md, VERSION.json и .memory/* с актуальными правками
-## phase1-spec-review-2025-10-16
-- 2025-10-16 11:10 — изучил инструкции agents.md и актуальные артефакты .memory (MISSION, CONTEXT, TASKS, ASKS)
-- 2025-10-16 11:18 — провёл первичное чтение spec/contracts/openapi.yaml для оценки покрытия эндпоинтов и статусов
-- 2025-10-16 11:25 — зафиксировал перечень JSON Schema в spec/contracts/schemas для последующего сопоставления
-- 2025-10-16 11:40 — выявил отсутствие базовых схем AuthToken/Settings/Result и расхождения TTL описаний в MediaObject/TemplateMedia
-- 2025-10-16 11:55 — обновил openapi.yaml и JSON Schema: добавил канонические объекты, уточнил TTL и метаданные, устранил устаревший SlotResultPreview
-- 2025-10-16 12:05 — пересчитал версию контрактов до 0.1.1 и подготовил фиксацию изменений для PR
 
 ## phase1-wrapup-2025-10-16
 - 2025-10-16 16:05 — получил запрос пользователя зафиксировать завершение фазы 1 в мемори-банке
@@ -45,6 +60,14 @@ updated: 2025-11-09
 
 ## phase2-stubs-2025-10-16
 - 2025-10-16 17:05 — изучил spec/contracts/openapi.yaml и текущие стабы API для проверки покрытия подпункта 2.1
+
+## phase4-task4.2-2025-10-16
+- 2025-10-16 17:11 — изучил задание 4.2 и существующий каркас PostgresJobQueue
+- 2025-10-16 17:11 — запланировал реализацию SQLite-совместимого слоя (enqueue, acquire, finalize, timeout) и тесты
+- 2025-10-16 17:14 — реализовал PostgresJobQueue на SQLite (enqueue/acquire/finalize/timeout, backpressure) и обновил DefaultJobService
+- 2025-10-16 17:14 — добавил unit-тесты очереди, адаптировал тесты сервиса, pytest -m unit завершается ошибкой (нет fastapi)
+
+## phase2-stubs-2025-10-16
 - 2025-10-16 17:18 — выявил несовпадения (enum параметров в маршрутах/клиенте, версия стабов 0.1.1 при contracts v0.1.2)
 - 2025-10-16 17:26 — установил PyYAML и прогнал scripts/gen_stubs.py --dry-run для сверки с актуальным контрактом
 - 2025-10-16 17:34 — поднял версию OpenAPI до 0.1.2 и пересобрал stubs.py из свежего контракта
@@ -58,6 +81,7 @@ updated: 2025-11-09
   контрактами и TTL-формулами
 - 2025-10-17 09:35 — обновил docstring-и сервисов/репозиториев/воркеров, чтобы зафиксировать требования SDD и связь с очередью,
   TemplateMedia и T_sync_response
+
 ## phase2-infra-2025-10-18
 - 2025-10-18 10:05 — перепроверил требования /brief.md и spec/docs/blueprints/use-cases.md для подпункта 2.3 (инфраструктурные заглушки)
 - 2025-10-18 10:18 — подготовил базовый ProviderAdapter и зафиксировал ограничения Gemini/Turbotext в docstring-ах без бизнес-логики
@@ -119,14 +143,7 @@ updated: 2025-11-09
 ## phase4-analysis-2025-10-22
 - 2025-10-22 11:20 — прошёлся по контрактам ingest и тестовым фикстурам, выявил рассинхрон multipart ↔ JSON/base64 и несоответствие Pydantic-модели `IngestRequest` требованиям `UploadFile`.
 
-## phase4-admin-auth-2025-11-05
-- 2025-11-05 09:40 — пересмотрел задачи 4.5.7 в `.memory/TASKS.md`, оценил длительность подпунктов > 2ч и декомпозировал их на b1–b3, c1–c3 для секьюрности и тестов логина.
-
 ## phase4-queue-worker-stats-2025-11-05
-- 2025-11-05 09:05 — перечитал задачу 4.5.6b, сверил контекст JobService/QueueWorker/StatsService и инструкции REFLECT/CONSULT в .memory/TASKS.md.
-- 2025-11-05 10:20 — реализовал запись ProcessingLog в DefaultJobService (create/finalize/fail), добавил проксирование событий в StatsService с ретраями и логированием ошибок.
-- 2025-11-05 11:00 — переработал QueueWorker на делегирование JobService, обогатил детали логов провайдера, обновил DI create_app под новый конструктор.
-- 2025-11-05 11:40 — адаптировал интеграционные/юнит тесты (DefaultJobService, CachedStatsService, QueueWorker), подготовил запуск pytest -m unit и pytest -m integration.
 - 2025-10-22 11:40 — проверил воркер и DI: отсутствие `SlotService`/регистрации провайдеров в `ServiceRegistry` блокирует `dispatch_to_provider` и выбор адаптера.
 - 2025-10-22 12:00 — зафиксировал найденные блокеры и подготовил рекомендации/промпты для их устранения перед стартом реализации Фазы 4.
 
@@ -169,39 +186,52 @@ updated: 2025-11-09
 - 2025-10-25 09:35 — осмотрел текущий код ingest маршрута, DefaultJobService, PostgresJobQueue и тестовые фикстуры, набросал план реализации polling, очистки, ошибок очереди и обновления тестов.
 
 ## phase4-admin-stats-di-2025-11-04
-- 2025-11-04 10:05 — перечитал .memory/TASKS.md и контекст Фазы 4.5, проверил состояние 4.5.6 и связанных подпунктов (репозитории, StatsService, QueueWorker, JobService).
-- 2025-11-04 10:18 — изучил реализации `create_app`, `ServiceRegistry`, `QueueWorker`, `DefaultJobService`, `CachedStatsService` и интерфейсы репозиториев для оценки точек интеграции и зависимостей.
-- 2025-11-04 10:32 — декомпозировал пункт 4.5.6 на REFLECT/CONSULT и пошаговые сабтаски (DI, события, тесты/конфигурация), зафиксировал риски кеш-инвалидации и отказоустойчивости StatsService.
 - 2025-10-25 10:05 — уточнил требования к очистке payload и TTL, сверился с ADR-0002.
-- 2025-11-04 11:05 — прошёлся по `DefaultJobService`, `QueueWorker`, `CachedStatsService` и `PostgresJobQueue.append_processing_logs`: собрал карту генерации `ProcessingLog`, отметил, что в scaffolding DI (`DefaultStatsService`, in-memory queue) нет записи в БД и кеш-инвалидация не применяется.
-- 2025-11-04 11:20 — выписал зависимости DI (`create_app`, `ServiceRegistry`, `services/container.py`), выделил стабы: StatsService/StatsRepository остаются in-memory/NotImplemented, очередь может деградировать до `_InMemoryJobQueue`.
-- 2025-11-04 11:30 — сопоставил `ProcessingLog` из domain модели с отсутствующим контрактом в `spec/contracts/schemas`, проверил агрегаты `ProcessingLogAggregate` и схемы `StatsAggregation`/`StatsMetric` на консистентность с spec/docs/admin/stats.md.
-- 2025-11-04 11:40 — зафиксировал риски: (1) дублирование логов при ретраях провайдера/перезапуске воркера; (2) отсутствие транзакционной обвязки между записью job state и processing_logs (потенциальная рассинхронизация); (3) при падении StatsService кеши не инвалидируются, а очередь продолжает писать только в БД.
-- 2025-11-04 11:45 — подготовил вопросы к тимлиду: обязательные поля `ProcessingLog`, политика ретраев/дедупликации, допустимая задержка обновления метрик после job, разделение TTL кешей. Предложил ответы по умолчанию: требуемые поля = `id/job_id/slot_id/status/occurred_at` + `provider_latency_ms`; дедупликация за счёт идемпотентного `id` и фильтра в агрегаторе, ретраи публикуют отдельные события; SLA обновления ≤1 мин для глобальных и ≤5 мин для слотов (соответствует текущему кешу); TTL кешей разделяются (1 мин глобальный, 5 мин слот) с возможностью override через конфиг.
-- 2025-11-05 11:20 — реализовал разделение TTL кеша, добавил метод `recent_results` с ретенцией 72 ч, обновил SQLAlchemy StatsRepository и unit-тесты; сабтаски 4.5.4/4.5.5 закрыты.
 
-## phase4-admin-stats-default-2025-11-05
-- 2025-11-05 13:10 — расширил `AppConfig` новыми полями (`stats_slot_cache_ttl_seconds`, `stats_global_cache_ttl_seconds`, `stats_recent_results_retention_hours`, `stats_recent_results_limit`) и обновил `CachedStatsService`, чтобы принимать ретенцию и лимит `recent_results`.
-- 2025-11-05 13:28 — переписал DI (`services/container.build_service_registry`, `create_app`) на использование `PostgresJobQueue`/`CachedStatsService` без автоматического fallback, добавил error-логирование при недоступности PostgreSQL.
-- 2025-11-05 13:45 — обновил тесты (`tests/unit/test_app_scaffolding.py`) на явный in-memory override и добавил интеграционный сценарий `tests/integration/test_default_pipeline.py`, проверяющий запись `ProcessingLog`, вызов `StatsService.record_processing_event` и сброс кеша.
-- 2025-11-05 14:05 — синхронизировал конфигурацию (`configs/stats.json`, `.env.example`) и документацию (README, ingest/postgres runbook, admin stats) с новыми переменными окружения и дефолтами кеша.
+## phase5-architecture-analysis-2025-10-28
+- 2025-10-25 10:20 — реализовал синхронный ingest (polling по job, декодирование inline результата, маппинг 429/503/504) и очистку payload/inline данных, добавил queue exceptions.
+- 2025-10-25 10:55 — обновил FakeJobQueue и contract/unit тесты (успех, неверный пароль, 415, 429, 504), добавил unit проверки `_decode_inline_result` и DefaultJobService cleanup.
+- 2025-10-25 11:20 — создал spec/docs/operations/ingest_runbook.md и ссылку в README, синхронизировал .memory/TASKS/PROGRESS/ASKS/INDEX.
+- 2025-10-25 11:35 — прогнал `ruff format`, `ruff check`, `mypy src/`, `pytest -m unit`, `pytest -m contract` (после установки fastapi/httpx/pydantic и python-multipart).
 
-## phase4-admin-auth-verify-2025-11-09
-- 2025-11-09 09:15 — перечитал `src/app/api/routes/dependencies.py`, `security/service.py` и маршруты admin API, убедился в проверках Bearer-токена, матрице прав и кодах ошибок 401/403.
-- 2025-11-09 09:28 — запустил `pytest tests/unit/test_authentication_service.py` (зелёный), попытки прогнать FastAPI-интеграции возвращают `skip` (нет зависимости `fastapi` в окружении); зафиксировал результат в `.memory/TASKS.md`.
+## phase4-ingest-tests-2025-10-27
+- 2025-10-27 09:15 — перечитал .memory/TASKS.md (сабтаски 4.1.9–4.1.10) и spec/docs/operations/ingest_runbook.md для уточнения требований к тестам и документации.
+- 2025-10-27 09:45 — обновил фикстуры ingest (небезопасное имя файла, предвычисленный TTL) и проверил FakeJobQueue на очистку payload после ошибок.
+- 2025-10-27 10:10 — расширил unit-тесты ingest helper-ов (`_store_payload`, `_sanitize_filename`, `_error_response`), адаптировал вызовы через `asyncio.run`.
+- 2025-10-27 10:35 — актуализировал контрактные тесты ingest (Cache-Control, очищенные payload, `expires_at` в ответе 504).
+- 2025-10-27 10:50 — дополнил spec/docs/operations/ingest_runbook.md примерами curl, TTL-политикой и описанием заголовков.
+- 2025-10-27 11:05 — прогнал `pytest tests/unit/test_ingest_helpers.py` и `pytest tests/contract/test_ingest.py` (зелёные).
+- 2025-10-27 12:30 — отметил тесты ingest helper-ов маркером `unit`, чтобы они входили в матрицу `pytest -m unit`.
 
-## phase4-media-ttl-2025-10-30
-- 2025-10-30 09:15 — перечитал .memory/CONTEXT.md, .memory/USECASES.md и ADR-0002 для подтверждения политики TTL/очистки (T_sync_response, T_public_link_ttl, T_result_retention 72h, фоновые очистители).
-- 2025-10-30 09:35 — сверил требования с docstring-ами `MediaService` и `JobService`: подтверждена синхронизация расчёта `expires_at`, удаления inline base64 и необходимости фонового очистителя; изменения политик не требуются, но реализация ещё отсутствует (риск задержки очистки).
+## phase4-open-tasks-review-2025-10-27
+- 2025-10-27 13:25 — перечитал .memory/TASKS.md (подфазы 4.2–4.9) и требования roadmap для уточнения ожидаемых артефактов реализации.
+- 2025-10-27 13:40 — осмотрел текущие заготовки очереди, воркера и сервисов (`src/app/infrastructure/queue/postgres.py`, `src/app/workers/queue_worker.py`, `src/app/services/default.py`) на предмет пробелов.
+- 2025-10-27 14:05 — зафиксировал анализ незавершённых тасков фазы 4 и рекомендации по декомпозиции/дополнительным пунктам в `.memory/notes/phase4_open_tasks_analysis.md`.
 
-## phase4-media-cleanup-2025-10-30
-- 2025-10-30 10:05 — пересмотрел Issue 2 реализацию (`result_expires_at`, структура MEDIA_ROOT/results) и ограничения ADR-0002, уточнил источники TTL для очистителя.
-- 2025-10-30 10:32 — спроектировал периодический таск очистки (15 мин, FastAPI lifecycle), учёл повторное использование DefaultJobService/MediaService и интеграцию с DI в create_app.
-- 2025-10-30 11:05 — реализовал lifecycle-модуль, `JobService.purge_expired_results`, обновил DI create_app и написал unit/async тесты (`tests/services/test_media_cleanup.py`, `tests/unit/test_default_job_service.py`).
-- 2025-10-30 11:25 — попытался запустить целевые pytest (`tests/services/test_media_cleanup.py`, `tests/unit/test_default_job_service.py`); прогон остановился на импорте psycopg (ограничение окружения).
+## phase5-architecture-analysis-2025-10-28
+- 2025-10-28 09:10 — перечитал инструкции agents.md и политику CONSULT/REFLECT перед анализом Фазы 5.
 
-## docs-media-cleanup-2025-10-30
-- 2025-10-30 14:20 — зафиксировал финальные решения Issues 2–4 в брифе, blueprints и ops runbook: описал структуру `MEDIA_ROOT/results/<job_id>.<ext>`, TTL 72h, работу фонового очистителя `photochanger-media-cleanup` (каждые 15 мин) и ссылки на `JobService.purge_expired_results`/`MediaService.purge_expired_media`.
+## phase4-queue-migrations-2025-10-28
+- 2025-10-28 09:10 — перечитал .memory/TASKS.md (подфаза 4.2) и spec/docs/operations/ingest_runbook.md для требований к миграциям и конфигурации очереди.
+
+## phase5-architecture-analysis-2025-10-28
+- 2025-10-28 09:25 — прошёлся по подпунктам 5.1–5.4 в .memory/TASKS.md, оценил сложность и потенциальные архитектурные ветвления для каждого сабтаска.
+
+## phase4-queue-migrations-2025-10-28
+- 2025-10-28 09:25 — подготовил структуру Alembic (`alembic.ini`, `src/app/infrastructure/queue/migrations/*`), описал схему в `schema.py` и создал миграцию `202510280001_create_queue_tables`.
+
+## phase5-architecture-analysis-2025-10-28
+- 2025-10-28 09:40 — добавил пометки о сложности и рисках ветвления, создал дополнительные REFLECT/CONSULT задачи для ключевых решений (httpx lifecycle, Turbotext ссылки, фронтенд стек, публичный UX).
+- 2025-10-28 09:55 — перепроверил форматирование .memory/TASKS.md и убедился, что новые комментарии не нарушают структуру чекбоксов.
+
+## phase4-queue-migrations-2025-10-28
+- 2025-10-28 10:05 — обновил `PostgresJobQueue` (удалил создание схемы налету, добавил сообщения об отсутствии миграций), прокинул `queue_statement_timeout_ms` из `AppConfig` и настроил прогон миграций в `tests/conftest.py`.
+- 2025-10-28 10:40 — задокументировал запуск Alembic и параметры очереди (`spec/docs/operations/postgres_queue_runbook.md`, обновление README и ingest runbook), установил alembic/sqlalchemy/psycopg для локальной проверки, запуск `pytest -m unit` упал из-за отсутствия fastapi в окружении.
+
+## phase4-queue-backpressure-2025-10-28
+- 2025-10-28 14:05 — зафиксировал решение держать таблицу `processing_logs` в первой миграции, чтобы фазы 4.3/4.5 могли сразу опираться на историю обработки.
+- 2025-10-28 14:20 — добавил `queue_max_in_flight_jobs` в `AppConfig` и DI, обновил runbook/ingest README по переменной `PHOTOCHANGER_QUEUE_MAX_IN_FLIGHT_JOBS` (дефолт 12 активных задач).
+- 2025-10-28 14:35 — синхронизировал .memory (TASKS, ASKS, PROGRESS) и задокументировал back-pressure решение для команды эксплуатации.
 
 ## phase4-workers-plan-2025-10-29
 - 2025-10-29 09:05 — уточнил с тимлидом модель воркеров: четыре фоновые задачи внутри FastAPI, общий event loop uvicorn/asyncio, ретраи 5× (таймаут 5 с, пауза 3 с), при shutdown воркеры закрывают HTTP-клиенты.
@@ -217,46 +247,6 @@ updated: 2025-11-09
 - 2025-10-29 12:50 — Переписал contract/integration тесты QueueWorker на asyncio.run, адаптировал фикстуры sleep, отключил воркер-пул в contract_app.
 - 2025-10-29 13:05 — pytest tests/integration/test_queue_worker_dispatch.py завершился ошибкой (нет psycopg) — зафиксировал ограничение окружения.
 
-## phase5-architecture-analysis-2025-10-28
-- 2025-10-28 09:10 — перечитал инструкции agents.md и политику CONSULT/REFLECT перед анализом Фазы 5.
-- 2025-10-28 09:25 — прошёлся по подпунктам 5.1–5.4 в .memory/TASKS.md, оценил сложность и потенциальные архитектурные ветвления для каждого сабтаска.
-- 2025-10-28 09:40 — добавил пометки о сложности и рисках ветвления, создал дополнительные REFLECT/CONSULT задачи для ключевых решений (httpx lifecycle, Turbotext ссылки, фронтенд стек, публичный UX).
-- 2025-10-28 09:55 — перепроверил форматирование .memory/TASKS.md и убедился, что новые комментарии не нарушают структуру чекбоксов.
-- 2025-10-25 10:20 — реализовал синхронный ingest (polling по job, декодирование inline результата, маппинг 429/503/504) и очистку payload/inline данных, добавил queue exceptions.
-- 2025-10-25 10:55 — обновил FakeJobQueue и contract/unit тесты (успех, неверный пароль, 415, 429, 504), добавил unit проверки `_decode_inline_result` и DefaultJobService cleanup.
-- 2025-10-25 11:20 — создал spec/docs/operations/ingest_runbook.md и ссылку в README, синхронизировал .memory/TASKS/PROGRESS/ASKS/INDEX.
-- 2025-10-25 11:35 — прогнал `ruff format`, `ruff check`, `mypy src/`, `pytest -m unit`, `pytest -m contract` (после установки fastapi/httpx/pydantic и python-multipart).
-
-## phase4-ingest-tests-2025-10-27
-- 2025-10-27 09:15 — перечитал .memory/TASKS.md (сабтаски 4.1.9–4.1.10) и spec/docs/operations/ingest_runbook.md для уточнения требований к тестам и документации.
-- 2025-10-27 09:45 — обновил фикстуры ingest (небезопасное имя файла, предвычисленный TTL) и проверил FakeJobQueue на очистку payload после ошибок.
-- 2025-10-27 10:10 — расширил unit-тесты ingest helper-ов (`_store_payload`, `_sanitize_filename`, `_error_response`), адаптировал вызовы через `asyncio.run`.
-- 2025-10-27 10:35 — актуализировал контрактные тесты ingest (Cache-Control, очищенные payload, `expires_at` в ответе 504).
-- 2025-10-27 10:50 — дополнил spec/docs/operations/ingest_runbook.md примерами curl, TTL-политикой и описанием заголовков.
-- 2025-10-27 11:05 — прогнал `pytest tests/unit/test_ingest_helpers.py` и `pytest tests/contract/test_ingest.py` (зелёные).
-- 2025-10-27 12:30 — отметил тесты ingest helper-ов маркером `unit`, чтобы они входили в матрицу `pytest -m unit`.
-
-## phase4-task4.2-2025-10-16
-- 2025-10-16 17:11 — изучил задание 4.2 и существующий каркас PostgresJobQueue
-- 2025-10-16 17:11 — запланировал реализацию SQLite-совместимого слоя (enqueue, acquire, finalize, timeout) и тесты
-- 2025-10-16 17:14 — реализовал PostgresJobQueue на SQLite (enqueue/acquire/finalize/timeout, backpressure) и обновил DefaultJobService
-- 2025-10-16 17:14 — добавил unit-тесты очереди, адаптировал тесты сервиса, pytest -m unit завершается ошибкой (нет fastapi)
-
-## phase4-open-tasks-review-2025-10-27
-- 2025-10-27 13:25 — перечитал .memory/TASKS.md (подфазы 4.2–4.9) и требования roadmap для уточнения ожидаемых артефактов реализации.
-- 2025-10-27 13:40 — осмотрел текущие заготовки очереди, воркера и сервисов (`src/app/infrastructure/queue/postgres.py`, `src/app/workers/queue_worker.py`, `src/app/services/default.py`) на предмет пробелов.
-- 2025-10-27 14:05 — зафиксировал анализ незавершённых тасков фазы 4 и рекомендации по декомпозиции/дополнительным пунктам в `.memory/notes/phase4_open_tasks_analysis.md`.
-
-## phase4-queue-migrations-2025-10-28
-- 2025-10-28 09:10 — перечитал .memory/TASKS.md (подфаза 4.2) и spec/docs/operations/ingest_runbook.md для требований к миграциям и конфигурации очереди.
-- 2025-10-28 09:25 — подготовил структуру Alembic (`alembic.ini`, `src/app/infrastructure/queue/migrations/*`), описал схему в `schema.py` и создал миграцию `202510280001_create_queue_tables`.
-- 2025-10-28 10:05 — обновил `PostgresJobQueue` (удалил создание схемы налету, добавил сообщения об отсутствии миграций), прокинул `queue_statement_timeout_ms` из `AppConfig` и настроил прогон миграций в `tests/conftest.py`.
-- 2025-10-28 10:40 — задокументировал запуск Alembic и параметры очереди (`spec/docs/operations/postgres_queue_runbook.md`, обновление README и ingest runbook), установил alembic/sqlalchemy/psycopg для локальной проверки, запуск `pytest -m unit` упал из-за отсутствия fastapi в окружении.
-
-## phase4-queue-backpressure-2025-10-28
-- 2025-10-28 14:05 — зафиксировал решение держать таблицу `processing_logs` в первой миграции, чтобы фазы 4.3/4.5 могли сразу опираться на историю обработки.
-- 2025-10-28 14:20 — добавил `queue_max_in_flight_jobs` в `AppConfig` и DI, обновил runbook/ingest README по переменной `PHOTOCHANGER_QUEUE_MAX_IN_FLIGHT_JOBS` (дефолт 12 активных задач).
-- 2025-10-28 14:35 — синхронизировал .memory (TASKS, ASKS, PROGRESS) и задокументировал back-pressure решение для команды эксплуатации.
 ## phase4-results-media-2025-10-29
 - 2025-10-29 14:05 — изучил сабтаск 4.4.1 в .memory/TASKS.md, перечитал spec/docs/blueprints/use-cases.md и ADR-0002 для требований к TTL 72h и хранению результатов в MEDIA_ROOT/results.
 - 2025-10-29 14:18 — осмотрел текущую реализацию DefaultMediaService и QueueWorker._persist_result_bytes, отметил дублирование расчёта checksum/TTL и необходимость вынести запись файлов в MediaService.
@@ -271,12 +261,45 @@ updated: 2025-11-09
 
 ## phase4-public-links-2025-10-30
 - 2025-10-30 09:05 — перечитал .memory/TASKS.md (подпункты 4.4.2–4.4.5), ADR-0002 и spec/contracts/openapi.yaml, уточнил требования к 307 redirect и 410 Gone.
+
+## phase4-media-ttl-2025-10-30
+- 2025-10-30 09:15 — перечитал .memory/CONTEXT.md, .memory/USECASES.md и ADR-0002 для подтверждения политики TTL/очистки (T_sync_response, T_public_link_ttl, T_result_retention 72h, фоновые очистители).
+
+## phase4-public-links-2025-10-30
 - 2025-10-30 09:25 — поправил DI в create_app, чтобы тестовый job_service reuse'ил состояние при подмене очереди.
+
+## phase4-media-ttl-2025-10-30
+- 2025-10-30 09:35 — сверил требования с docstring-ами `MediaService` и `JobService`: подтверждена синхронизация расчёта `expires_at`, удаления inline base64 и необходимости фонового очистителя; изменения политик не требуются, но реализация ещё отсутствует (риск задержки очистки).
+
+## phase4-public-links-2025-10-30
 - 2025-10-30 09:40 — расширил MediaService/DefaultMediaService методом get_media_by_path для поиска зарегистрированного результата.
+
+## phase4-media-cleanup-2025-10-30
+- 2025-10-30 10:05 — пересмотрел Issue 2 реализацию (`result_expires_at`, структура MEDIA_ROOT/results) и ограничения ADR-0002, уточнил источники TTL для очистителя.
+
+## phase4-public-links-2025-10-30
 - 2025-10-30 10:10 — реализовал download_public_result (TTL-проверка, Cache-Control, Expires, header PhotoChanger-Result-Expires-At, редирект на public_url).
+
+## phase4-media-cleanup-2025-10-30
+- 2025-10-30 10:32 — спроектировал периодический таск очистки (15 мин, FastAPI lifecycle), учёл повторное использование DefaultJobService/MediaService и интеграцию с DI в create_app.
+
+## phase4-public-links-2025-10-30
 - 2025-10-30 10:35 — обновил OpenAPI (ответ 307 + заголовки), поднял версию контрактов до 0.2.0.
 - 2025-10-30 10:55 — добавил helper tests/helpers/public_results.py и новые API-тесты (redirect, 410) + переработал contract tests под реальную реализацию.
+
+## phase4-media-cleanup-2025-10-30
+- 2025-10-30 11:05 — реализовал lifecycle-модуль, `JobService.purge_expired_results`, обновил DI create_app и написал unit/async тесты (`tests/services/test_media_cleanup.py`, `tests/unit/test_default_job_service.py`).
+
+## phase4-public-links-2025-10-30
 - 2025-10-30 11:20 — прогнал pytest tests/api/public/test_results.py tests/contract/test_public_links.py (зелёные).
+
+## phase4-media-cleanup-2025-10-30
+- 2025-10-30 11:25 — попытался запустить целевые pytest (`tests/services/test_media_cleanup.py`, `tests/unit/test_default_job_service.py`); прогон остановился на импорте psycopg (ограничение окружения).
+
+## docs-media-cleanup-2025-10-30
+- 2025-10-30 14:20 — зафиксировал финальные решения Issues 2–4 в брифе, blueprints и ops runbook: описал структуру `MEDIA_ROOT/results/<job_id>.<ext>`, TTL 72h, работу фонового очистителя `photochanger-media-cleanup` (каждые 15 мин) и ссылки на `JobService.purge_expired_results`/`MediaService.purge_expired_media`.
+
+## phase4-public-links-2025-10-30
 - 2025-10-30 18:45 — подготовил отдельные fixtures для актуальных/просроченных публичных результатов, переработал контрактные и интеграционные сценарии публичных ссылок с проверкой перехода 307→410 и зачистки файлов очистителем.
 - 2025-10-30 19:10 — прогнал `pytest tests/api/public/test_results.py`; запуск остановился на подключении к локальному PostgreSQL (OperationalError, БД не поднята в окружении).【7189ce†L1-L88】
 - 2025-10-30 19:18 — прогнал `pytest tests/services/test_media_cleanup.py`; после установки pytest-asyncio тесты зелёные (подтверждена работа очистителя, отсутствуют остаточные файлы).【8a0a94†L1-L9】
@@ -318,12 +341,25 @@ updated: 2025-11-09
 ## phase4-admin-slots-2025-11-04
 - 2025-11-04 09:05 — прочитал `.memory/TASKS.md` (подпункт 4.5.4) и действующий каркас `SlotService`, уточнил требования к валидации (`provider_catalog`, наличие шаблонов, ETag) и зависимости от `SettingsService`/репозиториев.【F:.memory/TASKS.md†L88-L95】【F:src/app/services/slot_service.py†L1-L57】
 - 2025-11-04 09:30 — реализовал `SlotManagementService`: загрузку каталога провайдеров, CRUD через `SlotRepository`, валидацию `settings_json`, поддержку ETag/архивации, операции с шаблонами; скорректировал DTO/пайлоады в `src/app/schemas/__init__.py` для корректной работы dataclass-инициализации и совместимости с репозиториями.【F:src/app/services/slots.py†L1-L233】【F:src/app/schemas/__init__.py†L1-L162】
+
+## phase4-admin-stats-di-2025-11-04
+- 2025-11-04 10:05 — перечитал .memory/TASKS.md и контекст Фазы 4.5, проверил состояние 4.5.6 и связанных подпунктов (репозитории, StatsService, QueueWorker, JobService).
+
+## phase4-admin-slots-2025-11-04
 - 2025-11-04 10:10 — обновил unit-тесты `tests/unit/services/test_slot_service.py`, устранив дефолтные значения в хелпере `_slot` и обеспечив проверку негативных сценариев; установил зависимости `sqlalchemy`, `pytest-asyncio`, прогнал `pytest tests/unit/services/test_slot_service.py` (зелёный).【F:tests/unit/services/test_slot_service.py†L1-L392】【29253e†L1-L5】【5a4bb0†L1-L14】【142a06†L1-L5】
+
+## phase4-admin-stats-di-2025-11-04
+- 2025-11-04 10:18 — изучил реализации `create_app`, `ServiceRegistry`, `QueueWorker`, `DefaultJobService`, `CachedStatsService` и интерфейсы репозиториев для оценки точек интеграции и зависимостей.
+- 2025-11-04 10:32 — декомпозировал пункт 4.5.6 на REFLECT/CONSULT и пошаговые сабтаски (DI, события, тесты/конфигурация), зафиксировал риски кеш-инвалидации и отказоустойчивости StatsService.
+- 2025-11-04 11:05 — прошёлся по `DefaultJobService`, `QueueWorker`, `CachedStatsService` и `PostgresJobQueue.append_processing_logs`: собрал карту генерации `ProcessingLog`, отметил, что в scaffolding DI (`DefaultStatsService`, in-memory queue) нет записи в БД и кеш-инвалидация не применяется.
+- 2025-11-04 11:20 — выписал зависимости DI (`create_app`, `ServiceRegistry`, `services/container.py`), выделил стабы: StatsService/StatsRepository остаются in-memory/NotImplemented, очередь может деградировать до `_InMemoryJobQueue`.
+- 2025-11-04 11:30 — сопоставил `ProcessingLog` из domain модели с отсутствующим контрактом в `spec/contracts/schemas`, проверил агрегаты `ProcessingLogAggregate` и схемы `StatsAggregation`/`StatsMetric` на консистентность с spec/docs/admin/stats.md.
+- 2025-11-04 11:40 — зафиксировал риски: (1) дублирование логов при ретраях провайдера/перезапуске воркера; (2) отсутствие транзакционной обвязки между записью job state и processing_logs (потенциальная рассинхронизация); (3) при падении StatsService кеши не инвалидируются, а очередь продолжает писать только в БД.
+- 2025-11-04 11:45 — подготовил вопросы к тимлиду: обязательные поля `ProcessingLog`, политика ретраев/дедупликации, допустимая задержка обновления метрик после job, разделение TTL кешей. Предложил ответы по умолчанию: требуемые поля = `id/job_id/slot_id/status/occurred_at` + `provider_latency_ms`; дедупликация за счёт идемпотентного `id` и фильтра в агрегаторе, ретраи публикуют отдельные события; SLA обновления ≤1 мин для глобальных и ≤5 мин для слотов (соответствует текущему кешу); TTL кешей разделяются (1 мин глобальный, 5 мин слот) с возможностью override через конфиг.
 
 ## phase4-admin-stats-2025-11-04
 - 2025-11-04 13:45 — переработал `CachedStatsService`: добавил раздельные TTL (1 мин для глобальных, 5 мин для слотов), нормализацию диапазона `since` по требованиям CONSULT 4.5.C2 и очистку кэша при событиях; обновил документацию и unit-тесты, добавив проверку разных TTL и диапазонов. Прогнал `pytest tests/unit/services/test_stats_service.py` (зелёный).【F:src/app/services/stats.py†L1-L143】【F:spec/docs/admin/stats.md†L1-L74】【F:tests/unit/services/test_stats_service.py†L1-L220】【a62ba8†L1-L9】
-- 2025-11-04 16:05 — Тимлид подтвердил предложенные ответы по CONSULT 4.5.6.C1 (формат `ProcessingLog`, политика ретраев и разделение TTL кешей); отметил задачу выполненной и синхронизировал записи.
-- 2025-11-04 16:15 — Разбил имплементацию по Key Findings на сабтаски 4.5.6c/4.5.6d/4.5.6e: перевод DI на `PostgresJobQueue`/`CachedStatsService`, гарантированная запись `ProcessingLog`, smoke-тест и добавление JSON Schema/тестов.
+
 ## admin-settings-2025-11-04
 - 2025-11-04 14:05 — проанализировал контракт SettingsService и вызовы read_settings() в сервисах и воркерах.
 - 2025-11-04 14:18 — обновил интерфейс SettingsService:get_settings(), привёл реализации/воркеры/тесты к новому методу, проверил логику кеша.
@@ -335,16 +371,61 @@ updated: 2025-11-09
 - 2025-11-04 15:30 — реализовал `SQLAlchemyTemplateMediaRepository` (методы `list_for_slot`/`list_by_ids`) и экспортировал его из пакета `src/app/repositories/sqlalchemy/__init__.py`.
 - 2025-11-04 15:45 — попытался прогнать `pytest tests/unit/repositories -q`; выполнение упало из-за PostgreSQL-специфичного CHECK (оператор `~`) в SQLite (`sqlalchemy.exc.OperationalError`).
 
+## phase4-admin-stats-2025-11-04
+- 2025-11-04 16:05 — Тимлид подтвердил предложенные ответы по CONSULT 4.5.6.C1 (формат `ProcessingLog`, политика ретраев и разделение TTL кешей); отметил задачу выполненной и синхронизировал записи.
+- 2025-11-04 16:15 — Разбил имплементацию по Key Findings на сабтаски 4.5.6c/4.5.6d/4.5.6e: перевод DI на `PostgresJobQueue`/`CachedStatsService`, гарантированная запись `ProcessingLog`, smoke-тест и добавление JSON Schema/тестов.
+
+## phase4-queue-worker-stats-2025-11-05
+- 2025-11-05 09:05 — перечитал задачу 4.5.6b, сверил контекст JobService/QueueWorker/StatsService и инструкции REFLECT/CONSULT в .memory/TASKS.md.
+
+## phase4-admin-auth-2025-11-05
+- 2025-11-05 09:40 — пересмотрел задачи 4.5.7 в `.memory/TASKS.md`, оценил длительность подпунктов > 2ч и декомпозировал их на b1–b3, c1–c3 для секьюрности и тестов логина.
+
+## phase4-queue-worker-stats-2025-11-05
+- 2025-11-05 10:20 — реализовал запись ProcessingLog в DefaultJobService (create/finalize/fail), добавил проксирование событий в StatsService с ретраями и логированием ошибок.
+- 2025-11-05 11:00 — переработал QueueWorker на делегирование JobService, обогатил детали логов провайдера, обновил DI create_app под новый конструктор.
+
+## phase4-admin-stats-di-2025-11-04
+- 2025-11-05 11:20 — реализовал разделение TTL кеша, добавил метод `recent_results` с ретенцией 72 ч, обновил SQLAlchemy StatsRepository и unit-тесты; сабтаски 4.5.4/4.5.5 закрыты.
+
+## phase4-queue-worker-stats-2025-11-05
+- 2025-11-05 11:40 — адаптировал интеграционные/юнит тесты (DefaultJobService, CachedStatsService, QueueWorker), подготовил запуск pytest -m unit и pytest -m integration.
+
 ## phase4-admin-stats-2025-11-05
 - 2025-11-05 12:10 — собрал интеграционный smoke-тест `tests/integration/test_stats_pipeline.py`, который поднимает FastAPI с реальными DI-зависимостями, прогоняет сценарии success/timeout и проверяет запись `processing_logs` + инвалидацию кеша `CachedStatsService`.【F:tests/integration/test_stats_pipeline.py†L1-L200】
-- 2025-11-05 12:25 — добавил параметры stats/worker в конфигурации (`AppConfig`, `create_app`, `load_stats_cache_settings`), расширил `.env.example`, README и runbook; подготовил `configs/app.{dev,staging,prod}.json` и обновил `configs/stats.json` с DSN воркера/статистики.【F:src/app/core/config.py†L37-L125】【F:src/app/core/app.py†L95-L218】【F:src/app/services/container.py†L191-L217】【F:.env.example†L1-L11】【F:README.md†L10-L20】【F:configs/app.dev.json†L1-L17】【F:configs/app.staging.json†L1-L17】【F:configs/app.prod.json†L1-L17】【F:configs/stats.json†L1-L15】【F:spec/docs/operations/ingest_runbook.md†L11-L27】
-- 2025-11-05 12:35 — запустил `pytest tests/integration/test_stats_pipeline.py`; тест скипнут из-за отсутствия psycopg/PostgreSQL в окружении, что задокументировано для CI.【08c22f†L1-L7】
+
 ## phase4-processing-log-contract-2025-11-05
 - 2025-11-05 12:10 — собрал фактические поля ProcessingLog из JobService/QueueWorker и статистических репозиториев, зафиксировал требования к details/provider_latency.
+
+## phase4-admin-stats-2025-11-05
+- 2025-11-05 12:25 — добавил параметры stats/worker в конфигурации (`AppConfig`, `create_app`, `load_stats_cache_settings`), расширил `.env.example`, README и runbook; подготовил `configs/app.{dev,staging,prod}.json` и обновил `configs/stats.json` с DSN воркера/статистики.【F:src/app/core/config.py†L37-L125】【F:src/app/core/app.py†L95-L218】【F:src/app/services/container.py†L191-L217】【F:.env.example†L1-L11】【F:README.md†L10-L20】【F:configs/app.dev.json†L1-L17】【F:configs/app.staging.json†L1-L17】【F:configs/app.prod.json†L1-L17】【F:configs/stats.json†L1-L15】【F:spec/docs/operations/ingest_runbook.md†L11-L27】
+
+## phase4-processing-log-contract-2025-11-05
 - 2025-11-05 12:32 — подготовил JSON Schema processing_log.json, подключил компоненты в OpenAPI и обновил domain-model/admin stats документацию.
+
+## phase4-admin-stats-2025-11-05
+- 2025-11-05 12:35 — запустил `pytest tests/integration/test_stats_pipeline.py`; тест скипнут из-за отсутствия psycopg/PostgreSQL в окружении, что задокументировано для CI.【08c22f†L1-L7】
+
+## phase4-processing-log-contract-2025-11-05
 - 2025-11-05 12:55 — добавил валидатор stats-сервиса на jsonschema, обновил CachedStatsService и unit-тесты для проверки валидации и ошибок.
+
+## phase4-admin-stats-default-2025-11-05
+- 2025-11-05 13:10 — расширил `AppConfig` новыми полями (`stats_slot_cache_ttl_seconds`, `stats_global_cache_ttl_seconds`, `stats_recent_results_retention_hours`, `stats_recent_results_limit`) и обновил `CachedStatsService`, чтобы принимать ретенцию и лимит `recent_results`.
+
+## phase4-processing-log-contract-2025-11-05
 - 2025-11-05 13:20 — создал contract тест processing_log_schema, прогнал pytest -m unit и pytest -m contract (зелёные).
 
+## phase4-admin-stats-default-2025-11-05
+- 2025-11-05 13:28 — переписал DI (`services/container.build_service_registry`, `create_app`) на использование `PostgresJobQueue`/`CachedStatsService` без автоматического fallback, добавил error-логирование при недоступности PostgreSQL.
+- 2025-11-05 13:45 — обновил тесты (`tests/unit/test_app_scaffolding.py`) на явный in-memory override и добавил интеграционный сценарий `tests/integration/test_default_pipeline.py`, проверяющий запись `ProcessingLog`, вызов `StatsService.record_processing_event` и сброс кеша.
+- 2025-11-05 14:05 — синхронизировал конфигурацию (`configs/stats.json`, `.env.example`) и документацию (README, ingest/postgres runbook, admin stats) с новыми переменными окружения и дефолтами кеша.
+
+## ops-postgres-2025-11-06
+- 2025-11-06 09:10 — проанализировал задачу по отказу от SQLite, проверил `_configure_dependencies` и фикстуры репозиториев.
+- 2025-11-06 09:25 — удалил fallback на in-memory SQLite, обновил модели на `JSONB` и убедился, что миграция 202511010001 уже
+  создаёт нужные типы.
+
+## phase4-processing-log-contract-2025-11-05
 - 2025-11-06 09:40 — адаптировал тестовое окружение под отсутствие optional deps: добавил пропуск sqlite-тестов без `aiosqlite`,
   фоллбек SQLite для stats репозитория при отсутствии psycopg/psycopg2, ленивую инициализацию Jinja2-шаблонов в UI и фикстуру
   `anyio_backend` для запуска async-тестов только на asyncio; обновил FakeJobQueue под новый контракт `append_processing_logs` и
@@ -353,9 +434,6 @@ updated: 2025-11-09
 
 
 ## ops-postgres-2025-11-06
-- 2025-11-06 09:10 — проанализировал задачу по отказу от SQLite, проверил `_configure_dependencies` и фикстуры репозиториев.
-- 2025-11-06 09:25 — удалил fallback на in-memory SQLite, обновил модели на `JSONB` и убедился, что миграция 202511010001 уже
-  создаёт нужные типы.
 - 2025-11-06 09:40 — переписал `tests/unit/repositories/conftest.py` на PostgreSQL-движок через `psycopg`, обновил README, runbook
   и tests/HOWTO про обязательность PostgreSQL и способ запуска через Docker.
 - 2025-11-06 09:55 — синхронизировал .memory/TASKS.md и подготовил записи для PROGRESS/REPORT.
@@ -394,8 +472,17 @@ updated: 2025-11-09
 - 2025-11-08 15:45 — 4.5.7c: написал интеграционные тесты `/api/login` (успех с валидацией JWT claim'ов, ошибки 401 для неизвестного
   пользователя и неверного пароля, сценарий блокировки/разблокировки после lockout), добавил фабрику runtime credentials и запуск
   `pytest tests/api/test_auth.py -q` (skip — отсутствует fastapi/jwt в окружении).
+
+## phase4-admin-auth-verify-2025-11-09
+- 2025-11-09 09:15 — перечитал `src/app/api/routes/dependencies.py`, `security/service.py` и маршруты admin API, убедился в проверках Bearer-токена, матрице прав и кодах ошибок 401/403.
+
 ## task-4.5.8-2025-11-09
 - 2025-11-09 09:15 — перечитал требования 4.5.8 в `.memory/TASKS.md` и security-разделы openapi, уточнил ожидаемые права (`settings:write`, `slots:write`, `stats:read`) и форматы ошибок 401/403.
+
+## phase4-admin-auth-verify-2025-11-09
+- 2025-11-09 09:28 — запустил `pytest tests/unit/test_authentication_service.py` (зелёный), попытки прогнать FastAPI-интеграции возвращают `skip` (нет зависимости `fastapi` в окружении); зафиксировал результат в `.memory/TASKS.md`.
+
+## task-4.5.8-2025-11-09
 - 2025-11-09 09:28 — спроектировал `require_bearer_authentication` с проверкой JWT/TTL, расширением прав (`settings:write` ⇒ `settings:read`) и единым `ApiError`-обработчиком.
 - 2025-11-09 09:52 — обновил admin-роутеры для вызова `ensure_permissions`, переписал тестовые заглушки bearer auth и добавил интеграционные проверки 401/403 вместе с корректировкой login-тестов.
 
@@ -407,6 +494,7 @@ updated: 2025-11-09
 - 2025-11-09 11:05 — изучил реализацию `SettingsService`/роутера и существующие contract/unit тесты, уточнил критерии 4.5.9c1–4.5.9c3.
 - 2025-11-09 11:22 — реализовал интеграционные тесты `tests/api/admin/test_settings.py` (GET/PUT `/api/settings`, пересчёт TTL, ротация пароля, ошибки прав/валидации).
 - 2025-11-09 11:35 — запустил `pytest tests/api/admin/test_settings.py` (skip без FastAPI), обновил `.memory/TASKS.md` и подготовил фиксацию прогресса.
+
 ## task-4.5.9-review-2025-11-09
 - 2025-11-09 12:10 — ревьюировал `src/app/api/routes/settings.py` и `src/app/services/settings.py`, подтвердил маппинг доменных моделей, обработку ошибок и пересчёт таймаутов ingest и TTL публичных ссылок.
 - 2025-11-09 12:25 — проверил схемы `Settings*` и записи в `.memory/TASKS.md`, зафиксировал в PROGRESS ревизию 4.5.9, подтвердил, что тесты `tests/api/admin/test_settings.py` покрывают ротацию DSLR-пароля и обновление таймаутов.
