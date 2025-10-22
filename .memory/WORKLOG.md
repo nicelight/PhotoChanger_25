@@ -119,6 +119,9 @@ updated: 2025-11-05
 ## phase4-analysis-2025-10-22
 - 2025-10-22 11:20 — прошёлся по контрактам ingest и тестовым фикстурам, выявил рассинхрон multipart ↔ JSON/base64 и несоответствие Pydantic-модели `IngestRequest` требованиям `UploadFile`.
 
+## phase4-admin-auth-2025-11-05
+- 2025-11-05 09:40 — пересмотрел задачи 4.5.7 в `.memory/TASKS.md`, оценил длительность подпунктов > 2ч и декомпозировал их на b1–b3, c1–c3 для секьюрности и тестов логина.
+
 ## phase4-queue-worker-stats-2025-11-05
 - 2025-11-05 09:05 — перечитал задачу 4.5.6b, сверил контекст JobService/QueueWorker/StatsService и инструкции REFLECT/CONSULT в .memory/TASKS.md.
 - 2025-11-05 10:20 — реализовал запись ProcessingLog в DefaultJobService (create/finalize/fail), добавил проксирование событий в StatsService с ретраями и логированием ошибок.
