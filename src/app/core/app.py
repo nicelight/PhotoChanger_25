@@ -206,9 +206,9 @@ def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
         shutdown_event = asyncio.Event()
         workers: list[QueueWorker] = []
         tasks: list[asyncio.Task[None]] = []
-        poll_interval = max(config.worker_poll_interval_ms / 1000.0, 0.001)
-        retry_delay = max(float(config.worker_retry_backoff_seconds), 0.0)
-        request_timeout = max(float(config.worker_request_timeout_seconds), 0.1)
+        poll_interval = max(app_config.worker_poll_interval_ms / 1000.0, 0.001)
+        retry_delay = max(float(app_config.worker_retry_backoff_seconds), 0.0)
+        request_timeout = max(float(app_config.worker_request_timeout_seconds), 0.1)
         for index in range(worker_count):
             worker = QueueWorker(
                 job_service=job_service,
@@ -218,8 +218,8 @@ def create_app(extra_state: dict[str, Any] | None = None) -> FastAPI:
                 provider_factories=provider_factories,
                 provider_configs=provider_configs,
                 poll_interval=poll_interval,
-                max_poll_attempts=config.worker_max_poll_attempts,
-                retry_attempts=config.worker_retry_attempts,
+                max_poll_attempts=app_config.worker_max_poll_attempts,
+                retry_attempts=app_config.worker_retry_attempts,
                 retry_delay_seconds=retry_delay,
                 request_timeout_seconds=request_timeout,
             )
