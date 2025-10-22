@@ -87,188 +87,192 @@ def test_store_processing_log_updates_aggregates(postgres_dsn: str) -> None:
     base_time = datetime(2025, 1, 1, 12, tzinfo=timezone.utc)
 
     try:
+        job_success = uuid4()
+        job_error = uuid4()
+        job_timeout = uuid4()
+        job_cancelled = uuid4()
+
         with engine.begin() as conn:
             # Successful job
-            job_success = uuid4()
             _insert_job(
                 conn, job_id=job_success, slot_id=slot_id, created_at=base_time
             )
 
-            repository.store_processing_log(
-                ProcessingLog(
-                    id=uuid4(),
-                    job_id=job_success,
-                    slot_id=slot_id,
-                    status=ProcessingStatus.RECEIVED,
-                    occurred_at=base_time,
-                    message="received",
-                    details={"provider_id": "gemini"},
-                    provider_latency_ms=0,
-                )
-            )
-            repository.store_processing_log(
-                ProcessingLog(
-                    id=uuid4(),
-                    job_id=job_success,
-                    slot_id=slot_id,
-                    status=ProcessingStatus.SUCCEEDED,
-                    occurred_at=base_time + timedelta(minutes=1),
-                    message="provider replied",
-                    details={"provider_id": "gemini"},
-                    provider_latency_ms=50,
-                )
-            )
-            repository.store_processing_log(
-                ProcessingLog(
-                    id=uuid4(),
-                    job_id=job_success,
-                    slot_id=slot_id,
-                    status=ProcessingStatus.SUCCEEDED,
-                    occurred_at=base_time + timedelta(minutes=2),
-                    message="job finalized",
-                    details={
-                        "result_file_path": "media/result.png",
-                        "result_checksum": "abc",
-                        "inline_preview": False,
-                    },
-                    provider_latency_ms=None,
-                )
-            )
-
             # Provider error job
-            job_error = uuid4()
             _insert_job(
                 conn,
                 job_id=job_error,
                 slot_id=slot_id,
                 created_at=base_time + timedelta(minutes=5),
             )
-            repository.store_processing_log(
-                ProcessingLog(
-                    id=uuid4(),
-                    job_id=job_error,
-                    slot_id=slot_id,
-                    status=ProcessingStatus.RECEIVED,
-                    occurred_at=base_time + timedelta(minutes=5),
-                    message="received",
-                    details={"provider_id": "gemini"},
-                    provider_latency_ms=0,
-                )
-            )
-            repository.store_processing_log(
-                ProcessingLog(
-                    id=uuid4(),
-                    job_id=job_error,
-                    slot_id=slot_id,
-                    status=ProcessingStatus.FAILED,
-                    occurred_at=base_time + timedelta(minutes=6),
-                    message="provider failed",
-                    details={"provider_id": "gemini"},
-                    provider_latency_ms=100,
-                )
-            )
-            repository.store_processing_log(
-                ProcessingLog(
-                    id=uuid4(),
-                    job_id=job_error,
-                    slot_id=slot_id,
-                    status=ProcessingStatus.FAILED,
-                    occurred_at=base_time + timedelta(minutes=7),
-                    message="job failed",
-                    details={"failure_reason": JobFailureReason.PROVIDER_ERROR.value},
-                    provider_latency_ms=None,
-                )
-            )
 
             # Timeout job
-            job_timeout = uuid4()
             _insert_job(
                 conn,
                 job_id=job_timeout,
                 slot_id=slot_id,
                 created_at=base_time + timedelta(minutes=10),
             )
-            repository.store_processing_log(
-                ProcessingLog(
-                    id=uuid4(),
-                    job_id=job_timeout,
-                    slot_id=slot_id,
-                    status=ProcessingStatus.RECEIVED,
-                    occurred_at=base_time + timedelta(minutes=10),
-                    message="received",
-                    details={"provider_id": "gemini"},
-                    provider_latency_ms=0,
-                )
-            )
-            repository.store_processing_log(
-                ProcessingLog(
-                    id=uuid4(),
-                    job_id=job_timeout,
-                    slot_id=slot_id,
-                    status=ProcessingStatus.TIMEOUT,
-                    occurred_at=base_time + timedelta(minutes=11),
-                    message="job timeout",
-                    details={"failure_reason": JobFailureReason.TIMEOUT.value},
-                    provider_latency_ms=None,
-                )
-            )
-            repository.store_processing_log(
-                ProcessingLog(
-                    id=uuid4(),
-                    job_id=job_timeout,
-                    slot_id=slot_id,
-                    status=ProcessingStatus.TIMEOUT,
-                    occurred_at=base_time + timedelta(minutes=12),
-                    message="deadline reached",
-                    details={"provider_id": "gemini"},
-                    provider_latency_ms=None,
-                )
-            )
 
             # Cancelled job
-            job_cancelled = uuid4()
             _insert_job(
                 conn,
                 job_id=job_cancelled,
                 slot_id=slot_id,
                 created_at=base_time + timedelta(minutes=15),
             )
-            repository.store_processing_log(
-                ProcessingLog(
-                    id=uuid4(),
-                    job_id=job_cancelled,
-                    slot_id=slot_id,
-                    status=ProcessingStatus.RECEIVED,
-                    occurred_at=base_time + timedelta(minutes=15),
-                    message="received",
-                    details={"provider_id": "gemini"},
-                    provider_latency_ms=0,
-                )
+
+        repository.store_processing_log(
+            ProcessingLog(
+                id=uuid4(),
+                job_id=job_success,
+                slot_id=slot_id,
+                status=ProcessingStatus.RECEIVED,
+                occurred_at=base_time,
+                message="received",
+                details={"provider_id": "gemini"},
+                provider_latency_ms=0,
             )
-            repository.store_processing_log(
-                ProcessingLog(
-                    id=uuid4(),
-                    job_id=job_cancelled,
-                    slot_id=slot_id,
-                    status=ProcessingStatus.FAILED,
-                    occurred_at=base_time + timedelta(minutes=16),
-                    message="worker shutdown",
-                    details={"failure_reason": JobFailureReason.CANCELLED.value},
-                    provider_latency_ms=None,
-                )
+        )
+        repository.store_processing_log(
+            ProcessingLog(
+                id=uuid4(),
+                job_id=job_success,
+                slot_id=slot_id,
+                status=ProcessingStatus.SUCCEEDED,
+                occurred_at=base_time + timedelta(minutes=1),
+                message="provider replied",
+                details={"provider_id": "gemini"},
+                provider_latency_ms=50,
             )
-            repository.store_processing_log(
-                ProcessingLog(
-                    id=uuid4(),
-                    job_id=job_cancelled,
-                    slot_id=slot_id,
-                    status=ProcessingStatus.FAILED,
-                    occurred_at=base_time + timedelta(minutes=17),
-                    message="shutdown cleanup",
-                    details={},
-                    provider_latency_ms=None,
-                )
+        )
+        repository.store_processing_log(
+            ProcessingLog(
+                id=uuid4(),
+                job_id=job_success,
+                slot_id=slot_id,
+                status=ProcessingStatus.SUCCEEDED,
+                occurred_at=base_time + timedelta(minutes=2),
+                message="job finalized",
+                details={
+                    "result_file_path": "media/result.png",
+                    "result_checksum": "abc",
+                    "inline_preview": False,
+                },
+                provider_latency_ms=None,
             )
+        )
+
+        repository.store_processing_log(
+            ProcessingLog(
+                id=uuid4(),
+                job_id=job_error,
+                slot_id=slot_id,
+                status=ProcessingStatus.RECEIVED,
+                occurred_at=base_time + timedelta(minutes=5),
+                message="received",
+                details={"provider_id": "gemini"},
+                provider_latency_ms=0,
+            )
+        )
+        repository.store_processing_log(
+            ProcessingLog(
+                id=uuid4(),
+                job_id=job_error,
+                slot_id=slot_id,
+                status=ProcessingStatus.FAILED,
+                occurred_at=base_time + timedelta(minutes=6),
+                message="provider failed",
+                details={"provider_id": "gemini"},
+                provider_latency_ms=100,
+            )
+        )
+        repository.store_processing_log(
+            ProcessingLog(
+                id=uuid4(),
+                job_id=job_error,
+                slot_id=slot_id,
+                status=ProcessingStatus.FAILED,
+                occurred_at=base_time + timedelta(minutes=7),
+                message="job failed",
+                details={"failure_reason": JobFailureReason.PROVIDER_ERROR.value},
+                provider_latency_ms=None,
+            )
+        )
+
+        repository.store_processing_log(
+            ProcessingLog(
+                id=uuid4(),
+                job_id=job_timeout,
+                slot_id=slot_id,
+                status=ProcessingStatus.RECEIVED,
+                occurred_at=base_time + timedelta(minutes=10),
+                message="received",
+                details={"provider_id": "gemini"},
+                provider_latency_ms=0,
+            )
+        )
+        repository.store_processing_log(
+            ProcessingLog(
+                id=uuid4(),
+                job_id=job_timeout,
+                slot_id=slot_id,
+                status=ProcessingStatus.TIMEOUT,
+                occurred_at=base_time + timedelta(minutes=11),
+                message="job timeout",
+                details={"failure_reason": JobFailureReason.TIMEOUT.value},
+                provider_latency_ms=None,
+            )
+        )
+        repository.store_processing_log(
+            ProcessingLog(
+                id=uuid4(),
+                job_id=job_timeout,
+                slot_id=slot_id,
+                status=ProcessingStatus.TIMEOUT,
+                occurred_at=base_time + timedelta(minutes=12),
+                message="deadline reached",
+                details={"provider_id": "gemini"},
+                provider_latency_ms=None,
+            )
+        )
+
+        repository.store_processing_log(
+            ProcessingLog(
+                id=uuid4(),
+                job_id=job_cancelled,
+                slot_id=slot_id,
+                status=ProcessingStatus.RECEIVED,
+                occurred_at=base_time + timedelta(minutes=15),
+                message="received",
+                details={"provider_id": "gemini"},
+                provider_latency_ms=0,
+            )
+        )
+        repository.store_processing_log(
+            ProcessingLog(
+                id=uuid4(),
+                job_id=job_cancelled,
+                slot_id=slot_id,
+                status=ProcessingStatus.FAILED,
+                occurred_at=base_time + timedelta(minutes=16),
+                message="worker shutdown",
+                details={"failure_reason": JobFailureReason.CANCELLED.value},
+                provider_latency_ms=None,
+            )
+        )
+        repository.store_processing_log(
+            ProcessingLog(
+                id=uuid4(),
+                job_id=job_cancelled,
+                slot_id=slot_id,
+                status=ProcessingStatus.FAILED,
+                occurred_at=base_time + timedelta(minutes=17),
+                message="shutdown cleanup",
+                details={},
+                provider_latency_ms=None,
+            )
+        )
 
         with engine.connect() as conn:
             day_slot = _select_aggregate(conn, slot_id=slot_id, granularity="day")
