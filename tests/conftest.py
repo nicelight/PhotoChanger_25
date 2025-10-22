@@ -328,17 +328,21 @@ from src.app.utils.postgres_dsn import normalize_postgres_dsn  # noqa: E402
 
 def _resolve_postgres_dsn() -> str:
     _require_psycopg()
-    env_dsn = os.getenv("TEST_POSTGRES_DSN")
+    env_dsn = os.getenv("TEST_POSTGRES_DSN") or os.getenv("PHOTOCHANGER_DATABASE_URL")
     if env_dsn:
         return env_dsn
-    params: dict[str, object] = {
-        "host": os.getenv("TEST_POSTGRES_HOST", "localhost"),
-        "port": os.getenv("TEST_POSTGRES_PORT", "5432"),
-        "dbname": os.getenv("TEST_POSTGRES_DB", "photochanger_test"),
-        "user": os.getenv("TEST_POSTGRES_USER", "postgres"),
-        "password": os.getenv("TEST_POSTGRES_PASSWORD", "postgres"),
-    }
-    return conninfo.make_conninfo(**params)
+
+    prod_config_path = PROJECT_ROOT / "configs" / "app.prod.json"
+    try:
+        prod_config = json.loads(prod_config_path.read_text(encoding="utf-8"))
+        database_section = prod_config.get("database") or {}
+        queue_dsn = database_section["queue_dsn"]
+    except (FileNotFoundError, KeyError, json.JSONDecodeError) as exc:
+        raise RuntimeError(
+            "Production queue DSN is not configured for tests"
+        ) from exc
+
+    return str(queue_dsn)
 
 
 def _ensure_database_exists(dsn: str) -> None:

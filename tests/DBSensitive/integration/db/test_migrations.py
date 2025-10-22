@@ -14,7 +14,7 @@ psycopg = pytest.importorskip(
     "psycopg", reason="psycopg is required for database migration tests"
 )
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[4]
 
 
 @pytest.mark.integration
