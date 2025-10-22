@@ -34,6 +34,8 @@ owner: techlead
 - Покрытие: ≥ 80 % unit-тестами (критичные доменные функции, расчёт TTL) и 100 % контрактами на публичные API, как закреплено в test-plan и NFR. Провалы фиксируются до merge.【F:spec/docs/blueprints/test-plan.md】【F:spec/docs/blueprints/nfr.md】
 - Security: запрещено логировать бинарные изображения и секреты; JWT выдаётся только статическим администраторам; ingest-пароль хранится в виде хэша, ротация требует права `settings:write`. Секреты провайдеров — только в секрет-хранилищах/окружении. Регулярные проверки лицензий зависимостей перед релизом.【F:spec/docs/blueprints/nfr.md】【F:spec/docs/blueprints/acceptance-criteria.md】
 
+- Во время тестирования можно использовать боевую базу данных и не создавать обходных путей или дополнительных тестовых баз данных. Мы не боимся утери данных внутри БД.
+
 ## Deprecation policy
 - SemVer: MAJOR — breaking изменения контрактов; MINOR — новые возможности без поломок; PATCH — фиксы и документация.【F:agents.md】
 - Любой деприкейт API получает notice минимум на один MINOR; сроки и миграции документируются в `spec/contracts/VERSION.json` и ADR (см. roadmap Фаза 0/7 для Re-Sync).【F:agents.md】【F:spec/contracts/VERSION.json】
