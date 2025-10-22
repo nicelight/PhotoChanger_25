@@ -36,7 +36,6 @@
 - После прохождения checkpoint (см. ниже) — синхронизируй `.memory/TASKS.md`, `.memory/PROGRESS.md`, при необходимости — `.memory/DECISIONS.md` и `.memory/ASKS.md`.
 
 ## 3) Канонический процесс (SDD)
-**Contracts → Tests → Code → ADR → Progress**
 1) Любые изменения поведения/публичных интерфейсов — **сначала** `spec/contracts/*`.
 2) Добавь/обнови unit + contract-тесты; прогон pre-commit чек-листа (см. CONTEXT).
 3) Внеси минимально достаточные изменения кода.
