@@ -323,6 +323,7 @@ from src.app.infrastructure.queue.postgres import (  # noqa: E402
     PostgresJobQueue,
     PostgresQueueConfig,
 )
+from src.app.utils.postgres_dsn import normalize_postgres_dsn  # noqa: E402
 
 
 def _resolve_postgres_dsn() -> str:
@@ -342,7 +343,8 @@ def _resolve_postgres_dsn() -> str:
 
 def _ensure_database_exists(dsn: str) -> None:
     _require_psycopg()
-    params = conninfo.conninfo_to_dict(dsn)
+    normalized = normalize_postgres_dsn(dsn)
+    params = conninfo.conninfo_to_dict(normalized.libpq)
     dbname = params.get("dbname")
     if not dbname:
         raise RuntimeError("PostgreSQL DSN must include a database name")
@@ -370,18 +372,21 @@ def _apply_queue_migrations(dsn: str) -> None:
         import pytest
 
         pytest.skip("Alembic is required for PostgreSQL queue tests")
-    if dsn in _applied_migrations:
+    _require_psycopg()
+    normalized = normalize_postgres_dsn(dsn)
+    if normalized.sqlalchemy in _applied_migrations:
         return
     config = AlembicConfig(str(PROJECT_ROOT / "alembic.ini"))
     config.set_main_option("script_location", str(PROJECT_ROOT / "alembic"))
-    config.set_main_option("sqlalchemy.url", dsn)
+    config.set_main_option("sqlalchemy.url", normalized.sqlalchemy)
     alembic_command.upgrade(config, "head")
-    _applied_migrations.add(dsn)
+    _applied_migrations.add(normalized.sqlalchemy)
 
 
 def _truncate_postgres_tables(dsn: str) -> None:
     _require_psycopg()
-    with psycopg.connect(dsn, autocommit=True) as conn:
+    normalized = normalize_postgres_dsn(dsn)
+    with psycopg.connect(normalized.libpq, autocommit=True) as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
@@ -406,11 +411,12 @@ def _truncate_postgres_tables(dsn: str) -> None:
 def postgres_dsn() -> Iterator[str]:
     _require_psycopg()
     dsn = _resolve_postgres_dsn()
+    normalized = normalize_postgres_dsn(dsn)
     try:
-        _ensure_database_exists(dsn)
+        _ensure_database_exists(normalized.libpq)
     except psycopg.OperationalError as exc:  # pragma: no cover - environment guard
         pytest.skip(f"PostgreSQL unavailable for tests: {exc}")
-    yield dsn
+    yield normalized.libpq
 
 
 @pytest.fixture
@@ -422,6 +428,9 @@ def postgres_queue_factory(postgres_dsn: str) -> Iterator[Callable[..., Postgres
         _apply_queue_migrations(postgres_dsn)
         config_kwargs: dict[str, object] = {"dsn": postgres_dsn}
         config_kwargs.update(overrides)
+        override_dsn = config_kwargs.get("dsn")
+        if isinstance(override_dsn, str):
+            config_kwargs["dsn"] = normalize_postgres_dsn(override_dsn).libpq
         config = PostgresQueueConfig(**config_kwargs)
         queue = PostgresJobQueue(config=config)
         created.append(queue)

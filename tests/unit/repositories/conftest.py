@@ -8,6 +8,7 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from src.app.db.models import Base
+from src.app.utils.postgres_dsn import normalize_postgres_dsn
 
 
 def _async_postgres_url(dsn: str) -> str:
@@ -19,7 +20,9 @@ def _async_postgres_url(dsn: str) -> str:
         base_driver = driver.split("+", 1)[0]
     else:
         base_driver = driver
-    return str(url.set(drivername=f"{base_driver}+psycopg"))
+    return url.set(drivername=f"{base_driver}+psycopg").render_as_string(
+        hide_password=False
+    )
 
 
 @dataclass
@@ -27,7 +30,10 @@ class DatabaseFixture:
     sync_dsn: str
 
     def __post_init__(self) -> None:
-        self.engine = create_async_engine(_async_postgres_url(self.sync_dsn), future=True)
+        normalized = normalize_postgres_dsn(self.sync_dsn)
+        self.sync_dsn = normalized.libpq
+        async_dsn = _async_postgres_url(normalized.sqlalchemy)
+        self.engine = create_async_engine(async_dsn, future=True)
         self._sessionmaker = async_sessionmaker(
             self.engine, class_=AsyncSession, expire_on_commit=False
         )
