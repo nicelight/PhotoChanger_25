@@ -1,6 +1,6 @@
 ---
 id: worklog
-updated: 2025-11-06
+updated: 2025-11-09
 ---
 
 # Черновой журнал до checkpoint
@@ -185,6 +185,10 @@ updated: 2025-11-06
 - 2025-11-05 13:28 — переписал DI (`services/container.build_service_registry`, `create_app`) на использование `PostgresJobQueue`/`CachedStatsService` без автоматического fallback, добавил error-логирование при недоступности PostgreSQL.
 - 2025-11-05 13:45 — обновил тесты (`tests/unit/test_app_scaffolding.py`) на явный in-memory override и добавил интеграционный сценарий `tests/integration/test_default_pipeline.py`, проверяющий запись `ProcessingLog`, вызов `StatsService.record_processing_event` и сброс кеша.
 - 2025-11-05 14:05 — синхронизировал конфигурацию (`configs/stats.json`, `.env.example`) и документацию (README, ingest/postgres runbook, admin stats) с новыми переменными окружения и дефолтами кеша.
+
+## phase4-admin-auth-verify-2025-11-09
+- 2025-11-09 09:15 — перечитал `src/app/api/routes/dependencies.py`, `security/service.py` и маршруты admin API, убедился в проверках Bearer-токена, матрице прав и кодах ошибок 401/403.
+- 2025-11-09 09:28 — запустил `pytest tests/unit/test_authentication_service.py` (зелёный), попытки прогнать FastAPI-интеграции возвращают `skip` (нет зависимости `fastapi` в окружении); зафиксировал результат в `.memory/TASKS.md`.
 
 ## phase4-media-ttl-2025-10-30
 - 2025-10-30 09:15 — перечитал .memory/CONTEXT.md, .memory/USECASES.md и ADR-0002 для подтверждения политики TTL/очистки (T_sync_response, T_public_link_ttl, T_result_retention 72h, фоновые очистители).
