@@ -1,8 +1,0 @@
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "LoginResponse",
-  "description": "Ответ авторизации повторно использует контракт AuthToken",
-  "allOf": [
-    { "$ref": "./AuthToken.json" }
-  ]
-}

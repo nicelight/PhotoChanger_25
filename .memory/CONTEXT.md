@@ -14,16 +14,16 @@ owner: techlead
 ## Стек/версии
 - **Backend:** Python 3.12 + FastAPI; 
 
-- **Front:** Административный UI на HTMX/Vanilla JS, использует REST-контракты (`/api/slots`, `/api/settings`, `/public/results/{job_id}`) для настройки слотов и просмотра `recent_results`. Примеры макетов — в `spec/docs/frontend-examples`.【F:/brief.md】【F:spec/docs/blueprints/use-cases.md】
+- **Front:** Административный UI на HTMX/Vanilla JS, использует REST-контракты (`/api/slots`, `/api/settings`, `/public/results/{job_id}`) для настройки слотов и просмотра `recent_results`. Примеры макетов — в `spec/docs/frontend-examples`.【F:/docs/PRD.md】【F:spec/docs/blueprints/use-cases.md】
 - **DB/Queue/Infra:** PostgreSQL, файловое хранилище для `MEDIA_ROOT` (постоянные шаблоны и результаты 72 ч), временное публичное хранилище (`media_object`) с TTL = `T_sync_response`, интеграция с внешними AI API (Gemini, Turbotext).
 
 ## Команды разработчика (pre-commit чек-лист)
-- Линт/формат: `ruff check . && ruff format .` — единый стиль Python модулей и сгенерированных стабов.【F:spec/docs/sdd_roadmap.md】
+- Линт/формат: `ruff check . && ruff format .` — единый стиль Python модулей и сгенерированных стабов.
 - Type-check: `mypy src/` — контроль контрактов и адаптеров.
 - Unit: `pytest -q -m unit` — покрытие валидации слотов, дедлайнов, расчёта TTL.
 - Contract: `pytest -q -m contract` — валидация OpenAPI (`POST /ingest`, `/api/settings`, `/public/results/{job_id}`) и JSON Schema для сущностей.
 - Сборка локально: `uvicorn src.app.main:app --reload` (или скрипт `scripts/dev.sh` после его добавления) с поднятой PostgreSQL и настройкой переменных `MEDIA_ROOT`, `DATABASE_URL`, ключей провайдеров (моки).
-- Быстрые e2e/снимки (опционально): `pytest -q -m e2e` с моками Gemini/Turbotext для сценариев «успех», «504», истечение публичных ссылок и скачивание из UI; проверяет соответствие TTL и расчёт `result_inline_base64`.【F:spec/docs/blueprints/test-plan.md】
+- Быстрые e2e/снимки (опционально): `pytest -q -m e2e` с моками Gemini/Turbotext для сценариев «успех», «504», истечение публичных ссылок и скачивание из UI; проверяет соответствие TTL и расчёт `result_inline_base64`.
 
 ## Политики качества
 - **Простота важнее стабильности и удобства тестирования:** при выборе решений держим минимальную комплексность архитектуры и контрактов, даже если это снижает покрытие сценариев или требует ручных проверок. Придерживаемся принципов KISS. Любые улучшения стабильности/тестопригодности допускаются только если не увеличивают заметно сложность и не усложняют пользовательские контракты.
@@ -38,7 +38,7 @@ owner: techlead
 
 ## Deprecation policy
 - SemVer: MAJOR — breaking изменения контрактов; MINOR — новые возможности без поломок; PATCH — фиксы и документация.【F:agents.md】
-- Любой деприкейт API получает notice минимум на один MINOR; сроки и миграции документируются в `spec/contracts/VERSION.json` и ADR (см. roadmap Фаза 0/7 для Re-Sync).【F:agents.md】【F:spec/contracts/VERSION.json】
+- Любой деприкейт API получает notice минимум на один MINOR; сроки и миграции документируются в `spec/contracts/VERSION.json` и ADR.【F:agents.md】【F:spec/contracts/VERSION.json】
 
 ## Секреты/лицензии
 - Не коммитить API-ключи (Gemini, Turbotext), ingest-пароли, JWT-секреты, приватные медиа. Секреты хранятся в `secrets/runtime_credentials.json` и `app_settings`, доступ ограничен, ротация — через `/api/settings`.【F:spec/docs/blueprints/context.md】【F:spec/docs/blueprints/constraints-risks.md】
