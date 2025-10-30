@@ -1,9 +1,24 @@
 # Машиночитаемый индекс актуальности артефактов
-updated: 2025-11-06
-'spec/contracts':
+updated: 2025-10-31
+
+spec/contracts:
   version: "0.1.0"
-  released_at: "2025-11-05"
-'spec/adr':
-  count: 0
+  released_at: "2025-10-08"
+  notes: "Initial ingest/admin/public API skeleton; provider addenda under providers/"
+
+spec/adr:
+  count: 1
   last_id: "ADR-0001"
-  updated: "2025-11-06"
+  updated: "2025-10-08"
+  summary:
+    ADR-0001: "Монолит FastAPI + cron, без очередей"
+
+memory:
+  mission: 2025-10-31
+  context: 2025-10-31
+  tasks: 2025-10-31
+  asks: 2025-10-31
+  usecases: 2025-10-31
+  progress: 2025-10-31
+  worklog: 2025-10-31
+  reports: "deprecated 2025-10-31 (REPORT.json/REPORT_SCHEMA.json removed)"

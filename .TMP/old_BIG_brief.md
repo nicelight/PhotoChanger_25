@@ -1355,6 +1355,10 @@ do:get_result
 queueid:{QUEUEID} 
 ```
 
+
+
+
+
 ## API Gemini
 ### Ссылки на документацию 
 Image generation: https://ai.google.dev/gemini-api/docs/image-generation#image_generation_text-to-image

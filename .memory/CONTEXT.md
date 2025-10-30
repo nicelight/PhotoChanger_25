@@ -1,45 +1,62 @@
 ---
 id: context
 version: 1
-updated: 2025-01-14
+updated: 2025-10-31
 owner: techlead
 ---
 
 # Устойчивый контекст
 
-## Среды/URL
-- **Prod:** не развёрнут (MVP в разработке); конечная цель — развёртывание на одном сервере в Docker с публичным HTTPS-доменом для ingest и публичных ссылок. 
-- **Local:** разработчики поднимают FastAPI-приложение и PostgreSQL локально; медиа хранятся в файловой системе (`MEDIA_ROOT`). UI (HTMX) работает на том же сервере.
+## Среды и развёртывания
+- **Prod (план):** один Docker/VM-хост с FastAPI (uvicorn), PostgreSQL 15 и внешним cron `python scripts/cleanup_media.py` каждые 15 минут; общий том `media/`. Горизонтальное масштабирование не закладываем (ADR-0001).
+- **Staging:** приёмочная среда для этапа Ops (PRD §12/E4) — тот же стек с мок-ключами провайдеров и прогоном health-check перед релизом.
+- **Local:** `uvicorn src.app.main:app --reload` + локальная PostgreSQL (docker-compose). Файлы сохраняются в `./media/temp`, `./media/results`, `./media/templates`; UI макеты лежат в `spec/docs/ui/frontend-examples/`.
 
-## Стек/версии
-- **Backend:** Python 3.12 + FastAPI; 
+## Стек и архитектура
+- **Backend:** однопроцессное FastAPI-приложение на Python ≥ 3.11 (uvicorn). Конфигурация собирается через `AppConfig` (`app/main.py`), модули `ingest`, `media`, `slots`, `settings`, `stats` подключаются через `Depends`. `IngestService` ограничивает обработку `asyncio.wait_for(..., timeout=T_sync_response)`.
+- **Provider drivers:** `GeminiDriver` и `TurbotextDriver` используют `httpx.AsyncClient`, соблюдают лимиты провайдеров и возвращают путь/байты результата.
+- **Data stores:** PostgreSQL 15 (`slot`, `settings`, `job_history`, `media_object`) и файловая система `media/temp`, `media/results` с `T_result_retention = 72 ч`. Очередей и фоновых воркеров нет (KISS, ADR-0001).
+- **Frontend:** Админ-UI и публичная галерея — статические страницы/HTMX + Vanilla JS (шаблоны в `spec/docs/ui/frontend-examples/`), работают поверх REST (`/api/login`, `/api/slots`, `/api/settings`, `/api/stats`, `/public/results/{job_id}`).
+- **Observability:** `structlog` для ingest/ошибок, Prometheus `/metrics`, `/healthz` проверяет БД, файловую систему и быстродоступность провайдеров.
 
-- **Front:** Административный UI на HTMX/Vanilla JS, использует REST-контракты (`/api/slots`, `/api/settings`, `/public/results/{job_id}`) для настройки слотов и просмотра `recent_results`. Примеры макетов — в `spec/docs/frontend-examples`.【F:/docs/PRD.md】【F:spec/docs/blueprints/use-cases.md】
-- **DB/Queue/Infra:** PostgreSQL, файловое хранилище для `MEDIA_ROOT` (постоянные шаблоны и результаты 72 ч), временное публичное хранилище (`media_object`) с TTL = `T_sync_response`, интеграция с внешними AI API (Gemini, Turbotext).
+## Конфигурация и секреты
+- Переменные окружения (PRD §10):
+  - `DATABASE_URL`
+  - `MEDIA_ROOT`
+  - `RESULT_TTL_HOURS` (72)
+  - `TEMP_TTL_SECONDS` (`T_sync_response`, 10–60 с)
+  - `JWT_SIGNING_KEY`
+  - `GEMINI_API_KEY`, `TURBOTEXT_API_KEY`
+- Пароли ingest и админов хранятся как хэши (`slot`, `secrets/runtime_credentials.json`); `.env` не коммитится.
+- Реальные ключи хранятся во внешнем секрет-хранилище (Vault/1Password); в репозитории допускается только `.env.example`.
 
 ## Команды разработчика (pre-commit чек-лист)
-- Линт/формат: `ruff check . && ruff format .` — единый стиль Python модулей и сгенерированных стабов.
-- Type-check: `mypy src/` — контроль контрактов и адаптеров.
-- Unit: `pytest -q -m unit` — покрытие валидации слотов, дедлайнов, расчёта TTL.
-- Contract: `pytest -q -m contract` — валидация OpenAPI (`POST /ingest`, `/api/settings`, `/public/results/{job_id}`) и JSON Schema для сущностей.
-- Сборка локально: `uvicorn src.app.main:app --reload` (или скрипт `scripts/dev.sh` после его добавления) с поднятой PostgreSQL и настройкой переменных `MEDIA_ROOT`, `DATABASE_URL`, ключей провайдеров (моки).
-- Быстрые e2e/снимки (опционально): `pytest -q -m e2e` с моками Gemini/Turbotext для сценариев «успех», «504», истечение публичных ссылок и скачивание из UI; проверяет соответствие TTL и расчёт `result_inline_base64`.
+- Линт: `ruff check .`
+- Форматирование: `black .`
+- Type-check: `mypy src/`
+- Pytest-наборы:
+  - unit-тесты сервисов модулей и драйверов провайдеров (pytest с фейковыми адаптерами);
+  - интеграционные тесты FastAPI с временными каталогами и PostgreSQL (`pytest-postgresql`);
+  - контрактные тесты провайдеров (мок-серверы Gemini/Turbotext);
+  - тест `scripts/cleanup_media.py`.
+- UI smoke (по мере готовности): Playwright/Cypress сценарии логина, редактирования слота, просмотра статистики.
 
-## Политики качества
-- **Простота важнее стабильности и удобства тестирования:** при выборе решений держим минимальную комплексность архитектуры и контрактов, даже если это снижает покрытие сценариев или требует ручных проверок. Придерживаемся принципов KISS. Любые улучшения стабильности/тестопригодности допускаются только если не увеличивают заметно сложность и не усложняют пользовательские контракты.
+## Политики качества и безопасности
+- Строго придерживаемся KISS: монолит FastAPI + cron, без очередей и фоновых потоков (ADR-0001).
+- `T_sync_response` конфигурируется в диапазоне 10–60 с; по превышению возвращаем 504 и удаляем временные файлы.
+- Итоговые файлы доступны 72 ч (`RESULT_TTL_HOURS`); cron очищает `media/results` и обновляет `media_object.cleaned_at`.
+- Ограничение загрузки ingest: по умолчанию 50 МБ, жёсткий предел FastAPI 2 ГБ.
+- Логи не содержат бинарных payload/секретов; события авторизации логируются как `auth.login.success`/`auth.login.failure`.
+- Throttling входа: блокировка после 10 неудачных попыток на 15 минут.
+- Секреты провайдеров, JWT-подписи и ingest-пароль не попадают в репозиторий; пароль обновляется через `/api/settings`.
 
-- При выборе менее стабильных, оптимальных, качественных или надёжных решений ради упрощения архитектуры или кода заранее фиксируем риски и уведомляем тимлида, подчёркивая, что компромисс сделан в пользу простоты.
-- Перед предложением увеличить комплексность кода, контрактов или архитектуры обязательно консультируемся с тимлидом и получаем подтверждение на изменение курса.
+## Deprecation / SemVer
+- Придерживаемся SemVer: MAJOR — breaking изменения, MINOR — новые возможности без поломок, PATCH — фиксы/документация.
+- Любой деприкейт фиксируем в `spec/contracts/VERSION.json`, ADR и `.memory/DECISIONS.md` минимум за один MINOR до удаления.
 
-- Покрытие: ≥ 80 % unit-тестами (критичные доменные функции, расчёт TTL) и 100 % контрактами на публичные API, как закреплено в test-plan и NFR. Провалы фиксируются до merge.【F:spec/docs/blueprints/test-plan.md】【F:spec/docs/blueprints/nfr.md】
-- Security: запрещено логировать бинарные изображения и секреты; JWT выдаётся только статическим администраторам; ingest-пароль хранится в виде хэша, ротация требует права `settings:write`. Секреты провайдеров — только в секрет-хранилищах/окружении. Регулярные проверки лицензий зависимостей перед релизом.【F:spec/docs/blueprints/nfr.md】【F:spec/docs/blueprints/acceptance-criteria.md】
-
-- Во время тестирования можно использовать боевую базу данных и не создавать обходных путей или дополнительных тестовых баз данных. Мы не боимся утери данных внутри БД.
-
-## Deprecation policy
-- SemVer: MAJOR — breaking изменения контрактов; MINOR — новые возможности без поломок; PATCH — фиксы и документация.【F:agents.md】
-- Любой деприкейт API получает notice минимум на один MINOR; сроки и миграции документируются в `spec/contracts/VERSION.json` и ADR.【F:agents.md】【F:spec/contracts/VERSION.json】
-
-## Секреты/лицензии
-- Не коммитить API-ключи (Gemini, Turbotext), ingest-пароли, JWT-секреты, приватные медиа. Секреты хранятся в `secrets/runtime_credentials.json` и `app_settings`, доступ ограничен, ротация — через `/api/settings`.【F:spec/docs/blueprints/context.md】【F:spec/docs/blueprints/constraints-risks.md】
-- Перед PR проверять лицензии зависимостей и соответствие требованиям провайдеров; фиксировать нарушения в ADR/roadmap. При работе с внешними провайдерами соблюдать их SLA и rate limit (Gemini 500 rpm, Turbotext billing).
+## Мониторинг и Ops
+- Cron: `python scripts/cleanup_media.py` каждые 15 минут; результаты логируются в syslog (PRD §10).
+- `/metrics` (Prometheus) публикует p95 ingest, долю 504, размер `media/*`; алерты управляются через Alertmanager.
+- `/healthz` проверяет PostgreSQL, наличие путей файловой системы и быстрый ping провайдеров.
+- Деплой: `alembic upgrade head`, проверка health-check, синхронизация контрактов/ADR.
+- Бэкапы: ежедневный dump PostgreSQL + снапшоты `media/results` на период релиза.

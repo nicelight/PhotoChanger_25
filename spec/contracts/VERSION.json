@@ -1,0 +1,28 @@
+{
+  "version": "0.1.0",
+  "released_at": "2025-10-08",
+  "stage": "draft",
+  "summary": "Initial PhotoChanger contracts for ingest, admin, provider integrations.",
+  "changes": [
+    {
+      "type": "init",
+      "description": "Defined ingest flow expectations (`POST /api/ingest/{slot_id}`) and media TTL behaviour.",
+      "artifacts": [
+        "spec/contracts/providers/gemini.md",
+        "spec/contracts/providers/turbotext.md"
+      ]
+    },
+    {
+      "type": "init",
+      "description": "Outlined admin APIs for slots, settings, statistics and public results delivery.",
+      "artifacts": [
+        "docs/PRD.md",
+        "docs/ARCHITECTURE.md",
+        "spec/docs/blueprints/use-cases.md"
+      ]
+    }
+  ],
+  "deprecated": [],
+  "breaking": false,
+  "notes": "Next minor release (0.2.x) expected after OpenAPI specifications are published."
+}

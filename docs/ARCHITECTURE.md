@@ -1,10 +1,130 @@
 # PhotoChanger KISS Architecture (Revised)
 
-## 1. Общие архитектурные принципы
+## 0. Общие архитектурные принципы
 - **Минимум компонентов.** Один процесс FastAPI, один PostgreSQL-инстанс, локальное файловое хранилище. В проекте нет очередей, отдельных воркеров и контейнеров зависимостей.
 - **Вертикальные модули.** Код разбит по срезам `ingest`, `media`, `slots`, `settings`, `stats`. Каждый модуль содержит HTTP-роуты, сервисы, инфраструктурный слой и тесты, что упрощает локальное понимание поведения.
 - **Явное связывание зависимостей.** В `app/main.py` формируется `AppConfig`, создаются экземпляры сервисов модулей, и они напрямую прокидываются в роуты через `Depends`. Для тестов используется та же функция построения конфигурации с передачей фейковых адаптеров.
 - **Простые контракты.** Публичные фасады имеют подробные docstring с описанием входов/выходов, README модулей фиксируют границы ответственности, чтобы LLM-помощникам было проще ориентироваться.
+
+## 1. Диаграммы проекта 
+
+### Общая структура системы 
+```mermaid
+graph TD
+    A["DSLR Remote Pro"] -->|POST /api/ingest/&#123;slot_id&#125;| B["FastAPI App"]
+    B --> C["IngestService"]
+    C --> D["ProviderDriver • Gemini, Turbotext"]
+    C --> E["TempMediaStore"]
+    C --> F["ResultStore"]
+    C --> G["PostgreSQL • job_history, slot, media_object, settings"]
+    F --> H["Public API • /public/results/&#123;job_id&#125;"]
+    B --> I["Admin UI / API • slots, settings, stats"]
+```
+
+### Модульная структура
+
+```mermaid
+graph TD
+    A["AppConfig / main.py"] --> B["ingest"]
+    A --> C["media"]
+    A --> D["slots"]
+    A --> E["settings"]
+    A --> F["stats"]
+
+    %% зависимостные связи (потребитель → провайдер)
+    B -->|uses| C
+    B -->|reads writes| G["PostgreSQL"]
+    B -->|reads| D
+    B -->|reads| E
+
+    C -->|stores| H["Файловая система media/"]
+    F -->|reads aggregates| G
+    D -->|persists slot config| G
+    E -->|persists globals| G
+
+```
+
+### Поток обработки ingest-запроса
+
+```mermaid
+sequenceDiagram
+    participant DSLR as DSLR Remote Pro
+    participant API as FastAPI /ingest
+    participant ING as IngestService
+    participant PROV as ProviderDriver
+    participant MEDIA as MediaStore
+    participant DB as PostgreSQL
+
+    DSLR->>API: POST /api/ingest/{slot_id} (multipart)
+    API->>ING: validate & create JobContext
+    ING->>MEDIA: save temp file
+    ING->>PROV: await driver.process(job_ctx) timeout=T_sync_response
+    alt success
+        PROV-->>ING: ProviderResult (base64 or file)
+        ING->>MEDIA: save result file
+        ING->>DB: update job_history (done)
+        ING-->>API: HTTP 200 + result URL
+    else timeout
+        ING->>DB: status=timeout
+        ING->>MEDIA: delete temp
+        ING-->>API: HTTP 504
+    else provider_error
+        ING->>DB: status=failed
+        ING-->>API: HTTP 502/500
+    end
+```
+
+### Хранилища и очистка
+
+```mermaid
+graph TD
+    subgraph DB["PostgreSQL"]
+        A["slot"]
+        B["job_history"]
+        C["media_object"]
+        D["settings"]
+    end
+
+    subgraph FS["Файловая система"]
+        E["media/temp/{slot}/{job}/payload.*"]
+        F["media/results/{job_id}.png"]
+    end
+
+    B -->|ссылается на| C
+    C -->|указывает путь| E
+    C -->|указывает результат| F
+    subgraph CRON["Cron cleanup_media.py"]
+        X["15min job"] -->|удаляет expired| C
+    end
+
+```
+
+### Провайдеры и адаптеры
+
+```mermaid
+graph TD
+    A["IngestService"] -->|process `job_ctx`| B["ProviderDriver"]
+    B --> C["GeminiDriver"]
+    B --> D["TurbotextDriver"]
+    C -->|async httpx| E["Gemini API"]
+    D -->|async polling| F["Turbotext API"]
+    B -->|returns| G["ProviderResult `file_path or bytes`"]
+```
+
+### Взаимодействие с админ-панелью
+
+```mermaid
+graph TD
+    A["Admin UI"] -->|JWT auth| B["Admin API"]
+    B --> C["SlotConfigurator"]
+    B --> D["SettingsFacade"]
+    B --> E["StatsService"]
+    C -->|CRUD slots| F["PostgreSQL slot table"]
+    D -->|update globals| G["settings table"]
+    E -->|read aggregates| H["job_history"]
+```
+
+
 
 ## 2. Модульная структура
 
@@ -71,7 +191,7 @@
 - **Конфигурация.** Список доступных драйверов фиксируется в `AppConfig`. Для тестов можно подменить словарь `provider_drivers` на заглушки.
 
 ## 6. Административный UI и API
-- **UI.** Статические страницы или SPA в `frontend/`, обращаются к REST-API модулей. UI не организует сложных параллельных операций.
+- **UI.** HTMX/Vanilla страницы  в `frontend/`, обращаются к REST-API модулей. UI не организует сложных параллельных операций.
 - **API.** Админ-маршруты используют тот же механизм `Depends` и сервисы модулей. Авторизация базируется на stateless токенах из `.env`.
 
 ## 7. Наблюдаемость и операционные аспекты

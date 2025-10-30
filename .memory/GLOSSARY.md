@@ -6,9 +6,9 @@ updated: 2025-01-14
 # Глоссарий
 - **Slot** — статическая конфигурация обработки (`slot-001`…`slot-015`), которая определяет провайдера (Gemini/Turbotext), операцию, параметры и связанные шаблонные медиа. Используется для построения ingest-ссылки `<BASE_URL>/ingest/{slot_id}` и не содержит индивидуальных секретов.
 - **Ingest API** — HTTP-эндпоинт `POST /ingest/{slotId}` для получения фотографий от DSLR Remote Pro, расчёта дедлайнов и выдачи результата либо 504 по истечении `T_sync_response` (10–60 с).
-- **T_sync_response** — максимальное окно ожидания синхронного ответа ingest API (по умолчанию 48 с, допустимый диапазон 10–60 с); определяет `job.expires_at`, TTL временных ссылок (`T_public_link_ttl`) и дедлайн очистки payload. Настраивается через `/api/settings`.
-- **T_ingest_ttl** — TTL исходных ingest-файлов во временном хранилище (`payload_path`), совпадает с `T_sync_response` и задаётся через `app_settings`.
-- **T_public_link_ttl** — TTL временных публичных ссылок (`media_object`), равный `T_sync_response`; после истечения ссылка удаляется. Настраивается в `app_settings`.
+- **T_sync_response** — максимальное окно ожидания синхронного ответа ingest API (по умолчанию 48 с, допустимый диапазон 10–60 с);  Настраивается через `/api/settings`.
+- **T_ingest_ttl** — TTL исходных ingest-файлов во временном хранилище (`payload_path`), совпадает с `T_sync_response`.
+- **T_public_link_ttl** — TTL временных публичных ссылок (`media_object`), равный `T_sync_response`; после истечения ссылка удаляется.
 - **T_result_retention** — фиксированный TTL итоговых файлов (72 ч) и публичных ссылок `GET /public/results/{job_id}`; после истечения endpoint возвращает `410 Gone`, а файл удаляется очистителем. 
 - **MediaObject** — временный публичный файл с TTL = `T_public_link_ttl = T_sync_response`, выдаваемый через `POST /api/media/register` для загрузок провайдера (например, Turbotext). По истечении срока запись удаляется.
 - **Media public link** — одноразовый URL на `MediaObject`, доступный провайдерам (Turbotext) в пределах `T_public_link_ttl`; истечение делает ссылку недоступной.
