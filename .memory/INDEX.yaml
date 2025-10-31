@@ -13,6 +13,10 @@ spec/adr:
   summary:
     ADR-0001: "Монолит FastAPI + cron, без очередей"
 
+spec/docs:
+  updated: "2025-10-31"
+  baseline: "US PHC-1.0.0 — базовые SDD документы (vision/context/glossary/domain-model/constraints-risks/nfr/use-cases/acceptance-criteria/test-plan)"
+
 memory:
   mission: 2025-10-31
   context: 2025-10-31

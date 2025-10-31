@@ -9,3 +9,4 @@ updated: 2025-10-31
 - 2025-10-31: Меморибанк и служебные артефакты заполнены (MISSION/CONTEXT/ASKS/USECASES/REPORT_SCHEMA).
 - 2025-10-31: Исключены REPORT-артефакты из `.memory`, обновлены инструкции `agents.md`.
 - 2025-10-31: `.memory/CONTEXT.md` приведён в соответствие PRD/ARCHITECTURE (среды, стек, ops).
+- 2025-10-31: Подготовлены базовые SDD документы (`spec/docs/*.md` — vision/context/glossary/domain-model/constraints-risks/nfr/use-cases/acceptance-criteria/test-plan).

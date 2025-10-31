@@ -1,4 +1,4 @@
----
+﻿---
 id: tasks
 updated: 2025-10-31
 ---
@@ -20,28 +20,32 @@ updated: 2025-10-31
 
 ## TODO
 - [ ] EP PHC-1 — Синхронный ingest 15 слотов  
-  [ ] US PHC-1.GOV — Governance & Discovery  
-    [ ] T PHC-1.GOV.1 — CONSULT — подтвердить лимиты конкурентных ingest-запросов и необходимость внешнего rate limiting (тимлид)  
-    [ ] T PHC-1.GOV.2 — REFLECT — баланс KISS vs SLA при росте количества провайдеров  
-    [ ] T PHC-1.GOV.3 — CONSULT — утвердить состав SDD-пакета спецификаций (vision/context/glossary/domain-model/constraints-risks/nfr/use-cases/acceptance-criteria/test-plan)  
-    [ ] T PHC-1.GOV.4 — REFLECT — оценить риски и зависимости подготовки полного SDD-пакета  
+  [x] US PHC-1.GOV — Governance & Discovery  
+    [x] T PHC-1.GOV.1 — CONSULT — подтвердить лимиты конкурентных ingest-запросов и необходимость внешнего rate limiting (тимлид)  
+    [x] T PHC-1.GOV.2 — REFLECT — баланс KISS vs SLA при росте количества провайдеров  
+    [x] T PHC-1.GOV.3 — CONSULT — утвердить состав SDD-пакета спецификаций (vision/context/glossary/domain-model/constraints-risks/nfr/use-cases/acceptance-criteria/test-plan)  
+    [x] T PHC-1.GOV.4 — REFLECT — оценить риски и зависимости подготовки полного SDD-пакета  
   [ ] FEAT PHC-1.0 — Спецификации ingest API  
-    [ ] US PHC-1.0.0 — Базовые SDD документы  
-      [ ] T PHC-1.0.0.1 — Подготовить `spec/docs/vision.md` (видение продукта и целевые метрики)  
-      [ ] T PHC-1.0.0.2 — Описать `spec/docs/context.md` (границы системы, акторы, контекстная диаграмма)  
-      [ ] T PHC-1.0.0.3 — Составить `spec/docs/glossary.md` (термины и обозначения)  
-      [ ] T PHC-1.0.0.4 — Разработать `spec/docs/domain-model.md` (сущности, связи, инварианты)  
-      [ ] T PHC-1.0.0.5 — Зафиксировать `spec/docs/constraints-risks.md` (ограничения, допущения, риски)  
-      [ ] T PHC-1.0.0.6 — Уточнить `spec/docs/nfr.md` (нефункциональные требования и SLA)  
-      [ ] T PHC-1.0.0.7 — Обновить `spec/docs/use-cases.md` с диаграммами последовательностей/состояний  
-      [ ] T PHC-1.0.0.8 — Сформировать `spec/docs/acceptance-criteria.md` по основным сценариям  
-      [ ] T PHC-1.0.0.9 — Составить `spec/docs/test-plan.md` (стратегия тестирования и ответственность)  
+    [x] US PHC-1.0.0 — Базовые SDD документы  
+      [x] T PHC-1.0.0.1 — Подготовить `spec/docs/vision.md` (видение продукта и целевые метрики)  
+      [x] T PHC-1.0.0.2 — Описать `spec/docs/context.md` (границы системы, акторы, контекстная диаграмма)  
+      [x] T PHC-1.0.0.3 — Составить `spec/docs/glossary.md` (термины и обозначения)  
+      [x] T PHC-1.0.0.4 — Разработать `spec/docs/domain-model.md` (сущности, связи, инварианты)  
+      [x] T PHC-1.0.0.5 — Зафиксировать `spec/docs/constraints-risks.md` (ограничения, допущения, риски)  
+      [x] T PHC-1.0.0.6 — Уточнить `spec/docs/nfr.md` (нефункциональные требования и SLA)  
+      [x] T PHC-1.0.0.7 — Обновить `spec/docs/use-cases.md` с диаграммами последовательностей/состояний  
+      [x] T PHC-1.0.0.8 — Сформировать `spec/docs/acceptance-criteria.md` по основным сценариям  
+      [x] T PHC-1.0.0.9 — Составить `spec/docs/test-plan.md` (стратегия тестирования и ответственность)  
     [ ] US PHC-1.0.1 — OpenAPI `/api/ingest/{slot_id}` и SLA  
       [ ] T PHC-1.0.1.1 — Описать JSON Schema multipart payload и ответы (успех/ошибки)  
       [ ] T PHC-1.0.1.2 — Зафиксировать коды ошибок/таймаутов и семантику `failure_reason`  
     [ ] US PHC-1.0.2 — Провайдерские спецификации Gemini/Turbotext  
       [ ] T PHC-1.0.2.1 — Обновить `spec/contracts/providers/gemini.md` и `turbotext.md` (лимиты, форматы, SLA)  
       [ ] T PHC-1.0.2.2 — Задокументировать деградации/ретраи в `spec/docs/providers/*.md`  
+    [ ] US PHC-1.0.3 — Диаграммы для SDD
+      [ ] T PHC-1.0.3.1 — Подготовить C4-диаграммы контекста/контейнера в `spec/diagrams/`
+      [ ] T PHC-1.0.3.2 — Добавить sequence/state диаграммы (Mermaid/PlantUML) для ключевых use-case в `spec/diagrams/`
+
   [ ] FEAT PHC-1.1 — Построение ingest API и доменной модели  
     [ ] US PHC-1.1.1 — Валидация payload и создание `JobContext`  
       [ ] T PHC-1.1.1.1 — Ограничение размера файлов и MIME (JPEG/PNG/WebP/HEIC/HEIF)  
