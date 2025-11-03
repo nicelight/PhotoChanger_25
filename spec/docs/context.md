@@ -1,7 +1,7 @@
 # System Context — PhotoChanger
 
 ## 1. Границы системы
-- **Внутри**: FastAPI-приложение (ingest, media, slots, settings, stats), внутрипроцессный Auth API `/api/login`, PostgreSQL 15, файловое хранилище `media/temp` и `media/results`, cron `scripts/cleanup_media.py`, Admin UI/REST, публичные ссылки `/public/results/{job_id}`.
+- **Внутри**: FastAPI-приложение (ingest, media, slots, settings, stats), внутрипроцессный Auth API `/api/login`, PostgreSQL 15, файловое хранилище `media/results`, cron `scripts/cleanup_media.py`, Admin UI/REST, публичные ссылки `/public/results/{job_id}`.
 - **Снаружи**: DSLR Remote Pro, AI-провайдеры Gemini/Turbotext, пользователи публичных ссылок, мониторинг/логирование, TLS-инфраструктура, секрет-хранилище.
 - Архитектурные решения фиксированы ADR-0001: монолит без очередей, горизонтального масштабирования и внешнего rate limiting.
 

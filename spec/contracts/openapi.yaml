@@ -36,6 +36,12 @@ paths:
           multipart/form-data:
             schema:
               $ref: "./schemas/ingest-request.schema.json"
+            encoding:
+              fileToUpload:
+                contentType:
+                  - image/jpeg
+                  - image/png
+                  - image/webp
             examples:
               dslrSample:
                 summary: DSLR Remote Pro upload
@@ -125,11 +131,11 @@ components:
     IngestPayloadTooLarge:
       allOf:
         - $ref: '#/components/responses/IngestErrorResponse'
-      description: File exceeds slot limit (`failure_reason=payload_too_large`).
+      description: File exceeds the configured slot limit or the global 50 MB safety cap (`failure_reason=payload_too_large`).
     IngestUnsupportedMedia:
       allOf:
         - $ref: '#/components/responses/IngestErrorResponse'
-      description: Unsupported MIME type (`failure_reason=unsupported_media_type`).
+      description: Unsupported MIME type (validated against the multipart part `Content-Type`; allowed values: image/jpeg, image/png, image/webp) (`failure_reason=unsupported_media_type`).
     IngestRateLimited:
       allOf:
         - $ref: '#/components/responses/IngestErrorResponse'

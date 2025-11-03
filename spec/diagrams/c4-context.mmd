@@ -10,7 +10,7 @@ graph TD
     subgraph PhotoChanger["PhotoChanger • FastAPI + PostgreSQL + MEDIA_ROOT"]
         API["Сервисы API\n(ingest, slots, settings, stats)"]
         DB["PostgreSQL"]
-        Media["Файловое хранилище\n(media/temp, media/results, media/templates)"]
+        Media["Файловое хранилище\n(media/results, media/templates)"]
         Cron["Cron cleanup_media.py"]
     end
 

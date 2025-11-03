@@ -10,12 +10,12 @@ owner: techlead
 ## Среды и развёртывания
 - **Prod (план):** один Docker/VM-хост с FastAPI (uvicorn), PostgreSQL 15 и внешним cron `python scripts/cleanup_media.py` каждые 15 минут; общий том `media/`. Горизонтальное масштабирование не закладываем (ADR-0001).
 - **Staging:** приёмочная среда для этапа Ops (PRD §12/E4) — тот же стек с мок-ключами провайдеров и прогоном health-check перед релизом.
-- **Local:** `uvicorn src.app.main:app --reload` + локальная PostgreSQL (docker-compose). Файлы сохраняются в `./media/temp`, `./media/results`, `./media/templates`; UI макеты лежат в `spec/docs/ui/frontend-examples/`.
+- **Local:** `uvicorn src.app.main:app --reload` + локальная PostgreSQL (docker-compose). Итоговые файлы сохраняются в `./media/results` (payload + preview), шаблоны — в `./media/templates`; UI макеты лежат в `spec/docs/ui/frontend-examples/`.
 
 ## Стек и архитектура
 - **Backend:** однопроцессное FastAPI-приложение на Python ≥ 3.11 (uvicorn). Конфигурация собирается через `AppConfig` (`app/main.py`), модули `ingest`, `media`, `slots`, `settings`, `stats` подключаются через `Depends`. `IngestService` ограничивает обработку `asyncio.wait_for(..., timeout=T_sync_response)`.
 - **Provider drivers:** `GeminiDriver` и `TurbotextDriver` используют `httpx.AsyncClient`, соблюдают лимиты провайдеров и возвращают путь/байты результата.
-- **Data stores:** PostgreSQL 15 (`slot`, `settings`, `job_history`, `media_object`) и файловая система `media/temp`, `media/results` с `T_result_retention = 72 ч`. Очередей и фоновых воркеров нет (KISS, ADR-0001).
+- **Data stores:** PostgreSQL 15 (`slot`, `settings`, `job_history`, `media_object`) и файловая система `media/results` с `T_result_retention = 72 ч`. Входящие файлы буферизуются в памяти; очередей и фоновых воркеров нет (KISS, ADR-0001).
 - **Frontend:** Админ-UI и публичная галерея — статические страницы/HTMX + Vanilla JS (шаблоны в `spec/docs/ui/frontend-examples/`), работают поверх REST (`/api/login`, `/api/slots`, `/api/settings`, `/api/stats`, `/public/results/{job_id}`).
 - **Observability:** `structlog` для ingest/ошибок, Prometheus `/metrics`, `/healthz` проверяет БД, файловую систему и быстродоступность провайдеров.
 

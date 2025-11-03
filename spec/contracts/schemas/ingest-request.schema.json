@@ -10,30 +10,50 @@
       "minLength": 1,
       "description": "Global ingest password. Must match the hash stored in app_settings.ingest.dslr_password."
     },
-    "fileToUpload": {
+    "hash": {
       "type": "string",
-      "format": "binary",
-      "contentMediaType": "application/octet-stream",
-      "description": "Binary image payload (JPEG, PNG, WebP). Maximum size is limited by the slot setting (default ≤ 15 MB)."
+      "pattern": "^[0-9a-fA-F]{32,128}$",
+      "description": "Hex-encoded checksum (MD5/SHA) of the uploaded image used to verify integrity."
+    },
+    "fileToUpload": {
+      "description": "Binary image payload. The multipart part MUST provide `Content-Type` = image/jpeg | image/png | image/webp. The server validates the header and enforces both the per-slot limit (default ≤ 15 MB) and an absolute 50 MB safety cap.",
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "binary",
+          "contentMediaType": "image/jpeg"
+        },
+        {
+          "type": "string",
+          "format": "binary",
+          "contentMediaType": "image/png"
+        },
+        {
+          "type": "string",
+          "format": "binary",
+          "contentMediaType": "image/webp"
+        }
+      ]
     }
   },
   "required": [
     "password",
+    "hash",
     "fileToUpload"
   ],
   "additionalProperties": {
-    "description": "Optional DSLR Remote Pro metadata fields (`time`, `user_id`, `id`, `profile`, `status`, `hash`, `name`, `model`, `version`, ...). Values are passed through as-is without validation (string, number, boolean, JSON fragments, etc.)."
+    "description": "Optional DSLR Remote Pro metadata fields (`time`, `user_id`, `id`, `profile`, `status`, `name`, `model`, `version`, ...). Values are passed through as-is without validation (string, number, boolean, JSON fragments, etc.)."
   },
   "examples": [
     {
       "password": "123456",
+      "hash": "7b6c683e1d3fd29c8701791c54e3c12a236f5a5b",
       "fileToUpload": "<binary>",
       "time": "1758217512",
       "profile": "wedding-booth",
       "user_id": "operator-17",
       "id": "CY04N068111304S2L_00000001.",
       "status": "C:\\\\PhotoboothImages\\\\screenSerg\\\\preview.jpg",
-      "hash": "7b6c683e1d3fd29c8701791c54e3c12a236f5a5b",
       "name": "DESKTOP-K968T3F",
       "model": "Windows",
       "version": "3.30.2"

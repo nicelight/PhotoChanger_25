@@ -10,7 +10,7 @@ graph TD
     end
 
     DB[("PostgreSQL 15\nslot, job_history, media_object, settings")] 
-    FS[("MEDIA_ROOT\nmedia/temp, media/results, media/templates")]
+    FS[("MEDIA_ROOT\nmedia/results, media/templates")]
     Cron["cleanup_media.py"]
 
     DSLR["DSLR Remote Pro"] -->|"POST /api/ingest/{slot_id}"| Ingest

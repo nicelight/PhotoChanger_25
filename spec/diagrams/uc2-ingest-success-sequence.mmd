@@ -8,7 +8,7 @@ sequenceDiagram
 
     DSLR->>API: POST /api/ingest/{slot_id}\n(password, file, metadata)
     API->>DB: Проверка слота, запись job_history (pending)
-    API->>Media: Сохранить temp файл (media/temp/{slot}/{job})
+    API->>Media: Подготовить каталог результата (media/results/{slot}/{job})
     API->>Driver: process(job_ctx) (async, timeout = T_sync_response)
     Driver-->>Media: Запрос временных ссылок/Files API
     Driver-->>API: Обработанный файл

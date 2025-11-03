@@ -7,8 +7,8 @@
 | `400 Bad Request` | `invalid_request`       | Нарушен формат `multipart/form-data`: отсутствует `password`/`fileToUpload`, повреждён boundary, неподдерживаемый тип дополнительного поля и т.п. | — |
 | `401 Unauthorized` | `invalid_password`      | Передан неверный глобальный ingest-пароль.                                                 | — |
 | `404 Not Found` | `slot_not_found`        | Слот с указанным `slot_id` не существует или отключён администратором.                     | — |
-| `413 Payload Too Large` | `payload_too_large` | Размер файла превысил лимит, настроенный для слота.                                        | — |
-| `415 Unsupported Media Type` | `unsupported_media_type` | MIME не входит в поддерживаемый перечень (JPEG/PNG/WebP). | — |
+| `413 Payload Too Large` | `payload_too_large` | Размер файла превысил лимит, настроенный для слота, либо глобальный предельный размер 50 МБ. | Поле `details` может содержать фактический размер и лимит. |
+| `415 Unsupported Media Type` | `unsupported_media_type` | MIME не входит в поддерживаемый перечень (JPEG/PNG/WebP), проверяется по заголовку `Content-Type` части multipart. | — |
 | `429 Too Many Requests` | `rate_limited`         | Достигнут лимит параллельных задач (глобальный или per-slot семафор).                      | Поле `retry_after` (секунды) заполняется при наличии прогнозируемого окна повторной попытки. |
 | `502 Bad Gateway` / `503 Service Unavailable` | `provider_error`       | Провайдер вернул ошибку/был временно недоступен, либо произошёл сбой при обмене данными.    | — |
 | `504 Gateway Timeout` | `provider_timeout`     | Драйвер провайдера не успел завершить обработку в пределах `T_sync_response`.              | Поле `status` = `timeout`. |
@@ -31,3 +31,4 @@
 - `status` принимает значения `error` либо `timeout` (только для 504).
 - `details` — опциональное текстовое пояснение (без бинарного содержимого).
 - `retry_after` — опционально для 429, целое число секунд.
+- При проверке размеров и MIME сервер использует заголовки каждой части multipart (`Content-Type`) и потоково подсчитывает размер загруженного файла, чтобы остановить обработку до передачи провайдеру.

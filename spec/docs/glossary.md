@@ -5,11 +5,10 @@
 | Slot | Статическая конфигурация обработки (`slot-001`…`slot-015`), содержит выбранного провайдера, операцию, параметры, шаблонные медиа, признак активности. Используется для построения URL ingest. | `docs/PRD.md` §2, §4 |
 | Ingest API | Публичный HTTP-эндпоинт `POST /api/ingest/{slot_id}` для приёма multipart-запросов от DSLR Remote Pro, проверки пароля и запуска обработки. SLA ограничен `T_sync_response`. | `docs/ARCHITECTURE.md` §3, `.memory/USECASES.md` UC2 |
 | T_sync_response | Конфигурируемое окно синхронного ответа ingest (10–60 с, по умолчанию 48 с). По превышению возвращается 504 и статус `timeout`. | `.memory/MISSION.md`, `docs/PRD.md` §1 |
-| MediaObject | Внутренний объект, представляющий временную ссылку (`media/temp`) с TTL = `T_sync_response`, используемую провайдерами для скачивания исходных файлов. | `spec/docs/providers/turbotext.md` |
-| ResultStore | Подсистема хранения итоговых файлов (`media/results/{job_id}.{ext}`) с TTL 72 ч (`T_result_retention`). Публикует `GET /public/results/{job_id}`. | `docs/ARCHITECTURE.md` §4 |
-| TempMediaStore | Подсистема хранения временных файлов (`media/temp/{slot_id}/{job_id}`) и `MediaObject` с TTL = `T_sync_response`; используется драйверами провайдеров для скачивания исходников. | `docs/ARCHITECTURE.md` §4 |
+| MediaObject | Запись о медиафайле PhotoChanger с путём к результату (`media/results/{slot_id}/{job_id}/payload.{ext}`), ссылкой на превью и TTL. Используется для публикации `/public/results/{job_id}` и учёта очистки. | `spec/docs/domain-model.md`, `docs/ARCHITECTURE.md` §4 |
+| ResultStore | Подсистема хранения итоговых файлов (`media/results/{slot_id}/{job_id}/payload.{ext}`) и превью (`preview.webp`) с TTL 72 ч (`T_result_retention`). Публикует `GET /public/results/{job_id}`. | `docs/ARCHITECTURE.md` §4 |
 | ProviderDriver | Абстракция драйвера AI-провайдера с методом `process(job_ctx) -> ProviderResult`. Реализации: `GeminiDriver`, `TurbotextDriver`. | `docs/ARCHITECTURE.md` §5 |
-| JobContext | Структура, собираемая `IngestService`: содержит `job_id`, сведения о слоте, пути к временным файлам, дедлайны и параметры провайдера. | `docs/ARCHITECTURE.md` §3 |
+| JobContext | Структура, собираемая `IngestService`: содержит `job_id`, сведения о слоте, дедлайн `sync_deadline = now + T_sync_response`, ссылку на каталог результата и параметры провайдера. | `docs/ARCHITECTURE.md` §3 |
 | ProviderResult | Унифицированный ответ драйвера (путь к файлу или байты), на основании которого Ingest формирует итоговый результат. | `docs/ARCHITECTURE.md` §5 |
 | TemplateMedia | Статические шаблонные изображения, привязанные к слотам; хранятся долго, проходят валидацию MIME/размера при загрузке. | `docs/PRD.md` §5 |
 | Ingest password | Глобальный секрет, проверяемый при каждом `POST /api/ingest/{slot_id}`; хранится в `app_settings` (`ingest.dslr_password`) в виде хэша и обновляется через `/api/settings`. | `docs/PRD.md` §4 |
