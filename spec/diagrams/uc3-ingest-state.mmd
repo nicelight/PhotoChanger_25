@@ -1,0 +1,10 @@
+```mermaid
+stateDiagram-v2
+    [*] --> pending
+    pending --> done: Provider завершил обработку ≤ T_sync_response
+    pending --> timeout: Превышено T_sync_response / timeout Error
+    pending --> failed: Ошибка провайдера / инфраструктуры
+    done --> [*]
+    timeout --> [*]
+    failed --> [*]
+```

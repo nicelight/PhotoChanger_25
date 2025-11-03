@@ -1,0 +1,10 @@
+```mermaid
+stateDiagram-v2
+    [*] --> registered: MediaObject создан (expires_at = now + T_sync_response)
+    registered --> active: Провайдер скачивает файл
+    active --> expired: TTL истёк (cleanup лениво или cron)
+    active --> cleaned: cleanup_media.py удалил файл и обновил cleaned_at
+    registered --> expired: TTL истёк без скачивания
+    expired --> cleaned: cron удалил файл
+    cleaned --> [*]
+```

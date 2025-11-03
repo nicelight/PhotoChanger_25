@@ -18,7 +18,44 @@
       "artifacts": [
         "docs/PRD.md",
         "docs/ARCHITECTURE.md",
-        "spec/docs/blueprints/use-cases.md"
+        "spec/docs/use-cases.md"
+      ]
+    },
+    {
+      "type": "docs",
+      "description": "Added draft OpenAPI 3.1 specification for ingest endpoint, referencing multipart and error schemas.",
+      "artifacts": [
+        "spec/contracts/openapi.yaml",
+        "spec/contracts/schemas/ingest-request.schema.json",
+        "spec/contracts/schemas/ingest-error.schema.json",
+        "spec/contracts/ingest-errors.md"
+      ]
+    },
+    {
+      "type": "docs",
+      "description": "Expanded ingest OpenAPI with examples and SLA description.",
+      "artifacts": [
+        "spec/contracts/openapi.yaml"
+      ]
+    },
+    {
+      "type": "docs",
+      "description": "Refined provider contracts for Gemini and Turbotext (limits, protocols, error handling).",
+      "artifacts": [
+        "spec/contracts/providers/gemini.md",
+        "spec/contracts/providers/turbotext.md"
+      ]
+    },
+    {
+      "type": "docs",
+      "description": "Simplified ingest media support to JPEG/PNG/WebP across PRD, SDD, and contracts.",
+      "artifacts": [
+        "docs/PRD.md",
+        "spec/docs/use-cases.md",
+        "spec/docs/nfr.md",
+        "spec/contracts/schemas/ingest-request.schema.json",
+        "spec/contracts/ingest-errors.md",
+        "spec/contracts/openapi.yaml"
       ]
     }
   ],

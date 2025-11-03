@@ -1,0 +1,19 @@
+```mermaid
+sequenceDiagram
+    participant DSLR as DSLR Remote Pro
+    participant API as Ingest API (FastAPI)
+    participant Media as Media Module
+    participant Driver as Provider Driver
+    participant FS as MEDIA_ROOT
+    participant DB as PostgreSQL
+
+    DSLR->>API: POST /api/ingest/{slot_id}\n(password, file, metadata)
+    API->>DB: Проверка слота, запись job_history (pending)
+    API->>Media: Сохранить temp файл (media/temp/{slot}/{job})
+    API->>Driver: process(job_ctx) (async, timeout = T_sync_response)
+    Driver-->>Media: Запрос временных ссылок/Files API
+    Driver-->>API: Обработанный файл
+    API->>Media: Сохранить результат (media/results/{job}.ext)
+    API->>DB: Обновить job_history (status=done, result_expires_at = now + 72h)
+    API-->>DSLR: HTTP 200 + бинарный результат
+```

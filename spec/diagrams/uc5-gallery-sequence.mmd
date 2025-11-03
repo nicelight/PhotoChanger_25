@@ -1,0 +1,18 @@
+```mermaid
+sequenceDiagram
+    participant Admin as Admin UI
+    participant API as Admin API
+    participant Slots as Slots Service
+    participant DB as PostgreSQL
+    participant Public as Public API
+
+    Admin->>API: GET /api/slots/{slot_id}
+    API->>Slots: Загрузи конфигурацию + recent_results
+    Slots->>DB: SELECT slot, recent job_history
+    Slots-->>API: Данные слота + recent_results
+    API-->>Admin: JSON (config, recent_results)
+    loop Отображение
+        Admin->>Public: GET /public/results/{job_id}
+        Public-->>Admin: 200 (файл) или 410 (TTL истёк)
+    end
+```

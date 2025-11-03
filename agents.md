@@ -1,7 +1,7 @@
 # Codex — Operating Guide (Core)
 
 > Ядро правил.  Подробные плейбуки и команды — в `.memory/CONTEXT.md`.
-> Миссия/контекст/таски/прогресс — в `.memory/*`. Контракты — в `spec/contracts/*`. ADR — в `spec/adr/*` (индекс — `.memory/DECISIONS.md`). Блюпринты — в `spec/docs/blueprints/*`.
+> Миссия/контекст/таски/прогресс — в `.memory/*`. Контракты — в `spec/contracts/*`. ADR — в `spec/adr/*` (индекс — `.memory/DECISIONS.md`). Спецификации и SDD — в `spec/docs/*`.
 
 ---
 
@@ -47,6 +47,7 @@
 4) Если принято архитектурное решение — оформи ADR в `spec/adr/ADR-XXXX.md` и обнови индекс `.memory/DECISIONS.md`.
 5) Обнови прогресс (после checkpoint): `.memory/PROGRESS.md` (1 строка), `.memory/ASKS.md` (фиксируй выполненный запрос) и статус задачи в `.memory/TASKS.md`.
 
+
 ## 4) Checkpoints (минимум)
 Считается пройденным, если одновременно:
 - `spec/contracts/*` валидны и версия в `spec/contracts/VERSION.json` обновлена по правилам SemVer (MAJOR/MINOR/PATCH);
@@ -63,6 +64,9 @@
 - пройди pre-commit чек-лист (см. `.memory/CONTEXT.md`),
 - проверь SemVer/Deprecation,
 - синхронизируй ADR/ASKS/PROGRESS/TASKS/INDEX.
+
+## 7) Правила 
+ - Работаем по принципу KISS. Не усложняй, производи только критически необходимые проверки и валидации.
 
 ## 8) Антипаттерны (запрещено)
 - Менять публичные контракты без `spec/contracts/*` и VERSION bump.

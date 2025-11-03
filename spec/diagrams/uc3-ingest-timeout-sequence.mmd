@@ -1,0 +1,18 @@
+```mermaid
+sequenceDiagram
+    participant DSLR as DSLR Remote Pro
+    participant API as Ingest API
+    participant Media as Media Module
+    participant Driver as Provider Driver
+    participant DB as PostgreSQL
+
+    DSLR->>API: POST /api/ingest/{slot_id}
+    API->>DB: Создать запись job_history (pending)
+    API->>Media: Сохранить временный файл
+    API->>Driver: process(job_ctx) (timeout = T_sync_response)
+    Driver-->>API: (нет ответа вовремя)
+    API-->>Driver: Cancel (timeout)
+    API->>Media: Удалить temp файл
+    API->>DB: Обновить job_history (status=timeout, failure_reason=provider_timeout)
+    API-->>DSLR: HTTP 504 + JSON ошибка
+```

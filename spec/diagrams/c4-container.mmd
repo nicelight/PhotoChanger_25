@@ -1,0 +1,45 @@
+```mermaid
+graph TD
+    subgraph "PhotoChanger Monolith"
+        API["FastAPI Application"]
+        Ingest["Ingest Module"]
+        MediaSvc["Media Module"]
+        Slots["Slots Module"]
+        Settings["Settings Module"]
+        Stats["Stats Module"]
+        Providers["Provider Drivers\n(GeminiDriver, TurbotextDriver)"]
+    end
+
+    DB[("PostgreSQL 15\nslot, job_history, media_object, settings")] 
+    FS[("MEDIA_ROOT\nmedia/temp, media/results, media/templates")]
+    Cron["cleanup_media.py"]
+
+    DSLR["DSLR Remote Pro"] -->|"POST /api/ingest/{slot_id}"| Ingest
+    Admin["Admin UI / REST"] -->|"JWT /api/slots, /api/settings, /api/stats"| API
+    Public["Публичные клиенты"] -->|"GET /public/results/{job_id}"| MediaSvc
+    Ops["Monitoring / Logs"] -->|"GET /metrics, /healthz"| API
+
+    Ingest -->|read/write temp/result| MediaSvc
+    Ingest -->|job status| Stats
+    Ingest -->|select slot| Slots
+    Ingest -->|global config| Settings
+    Ingest -->|process(job)| Providers
+
+    API -->|shares context| Ingest
+    API -->|shares context| MediaSvc
+    API -->|shares context| Slots
+    API -->|shares context| Settings
+    API -->|shares context| Stats
+
+    MediaSvc -->|store files| FS
+    Providers -->|await result| MediaSvc
+    Providers -->|updates| Ingest
+
+    Ingest -->|persist job_history| DB
+    Slots -->|CRUD slot| DB
+    Settings -->|CRUD settings| DB
+    Stats -->|read aggregates| DB
+
+    Cron -->|"Удаляет просроченные temp/result"| FS
+    Cron -->|"Обновляет media_object.cleaned_at"| DB
+```

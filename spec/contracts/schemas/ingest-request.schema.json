@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://photochanger.spec/contracts/schemas/ingest-request.schema.json",
+  "title": "Ingest Multipart Form",
+  "type": "object",
+  "description": "Logical representation of the multipart/form-data payload sent to POST /api/ingest/{slot_id}. Each field maps to a part in the multipart request.",
+  "properties": {
+    "password": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Global ingest password. Must match the hash stored in app_settings.ingest.dslr_password."
+    },
+    "fileToUpload": {
+      "type": "string",
+      "format": "binary",
+      "contentMediaType": "application/octet-stream",
+      "description": "Binary image payload (JPEG, PNG, WebP). Maximum size is limited by the slot setting (default ≤ 15 MB)."
+    }
+  },
+  "required": [
+    "password",
+    "fileToUpload"
+  ],
+  "additionalProperties": {
+    "description": "Optional DSLR Remote Pro metadata fields (`time`, `user_id`, `id`, `profile`, `status`, `hash`, `name`, `model`, `version`, ...). Values are passed through as-is without validation (string, number, boolean, JSON fragments, etc.)."
+  },
+  "examples": [
+    {
+      "password": "123456",
+      "fileToUpload": "<binary>",
+      "time": "1758217512",
+      "profile": "wedding-booth",
+      "user_id": "operator-17",
+      "id": "CY04N068111304S2L_00000001.",
+      "status": "C:\\\\PhotoboothImages\\\\screenSerg\\\\preview.jpg",
+      "hash": "7b6c683e1d3fd29c8701791c54e3c12a236f5a5b",
+      "name": "DESKTOP-K968T3F",
+      "model": "Windows",
+      "version": "3.30.2"
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://photochanger.spec/contracts/schemas/ingest-error.schema.json",
+  "title": "Ingest Error Response",
+  "type": "object",
+  "description": "Canonical JSON body returned by POST /api/ingest/{slot_id} when the request cannot be fulfilled. Successful responses return binary payloads and do not follow this schema.",
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "error",
+        "timeout"
+      ],
+      "description": "`timeout` используется исключительно для 504 Gateway Timeout. Для остальных кодов ответа используется `error`."
+    },
+    "failure_reason": {
+      "type": "string",
+      "enum": [
+        "invalid_request",
+        "invalid_password",
+        "slot_not_found",
+        "slot_disabled",
+        "payload_too_large",
+        "unsupported_media_type",
+        "rate_limited",
+        "provider_timeout",
+        "provider_error",
+        "internal_error"
+      ],
+      "description": "Машиночитаемый код причины ошибки. Соответствие HTTP-кодам фиксируется в спецификации API."
+    },
+    "details": {
+      "type": "string",
+      "description": "Человеко-читаемое пояснение (опционально). Не содержит бинарных данных."
+    },
+    "retry_after": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Количество секунд до очередной попытки (используется только для 429 Too Many Requests)."
+    }
+  },
+  "required": [
+    "status",
+    "failure_reason"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "status": "error",
+      "failure_reason": "invalid_password",
+      "details": "Provided ingest password does not match."
+    },
+    {
+      "status": "timeout",
+      "failure_reason": "provider_timeout"
+    },
+    {
+      "status": "error",
+      "failure_reason": "rate_limited",
+      "retry_after": 30
+    }
+  ]
+}

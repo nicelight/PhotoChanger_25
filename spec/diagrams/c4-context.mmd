@@ -1,0 +1,26 @@
+```mermaid
+graph TD
+    subgraph External
+        DSLR["DSLR Remote Pro"]
+        Admin["Admin UI / Operator"]
+        Providers["AI Providers\n(Gemini, Turbotext)"]
+        Public["Пользователи публичных ссылок"]
+        Ops["Мониторинг / Ops"]
+    end
+
+    subgraph PhotoChanger["PhotoChanger • FastAPI + PostgreSQL + MEDIA_ROOT"]
+        API["Сервисы API\n(ingest, slots, settings, stats)"]
+        DB["PostgreSQL"]
+        Media["Файловое хранилище\n(media/temp, media/results, media/templates)"]
+        Cron["Cron cleanup_media.py"]
+    end
+
+    DSLR -->|"POST /api/ingest/{slot_id}"| API
+    Admin -->|"JWT /api/login, /api/slots, /api/settings"| API
+    API -->|"async драйверы"| Providers
+    API -->|"read/write"| Media
+    API -->|"SQL"| DB
+    API -->|"GET /public/results/{job_id}"| Public
+    Cron -->|"Удаление просроченного media"| Media
+    Ops -->|"Метрики /healthz, журналы"| API
+```

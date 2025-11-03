@@ -1,6 +1,6 @@
 ﻿---
 id: tasks
-updated: 2025-10-31
+updated: 2025-11-02
 ---
 
 # Tasks (канбан)
@@ -25,7 +25,7 @@ updated: 2025-10-31
     [x] T PHC-1.GOV.2 — REFLECT — баланс KISS vs SLA при росте количества провайдеров  
     [x] T PHC-1.GOV.3 — CONSULT — утвердить состав SDD-пакета спецификаций (vision/context/glossary/domain-model/constraints-risks/nfr/use-cases/acceptance-criteria/test-plan)  
     [x] T PHC-1.GOV.4 — REFLECT — оценить риски и зависимости подготовки полного SDD-пакета  
-  [ ] FEAT PHC-1.0 — Спецификации ingest API  
+  [x] FEAT PHC-1.0 — Спецификации ingest API  
     [x] US PHC-1.0.0 — Базовые SDD документы  
       [x] T PHC-1.0.0.1 — Подготовить `spec/docs/vision.md` (видение продукта и целевые метрики)  
       [x] T PHC-1.0.0.2 — Описать `spec/docs/context.md` (границы системы, акторы, контекстная диаграмма)  
@@ -36,27 +36,52 @@ updated: 2025-10-31
       [x] T PHC-1.0.0.7 — Обновить `spec/docs/use-cases.md` с диаграммами последовательностей/состояний  
       [x] T PHC-1.0.0.8 — Сформировать `spec/docs/acceptance-criteria.md` по основным сценариям  
       [x] T PHC-1.0.0.9 — Составить `spec/docs/test-plan.md` (стратегия тестирования и ответственность)  
-    [ ] US PHC-1.0.1 — OpenAPI `/api/ingest/{slot_id}` и SLA  
-      [ ] T PHC-1.0.1.1 — Описать JSON Schema multipart payload и ответы (успех/ошибки)  
-      [ ] T PHC-1.0.1.2 — Зафиксировать коды ошибок/таймаутов и семантику `failure_reason`  
-    [ ] US PHC-1.0.2 — Провайдерские спецификации Gemini/Turbotext  
-      [ ] T PHC-1.0.2.1 — Обновить `spec/contracts/providers/gemini.md` и `turbotext.md` (лимиты, форматы, SLA)  
-      [ ] T PHC-1.0.2.2 — Задокументировать деградации/ретраи в `spec/docs/providers/*.md`  
-    [ ] US PHC-1.0.3 — Диаграммы для SDD
-      [ ] T PHC-1.0.3.1 — Подготовить C4-диаграммы контекста/контейнера в `spec/diagrams/`
-      [ ] T PHC-1.0.3.2 — Добавить sequence/state диаграммы (Mermaid/PlantUML) для ключевых use-case в `spec/diagrams/`
+      [x] T PHC-1.0.0.10 — REFLECT — сверить `spec/docs/use-cases.md` с BRIEF/PRD/ARCHITECTURE и зафиксировать правки  
+      [x] T PHC-1.0.0.11 — CONSULT — утвердить обновлённые use-case у тимлида  
+    [x] US PHC-1.0.1.GOV — Governance & Discovery  
+      [x] T PHC-1.0.1.GOV.1 — REFLECT — сопоставить требования ingest payload/ответов из BRIEF/PRD/ARCHITECTURE и выявить расхождения  
+      [x] T PHC-1.0.1.GOV.2 — CONSULT — подтвердить формат успешного ответа (`binary` vs JSON) и состав обязательных полей/заголовков ingest API у тимлида  
+    [x] US PHC-1.0.1 — OpenAPI `/api/ingest/{slot_id}` и SLA  
+      [x] T PHC-1.0.1.1 — Описать JSON Schema multipart payload и ответы (успех/ошибки)  
+      [x] T PHC-1.0.1.2 — Зафиксировать коды ошибок/таймаутов и семантику `failure_reason`  
+      [x] T PHC-1.0.1.3 — REFLECT — оценить поддержку `format: binary`/`contentMediaType` выбранными инструментами OpenAPI и при необходимости скорректировать схемы  
+      [x] T PHC-1.0.1.4 — Добавить примеры запросов/ошибок и описание SLA (`T_sync_response`, TTL) в `spec/contracts/openapi.yaml`  
+    [x] US PHC-1.0.2 — Провайдерские спецификации Gemini/Turbotext  
+      [x] T PHC-1.0.2.1 — Обновить `spec/contracts/providers/gemini.md` и `turbotext.md` (лимиты, форматы, SLA)  
+      [x] T PHC-1.0.2.2 — Задокументировать деградации/ретраи в `spec/docs/providers/*.md`  
+    [x] US PHC-1.0.3 — Диаграммы для SDD
+      [x] T PHC-1.0.3.1 — Подготовить C4-диаграммы контекста/контейнера в `spec/diagrams/`
+      [x] T PHC-1.0.3.2 — Добавить sequence/state диаграммы (Mermaid/PlantUML) для ключевых use-case в `spec/diagrams/`
 
   [ ] FEAT PHC-1.1 — Построение ingest API и доменной модели  
     [ ] US PHC-1.1.1 — Валидация payload и создание `JobContext`  
-      [ ] T PHC-1.1.1.1 — Ограничение размера файлов и MIME (JPEG/PNG/WebP/HEIC/HEIF)  
+      [ ] T PHC-1.1.1.1 — Ограничение размера файлов и MIME (JPEG/PNG/WebP)  
+        [ ] T PHC-1.1.1.1a — REFLECT — выбрать подход к потоковой валидации и определению MIME  
+        [ ] T PHC-1.1.1.1b — Реализовать проверку размера (per-slot + safety cap) и MIME на уровне ingest  
+        [ ] T PHC-1.1.1.1c — Добавить тесты и обновить контракты/документацию по валидации  
       [ ] T PHC-1.1.1.2 — Хранение temp файлов с TTL = `T_sync_response`  
+        [ ] T PHC-1.1.1.2a — REFLECT — спроектировать управление temp-файлами и TTL (создание, обновление, очистка)  
+        [ ] T PHC-1.1.1.2b — Реализовать TempMediaStore с учётом TTL и интеграцией в JobContext  
+        [ ] T PHC-1.1.1.2c — Написать тесты на TTL/очистку temp-файлов и синхронизировать документацию  
     [ ] US PHC-1.1.2 — Таймауты и статусы `pending/done/timeout/failed`  
-  [ ] FEAT PHC-1.2 — Интеграция провайдеров Gemini/Turbotext  
-    [ ] T PHC-1.2.1.1 — Реализовать `GeminiDriver` (Files API, inline, ошибки)  
-    [ ] T PHC-1.2.1.2 — Реализовать `TurbotextDriver` (polling, публичные ссылки)  
-  [ ] FEAT PHC-1.3 — TTL и очистка медиа  
-    [ ] T PHC-1.3.1.1 — Cron `scripts/cleanup_media.py`  
-    [ ] T PHC-1.3.1.2 — Контрактные тесты на истечение и 410  
+    [ ] FEAT PHC-1.2 — Интеграция провайдеров Gemini/Turbotext  
+      [ ] T PHC-1.2.1.1 — Реализовать `GeminiDriver` (Files API, inline, ошибки)  
+        [ ] T PHC-1.2.1.1a — REFLECT — спроектировать адаптер Gemini (Files API, retries, ограничения)  
+        [ ] T PHC-1.2.1.1b — Имплементация клиента Gemini + интеграция с JobContext  
+        [ ] T PHC-1.2.1.1c — Тесты/контракты для GeminiDriver (успех, timeout, ошибки)  
+      [ ] T PHC-1.2.1.2 — Реализовать `TurbotextDriver` (polling, публичные ссылки)  
+        [ ] T PHC-1.2.1.2a — REFLECT — спроектировать адаптер Turbotext (polling, публичные URL, квоты)  
+        [ ] T PHC-1.2.1.2b — Имплементация клиента Turbotext + обновление JobContext  
+        [ ] T PHC-1.2.1.2c — Тесты/контракты для TurbotextDriver (успех, очередь, ошибки)  
+    [ ] FEAT PHC-1.3 — TTL и очистка медиа  
+      [ ] T PHC-1.3.1.1 — Cron `scripts/cleanup_media.py`  
+        [ ] T PHC-1.3.1.1a — REFLECT — определить стратегию очистки и инструменты (FS/DB)  
+        [ ] T PHC-1.3.1.1b — Имплементация скрипта cleanup_media.py (TTL, логи, dry-run)  
+        [ ] T PHC-1.3.1.1c — Тесты/проверки для cron (unit/integration)  
+      [ ] T PHC-1.3.1.2 — Контрактные тесты на истечение и 410  
+        [ ] T PHC-1.3.1.2a — REFLECT — определить сценарии тестирования (results/public API)  
+        [ ] T PHC-1.3.1.2b — Реализовать контрактные тесты истечения (result TTL, 410)  
+        [ ] T PHC-1.3.1.2c — Документация/репортинг результатов тестов  
 
 - [ ] EP PHC-2 — Админ-панель и статистика  
   [ ] FEAT PHC-2.0 — Спецификации админ API и UI  
@@ -64,7 +89,7 @@ updated: 2025-10-31
       [ ] T PHC-2.0.1.1 — Описать схемы запросов/ответов и ошибки в `spec/contracts/schemas/`  
       [ ] T PHC-2.0.1.2 — Зафиксировать аутентификацию/авторизацию и бизнес-правила в OpenAPI  
     [ ] US PHC-2.0.2 — Документация UI и blueprints  
-      [ ] T PHC-2.0.2.1 — Обновить `docs/PRD.md` и `spec/docs/blueprints/use-cases.md` (CRUD слотов, статистика)  
+      [ ] T PHC-2.0.2.1 — Обновить `docs/PRD.md` и `spec/docs/use-cases.md` (CRUD слотов, статистика)  
       [ ] T PHC-2.0.2.2 — Подготовить мок-эндпоинты/пример HTML для HTMX в `spec/docs/ui/`  
   [ ] FEAT PHC-2.1 — CRUD слотов и глобальных настроек  
     [ ] US PHC-2.1.1 — UI форм редактирования (HTMX)  
