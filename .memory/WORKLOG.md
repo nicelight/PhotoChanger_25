@@ -372,6 +372,11 @@ updated: 2025-11-02
 - 2025-11-03 14:20 — Добавил US PHC-1.2.0 в `.memory/TASKS.md`: выделены задачи на `_invoke_provider`, выбор драйвера и unit-тесты, чтобы закрыть NotImplemented и формализовать обработку ошибок.
 - 2025-11-03 14:24 — Обновил спецификации: `spec/docs/providers/turbotext.md` и `spec/contracts/providers/turbotext.md` фиксируют отказ от публичных URL Turbotext; используем multipart-вложения и локальное хранение результатов.
 
+## T PHC-1.2.0.4 — REFLECT — определить недостающие поля Slot
+- 2025-11-04 15:35 — Сопоставил текущий код и PRD/SDD: слоту нужны `display_name`, `provider`, `operation`, `settings_json`, `is_active`, `version`, `updated_at`, `updated_by`; лимиты и конкурентность остаются в `settings`.
+- 2025-11-04 15:38 — Обосновал `settings_json`: JSONB-колонка хранит словарь параметров провайдера (температура, prompt, template IDs), что позволяет добавлять новые параметры без миграций и держать единый формат `SlotConfig` в сервисах. Альтернатива — расширять схему слота колонками `gemini_prompt`, `turbotext_style`, что быстро разрастается и ломает KISS/SDD.
+- 2025-11-04 15:41 — Бутылочные горлышки: отсутствие Alembic, необходимость синхронизировать спецификации (PRD/domain model/contracts) до правок кода, пересобрать фикстуры и провайдерские схемы.
+
 ## TEST — FEAT PHC-1.1 unit
 - 2025-11-03 14:40 — Установил `pytest-asyncio`, скорректировал тестовые helper'ы (`UploadFile` заголовки) и валидатор; `py -m pytest tests/unit` завершился `13 passed`.
 - 2025-11-04 10:05 — проверил статус задач в `.memory/TASKS.md`: следующая ветка `T PHC-1.2.1.*` (GeminiDriver) не заблокирована, готовлюсь к фазе REFLECT перед реализацией драйвера
@@ -384,6 +389,7 @@ updated: 2025-11-02
 ## CONSULT — Slot модель и миграция
 - 2025-11-04 11:55 — подготовил вопросы/решения для T PHC-1.2.0.5: структура slot, settings_json, template media, миграции
 - 2025-11-04 12:00 — тимлид подтвердил предложенные поля (display_name, operation, settings_json, version/audit, slot_template_media)
+- 2025-11-04 15:30 — уточнил у тимлида детали: `size_limit_mb`/`max_concurrency` оставляем в глобальных настройках, в слоте храним `display_name`, `provider`, `operation`, `settings_json`, `is_active`, `version`, `updated_*`; допускается `settings_json` как JSONB-хранилище параметров провайдера; Alembic возможно настроить — требуется проверить препятствия.
 
 ## T PHC-1.2.0.6 — Расширение модели слота
 - 2025-11-04 12:20 — реализовал T PHC-1.2.0.6: добавлены новые поля slot (display_name, operation, settings_json, version, updated_by), таблица slot_template_media, миграция через init_db, обновлены ORM/репозиторий/сидеры
