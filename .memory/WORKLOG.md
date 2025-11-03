@@ -128,6 +128,7 @@ updated: 2025-11-02
 - 2025-11-04 12:15 — Добавил тестовые ассеты (`tests/assets`) и unit-тесты для валидатора и сервиса; проверил обработку ошибок 413/415 и checksum mismatch.
 - 2025-11-04 12:17 — Попытался запустить `pytest`, но он отсутствует в окружении (No module named pytest); тесты не стартовали.
 - 2025-11-04 12:25 — Добавил SQLAlchemy/Alembic в зависимости, реализовал `load_config` с `init_db`, модели (`slot`, `job_history`, `media_object`, `settings`) и seed 15 слотов; создан скрипт `scripts/init_db.py`.
+
 - 2025-11-04 20:30 — Перестроил модули `slots`, `media`, `repositories` после реинициализации: добавлены SQLAlchemy-репозитории, `ResultStore`, `MediaObject` модели, cleanup cron.
 - 2025-11-04 20:35 — Обновил `IngestService` (job_id, TTL, запись результата/ошибок), DI, тесты (`ingest`, `media`, `repositories`), добавил cron cleanup тесты и фикстуры.
 - 2025-11-04 20:36 — Повторная попытка `pytest` (unit набор) завершилась ошибкой из-за отсутствия установленного pytest (No module named pytest).
