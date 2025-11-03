@@ -80,6 +80,6 @@
 ## 10) Кодировочная дисциплина (UTF-8)
 - Все текстовые артефакты хранятся в UTF-8 без BOM; не «упрощай» содержимое ради ASCII.
 - При работе из PowerShell явно указывай кодировку: `Get-Content -Raw -Encoding UTF8 …`, `Set-Content … -Encoding UTF8`; не используй команды без `-Encoding UTF8`.
-- Перед любым выводом текста в PowerShell принудительно выставляй консольную кодировку: `[Console]::InputEncoding = [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; <команда>`. Пример: `powershell.exe -NoLogo -Command "[Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8; Get-Content -Raw -Encoding UTF8 '.memory/CONTEXT.md'"`.
+- Перед любым выводом текста в PowerShell принудительно выставляй консольную кодировку: `[Console]::InputEncoding = [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; <команда>`. Пример: `powershell.exe -NoLogo -Command "[Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8; Get-Content -Raw -Encoding UTF8 '.memory/CONTEXT.md'"`!
 - Для скриптовых правок предпочитай `py -X utf8 -c "…"`, а для точечных изменений — `apply_patch`; это исключает двойное перекодирование.
 - После правок проверяй, что файл читается как UTF-8 (`py -X utf8 -c "from pathlib import Path; Path(...).read_text(encoding='utf-8')"`) и что `git diff` не содержит «Р…» артефактов.
