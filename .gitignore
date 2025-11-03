@@ -1,2 +1,3 @@
 # Secrets generated at deploy time
 secrets/runtime_credentials.json
+.venv/

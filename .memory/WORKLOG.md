@@ -263,3 +263,6 @@ updated: 2025-11-02
 - 2025-11-04 12:17 — Попытался запустить `pytest`, но он отсутствует в окружении (No module named pytest); тесты не стартовали.
 - 2025-11-04 12:25 — Добавил SQLAlchemy/Alembic в зависимости, реализовал `load_config` с `init_db`, модели (`slot`, `job_history`, `media_object`, `settings`) и seed 15 слотов; создан скрипт `scripts/init_db.py`.
 
+
+## REPO - Git hygiene
+- 2025-11-03 20:58 - Добавил .venv/ в .gitignore, чтобы не версионировать локальное виртуальное окружение.
