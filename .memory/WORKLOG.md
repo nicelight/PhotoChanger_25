@@ -29,6 +29,25 @@ updated: 2025-11-02
 - 2025-10-31 04:25 — создал задачи для формирования полного пакета спецификаций (OpenAPI, схемы, blueprints, VERSION bump) по SDD в `.memory/TASKS.md`
 - 2025-10-31 04:32 — дополнил `.memory/TASKS.md`: добавлены задачи на подготовку SDD-доков (vision/context/glossary/domain-model/constraints-risks/nfr/use-cases/acceptance-criteria/test-plan) и согласование структуры в `US PHC-1.GOV`
 
+## T PHC-1.1.1.2a — REFLECT — спроектировать управление temp-файлами и TTL
+- 2025-11-03 09:40 — изучил текущую реализацию ingest/media: `UploadValidator` считает хэш и размер, но не сохраняет файл, `JobContext` держит только `result_dir`; `MediaPaths` не содержит `temp`, `MediaObject.scope` подразумевает `provider|result`, но репозиторий работает только с `result`.
+- 2025-11-03 09:46 — зафиксировал требования из PRD/SDD: временные файлы должны жить не дольше `T_sync_response`, храниться в `media/temp`, регистрироваться как `media_object(scope='provider')` и очищаться сразу по завершении/ошибке, плюс резервный cron.
+- 2025-11-03 09:51 — потенциальные блокеры: 1) потребуется расширить конфиг (`MediaPaths.temp`, env `TEMP_TTL_SECONDS`), 2) нужна новая сущность `TempMediaStore` с API для записи UploadFile → temp-dir → возврат пути и регистрация TTL, 3) потребуется обновить `MediaObjectRepository` для работы с `scope='provider'`, 4) очистку нужно вызывать из `IngestService.record_success/record_failure` и предусмотреть fallback для просрочки.
+- 2025-11-03 09:56 — открытые вопросы к тимлиду: (a) подтверждаем ли структуру каталога `media/temp/{slot_id}/{job_id}` и регистрацию temp-файлов в `media_object`? (b) достаточно ли удаления temp-файла напрямую из ingest + периодический cron, или нужен отдельный механизм (e.g. фоновой таск) для экспирации ≤60 с? (c) должны ли драйверы провайдеров получать публичный URL из `TempMediaStore` (для future HTTP-доступа) или достаточно локального пути?
+- 2025-11-03 10:05 — Тимлид подтвердил: структура `media/temp/{slot_id}/{job_id}` + регистрация `scope='provider'` подходит, достаточно удаления силами ingest + cron, генерацию публичных ссылок откладываем на следующую итерацию.
+
+## T PHC-1.1.1.2b — Реализовать TempMediaStore (API, TTL-метаданные, файловая структура)
+- 2025-11-03 10:20 — расширил `MediaPaths` (`temp`), `AppConfig` (`temp_ttl_seconds`), внедрил чтение `TEMP_TTL_SECONDS` (fallback на `T_SYNC_RESPONSE_SECONDS`), обновил `load_config` и создание директорий.
+- 2025-11-03 10:32 — добавил `TempMediaStore` (`persist_upload`, `cleanup`, `cleanup_expired`), общий репозиторийный метод `_register_media`, `register_temp`, `list_expired_by_scope`, расширил `MediaObject` полем `scope`.
+
+## T PHC-1.1.1.2c — Интегрировать TempMediaStore с JobContext и ingest сервисом
+- 2025-11-03 10:45 — обновил `JobContext` (список temp-хэндлов, `temp_payload_path`), внедрил `TempMediaStore` в зависимости FastAPI, записал хэндлы через `IngestService.validate_upload`, добавил очистку temp-файлов в `record_success`/`record_failure`.
+- 2025-11-03 10:52 — расширил cron `cleanup_media.py`: теперь дополнительно чистит `scope='provider'` через `TempMediaStore.cleanup_expired`.
+
+## T PHC-1.1.1.2d — Написать тесты на TTL/очистку temp-файлов и синхронизировать документацию
+- 2025-11-03 11:05 — обновил unit-тесты (`ingest/test_service.py`, `media/test_cleanup.py`, `repositories/test_media_object_repository.py`) под новую инфраструктуру temp-хранилища, добавил проверку удаления temp-файлов.
+- 2025-11-03 11:12 — попытка запуска `py -m pytest tests/unit` завершилась ошибкой из-за отсутствия установленного `pytest`; зафиксировано для отчёта, требуется установка зависимости в окружении.
+
 ## US PHC-1.GOV — Governance & Discovery
 - 2025-10-31 04:45 — Подготовил вопросы к тимлиду по лимитам ingest-конкурентности: текущие артефакты декларируют поддержку ≤30 параллельных запросов (MISSION.md) и provider quotas (PRD §4.3). Предложение: удерживать внутренний лимит 30 concurrent jobs (1–2 на слот) без внешнего rate limiter, но уточнить, нужен ли внешний gateway для защиты от bursts >0.5 RPS и согласовать ожидаемую нагрузку с провайдерами (Gemini 500 RPM). Вопросы: подтверждаем ли «30» как жёсткий потолок? требуется ли global RPS cap на уровне reverse-proxy?
 - 2025-10-31 04:47 — Зафиксировал анализ KISS vs SLA при росте числа провайдеров: добавление асинхронных/пуллинговых провайдеров может потребовать очередей и ретраев, что нарушает KISS и лимит 60 с. Предложены guardrails — принимать только провайдеров с ≤60 с SLA, использовать pluggable драйверы, эмулировать долгие операции контрактными тестами, держать фичи типа retries как ADR с согласованием SLA.
@@ -267,3 +286,4 @@ updated: 2025-11-02
 
 ## REPO - Git hygiene
 - 2025-11-03 20:58 - Добавил .venv/ в .gitignore, чтобы не версионировать локальное виртуальное окружение.
+ 

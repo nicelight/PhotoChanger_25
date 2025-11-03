@@ -62,10 +62,10 @@ updated: 2025-11-02
         [x] T PHC-1.1.1.1d — Добавить тесты и обновить контракты/документацию по валидации  
         [x] T PHC-1.1.1.1e — Инициализировать реальную БД, миграции и репозитории (`slot`, `job_history`, `media_object`, `settings`)
       [ ] T PHC-1.1.1.2 — Хранение temp файлов с TTL = `T_sync_response`  
-          [ ] T PHC-1.1.1.2a — REFLECT — спроектировать управление temp-файлами и TTL (создание, обновление, очистка)  
-          [ ] T PHC-1.1.1.2b — Реализовать TempMediaStore (API, TTL-метаданные, файловая структура)  
-          [ ] T PHC-1.1.1.2c — Интегрировать TempMediaStore с JobContext и ingest сервисом  
-          [ ] T PHC-1.1.1.2d — Написать тесты на TTL/очистку temp-файлов и синхронизировать документацию  
+          [x] T PHC-1.1.1.2a — REFLECT — спроектировать управление temp-файлами и TTL (создание, обновление, очистка)  
+          [x] T PHC-1.1.1.2b — Реализовать TempMediaStore (API, TTL-метаданные, файловая структура)  
+          [x] T PHC-1.1.1.2c — Интегрировать TempMediaStore с JobContext и ingest сервисом  
+          [x] T PHC-1.1.1.2d — Написать тесты на TTL/очистку temp-файлов и синхронизировать документацию  
     [ ] US PHC-1.1.2 — Таймауты и статусы `pending/done/timeout/failed`
       [ ] T PHC-1.1.2.1 — REFLECT — сверить переходы состояний с PRD (§4/§5), SDD (`spec/docs/use-cases.md`) и `ingest-errors.md`, подготовить диаграмму для `JobContext`/БД
       [ ] T PHC-1.1.2.2 — Управление статусами и `failure_reason`

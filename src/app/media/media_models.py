@@ -13,4 +13,5 @@ class MediaObject:
     path: Path
     preview_path: Path | None
     expires_at: datetime
+    scope: str
     cleaned_at: datetime | None = None

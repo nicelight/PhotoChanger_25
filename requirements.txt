@@ -1,3 +1,11 @@
+# === Подсказки по установке (не выполняется) ===
+# 1) python -m venv .venv
+# 2) .\.venv\Scripts\Activate.ps1  
+# 2.1) deactivate # чтобы деактивировать виртуальное окружение
+# 3) pip install -U pip
+# 4) pip install -r requirements.txt
+
+
 fastapi>=0.110
 uvicorn[standard]>=0.27
 structlog>=24.1

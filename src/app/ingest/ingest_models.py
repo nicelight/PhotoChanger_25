@@ -3,6 +3,10 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover - type checking only
+    from ..media.temp_media_store import TempMediaHandle
 
 
 @dataclass(slots=True)
@@ -26,3 +30,5 @@ class JobContext:
     result_expires_at: datetime | None = None
     upload: UploadValidationResult | None = None
     metadata: dict[str, str] = field(default_factory=dict)
+    temp_media: list["TempMediaHandle"] = field(default_factory=list)
+    temp_payload_path: Path | None = None

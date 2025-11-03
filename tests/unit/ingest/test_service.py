@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 from hashlib import sha256
 from io import BytesIO
 from pathlib import Path
@@ -11,10 +10,10 @@ from sqlalchemy.orm import sessionmaker
 from src.app.config import IngestLimits, MediaPaths
 from src.app.db.db_init import init_db
 from src.app.ingest.ingest_errors import ChecksumMismatchError
-from src.app.ingest.ingest_models import UploadValidationResult
 from src.app.ingest.ingest_service import IngestService
 from src.app.ingest.validation import UploadValidator
 from src.app.media.media_service import ResultStore
+from src.app.media.temp_media_store import TempMediaStore
 from src.app.repositories.job_history_repository import JobHistoryRepository
 from src.app.repositories.media_object_repository import MediaObjectRepository
 from src.app.slots.slots_repository import SlotRepository
@@ -49,14 +48,21 @@ def build_service(tmp_path: Path) -> IngestService:
         root=tmp_path,
         results=tmp_path / "results",
         templates=tmp_path / "templates",
+        temp=tmp_path / "temp",
     )
     result_store = ResultStore(media_paths)
+    temp_store = TempMediaStore(
+        paths=media_paths,
+        media_repo=media_repo,
+        temp_ttl_seconds=48,
+    )
     return IngestService(
         slot_repo=slot_repo,
         validator=validator,
         job_repo=job_repo,
         media_repo=media_repo,
         result_store=result_store,
+        temp_store=temp_store,
         result_ttl_hours=72,
         sync_response_seconds=48,
     )
@@ -78,6 +84,9 @@ async def test_prepare_and_validate(tmp_path) -> None:
 
     assert result.sha256 == expected_hash
     assert job.upload == result
+    assert len(job.temp_media) == 1
+    assert job.temp_payload_path is not None
+    assert job.temp_payload_path.exists()
 
 
 @pytest.mark.asyncio
@@ -94,18 +103,17 @@ async def test_checksum_mismatch(tmp_path) -> None:
 async def test_record_success(tmp_path) -> None:
     service = build_service(tmp_path)
     job = service.prepare_job("slot-001")
-    payload = b"result-bytes"
-    job.upload = UploadValidationResult(
-        content_type="image/png",
-        size_bytes=len(payload),
-        sha256=sha256(payload).hexdigest(),
-        filename="file.png",
-    )
-    job.result_expires_at = datetime.utcnow() + timedelta(hours=1)
+    data = load_asset("tiny.png")
+    upload = make_upload(data, content_type="image/png")
+    expected_hash = sha256(data).hexdigest()
+    await service.validate_upload(job, upload, expected_hash)
+    temp_path = job.temp_payload_path
+    assert temp_path is not None and temp_path.exists()
 
-    path = service.record_success(job, payload, "image/png")
+    path = service.record_success(job, data, "image/png")
 
     assert path.exists()
+    assert temp_path is not None and not temp_path.exists()
 
 
 @pytest.mark.asyncio
@@ -114,7 +122,14 @@ async def test_record_failure(tmp_path) -> None:
     job = service.prepare_job("slot-001")
     directory = job.result_dir
     assert directory and directory.exists()
+    data = load_asset("tiny.png")
+    upload = make_upload(data, content_type="image/png")
+    expected_hash = sha256(data).hexdigest()
+    await service.validate_upload(job, upload, expected_hash)
+    temp_path = job.temp_payload_path
+    assert temp_path is not None and temp_path.exists()
 
     service.record_failure(job, failure_reason="provider_timeout", status="timeout")
 
     assert directory and not directory.exists()
+    assert temp_path is not None and not temp_path.exists()

@@ -14,6 +14,7 @@ from ..repositories.job_history_repository import JobHistoryRepository
 from ..repositories.media_object_repository import MediaObjectRepository
 from ..slots.slots_repository import SlotRepository
 from ..media.media_service import ResultStore
+from ..media.temp_media_store import TempMediaStore
 from .ingest_errors import ChecksumMismatchError
 from .ingest_models import JobContext, UploadValidationResult
 from .validation import UploadValidator
@@ -30,6 +31,7 @@ class IngestService:
     job_repo: JobHistoryRepository
     media_repo: MediaObjectRepository
     result_store: "ResultStore"
+    temp_store: "TempMediaStore"
     result_ttl_hours: int
     sync_response_seconds: int
     log: logging.Logger = field(default_factory=lambda: logger)
@@ -84,6 +86,19 @@ class IngestService:
             raise ChecksumMismatchError("Checksum mismatch")
 
         job.upload = result
+
+        if job.job_id is None or job.sync_deadline is None:
+            raise RuntimeError("JobContext missing identifiers for temp storage")
+
+        handle = await self.temp_store.persist_upload(
+            slot_id=job.slot_id,
+            job_id=job.job_id,
+            upload=upload,
+            expires_at=job.sync_deadline,
+        )
+        job.temp_media.append(handle)
+        job.temp_payload_path = handle.path
+
         self.log.info(
             "ingest.upload.ready",
             extra={
@@ -91,6 +106,7 @@ class IngestService:
                 "job_id": job.job_id,
                 "size_bytes": result.size_bytes,
                 "content_type": result.content_type,
+                "temp_path": str(handle.path),
             },
         )
         return result
@@ -122,6 +138,7 @@ class IngestService:
             preview_path=None,
             expires_at=expires_at,
         )
+        self.temp_store.cleanup(job.slot_id, job.job_id, job.temp_media)
         self.log.info(
             "ingest.job.completed",
             extra={"slot_id": job.slot_id, "job_id": job.job_id, "result_path": str(payload_path)},
@@ -139,6 +156,7 @@ class IngestService:
             raise RuntimeError("JobContext is not fully initialized")
         self.job_repo.set_failure(job_id=job.job_id, status=status, failure_reason=failure_reason)
         self.result_store.remove_result_dir(job.slot_id, job.job_id)
+        self.temp_store.cleanup(job.slot_id, job.job_id, job.temp_media)
         self.log.warning(
             "ingest.job.failed",
             extra={"slot_id": job.slot_id, "job_id": job.job_id, "reason": failure_reason, "status": status},
