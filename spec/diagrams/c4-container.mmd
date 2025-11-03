@@ -23,7 +23,7 @@ graph TD
     Ingest -->|job status| Stats
     Ingest -->|select slot| Slots
     Ingest -->|global config| Settings
-    Ingest -->|process(job)| Providers
+    Ingest -->|process `job`| Providers
 
     API -->|shares context| Ingest
     API -->|shares context| MediaSvc
