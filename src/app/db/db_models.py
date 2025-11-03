@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+import uuid
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -16,9 +17,14 @@ class SlotModel(Base):
     __tablename__ = "slot"
 
     id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    display_name: Mapped[str] = mapped_column(String(128), nullable=False, default="")
     provider: Mapped[str] = mapped_column(String(64), nullable=False)
+    operation: Mapped[str] = mapped_column(String(64), nullable=False, default="image_edit")
+    settings_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
     size_limit_mb: Mapped[int] = mapped_column(Integer, nullable=False, default=15)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    updated_by: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
@@ -26,6 +32,23 @@ class SlotModel(Base):
         back_populates="slot",
         cascade="all, delete-orphan",
     )
+    template_media: Mapped[list["SlotTemplateMediaModel"]] = relationship(
+        back_populates="slot",
+        cascade="all, delete-orphan",
+    )
+
+
+class SlotTemplateMediaModel(Base):
+    __tablename__ = "slot_template_media"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True, default=lambda: uuid.uuid4().hex)
+    slot_id: Mapped[str] = mapped_column(String(32), ForeignKey("slot.id"), nullable=False, index=True)
+    media_kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    media_object_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    slot: Mapped[SlotModel] = relationship(back_populates="template_media")
 
 
 class JobHistoryModel(Base):

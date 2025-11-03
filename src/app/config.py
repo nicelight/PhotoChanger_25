@@ -63,7 +63,7 @@ def load_config() -> AppConfig:
     ingest_limits = IngestLimits(
         allowed_content_types=("image/jpeg", "image/png", "image/webp"),
         slot_default_limit_mb=int(os.getenv("INGEST_SLOT_DEFAULT_LIMIT_MB", 15)),
-        absolute_cap_bytes=int(os.getenv("INGEST_ABSOLUTE_CAP_BYTES", 50 * 1024 * 1024)),
+        absolute_cap_bytes=int(os.getenv("INGEST_ABSOLUTE_CAP_BYTES", 20 * 1024 * 1024)),
         chunk_size_bytes=int(os.getenv("INGEST_CHUNK_SIZE_BYTES", 1 * 1024 * 1024)),
     )
 

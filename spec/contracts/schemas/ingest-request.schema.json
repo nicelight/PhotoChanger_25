@@ -16,7 +16,7 @@
       "description": "Hex-encoded checksum (MD5/SHA) of the uploaded image used to verify integrity."
     },
     "fileToUpload": {
-      "description": "Binary image payload. The multipart part MUST provide `Content-Type` = image/jpeg | image/png | image/webp. The server validates the header and enforces both the per-slot limit (default ≤ 15 MB) and an absolute 50 MB safety cap.",
+      "description": "Binary image payload. The multipart part MUST provide `Content-Type` = image/jpeg | image/png | image/webp. The server validates the header and enforces both the per-slot limit (default ≤ 15 MB) and an absolute 20 MB safety cap.",
       "oneOf": [
         {
           "type": "string",

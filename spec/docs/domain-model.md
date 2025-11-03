@@ -4,7 +4,7 @@
 
 | Сущность | Ключевые поля | Описание и требования |
 |----------|---------------|-----------------------|
-| Slot | `id`, `display_name`, `provider`, `operation`, `parameters`, `template_media_ids`, `ingest_password_hash`, `is_active`, `updated_at`, `version` | Определяет правило обработки. Всегда существует 15 предсозданных слотов (`slot-001`…`slot-015`). Конфликт версий предотвращается через optimistic locking (`version`). |
+| Slot | `id`, `display_name`, `provider`, `operation`, `parameters`, `template_media_ids`, `is_active`, `updated_at`, `version` | Определяет правило обработки. Всегда существует 15 предсозданных слотов (`slot-001`…`slot-015`). Конфликт версий предотвращается через optimistic locking (`version`). |
 | JobHistory | `job_id`, `slot_id`, `status`, `failure_reason`, `started_at`, `completed_at`, `result_path`, `result_inline_base64`, `result_expires_at`, `metrics` | Фиксирует каждое обращение Ingest API. Статусы: `pending`, `done`, `timeout`, `failed`. `result_expires_at = started_at + T_result_retention`. |
 | MediaObject | `id`, `path`, `preview_path`, `media_type`, `expires_at`, `cleaned_at`, `job_id`, `slot_id`, `scope` (`provider|result`) | Отслеживает файлы PhotoChanger. При `scope=result` хранит путь к итоговому изображению и превью (`preview_path`), TTL совпадает с `result_expires_at`. |
 | TemplateMedia | `id`, `slot_id`, `path`, `media_type`, `created_at`, `checksum` | Шаблонные изображения, привязанные к слотам; используются провайдерами при генерации. |

@@ -8,6 +8,7 @@ from .ingest.ingest_service import IngestService
 from .ingest.validation import UploadValidator
 from .media.media_service import ResultStore
 from .media.temp_media_store import TempMediaStore
+from .providers.providers_factory import create_driver
 from .repositories.job_history_repository import JobHistoryRepository
 from .repositories.media_object_repository import MediaObjectRepository
 from .slots.slots_repository import SlotRepository
@@ -35,6 +36,7 @@ def include_routers(app: FastAPI, config: AppConfig) -> None:
         temp_store=temp_store,
         result_ttl_hours=config.result_ttl_hours,
         sync_response_seconds=config.sync_response_seconds,
+        provider_factory=create_driver,
     )
 
     app.state.config = config

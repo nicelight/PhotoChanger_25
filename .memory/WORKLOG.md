@@ -29,6 +29,27 @@ updated: 2025-11-02
 - 2025-10-31 04:25 — создал задачи для формирования полного пакета спецификаций (OpenAPI, схемы, blueprints, VERSION bump) по SDD в `.memory/TASKS.md`
 - 2025-10-31 04:32 — дополнил `.memory/TASKS.md`: добавлены задачи на подготовку SDD-доков (vision/context/glossary/domain-model/constraints-risks/nfr/use-cases/acceptance-criteria/test-plan) и согласование структуры в `US PHC-1.GOV`
 
+## US PHC-1.2.0 — Инфраструктура провайдеров
+- 2025-11-04 09:05 — перечитал `.memory/MISSION.md`, `.memory/CONTEXT.md`, `.memory/TASKS.md`, `.memory/ASKS.md`, `.memory/DECISIONS.md`, `.memory/USECASES.md`, `.memory/INDEX.yaml` для актуализации контекста перед стартом US PHC-1.2.0
+- 2025-11-04 09:12 — загрузил в рабочий контекст BRIEF, PRD и ARCHITECTURE, выписал требования к провайдерским драйверам и SLA
+- 2025-11-04 09:20 — изучил текущий код `IngestService`, заглушки драйверов (`providers_*.py`), фабрику провайдеров и существующие unit-тесты, зафиксировал отсутствие реализации `_invoke_provider`
+- 2025-11-04 09:32 — обсудил с тимлидом план по `_invoke_provider`: используем DI фабрики драйверов, оборачиваем ошибки в `provider_error`, тесты добавим после реализации настоящих драйверов (по решению тимлида сейчас не прогоняем)
+- 2025-11-04 09:50 — внедрил DI для провайдеров (`ProviderResult`, `provider_factory` в `IngestService`), обработку ошибок с маппингом в `provider_error`, обновил зависимости FastAPI
+- 2025-11-04 10:20 — совместно с тимлидом решили сначала расширить модель слота; в .memory/TASKS.md добавлены задачи T PHC-1.2.0.4–T PHC-1.2.0.7
+- 2025-11-04 10:40 — зафиксировал в документации отказ от Files API и лимит 20 МБ (PRD, spec/docs/providers/gemini.md, spec/contracts/providers/gemini.md), обновил ограничения ingest и MIME, синхронизировал конфиг/тесты
+- 2025-11-04 10:55 — вернул spec/docs/providers/gemini.md к исходной версии (источник истины не изменяем), дальнейшие ограничения фиксируем в PRD/контрактах
+- 2025-11-04 11:05 — добавил зависимость httpx в requirements для будущих провайдерских драйверов, уточнил хранение ключей и обработку base64 ответа
+ - 2025-11-04 11:20 — REFLECT: текущий слот хранит только id/provider/size/is_active; для провайдеров нужны поля operation, settings_json (параметры провайдера, promt/strength/quality), связь с шаблонными медиа, версионность
+   * operation: строка из доменного словаря (style_transfer, image_edit, identity_transfer) — иначе драйверу нечего выбрать
+   * settings_json: JSON конфиг слота с параметрами (prompt, style_strength, guidance_scale, retries) и ID шаблонов; сейчас нечему хранить эти значения
+   * template_media: отдельная таблица/связка на media_object с TTL>72ч; слоту нужны ID шаблонов и возможность различать основное/оверлей
+   * ingest_password_hash: по PRD пароль может быть на слот; пока только глобальный hash в settings
+   * display_name/version/updated_by для UI и optimistic locking (PRD/domain-model)
+  Риски: придётся сделать миграцию (ALTER slot + новая таблица template_media), обновить сиды/репозиторий/датакласс и обеспечить совместимость с текущими данными.
+- 2025-11-04 11:31 — уточнил: по PRD ingest-пароль глобальный (hash хранится в settings), поле ingest_password_hash в описании slot — артефакт раннего драфта
+- 2025-11-04 11:40 — убрал упоминание ingest_password_hash у Slot (PRD, domain-model), чтобы отразить глобальный пароль из settings
+- 2025-11-04 11:48 — дополнил PRD: уточнена структура slot (display_name, operation, settings_json, version, template bindings) и предел загрузки 20 МБ
+
 ## T PHC-1.1.1.2a — REFLECT — спроектировать управление temp-файлами и TTL
 - 2025-11-03 09:40 — изучил текущую реализацию ingest/media: `UploadValidator` считает хэш и размер, но не сохраняет файл, `JobContext` держит только `result_dir`; `MediaPaths` не содержит `temp`, `MediaObject.scope` подразумевает `provider|result`, но репозиторий работает только с `result`.
 - 2025-11-03 09:46 — зафиксировал требования из PRD/SDD: временные файлы должны жить не дольше `T_sync_response`, храниться в `media/temp`, регистрироваться как `media_object(scope='provider')` и очищаться сразу по завершении/ошибке, плюс резервный cron.
@@ -47,6 +68,15 @@ updated: 2025-11-02
 ## T PHC-1.1.1.2d — Написать тесты на TTL/очистку temp-файлов и синхронизировать документацию
 - 2025-11-03 11:05 — обновил unit-тесты (`ingest/test_service.py`, `media/test_cleanup.py`, `repositories/test_media_object_repository.py`) под новую инфраструктуру temp-хранилища, добавил проверку удаления temp-файлов.
 - 2025-11-03 11:12 — попытка запуска `py -m pytest tests/unit` завершилась ошибкой из-за отсутствия установленного `pytest`; зафиксировано для отчёта, требуется установка зависимости в окружении.
+
+## T PHC-1.1.2.1 — REFLECT — сверить переходы состояний с PRD/SDD/ingest-errors
+- 2025-11-03 11:35 — пересмотрел PRD (§4 поток ingest, §5 таймауты), SDD use-cases UC2/UC3 и domain-model: статус `pending` создаётся на старте, далее единственный переход в `done|timeout|failed`; повторная смена статуса и повторный запуск job недопустимы.
+- 2025-11-03 11:38 — `ingest-errors.md` + JSON Schema фиксируют `status` поля ответа (`error|timeout`) и перечень `failure_reason` (`invalid_request`, `invalid_password`, `slot_not_found`, `slot_disabled`, `payload_too_large`, `unsupported_media_type`, `rate_limited`, `provider_timeout`, `provider_error`, `internal_error`). Нужно сопоставить их с HTTP-кодами и статусами БД.
+- 2025-11-03 11:42 — Текущая реализация `IngestService` создаёт `job_history.pending`, далее `record_success` → `set_result(status='done')`, `record_failure` → `set_failure(status, failure_reason)`; таймауты и ошибки провайдера пока не реализованы, но код уже очищает result/temp каталоги.
+- 2025-11-03 11:47 — Узкие места: (1) ошибки валидации/аутентификации происходят до запуска провайдера — нужно решить, менять ли статус на `failed` или удалять pending-запись; (2) при `asyncio.CancelledError`/`TimeoutError` нужно гарантированно фиксировать `status='timeout'` с `failure_reason='provider_timeout'`; (3) при внутренних исключениях сервиса отличать `internal_error` от `provider_error`, чтобы соблюсти контракты и статистику.
+- 2025-11-03 11:51 — Для диаграммы состояния достаточно текстового описания: `pending` → (`done`|`timeout`|`failed`), где `timeout` = `asyncio.TimeoutError`; `failed` дробится по причинам (`invalid_*`, `provider_error`, `internal_error`). Дополнительно нужно отметить, что при возврате 429 из throttle job может не создаваться (семафор отклоняет до `create_pending`).
+- 2025-11-03 11:54 — Решения: держимся KISS — не добавляем промежуточных статусов; передаём `failure_reason` напрямую из сервисных исключений; `status` поля HTTP тела будет `error` (кроме таймаута), а `job_history.status` — `failed`. Требуется уточнение у тимлида по стратегииям для ранних ошибок (оставлять pending в `failed` или не сохранять job вовсе).
+- 2025-11-03 12:00 — Тимлид одобрил вариант 1: `job_history` создаём сразу, любые ранние ошибки переводим в `failed` с соответствующим `failure_reason`; статистику по SLA фильтруем по нужным причинам.
 
 ## US PHC-1.GOV — Governance & Discovery
 - 2025-10-31 04:45 — Подготовил вопросы к тимлиду по лимитам ingest-конкурентности: текущие артефакты декларируют поддержку ≤30 параллельных запросов (MISSION.md) и provider quotas (PRD §4.3). Предложение: удерживать внутренний лимит 30 concurrent jobs (1–2 на слот) без внешнего rate limiter, но уточнить, нужен ли внешний gateway для защиты от bursts >0.5 RPS и согласовать ожидаемую нагрузку с провайдерами (Gemini 500 RPM). Вопросы: подтверждаем ли «30» как жёсткий потолок? требуется ли global RPS cap на уровне reverse-proxy?
@@ -287,3 +317,69 @@ updated: 2025-11-02
 ## REPO - Git hygiene
 - 2025-11-03 20:58 - Добавил .venv/ в .gitignore, чтобы не версионировать локальное виртуальное окружение.
  
+## T PHC-1.1.2.2a — Сформировать enum статусов и перечень `failure_reason`
+- 2025-11-03 12:10 — Собрал список доменных статусов job: `pending`, `done`, `timeout`, `failed` (domain-model, PRD §4, UC2/UC3).
+- 2025-11-03 12:12 — Перечень `failure_reason` по `ingest-error.schema.json` и `ingest-errors.md`: `invalid_request`, `invalid_password`, `slot_not_found`, `slot_disabled`, `payload_too_large`, `unsupported_media_type`, `rate_limited`, `provider_timeout`, `provider_error`, `internal_error`. Отдельно обсудить хэш: сейчас API возвращает `checksum_mismatch`, которого нет в контракте — нужно свести к `invalid_request` (KISS).
+- 2025-11-03 12:15 — План: добавить Enum/StrEnum для статусов job + перечисление `FailureReason`; создать helper для маппинга исключений/ситуаций → failure_reason; гарантировать, что `record_failure` всегда получает одно из этих значений. Для метрик таймаутов использовать `status='timeout'`, остальные ошибки → `failed`.
+
+## T PHC-1.1.2.2b — Интегрировать установки статусов и `failure_reason` в IngestService
+- 2025-11-03 12:25 — Добавил `JobStatus` и `FailureReason` (StrEnum) в `ingest_models`, обновил `IngestService.record_success/record_failure` для использования enum и логирования причин.
+- 2025-11-03 12:32 — Обновил `TempMediaStore`-интеграцию: `record_failure` теперь всегда очищает temp/result каталоги и пишет статус в `job_history`.
+- 2025-11-03 12:38 — `ingest_api` теперь маппит ранние ошибки на контракты (`invalid_request`, `payload_too_large`, `unsupported_media_type`) и вызывает `record_failure`, чтобы pending-заявки не зависали.
+- 2025-11-03 12:40 — Юнит-тесты сервиса обновлены: используют enum в вызове `record_failure`, дополнительная проверка на cleanup tmp-файлов остаётся. Тесты не прогнаны из-за отсутствия `pytest` (см. ранее).
+
+## T PHC-1.1.2.2c — Синхронизация API-ответов, логов, тестов и документации
+- 2025-11-03 12:55 — Обновил `tests/unit/ingest/test_service.py`: проверяем статусы/причины в БД после успеха и таймаута, используем новые enum.
+- 2025-11-03 13:00 — Привёл blueprint `spec/docs/blueprints/ingest-validation.md` к актуальной схеме (TempMediaStore, failure_reason enums), убрал упоминание `checksum_mismatch`, добавил описание try/except.
+- 2025-11-03 13:05 — В `spec/contracts/ingest-errors.md` уточнил, что `invalid_request` покрывает mismatch checksum; API код уже возвращает этот failure_reason.
+
+## T PHC-1.1.2.3a — REFLECT — согласовать отмену `asyncio.wait_for`, очистку ресурсов и логирование с ограничениями SLA (`T_sync_response`, TTL)
+- 2025-11-03 13:20 — Зафиксировал требования PRD/SDD: `driver.process(job_ctx)` выполняется внутри `asyncio.wait_for(..., timeout=T_sync_response)`, по истечении окна возвращаем 504, `job_history.status='timeout'`, `failure_reason='provider_timeout'`, очищаем каталоги.
+- 2025-11-03 13:24 — Риски: (1) драйверы должны корректно обрабатывать `CancelledError`; (2) важно очищать temp/result каталоги и освобождать (будущие) семафоры; (3) логировать длительность ожидания; (4) поздние ответы провайдера игнорируем; (5) контракт 504/`status: timeout` уже задокументирован.
+- 2025-11-03 13:28 — Решение: следуем KISS — используем встроенный `except asyncio.TimeoutError`, без отдельного helper, вызываем `record_failure(..., JobStatus.TIMEOUT, FailureReason.PROVIDER_TIMEOUT)` и логируем длительность.
+
+## T PHC-1.1.2.3b — Реализовать обработку таймаута: отмена провайдера, статус `timeout`, cleanup
+- 2025-11-03 13:40 — Добавил `ProviderTimeoutError`, реализовал `IngestService.process`: оборачивает `_invoke_provider(job)` в `asyncio.wait_for`, на таймаут логирует `ingest.job.timeout`, обновляет `job_history`, очищает каталоги и пробрасывает доменное исключение.
+- 2025-11-03 13:47 — Ввёл `_invoke_provider` как абстрактный метод (пока `NotImplementedError`); конкретные драйверы реализуют его в последующих задачах.
+- 2025-11-03 13:52 — Добавил unit-тест `test_process_timeout` (через `StubIngestService`) — проверяет статус `timeout`, очистку temp/result и `ProviderTimeoutError`.
+
+## T PHC-1.1.2.3c — Написать тесты/контракты и обновить документацию по статусам/таймаутам
+- 2025-11-03 14:00 — Проверил, что OpenAPI и PRD уже описывают 504/`provider_timeout`; уточнения в blueprint/ingest-errors синхронизированы.
+- 2025-11-03 14:05 — Подготовленный unit-тест покрывает таймаут; интеграционные/контрактные сценарии добавим после реализации драйверов.
+- 2025-11-03 13:05 — В `spec/contracts/ingest-errors.md` уточнил, что `invalid_request` покрывает mismatch checksum; API код уже возвращает этот failure_reason.
+
+## T PHC-1.1.2.3a — REFLECT — согласовать отмену `asyncio.wait_for`, очистку ресурсов и логирование с ограничениями SLA (`T_sync_response`, TTL)
+- 2025-11-03 13:20 — Зафиксировал требования PRD/SDD: `driver.process(job_ctx)` выполняется в `asyncio.wait_for(..., timeout=T_sync_response)`, при `TimeoutError` отвечаем 504, записываем `job_history.status='timeout'`, `failure_reason='provider_timeout'`, очищаем каталоги.
+- 2025-11-03 13:24 — Узкие места:
+  1. Нужно гарантировать отмену операций провайдера (Gemini/Turbotext). Для Gemini (async HTTP) достаточно отмены корутины; для Turbotext (polling) требуется, чтобы драйвер реагировал на `CancelledError` и прекращал цикл.
+  2. Очистка ресурсов: помимо `ResultStore.remove_result_dir` и TempMediaStore, нужно убедиться, что семафоры (когда появятся) освобождаются.
+  3. Логирование: фиксировать `ingest.job.timeout` с длительностью ожидания, чтобы Ops видели SLA.
+  4. Поздние ответы провайдера игнорируем — `wait_for` отменит корутину, драйвер должен корректно завершиться.
+  5. Контрактный ответ 504/`status: timeout` уже задокументирован (`ingest-errors.md`).
+- 2025-11-03 13:28 — Решение: KISS — используем встроенный `except asyncio.TimeoutError`, без дополнительного helper; в обработчике вызываем `record_failure(..., JobStatus.TIMEOUT, FailureReason.PROVIDER_TIMEOUT)` и логируем длительность.
+
+## T PHC-1.1.2.3b — Реализовать обработку таймаута: отмена провайдера, статус `timeout`, cleanup
+- 2025-11-03 13:40 — Добавил `ProviderTimeoutError`, реализовал `IngestService.process`: оборачивает `_invoke_provider(job)` в `asyncio.wait_for`, на таймаут логирует `ingest.job.timeout`, обновляет `job_history` и пробрасывает доменное исключение.
+- 2025-11-03 13:47 — Ввёл абстрактный `_invoke_provider` (пока `NotImplementedError`); реализация провайдеров добавит конкретную логику.
+- 2025-11-03 13:52 — Юнит-тест `test_process_timeout` построен на `StubIngestService` с задержкой, проверяет очистку temp/result каталогов и запись статуса `timeout`.
+
+## T PHC-1.2.0 — Инфраструктура провайдеров
+- 2025-11-03 14:20 — Добавил US PHC-1.2.0 в `.memory/TASKS.md`: выделены задачи на `_invoke_provider`, выбор драйвера и unit-тесты, чтобы закрыть NotImplemented и формализовать обработку ошибок.
+- 2025-11-03 14:24 — Обновил спецификации: `spec/docs/providers/turbotext.md` и `spec/contracts/providers/turbotext.md` фиксируют отказ от публичных URL Turbotext; используем multipart-вложения и локальное хранение результатов.
+
+## TEST — FEAT PHC-1.1 unit
+- 2025-11-03 14:40 — Установил `pytest-asyncio`, скорректировал тестовые helper'ы (`UploadFile` заголовки) и валидатор; `py -m pytest tests/unit` завершился `13 passed`.
+- 2025-11-04 10:05 — проверил статус задач в `.memory/TASKS.md`: следующая ветка `T PHC-1.2.1.*` (GeminiDriver) не заблокирована, готовлюсь к фазе REFLECT перед реализацией драйвера
+
+## CONSULT — Slot модель и миграция
+- 2025-11-04 11:55 — подготовил вопросы/решения для T PHC-1.2.0.5: структура slot, settings_json, template media, миграции
+- 2025-11-04 12:00 — тимлид подтвердил предложенные поля (display_name, operation, settings_json, version/audit, slot_template_media)
+
+## T PHC-1.2.0.6 — Расширение модели слота
+- 2025-11-04 12:20 — реализовал T PHC-1.2.0.6: добавлены новые поля slot (display_name, operation, settings_json, version, updated_by), таблица slot_template_media, миграция через init_db, обновлены ORM/репозиторий/сидеры
+
+- 2025-11-04 12:05 — сформулировал план: 1) миграция slot (display_name, operation, settings_json, version, updated_at/by), 2) новая таблица slot_template_media, 3) обновление ORM/датакласса/репозитория, 4) сиды/фикстуры
+- 2025-11-04 12:08 — риски: алембик ещё не настроен, возможно придётся писать SQL-миграцию вручную; нужно обеспечить обратную совместимость с существующими слотами (nullable поля, дефолты)
+
+- 2025-11-04 11:55 — подготовил вопросы/решения для T PHC-1.2.0.5: структура slot, settings_json, template media, миграции
+\n## SUPPORT-2025-11-04 - Восстановление состояния после GitHub Desktop\n- 2025-11-04 02:35 - Нашел stash GitHub Desktop (stash@{1}) с кодом PHC-1.1/1.2, применил его и подчистил конфликтующие __pycache__.\n- 2025-11-04 02:40 - Вернул .gitignore, удалил из индекса все bytecode-артефакты.\n- 2025-11-04 02:45 - Синхронизировал .memory/TASKS.md (PHC-1.1 закрыт, PHC-1.2 в работе) и прогнал py -m pytest tests/unit (13 passed).

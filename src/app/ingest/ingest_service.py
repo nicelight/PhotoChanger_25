@@ -2,21 +2,29 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import uuid
-from pathlib import Path
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+from pathlib import Path
 
 from fastapi import UploadFile
 
+from ..providers.providers_base import ProviderDriver, ProviderResult
+from ..providers.providers_factory import create_driver
 from ..repositories.job_history_repository import JobHistoryRepository
 from ..repositories.media_object_repository import MediaObjectRepository
 from ..slots.slots_repository import SlotRepository
 from ..media.media_service import ResultStore
 from ..media.temp_media_store import TempMediaStore
-from .ingest_errors import ChecksumMismatchError
-from .ingest_models import JobContext, UploadValidationResult
+from .ingest_errors import (
+    ChecksumMismatchError,
+    ProviderExecutionError,
+    ProviderTimeoutError,
+)
+from .ingest_models import FailureReason, JobContext, JobStatus, UploadValidationResult
 from .validation import UploadValidator
 
 logger = logging.getLogger(__name__)
@@ -34,6 +42,7 @@ class IngestService:
     temp_store: "TempMediaStore"
     result_ttl_hours: int
     sync_response_seconds: int
+    provider_factory: Callable[[str], ProviderDriver] = field(default_factory=lambda: create_driver)
     log: logging.Logger = field(default_factory=lambda: logger)
 
     def prepare_job(self, slot_id: str) -> JobContext:
@@ -127,7 +136,7 @@ class IngestService:
         expires_at = job.result_expires_at or (datetime.utcnow() + timedelta(hours=self.result_ttl_hours))
         self.job_repo.set_result(
             job_id=job.job_id,
-            status="done",
+            status=JobStatus.DONE.value,
             result_path=str(payload_path),
             result_expires_at=expires_at,
         )
@@ -148,22 +157,96 @@ class IngestService:
     def record_failure(
         self,
         job: JobContext,
-        failure_reason: str,
-        status: str = "failed",
+        failure_reason: FailureReason | str,
+        status: JobStatus = JobStatus.FAILED,
     ) -> None:
         """Update job status and cleanup result dir on failure/timeout."""
         if job.job_id is None:
             raise RuntimeError("JobContext is not fully initialized")
-        self.job_repo.set_failure(job_id=job.job_id, status=status, failure_reason=failure_reason)
+        reason = failure_reason.value if isinstance(failure_reason, FailureReason) else failure_reason
+        self.job_repo.set_failure(
+            job_id=job.job_id,
+            status=status.value,
+            failure_reason=reason,
+        )
         self.result_store.remove_result_dir(job.slot_id, job.job_id)
         self.temp_store.cleanup(job.slot_id, job.job_id, job.temp_media)
         self.log.warning(
             "ingest.job.failed",
-            extra={"slot_id": job.slot_id, "job_id": job.job_id, "reason": failure_reason, "status": status},
+            extra={
+                "slot_id": job.slot_id,
+                "job_id": job.job_id,
+                "reason": reason,
+                "status": status.value,
+            },
         )
 
-    async def process(self, job: JobContext) -> bytes:  # pragma: no cover - placeholder
-        raise NotImplementedError
+    async def process(self, job: JobContext) -> bytes:
+        """Invoke provider driver with timeout and persist result."""
+        if job.job_id is None:
+            raise RuntimeError("JobContext is not fully initialized")
+
+        provider_name = job.metadata.get("provider", "unknown")
+        started_at = datetime.utcnow()
+        try:
+            payload, content_type = await asyncio.wait_for(
+                self._invoke_provider(job),
+                timeout=self.sync_response_seconds,
+            )
+        except asyncio.TimeoutError as exc:
+            duration = (datetime.utcnow() - started_at).total_seconds()
+            self.log.warning(
+                "ingest.job.timeout",
+                extra={
+                    "slot_id": job.slot_id,
+                    "job_id": job.job_id,
+                    "provider": provider_name,
+                    "timeout_seconds": self.sync_response_seconds,
+                    "duration_seconds": duration,
+                },
+            )
+            self.record_failure(job, FailureReason.PROVIDER_TIMEOUT, status=JobStatus.TIMEOUT)
+            raise ProviderTimeoutError("Provider did not finish in time") from exc
+        except ProviderExecutionError as exc:
+            duration = (datetime.utcnow() - started_at).total_seconds()
+            self.log.error(
+                "ingest.job.provider_error",
+                extra={
+                    "slot_id": job.slot_id,
+                    "job_id": job.job_id,
+                    "provider": provider_name,
+                    "duration_seconds": duration,
+                    "error": str(exc),
+                },
+            )
+            self.record_failure(job, FailureReason.PROVIDER_ERROR)
+            raise
+
+        self.record_success(job, payload, content_type)
+        return payload
+
+    async def _invoke_provider(self, job: JobContext) -> tuple[bytes, str]:  # pragma: no cover - to be implemented
+        provider_name = job.metadata.get("provider")
+        if not provider_name:
+            raise ProviderExecutionError("Provider is not specified for the job")
+
+        try:
+            driver = self.provider_factory(provider_name)
+        except Exception as exc:
+            raise ProviderExecutionError(f"Unsupported provider '{provider_name}'") from exc
+
+        try:
+            result = await driver.process(job)
+        except Exception as exc:
+            raise ProviderExecutionError(f"Provider '{provider_name}' failed to process job") from exc
+
+        if not isinstance(result, ProviderResult):
+            raise ProviderExecutionError(f"Provider '{provider_name}' returned invalid result")
+
+        content_type = result.content_type or (
+            job.upload.content_type if job.upload and job.upload.content_type else "image/png"
+        )
+        return result.payload, content_type
 
     @staticmethod
     def _extension_from_content_type(content_type: str) -> str:

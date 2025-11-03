@@ -2,11 +2,36 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from enum import StrEnum
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover - type checking only
     from ..media.temp_media_store import TempMediaHandle
+
+
+class JobStatus(StrEnum):
+    """Lifecycle statuses for job_history records."""
+
+    PENDING = "pending"
+    DONE = "done"
+    TIMEOUT = "timeout"
+    FAILED = "failed"
+
+
+class FailureReason(StrEnum):
+    """Failure reasons enumerated in ingest error contracts."""
+
+    INVALID_REQUEST = "invalid_request"
+    INVALID_PASSWORD = "invalid_password"
+    SLOT_NOT_FOUND = "slot_not_found"
+    SLOT_DISABLED = "slot_disabled"
+    PAYLOAD_TOO_LARGE = "payload_too_large"
+    UNSUPPORTED_MEDIA_TYPE = "unsupported_media_type"
+    RATE_LIMITED = "rate_limited"
+    PROVIDER_TIMEOUT = "provider_timeout"
+    PROVIDER_ERROR = "provider_error"
+    INTERNAL_ERROR = "internal_error"
 
 
 @dataclass(slots=True)

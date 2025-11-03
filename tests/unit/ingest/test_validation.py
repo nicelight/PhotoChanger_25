@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 from fastapi import UploadFile
+from starlette.datastructures import Headers
 
 from src.app.config import IngestLimits
 from src.app.ingest.ingest_errors import PayloadTooLargeError, UnsupportedMediaError
@@ -16,14 +17,15 @@ def load_asset(name: str) -> bytes:
 
 
 def make_upload(data: bytes, *, content_type: str, filename: str) -> UploadFile:
-    return UploadFile(filename=filename, file=BytesIO(data), content_type=content_type)
+    headers = Headers({"content-type": content_type})
+    return UploadFile(filename=filename, file=BytesIO(data), headers=headers)
 
 
 def build_validator(chunk_size: int = 1024) -> UploadValidator:
     limits = IngestLimits(
         allowed_content_types=("image/jpeg", "image/png", "image/webp"),
         slot_default_limit_mb=15,
-        absolute_cap_bytes=50 * 1024 * 1024,
+        absolute_cap_bytes=20 * 1024 * 1024,
         chunk_size_bytes=chunk_size,
     )
     return UploadValidator(limits)

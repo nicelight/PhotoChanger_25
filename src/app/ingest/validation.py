@@ -51,6 +51,8 @@ class UploadValidator:
                     )
                     raise PayloadTooLargeError(size)
                 digest.update(chunk)
+        except PayloadTooLargeError:
+            raise
         except Exception as exc:  # pragma: no cover - defensive branch
             await upload.close()
             logger.error("ingest.upload.read_failed", exc_info=exc)

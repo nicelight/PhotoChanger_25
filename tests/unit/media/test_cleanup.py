@@ -73,5 +73,5 @@ def test_cleanup_expired_temp_media(tmp_path):
     removed = temp_store.cleanup_expired()
 
     assert removed == 1
-    assert not temp_dir.exists()
+    assert not payload.exists()
     assert all(obj.id != media_id for obj in media_repo.list_expired_by_scope("provider", datetime.utcnow()))

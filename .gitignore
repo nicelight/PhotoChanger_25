@@ -1,3 +1,14 @@
-# Secrets generated at deploy time
+﻿# Secrets generated at deploy time
 secrets/runtime_credentials.json
+
+# Local environments and caches
 .venv/
+**/__pycache__/
+.pytest_cache/
+
+# Bytecode artifacts
+*.py[cod]
+
+# IDE/project files
+.idea/
+.vscode/
