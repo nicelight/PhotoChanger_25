@@ -51,12 +51,14 @@ class IngestService:
         )
 
         result_dir = self.result_store.ensure_structure(slot.id, job_id)
+        result_expires_at = started_at + timedelta(hours=self.result_ttl_hours)
 
         job = JobContext(
             slot_id=slot.id,
             job_id=job_id,
             sync_deadline=sync_deadline,
             result_dir=result_dir,
+            result_expires_at=result_expires_at,
         )
         job.metadata["provider"] = slot.provider
         job.metadata["size_limit_mb"] = str(slot.size_limit_mb)
