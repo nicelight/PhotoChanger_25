@@ -11,3 +11,4 @@ updated: 2025-10-31
 - 2025-10-31: `.memory/CONTEXT.md` приведён в соответствие PRD/ARCHITECTURE (среды, стек, ops).
 - 2025-10-31: Подготовлены базовые SDD документы (`spec/docs/*.md` — vision/context/glossary/domain-model/constraints-risks/nfr/use-cases/acceptance-criteria/test-plan).
 - 2025-11-02: Обновлён промпт агента Codex (`.TMP/PROMTS.md`), синхронизированы ASKS/WORKLOG.
+- 2025-11-03: Завершены диаграммы UC6 и cron cleanup (`spec/diagrams/uc6-ops-sequence.mmd`, `cron-cleanup-state.mmd`).
