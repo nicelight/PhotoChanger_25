@@ -376,6 +376,11 @@ updated: 2025-11-02
 - 2025-11-03 14:40 — Установил `pytest-asyncio`, скорректировал тестовые helper'ы (`UploadFile` заголовки) и валидатор; `py -m pytest tests/unit` завершился `13 passed`.
 - 2025-11-04 10:05 — проверил статус задач в `.memory/TASKS.md`: следующая ветка `T PHC-1.2.1.*` (GeminiDriver) не заблокирована, готовлюсь к фазе REFLECT перед реализацией драйвера
 
+## SESSION 2025-11-04 — Kickoff US PHC-1.2.0 (slot infrastructure)
+- 2025-11-04 15:05 — перечитал `.memory/MISSION.md`, `.memory/CONTEXT.md`, `.memory/TASKS.md`, `.memory/ASKS.md`, `.memory/DECISIONS.md`, `.memory/USECASES.md`, `.memory/INDEX.yaml` перед продолжением `US PHC-1.2.0`.
+- 2025-11-04 15:12 — загрузил в рабочий контекст `docs/BRIEF.md`, `docs/PRD.md`, `docs/ARCHITECTURE.md`, выписал требования к слотам и настройкам провайдеров.
+- 2025-11-04 15:18 — проверил `US PHC-1.2.0` в `.memory/TASKS.md`: активная подзадача `T PHC-1.2.0.4` (REFLECT по полям слота), зафиксировал необходимость консультации перед реализацией ORM/миграций.
+
 ## CONSULT — Slot модель и миграция
 - 2025-11-04 11:55 — подготовил вопросы/решения для T PHC-1.2.0.5: структура slot, settings_json, template media, миграции
 - 2025-11-04 12:00 — тимлид подтвердил предложенные поля (display_name, operation, settings_json, version/audit, slot_template_media)
