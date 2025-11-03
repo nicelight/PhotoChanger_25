@@ -105,6 +105,10 @@ async def test_prepare_and_validate(tmp_path) -> None:
 
     assert job.job_id is not None
     assert job.result_dir is not None and job.result_dir.exists()
+    assert job.slot_settings == {}
+    assert job.slot_template_media == {}
+    assert job.slot_version == 1
+    assert job.metadata["slot_version"] == "1"
 
     data = load_asset("tiny.png")
     upload = make_upload(data)

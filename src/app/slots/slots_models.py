@@ -17,6 +17,7 @@ class Slot:
     is_active: bool = True
     version: int = 1
     updated_by: str | None = None
+    template_media: list["SlotTemplateMedia"] = field(default_factory=list)
 
 
 @dataclass(slots=True)

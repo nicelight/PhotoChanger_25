@@ -65,12 +65,19 @@ class IngestService:
         job = JobContext(
             slot_id=slot.id,
             job_id=job_id,
+            slot_settings=slot.settings,
+            slot_template_media={media.media_kind: media.media_object_id for media in slot.template_media},
+            slot_version=slot.version,
             sync_deadline=sync_deadline,
             result_dir=result_dir,
             result_expires_at=result_expires_at,
         )
         job.metadata["provider"] = slot.provider
         job.metadata["size_limit_mb"] = str(slot.size_limit_mb)
+        job.metadata["slot_version"] = str(slot.version)
+        if slot.updated_by:
+            job.metadata["slot_updated_by"] = slot.updated_by
+        job.metadata["slot_display_name"] = slot.display_name
         return job
 
     async def validate_upload(
@@ -80,6 +87,9 @@ class IngestService:
         expected_hash: str,
     ) -> UploadValidationResult:
         slot = self.slot_repo.get_slot(job.slot_id)
+        job.slot_settings = slot.settings
+        job.slot_template_media = {media.media_kind: media.media_object_id for media in slot.template_media}
+        job.slot_version = slot.version
         result = await self.validator.validate(slot.size_limit_mb, upload)
 
         if result.sha256.lower() != expected_hash.lower():

@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:  # pragma: no cover - type checking only
     from ..media.temp_media_store import TempMediaHandle
@@ -50,6 +50,9 @@ class JobContext:
 
     slot_id: str
     job_id: str | None = None
+    slot_settings: dict[str, Any] = field(default_factory=dict)
+    slot_template_media: dict[str, str] = field(default_factory=dict)
+    slot_version: int = 1
     sync_deadline: datetime | None = None
     result_dir: Path | None = None
     result_expires_at: datetime | None = None

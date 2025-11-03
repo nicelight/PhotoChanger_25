@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
-
-from sqlalchemy import text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -28,34 +26,10 @@ DEFAULT_SLOTS = [
 def init_db(engine: Engine, session_factory: sessionmaker[Session]) -> None:
     """Create tables and seed default slots if БД пуста."""
     Base.metadata.create_all(engine)
-    _migrate_slot_schema(engine)
 
     with session_factory() as session:
         _seed_slots(session)
         session.commit()
-
-
-def _migrate_slot_schema(engine: Engine) -> None:
-    """Ensure newly introduced slot columns exist (simple SQLite migration)."""
-    with engine.begin() as conn:
-        columns = set()
-        result = conn.execute(text("PRAGMA table_info('slot')"))
-        columns = {row[1] for row in result}  # pragma: no cover - depends on DB
-        required_columns = {
-            "display_name": "ALTER TABLE slot ADD COLUMN display_name TEXT DEFAULT ''",
-            "operation": "ALTER TABLE slot ADD COLUMN operation TEXT DEFAULT 'image_edit'",
-            "settings_json": "ALTER TABLE slot ADD COLUMN settings_json TEXT DEFAULT '{}'",
-            "version": "ALTER TABLE slot ADD COLUMN version INTEGER DEFAULT 1",
-            "updated_by": "ALTER TABLE slot ADD COLUMN updated_by TEXT",
-        }
-        for column, ddl in required_columns.items():
-            if column not in columns:
-                conn.execute(text(ddl))
-        # backfill defaults for existing rows
-        conn.execute(text("UPDATE slot SET display_name = id WHERE display_name IS NULL OR display_name = ''"))
-        conn.execute(text("UPDATE slot SET operation = 'image_edit' WHERE operation IS NULL OR operation = ''"))
-        conn.execute(text("UPDATE slot SET settings_json = '{}' WHERE settings_json IS NULL OR settings_json = ''"))
-        conn.execute(text("UPDATE slot SET version = 1 WHERE version IS NULL"))
 
 
 def _seed_slots(session: Session) -> None:

@@ -376,6 +376,7 @@ updated: 2025-11-02
 - 2025-11-04 15:35 — Сопоставил текущий код и PRD/SDD: слоту нужны `display_name`, `provider`, `operation`, `settings_json`, `is_active`, `version`, `updated_at`, `updated_by`; лимиты и конкурентность остаются в `settings`.
 - 2025-11-04 15:38 — Обосновал `settings_json`: JSONB-колонка хранит словарь параметров провайдера (температура, prompt, template IDs), что позволяет добавлять новые параметры без миграций и держать единый формат `SlotConfig` в сервисах. Альтернатива — расширять схему слота колонками `gemini_prompt`, `turbotext_style`, что быстро разрастается и ломает KISS/SDD.
 - 2025-11-04 15:41 — Бутылочные горлышки: отсутствие Alembic, необходимость синхронизировать спецификации (PRD/domain model/contracts) до правок кода, пересобрать фикстуры и провайдерские схемы.
+- 2025-11-04 15:50 — Обновил `docs/PRD.md` (структура `slot`, пояснение про `settings_json`, перенос лимитов/конкурентности в `settings`) и `spec/docs/domain-model.md` (атрибуты `Slot`, `SlotTemplateMedia`, инварианты).
 
 ## TEST — FEAT PHC-1.1 unit
 - 2025-11-03 14:40 — Установил `pytest-asyncio`, скорректировал тестовые helper'ы (`UploadFile` заголовки) и валидатор; `py -m pytest tests/unit` завершился `13 passed`.
@@ -385,6 +386,7 @@ updated: 2025-11-02
 - 2025-11-04 15:05 — перечитал `.memory/MISSION.md`, `.memory/CONTEXT.md`, `.memory/TASKS.md`, `.memory/ASKS.md`, `.memory/DECISIONS.md`, `.memory/USECASES.md`, `.memory/INDEX.yaml` перед продолжением `US PHC-1.2.0`.
 - 2025-11-04 15:12 — загрузил в рабочий контекст `docs/BRIEF.md`, `docs/PRD.md`, `docs/ARCHITECTURE.md`, выписал требования к слотам и настройкам провайдеров.
 - 2025-11-04 15:18 — проверил `US PHC-1.2.0` в `.memory/TASKS.md`: активная подзадача `T PHC-1.2.0.4` (REFLECT по полям слота), зафиксировал необходимость консультации перед реализацией ORM/миграций.
+- 2025-11-04 15:55 — инициализировал Alembic (`alembic.ini`, `alembic/env.py`, начальная ревизия `20251104_01_initial_schema.py`) для фиксации текущих таблиц (`slot`, `slot_template_media`, `job_history`, `media_object`, `settings`).
 
 ## CONSULT — Slot модель и миграция
 - 2025-11-04 11:55 — подготовил вопросы/решения для T PHC-1.2.0.5: структура slot, settings_json, template media, миграции
@@ -393,6 +395,10 @@ updated: 2025-11-02
 
 ## T PHC-1.2.0.6 — Расширение модели слота
 - 2025-11-04 12:20 — реализовал T PHC-1.2.0.6: добавлены новые поля slot (display_name, operation, settings_json, version, updated_by), таблица slot_template_media, миграция через init_db, обновлены ORM/репозиторий/сидеры
+- 2025-11-04 16:20 — обновил `Slot`/`SlotRepository`/`JobContext`: шаблонные медиа подгружаются через `selectinload`, `slot.settings` попадает в `JobContext`, метаданные (`slot_version`, `slot_display_name`) доступны драйверам.
+- 2025-11-04 16:28 — убрал кустарный `_migrate_slot_schema`, добавил Alembic ревизию `20251104_02_slot_extension` (условно добавляет поля/таблицу при апгрейде), обеспечил `updated_at` с `onupdate`.
+- 2025-11-04 16:35 — написал unit-тесты `test_slot_repository.py`, расширил `tests/unit/ingest/test_service.py` (job context) и прогнал `py -3 -m pytest tests/unit` (`15 passed`).
+- 2025-11-04 17:05 — по указанию тимлида упростил миграции: удалил условную ревизию `20251104_02`, оставив базовый снимок `20251104_01` (проект ещё не запускался, обратная совместимость не требуется).
 
 - 2025-11-04 12:05 — сформулировал план: 1) миграция slot (display_name, operation, settings_json, version, updated_at/by), 2) новая таблица slot_template_media, 3) обновление ORM/датакласса/репозитория, 4) сиды/фикстуры
 - 2025-11-04 12:08 — риски: алембик ещё не настроен, возможно придётся писать SQL-миграцию вручную; нужно обеспечить обратную совместимость с существующими слотами (nullable поля, дефолты)

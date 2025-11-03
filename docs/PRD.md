@@ -93,7 +93,7 @@ graph TD
 - Таймаут провайдера ограничен `T_sync_response`; при превышении фиксируется статус `timeout` без повторов.
 - Логи и метрики доступны в течение 30 дней.
 - Ограничения нагрузки:
-  - Конкурентность per-slot ≤ N (конфиг), per-provider ≤ M (конфиг).
+  - Конкурентность per-slot ≤ N и per-provider ≤ M задаются в глобальных настройках (`settings`). Слоты содержат только семантическую конфигурацию провайдера.
 - Идемпотентность:
   - Поддержка Idempotency-Key; дубликаты по хэшу файла возвращают ранее выданный job_id.
 
@@ -158,7 +158,9 @@ graph TD
 
 ### Хранилища
 - **PostgreSQL** (миграции в `alembic/`):
-  - `slot(id, provider_id, display_name, provider, operation, settings_json, size_limit_mb, is_active, version, updated_at, updated_by)`.
+  - `slot(id, provider_id, display_name, provider, operation, settings_json, is_active, version, updated_at, updated_by, size_limit_mb*)`.
+    - `settings_json` — JSON-конфигурация слота. Каждый драйвер имеет собственную JSON Schema (раздел 5.2), поэтому добавление параметров (`gemini.prompt`, `turbotext.mask_id`, и т.п.) не требует миграций БД и не раздувает таблицу десятками nullable-колонок.
+    - `size_limit_mb*` — временное поле для обратной совместимости с ранними версиями ingest-валидации; целевое состояние — перенести лимиты и конкурентность в глобальные `settings`.
   - `slot_template_media(id, slot_id, media_kind, media_object_id)` — привязка шаблонных медиа к слотам с указанием роли (`style`, `base`, `overlay` и т.п.).
   - `job_history(job_id, slot_id, status, provider_id, started_at, finished_at, duration_ms, failure_reason, result_path, result_expires_at)`.
   - `media_object(id, job_id, slot_id, type, path, expires_at, cleaned_at)`.

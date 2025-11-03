@@ -6,7 +6,7 @@ import json
 from collections.abc import Callable
 from typing import Sequence
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from ..db.db_models import SlotModel, SlotTemplateMediaModel
 from .slots_models import Slot, SlotTemplateMedia
@@ -20,12 +20,22 @@ class SlotRepository:
 
     def list_slots(self) -> Sequence[Slot]:
         with self._session_factory() as session:
-            rows = session.query(SlotModel).order_by(SlotModel.id).all()
+            rows = (
+                session.query(SlotModel)
+                .options(selectinload(SlotModel.template_media))
+                .order_by(SlotModel.id)
+                .all()
+            )
             return [self._to_domain(row) for row in rows]
 
     def get_slot(self, slot_id: str) -> Slot:
         with self._session_factory() as session:
-            row = session.get(SlotModel, slot_id)
+            row = (
+                session.query(SlotModel)
+                .options(selectinload(SlotModel.template_media))
+                .filter(SlotModel.id == slot_id)
+                .one_or_none()
+            )
             if row is None:
                 raise KeyError(f"Slot '{slot_id}' not found")
             return self._to_domain(row)
@@ -58,6 +68,7 @@ class SlotRepository:
             is_active=model.is_active,
             version=model.version,
             updated_by=model.updated_by,
+            template_media=[SlotRepository._to_template_domain(media) for media in model.template_media],
         )
 
     @staticmethod
