@@ -1,0 +1,23 @@
+sequenceDiagram
+    participant Admin as Admin UI / Operator
+    participant Slots as Slots API
+    participant Stats as Stats API
+    participant Public as Public API
+    participant Media as Media Store
+    participant DB as PostgreSQL
+
+    Admin->>Slots: GET /api/slots/{slot_id}
+    Slots->>DB: Получить конфигурацию и recent_results
+    Slots-->>Admin: Конфигурация + 10 последних результатов
+
+    Admin->>Stats: GET /api/stats/slots
+    Stats->>DB: Считать агрегированные метрики (p95, 504 rate)
+    Stats-->>Admin: Показать SLA и counters
+
+    Admin->>Public: GET /public/results/{job_id}
+    Public->>Media: Проверить TTL и отдать файл
+    Public-->>Admin: HTTP 200 (файл) или 410 (result_expired)
+
+    Admin->>Slots: POST /api/slots/{slot_id}/cleanup
+    Slots->>Media: Инициировать очистку temp кэша слота
+    Slots-->>Admin: Подтверждение cleanup request
