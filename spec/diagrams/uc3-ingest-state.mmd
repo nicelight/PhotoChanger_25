@@ -1,4 +1,3 @@
-```mermaid
 stateDiagram-v2
     [*] --> pending
     pending --> done: Provider завершил обработку ≤ T_sync_response
@@ -7,4 +6,3 @@ stateDiagram-v2
     done --> [*]
     timeout --> [*]
     failed --> [*]
-```

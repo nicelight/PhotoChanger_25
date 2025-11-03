@@ -1,4 +1,3 @@
-```mermaid
 sequenceDiagram
     participant DSLR as DSLR Remote Pro
     participant API as Ingest API (FastAPI)
@@ -16,4 +15,3 @@ sequenceDiagram
     API->>Media: Сохранить результат (media/results/{job}.ext)
     API->>DB: Обновить job_history (status=done, result_expires_at = now + 72h)
     API-->>DSLR: HTTP 200 + бинарный результат
-```

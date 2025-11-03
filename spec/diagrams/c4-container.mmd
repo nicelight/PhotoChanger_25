@@ -1,4 +1,3 @@
-```mermaid
 graph TD
     subgraph "PhotoChanger Monolith"
         API["FastAPI Application"]
@@ -42,4 +41,3 @@ graph TD
 
     Cron -->|"Удаляет просроченные temp/result"| FS
     Cron -->|"Обновляет media_object.cleaned_at"| DB
-```

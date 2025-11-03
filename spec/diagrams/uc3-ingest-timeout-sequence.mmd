@@ -1,4 +1,3 @@
-```mermaid
 sequenceDiagram
     participant DSLR as DSLR Remote Pro
     participant API as Ingest API
@@ -15,4 +14,3 @@ sequenceDiagram
     API->>Media: Удалить temp файл
     API->>DB: Обновить job_history (status=timeout, failure_reason=provider_timeout)
     API-->>DSLR: HTTP 504 + JSON ошибка
-```

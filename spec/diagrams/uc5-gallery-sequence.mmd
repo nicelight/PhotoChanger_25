@@ -1,4 +1,3 @@
-```mermaid
 sequenceDiagram
     participant Admin as Admin UI
     participant API as Admin API
@@ -15,4 +14,3 @@ sequenceDiagram
         Admin->>Public: GET /public/results/{job_id}
         Public-->>Admin: 200 (файл) или 410 (TTL истёк)
     end
-```

@@ -1,4 +1,3 @@
-```mermaid
 stateDiagram-v2
     [*] --> registered: MediaObject создан (expires_at = now + T_sync_response)
     registered --> active: Провайдер скачивает файл
@@ -7,4 +6,3 @@ stateDiagram-v2
     registered --> expired: TTL истёк без скачивания
     expired --> cleaned: cron удалил файл
     cleaned --> [*]
-```
