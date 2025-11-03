@@ -1,6 +1,6 @@
+from datetime import datetime, timedelta
 from hashlib import sha256
 from io import BytesIO
-from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -18,6 +18,16 @@ from src.app.media.media_service import ResultStore
 from src.app.repositories.job_history_repository import JobHistoryRepository
 from src.app.repositories.media_object_repository import MediaObjectRepository
 from src.app.slots.slots_repository import SlotRepository
+
+ASSETS = Path(__file__).resolve().parents[2] / "assets"
+
+
+def load_asset(name: str) -> bytes:
+    return (ASSETS / name).read_bytes()
+
+
+def make_upload(data: bytes, *, content_type: str = "image/png", filename: str = "file.png") -> UploadFile:
+    return UploadFile(filename=filename, file=BytesIO(data), content_type=content_type)
 
 
 def build_service(tmp_path: Path) -> IngestService:
@@ -52,10 +62,6 @@ def build_service(tmp_path: Path) -> IngestService:
     )
 
 
-def make_upload(data: bytes, *, content_type: str = "image/png", filename: str = "file.png") -> UploadFile:
-    return UploadFile(filename=filename, file=BytesIO(data), content_type=content_type)
-
-
 @pytest.mark.asyncio
 async def test_prepare_and_validate(tmp_path) -> None:
     service = build_service(tmp_path)
@@ -64,10 +70,7 @@ async def test_prepare_and_validate(tmp_path) -> None:
     assert job.job_id is not None
     assert job.result_dir is not None and job.result_dir.exists()
 
-    data = b"PNG
-
-
-"
+    data = load_asset("tiny.png")
     upload = make_upload(data)
     expected_hash = sha256(data).hexdigest()
 
@@ -103,6 +106,7 @@ async def test_record_success(tmp_path) -> None:
     path = service.record_success(job, payload, "image/png")
 
     assert path.exists()
+
 
 @pytest.mark.asyncio
 async def test_record_failure(tmp_path) -> None:
