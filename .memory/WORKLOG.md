@@ -7,6 +7,11 @@ updated: 2025-11-02
 
 > Перед созданием `CONSULT`/`REFLECT` задач в `.memory/TASKS.md` (см. «Практика CONSULT/REFLECT» в `agents.md`) запиши в этом журнале краткий контекст решения и вопросы, чтобы на созвоне можно было ссылаться на готовые заметки.
 
+## ISSUE UTF8-POWERSHELL
+- 2025-11-04 03:35 — воспроизвёл проблему нечитаемых символов PowerShell при `Get-Content -Raw -Encoding UTF8`, сохранил образец вывода `.memory/CONTEXT.md`.
+- 2025-11-04 03:44 — проверил, что добавление `[Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8` перед командой устраняет артефакты.
+- 2025-11-04 03:48 — обновил `agents.md` (п.10) инструкцией о принудительной установке кодировки и привёл рабочий пример с `Get-Content`.
+
 ## PHC-T-INIT-MEMORY
 - 2025-10-31 02:40 — перечитал agents.md, BRIEF, ARCHITECTURE, PRD, blueprints для восстановления контекста
 - 2025-10-31 02:44 — зафиксировал перечень недозаполненных артефактов (.memory/*.md, REPORT*, spec/contracts/VERSION.json)
