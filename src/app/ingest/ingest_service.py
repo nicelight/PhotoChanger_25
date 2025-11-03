@@ -4,21 +4,19 @@ from __future__ import annotations
 
 import logging
 import uuid
+from pathlib import Path
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING
 
 from fastapi import UploadFile
 
 from ..repositories.job_history_repository import JobHistoryRepository
 from ..repositories.media_object_repository import MediaObjectRepository
 from ..slots.slots_repository import SlotRepository
+from ..media.media_service import ResultStore
 from .ingest_errors import ChecksumMismatchError
 from .ingest_models import JobContext, UploadValidationResult
 from .validation import UploadValidator
-
-if TYPE_CHECKING:
-    from ..media.media_service import ResultStore
 
 logger = logging.getLogger(__name__)
 
@@ -97,5 +95,63 @@ class IngestService:
         )
         return result
 
+    def record_success(
+        self,
+        job: JobContext,
+        payload: bytes,
+        content_type: str,
+    ) -> Path:
+        """Persist successful result to disk and DB."""
+        if job.job_id is None or job.result_dir is None:
+            raise RuntimeError("JobContext is not fully initialized")
+
+        extension = self._extension_from_content_type(content_type)
+        payload_path = self.result_store.save_payload(job.slot_id, job.job_id, payload, extension)
+
+        expires_at = job.result_expires_at or (datetime.utcnow() + timedelta(hours=self.result_ttl_hours))
+        self.job_repo.set_result(
+            job_id=job.job_id,
+            status="done",
+            result_path=str(payload_path),
+            result_expires_at=expires_at,
+        )
+        self.media_repo.register_result(
+            job_id=job.job_id,
+            slot_id=job.slot_id,
+            path=payload_path,
+            preview_path=None,
+            expires_at=expires_at,
+        )
+        self.log.info(
+            "ingest.job.completed",
+            extra={"slot_id": job.slot_id, "job_id": job.job_id, "result_path": str(payload_path)},
+        )
+        return payload_path
+
+    def record_failure(
+        self,
+        job: JobContext,
+        failure_reason: str,
+        status: str = "failed",
+    ) -> None:
+        """Update job status and cleanup result dir on failure/timeout."""
+        if job.job_id is None:
+            raise RuntimeError("JobContext is not fully initialized")
+        self.job_repo.set_failure(job_id=job.job_id, status=status, failure_reason=failure_reason)
+        self.result_store.remove_result_dir(job.slot_id, job.job_id)
+        self.log.warning(
+            "ingest.job.failed",
+            extra={"slot_id": job.slot_id, "job_id": job.job_id, "reason": failure_reason, "status": status},
+        )
+
     async def process(self, job: JobContext) -> bytes:  # pragma: no cover - placeholder
         raise NotImplementedError
+
+    @staticmethod
+    def _extension_from_content_type(content_type: str) -> str:
+        mapping = {
+            "image/jpeg": "jpg",
+            "image/png": "png",
+            "image/webp": "webp",
+        }
+        return mapping.get(content_type, "bin")

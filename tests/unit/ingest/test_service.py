@@ -1,0 +1,116 @@
+from hashlib import sha256
+from io import BytesIO
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import pytest
+from fastapi import UploadFile
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from src.app.config import IngestLimits, MediaPaths
+from src.app.db.db_init import init_db
+from src.app.ingest.ingest_errors import ChecksumMismatchError
+from src.app.ingest.ingest_models import UploadValidationResult
+from src.app.ingest.ingest_service import IngestService
+from src.app.ingest.validation import UploadValidator
+from src.app.media.media_service import ResultStore
+from src.app.repositories.job_history_repository import JobHistoryRepository
+from src.app.repositories.media_object_repository import MediaObjectRepository
+from src.app.slots.slots_repository import SlotRepository
+
+
+def build_service(tmp_path: Path) -> IngestService:
+    engine = create_engine("sqlite:///:memory:", future=True)
+    session_factory = sessionmaker(bind=engine, expire_on_commit=False)
+    init_db(engine, session_factory)
+
+    limits = IngestLimits(
+        allowed_content_types=("image/jpeg", "image/png", "image/webp"),
+        slot_default_limit_mb=15,
+        absolute_cap_bytes=50 * 1024 * 1024,
+        chunk_size_bytes=1024,
+    )
+    validator = UploadValidator(limits)
+    slot_repo = SlotRepository(session_factory)
+    job_repo = JobHistoryRepository(session_factory)
+    media_repo = MediaObjectRepository(session_factory)
+    media_paths = MediaPaths(
+        root=tmp_path,
+        results=tmp_path / "results",
+        templates=tmp_path / "templates",
+    )
+    result_store = ResultStore(media_paths)
+    return IngestService(
+        slot_repo=slot_repo,
+        validator=validator,
+        job_repo=job_repo,
+        media_repo=media_repo,
+        result_store=result_store,
+        result_ttl_hours=72,
+        sync_response_seconds=48,
+    )
+
+
+def make_upload(data: bytes, *, content_type: str = "image/png", filename: str = "file.png") -> UploadFile:
+    return UploadFile(filename=filename, file=BytesIO(data), content_type=content_type)
+
+
+@pytest.mark.asyncio
+async def test_prepare_and_validate(tmp_path) -> None:
+    service = build_service(tmp_path)
+    job = service.prepare_job("slot-001")
+
+    assert job.job_id is not None
+    assert job.result_dir is not None and job.result_dir.exists()
+
+    data = b"PNG
+
+
+"
+    upload = make_upload(data)
+    expected_hash = sha256(data).hexdigest()
+
+    result = await service.validate_upload(job, upload, expected_hash)
+
+    assert result.sha256 == expected_hash
+    assert job.upload == result
+
+
+@pytest.mark.asyncio
+async def test_checksum_mismatch(tmp_path) -> None:
+    service = build_service(tmp_path)
+    job = service.prepare_job("slot-001")
+    upload = make_upload(b"PNGDATA")
+
+    with pytest.raises(ChecksumMismatchError):
+        await service.validate_upload(job, upload, "deadbeef")
+
+
+@pytest.mark.asyncio
+async def test_record_success(tmp_path) -> None:
+    service = build_service(tmp_path)
+    job = service.prepare_job("slot-001")
+    payload = b"result-bytes"
+    job.upload = UploadValidationResult(
+        content_type="image/png",
+        size_bytes=len(payload),
+        sha256=sha256(payload).hexdigest(),
+        filename="file.png",
+    )
+    job.result_expires_at = datetime.utcnow() + timedelta(hours=1)
+
+    path = service.record_success(job, payload, "image/png")
+
+    assert path.exists()
+
+@pytest.mark.asyncio
+async def test_record_failure(tmp_path) -> None:
+    service = build_service(tmp_path)
+    job = service.prepare_job("slot-001")
+    directory = job.result_dir
+    assert directory and directory.exists()
+
+    service.record_failure(job, failure_reason="provider_timeout", status="timeout")
+
+    assert directory and not directory.exists()
