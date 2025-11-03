@@ -37,6 +37,9 @@ def init_db(engine: Engine, session_factory: sessionmaker[Session]) -> None:
 
 def _migrate_slot_schema(engine: Engine) -> None:
     """Ensure newly introduced slot columns exist (simple SQLite migration)."""
+    if engine.dialect.name != "sqlite":  # pragma: no cover - depends on DB backend
+        return
+
     with engine.begin() as conn:
         columns = set()
         result = conn.execute(text("PRAGMA table_info('slot')"))
