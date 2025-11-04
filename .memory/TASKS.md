@@ -20,7 +20,7 @@ updated: 2025-11-02
 
 ## TODO
 - [ ] EP PHC-1 — Синхронный ingest 15 слотов  
-  [x] US PHC-1.GOV — Governance & Discovery  
+  [ ] US PHC-1.GOV — Governance & Discovery  
     [x] T PHC-1.GOV.1 — CONSULT — подтвердить лимиты конкурентных ingest-запросов и необходимость внешнего rate limiting (тимлид)  
     [x] T PHC-1.GOV.2 — REFLECT — баланс KISS vs SLA при росте количества провайдеров  
     [x] T PHC-1.GOV.3 — CONSULT — утвердить состав SDD-пакета спецификаций (vision/context/glossary/domain-model/constraints-risks/nfr/use-cases/acceptance-criteria/test-plan)  
