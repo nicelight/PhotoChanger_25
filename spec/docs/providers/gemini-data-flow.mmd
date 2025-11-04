@@ -1,0 +1,98 @@
+flowchart LR
+    %% --- Admin configuration path ---
+    subgraph ADMIN-UI
+        adminForm["Slot Config Form
+(prompt, template selections, model, retry, output)"]
+        adminSave["POST /api/slots/{slot_id}"]
+        templateUpload["POST /api/template-media/register
+(upload reference/background/overlay assets)"]
+        testUpload["POST /api/slots/{slot_id}/test-run
+(test_image, optional prompt override)"]
+    end
+
+    subgraph DATA-STORE["PostgreSQL + Media FS"]
+        slotRow["slot.settings_json
+(prompt, template_media[], retry, output)"]
+        templateRow["slot_template_media
+(media_kind ↦ media_object_id)"]
+        templateFile["media/templates/{id}.(png|jpg|webp)"]
+        tempFile["media/temp/{slot}/{job}/upload.bin"]
+        resultFile["media/results/{slot}/{job}/payload.ext"]
+    end
+
+    adminForm --> adminSave
+    adminSave --> slotRow
+    adminSave --> templateRow
+    templateUpload --> templateFile
+
+    %% --- DSLR ingest path ---
+    subgraph DSLR-CLIENT
+        dslr["DSLR Remote Pro
+multipart (password, hash, fileToUpload)"]
+    end
+
+    %% --- Ingest workflow ---
+    subgraph INGEST-SERVICE
+        prepareJob["prepare_job()
+→ JobContext(slot_id, metadata.provider, metadata.operation,
+slot_settings, slot_template_media)"]
+        validateUpload["validate_upload()
+→ UploadValidationResult(content_type, size, sha256)
+→ persist_upload()"]
+        jobContext["JobContext to driver:
+- slot_settings (prompt, template_media, retry, output)
+- slot_template_media role→media_object_id
+- temp_payload_path (ingest/test image in temp)
+- upload (content_type, sha256)
+- metadata(provider, operation, source)
+- prompt_override (optional, only for UI tests)"]
+        invokeDriver["process(job)
+asyncio.wait_for(driver.process, timeout=T_sync_response)"]
+        recordSuccess["record_success(job, payload, content_type)
+→ save_payload() → resultFile
+→ media_repo.register_result()"]
+    end
+
+    %% --- Driver internals ---
+    subgraph GEMINI-DRIVER
+        loadSettings["load slot_settings
+extract prompt, template_media, model, output"]
+        mergePrompt["apply prompt_override if present"]
+        resolveTemplates["resolve template_media entries
+(media_kind/media_object_id → templateFile)"]
+        readIngest["read temp_payload_path
+→ bytes → base64 inline_data"]
+        buildRequest["build generateContent payload:
+- inline_data (ingest/test image)
+- inline_data references (optional templates)
+- text prompt (final)"]
+        callGemini["httpx.AsyncClient POST
+https://.../generateContent"]
+        providerResult["ProviderResult(payload bytes, content_type)
+(payload = decoded inline image)"]
+    end
+
+    %% --- Connections ---
+    dslr --> prepareJob
+    testUpload --> prepareJob
+    slotRow --> prepareJob
+    templateRow --> prepareJob
+    prepareJob --> jobContext
+    validateUpload --> tempFile
+    templateRow --> resolveTemplates
+    templateFile --> resolveTemplates
+    tempFile --> readIngest
+    jobContext --> loadSettings
+    jobContext --> mergePrompt
+    jobContext --> resolveTemplates
+    jobContext --> readIngest
+    loadSettings --> mergePrompt
+    mergePrompt --> buildRequest
+    resolveTemplates --> buildRequest
+    readIngest --> buildRequest
+    buildRequest --> callGemini
+    callGemini --> providerResult
+    providerResult --> invokeDriver
+    invokeDriver --> recordSuccess
+    providerResult --> recordSuccess
+    recordSuccess --> resultFile

@@ -1,17 +1,69 @@
 # Провайдер Gemini (изображения)
 
+https://ai.google.dev/gemini-api/docs/image-generation
+
 > Статус: сведения из официальной документации Gemini API на октябрь 2024 года. Материал охватывает генерацию изображений, редактирование по текстовому промпту и работу с Files API.
 
 ## Поддерживаемые модели и сценарии
 
-| Модель | Сценарии | Особенности |
-| --- | --- | --- |
-| `gemini-2.5-flash-image` | Генерация изображений по промпту, редактирование «edit-with-prompt», комбинирование нескольких изображений (multi-image fusion), стилизация | Основная модель для работы с изображениями в публичном Gemini API. Подтверждена в гайде по image generation и в анонсе multi-image fusion. |
+| Модель | Особенности |
+| --- | --- |
+| `gemini-2.5-flash-image` | Основная модель для обработки фотографий людей. Поддерживает смешение нескольких изображений (inline_data или file_data) и текстового промпта. |
+
+> **PhotoChanger** использует один унифицированный сценарий: исходное фото (ingest), текстовый промпт и набор опциональных референсов. Главный приоритет — сохранить лица и фигуры людей на снимке, любые трансформации выполняются вокруг них.
+
 
 
 ## Метод вызова
 
+```python
+from google import genai
+from google.genai import types
+from PIL import Image
+from io import BytesIO
+
+client = genai.Client()
+
+prompt = (
+    "Create a picture of my cat eating a nano-banana in a "
+    "fancy restaurant under the Gemini constellation",
+)
+
+# img1_bytes = f1.read()
+image1 = types.Part.from_bytes(
+  data=image1_bytes, mime_type="image/jpeg"
+)
+
+# img2_bytes = some_bytes
+image2 = types.Part.from_bytes(
+  data=image2_bytes, mime_type="image/png"
+)
+
+response = client.models.generate_content(
+    model="gemini-2.5-flash-image",
+    contents=[prompt, image1, image2],
+)
+
+image_parts = [
+    part.inline_data.data
+    for part in response.candidates[0].content.parts
+    if part.inline_data
+]
+
+if image_parts:
+    image = Image.open(BytesIO(image_parts[0]))
+    image.save('cat_eats_banana.png')
+    image.show()
+```
+
+
+примеры промптов https://ai.google.dev/gemini-api/docs/image-generation#python_1
+
+
+
 Все операции выполняются методом [`models.generateContent`](https://ai.google.dev/api/generate-content?utm_source=chatgpt.com) с указанием нужной модели. Базовый REST-вызов:
+
+POST to endpoint: `https://generativelanguage.googleapis.com/v1beta/{model=models/*}:generateContent `
 
 ```http
 POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent
@@ -40,7 +92,13 @@ Content-Type: application/json
 - `inline_data`: объект `{"mime_type": "image/png", "data": "<base64>"}` для небольших изображений, передаваемых напрямую.
 - `file_data`: объект `{"mime_type": "image/jpeg", "file_uri": "files/abc123"}` — ссылка на файл, загруженный через Files API.
 
-Для мульти-изображений добавьте несколько частей с `inline_data` или `file_data`. В редактировании «edit-with-prompt» дайте исходное изображение + текст, описывающий изменения. Multi-image fusion (объединение сцен или перенос стиля) подтверждён в [официальном анонсе Gemini 2.5 Flash Image](https://developers.googleblog.com/en/introducing-gemini-2-5-flash-image/?utm_source=chatgpt.com).
+Для наших сценариев PhotoChanger формирует `contents` следующим образом:
+
+1. `inline_data` с ingest-фотографией людей (обязательный элемент).
+2. `text` с инструкцией (`slot.settings.prompt`).
+3. Опциональные `inline_data` из списка `template_media` (фон, стиль, атрибуты бренда). Если для роли не найден файл, драйвер пропускает её, если не указано обратное.
+
+Такой подход позволяет изменять окружение, стиль или фон, не трогая лица/фигуры.
 
 ### Пример (multi-image fusion)
 
@@ -110,54 +168,40 @@ Gemini API использует стандартные коды Google RPC:
 - Нет прямого скачивания файлов через Files API — можно только получать метаданные.
 - Генерация возвращает PNG; управление размером/соотношением сторон ограничено подсказками, явных параметров ширины/высоты нет.
 
-## Примеры кода
+## Настройки слота PhotoChanger (Gemini)
 
-### JavaScript (официальная библиотека `@google/generative-ai`)
+Конфигурация хранится в `slot.settings_json` и валидируется схемой `slot-settings-gemini.schema.json`.
 
-```javascript
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = client.getGenerativeModel({ model: "gemini-2.5-flash-image" });
-
-const result = await model.generateContent({
-  contents: [
+```json
+{
+  "model": "gemini-2.5-flash-image",
+  "prompt": "Describe desired result, e.g. keep faces, replace background with studio lights",
+  "output": { "mime_type": "image/png" },
+  "template_media": [
     {
-      role: "user",
-      parts: [{ text: "Create a vintage postcard style photo of the Eiffel Tower" }],
+      "role": "reference_background",
+      "media_kind": "background",
+      "optional": true
     },
+    {
+      "role": "brand_overlay",
+      "media_object_id": "mo_overlay_logo",
+      "optional": true
+    }
   ],
-});
-
-const imageBase64 = result.response.candidates[0].content.parts[0].inlineData.data;
+  "retry_policy": { "max_attempts": 2, "backoff_seconds": 2.0 }
+}
 ```
 
-### Python (`google-generativeai`)
-
-```python
-import google.generativeai as genai
-
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-model = genai.GenerativeModel("gemini-2.5-flash-image")
-
-response = model.generate_content(
-    [
-        {
-            "role": "user",
-            "parts": [
-                {"text": "Create a neon cyberpunk city skyline at night"},
-            ],
-        }
-    ]
-)
-
-image_base64 = response.candidates[0].content.parts[0].inline_data.data
-```
+- **prompt** — обязательная инструкцию для модели, обязательно содержит указания «сохранить лица/людей».
+- **template_media** — список дополнительных изображений (фон, стиль, логотипы). Для каждого элемента указывается либо `media_kind`, либо `media_object_id`, флаг `optional` разрешает пропустить отсутствующий файл.
+- **output.mime_type** — целевой формат ответа.
+- **retry_policy** и `safety_settings` (не показаны выше) позволяют тонко настроить поведение при ошибках и фильтрах Gemini.
 
 ## Рекомендации для PhotoChanger
 
-- Сохраняйте `job.metadata["provider"]` и параметры слота, чтобы адаптер мог подставить нужную конфигурацию (операция, стили, дополнительные изображения).
-- Передавайте файлы через Files API при размере > 20 MB или при повторном использовании (`template_media`).
-- Следите за лимитами RPM/TPM: при `RESOURCE_EXHAUSTED` реализуйте экспоненциальный backoff.
-- При `PROCESSING`/`FAILED_PRECONDITION` делайте повторный опрос Files API, прежде чем запускать `generateContent`.
+- Перед формированием `prompt` явно указывайте, что лица людей должны сохраниться («keep all faces intact», «preserve original pose and expressions»).
+- `template_media` используйте для фона, фирменных элементов, референсов освещения. При размере файла > 20 МБ стоит грузить его в Files API и ссылаться через `file_data`.
+- Обрабатывайте `RESOURCE_EXHAUSTED`/`DEADLINE_EXCEEDED` с учётом `retry_policy`: максимум 2 попытки, пауза ≥2 секунды.
+- Все загруженные из UI тестовые изображения проходят ту же цепочку, что и ingest: временный диск → `inline_data` → ответ → запись в `media/results`.
 

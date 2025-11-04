@@ -6,6 +6,8 @@
 PhotoChanger — это HTTP-платформа синхронной AI-обработки фотографий, развёрнутая как самостоятельный сервер, взаимодействующий с DSLR Remote Pro и внешними AI-провайдерами.  
 Система реализует ingest-интерфейс, хранение медиа, адаптацию вызовов провайдеров и публикацию результатов через временные публичные ссылки (TTL 72 ч).
 
+> Фокус продукта — обработка фотографий людей. Любые преобразования должны сохранять лица и основные характеристики персонажей; изменяются только фон, стиль или окружение. Для провайдера Gemini используется один универсальный метод (`prompt + ingest фото + опциональные референсы`), что отражено в слотовой схеме настроек.
+
 ### 0.2 Состав внутри системной границы
 - **Ingest API** — принимает `POST` от DSLR Remote Pro, валидирует вход и инициирует обработку.
 - **Адаптеры провайдеров** — драйверы Gemini, Turbotext и др., вызываемые через `asyncio.wait_for`.
@@ -103,8 +105,9 @@ graph TD
 2. Просматривает список слотов (ID, провайдер, статус, шаблон, лимит размера).
 3. Редактирует слот: меняет провайдера, параметры, ingest-пароль, шаблоны.
 4. Получает ingest-URL и передаёт операторам.
-5. Открывает страницу статистики: фильтр по слотам, метрики успехов/ошибок, последние результаты.
-6. Запускает ручную очистку медиа при необходимости.
+5. Загружает тестовое фото из UI слота для быстрой проверки конфигурации (фото проходит тот же конвейер, что и ingest, но без DSLR Remote Pro).
+6. Открывает страницу статистики: фильтр по слотам, метрики успехов/ошибок, последние результаты.
+7. Запускает ручную очистку медиа при необходимости.
 
 ### Оператор DSLR Remote Pro
 1. Копирует ingest-URL.
@@ -156,6 +159,15 @@ graph TD
 5. Если `asyncio.TimeoutError` или исключение провайдера, сервис фиксирует `status='timeout'/'failed'`, удаляет каталог результата (payload + preview) и возвращает 504 или 5xx.
 6. Клиент может опрашивать `GET /api/jobs/{job_id}` до истечения TTL; поздние ответы провайдера игнорируются, потому что корутина отменяется `wait_for`.
 
+### Тестовая обработка из Admin UI
+- Эндпоинт `POST /api/slots/{slot_id}/test-run` (только для авторизованных администраторов) принимает файл `test_image` (`UploadFile`) и опциональное описание (`prompt_override`).
+- Контроллер переиспользует `IngestService`:
+  1. вызывает `prepare_job(slot_id)` (job_history фиксирует задачу как обычную, `job.metadata["source"]="ui_test"`),
+  2. прогоняет `validate_upload` без проверки ingest-пароля,
+  3. формирует `JobContext` и передаёт его в `process`.
+- Результат возвращается в том же формате, что и ingest: бинарный ответ + публичная ссылка `/public/results/{job_id}`. В логах и статистике добавляется метка `source=ui_test`, чтобы отделять тестовые прогонки от боевых (при необходимости — через отдельное поле в `job_history`).
+- UI слота показывает кнопку «Протестировать конфигурацию», загружает фото через этот эндпоинт и отображает превью ответа, не затрагивая DSLR Remote Pro.
+
 ### Хранилища
 - **PostgreSQL** (миграции в `alembic/`):
   - `slot(id, provider_id, display_name, provider, operation, settings_json, is_active, version, updated_at, updated_by, size_limit_mb*)`.
@@ -177,14 +189,14 @@ graph TD
 - Настройка доступных драйверов и ключей провайдеров через `AppConfig` и `.env`.
  
  #### Gemini провайдер
-- **`gemini`** — операции `style_transfer`, `image_edit`, `identity_transfer`.
-- `GeminiDriver` — асинхронный HTTP-клиент на `httpx.AsyncClient`, соблюдает ограничения сервиса по форматам/размерам и возвращает локальный путь или байтовые данные результата.
-- Документация по провайдеру в `spec/contracts/providers/gemini.md`
+- **`gemini`** — универсальный метод `prompt + ingest фото + опциональные референсы`.
+- `GeminiDriver` — асинхронный HTTP-клиент на `httpx.AsyncClient`, соблюдает ограничения сервиса по форматам/размерам, добавляет ingest-фото и шаблонные медиа в `inline_data` и возвращает байтовые данные результата.
+- Документация по провайдеру в `spec/docs/providers/gemini.md`
 
  #### Turbotext провайдер
-- **`turbotext`** — операции `style_transfer`, `image_edit`, `identity_transfer`.
+- **`turbotext`** — предоставляет собственные сценарии (`style_transfer`, `image_edit`, `identity_transfer`), т.к. контракт провайдера жёстко задаёт режимы.
 - `TurbotextDriver` — асинхронный клиент с polling внутри одной корутины, ограниченный `asyncio.wait_for` на уровне сервиса; повторных попыток нет.
-- Документация по провайдеру в `spec/contracts/providers/turbotext.md`
+- Документация по провайдеру в `spec/docs/providers/turbotext.md`
 
 
 
@@ -372,8 +384,6 @@ queueid:{QUEUEID}
 
 #### Базовый метод вызова
 
-Все операции выполняются методом `models.generateContent` с указанием модели.
-
 **REST (text→image):**
 
 ```http
@@ -449,12 +459,6 @@ PhotoChanger использует только inline-передачу (`inline_
 }
 ```
 
-##### Style transfer — шаблон промпта
-
-```
-Transform the provided photograph of [subject] into the artistic style of [artist/art style]. Preserve the original composition but render it with [description of stylistic elements].
-```
-
 ##### Python (`google-generativeai`) — multi‑image
 
 ```python
@@ -469,15 +473,17 @@ response = model.generate_content([
         "role": "user",
         "parts": [
             {"text": "Combine the landscape and character into a matte painting"},
-            {"file_data": {"mime_type": "image/png", "file_uri": "files/landscape"}},
-            {"file_data": {"mime_type": "image/png", "file_uri": "files/character"}}
+            {"inline_data": {"mime_type": "image/png", "data": "$BASE64_IMAGE"}},
+            {"inline_data": {"mime_type": "image/png", "data": "$BASE64_IMAGE"}}
         ],
     }
 ])
 
+        {"text": "Reimagine this room in Scandinavian minimalism"},
+
+
 image_base64 = response.candidates[0].content.parts[0].inline_data["data"]
 image_bytes = base64.b64decode(image_base64)
-# PhotoChanger: сохрани bytes в MEDIA_ROOT/results, обнови Job.result_* и очисти base64 из Job после ответа.
 ```
 
 ##### REST — inline изображение

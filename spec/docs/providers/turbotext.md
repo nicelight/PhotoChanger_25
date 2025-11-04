@@ -29,6 +29,67 @@
 
 **Ответ**: после `do=get_result` Turbotext возвращает `data.image` (массив путей, например `"image/generate_image2image_id12_0.png"`), промпт и параметры генерации. Поле `uploaded_image` используется драйвером только для одноразового скачивания результата и сохранения в `media/results`; публичных ссылок PhotoChanger не публикует.
 
+
+#### API
+1. Запрос на создании очереди
+```
+/api_ai/generate_image2image HTTP/1.1
+Host: turbotext.ru
+Authorization: Bearer {APIKEY}
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 0
+
+do:create_queue
+user_id: int `# default: 1`
+url: string - required `# url with image (format: jpg, png, jpeg)`
+content: string - required ` # prompt for image2image`
+strength: int ` # degree of image change, 0 to 80, default: 40`
+seed: int `# min: 1, max: 10**10, default: random`
+scale: float `# min: 0.1, max: 20, default: 7.5`
+negative_prompt: string `# what to remove on image (max: 80 words), default: bad anatomy params`
+original_language: string `# default: ru` 
+```
+2. Ответ с данными очереди в формате JSON
+`{"success":true,"queueid":{QUEUEID}}`
+{QUEUEID} - Номер вашей очереди, далее обращаемся за получением результата использую этот массив данных.
+3.  Делаем запрос на получение результата
+```
+/api_ai/generate_image2image HTTP/1.1
+Host: turbotext.ru
+Authorization: Bearer {APIKEY}
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 0
+
+do:get_result
+queueid:{QUEUEID}  
+```
+4. Ответ с данными генерации в формате JSON
+Если генерация завершена вы получите success=true, если вы получили action=reconnect отправляем запрос заново, после получения success=true получаем данные генерации
+```
+{
+"success": true,
+"error": "",
+"data": {
+"user_id": 12,
+"image": [
+"image/generate_image2image_id12_0.png"
+],
+"prompt": "девушка в костюме супермена",
+"width": 768,
+"height": 768,
+"scale": 7.5,
+"seed": 5443937701,
+"strength": 50,
+"original_language": "ru"
+}
+} 
+```
+
+
+
+
+
+
 ### Метод «Микс-фото» (`/api_ai/mix_images`)
 
 | Параметр | Тип | Обязательность | Описание |
@@ -39,6 +100,47 @@
 
 **Ответ**: блок `data` содержит сведения о ширине/высоте, `prompt`, `strength`, `pattern_prompt`; `uploaded_image` скачивается драйвером и сразу сохраняется локально без дальнейшего публичного доступа.
 
+#### API
+1. Запрос на создании очереди
+```
+/api_ai/mix_images HTTP/1.1
+Host: turbotext.ru
+Authorization: Bearer {APIKEY}
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 0
+
+do:create_queue
+content - описание для усиления эффекта
+url_image_target - фото на урл которое нужно обработать
+url - фото на урл откуда используем стиль 
+```
+2. Ответ с данными очереди в формате JSON
+`{"success":true,"queueid":{QUEUEID}}`
+{QUEUEID} - Номер вашей очереди, далее обращаемся за получением результата использую этот массив данных.
+3.  Делаем запрос на получение результата
+```
+/api_ai/mix_images HTTP/1.1
+Host: turbotext.ru
+Authorization: Bearer {APIKEY}
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 0
+
+do:get_result
+queueid:{QUEUEID} 
+```
+4. Ответ с данными генерации в формате JSON
+Если генерация завершена вы получите success=true, если вы получили action=reconnect отправляем запрос заново, после получения success=true получаем данные генерации
+```
+{"success":true,"error":"","data":{"prompt":"В стиле дисней"],"width":768,"height":576,"seed":9147962925,"strength":50,"pattern_prompt":false},"uploaded_image":"https://www.turbotext.ru/download.php?f=..........png"} 
+```
+
+
+
+
+
+
+
+
 ### Замена лица (`/api_ai/deepfake_photo`)
 
 | Параметр | Тип | Обязательность | Описание |
@@ -48,6 +150,48 @@
 | `face_restore` | boolean (`True/False`) | optional | Включает дообработку лица после подстановки. |
 
 **Ответ**: `data.image` содержит массив ссылок на результат (обычно одно изображение) с признаками `width`, `height`, `face_restore`. Ссылка `uploaded_image` используется только внутри адаптера для загрузки файла; наружу не выдаётся.
+
+#### API
+1. Запрос на создании очереди
+```
+/api_ai/deepfake_photo HTTP/1.1
+Host: turbotext.ru
+Authorization: Bearer {APIKEY}
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 0
+
+do:create_queue
+url - урл с фото человека кому будем менять лицо
+url_image_target - урл с лицом на которое нужно заменить
+face_restore - True/False 
+```
+2. Ответ с данными очереди в формате JSON
+`{"success":true,"queueid":{QUEUEID}}`
+{QUEUEID} - Номер вашей очереди, далее обращаемся за получением результата использую этот массив данных.
+3.  Делаем запрос на получение результата
+```
+/api_ai/deepfake_photo HTTP/1.1
+Host: turbotext.ru
+Authorization: Bearer {APIKEY}
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 0
+
+do:get_result
+queueid:{QUEUEID} 
+```
+4. Ответ с данными генерации в формате JSON
+Если генерация завершена вы получите success=true, если вы получили action=reconnect отправляем запрос заново, после получения success=true получаем данные генерации
+```
+{
+"success":true,
+"error":"",
+"data":{"image":["https://...png"],
+"width":980,"height":1472,"forbidden_content":false,"face_restore":"False"},
+"uploaded_image":"Ссылка на фото с результатом генерации"
+} 
+```
+
+#### 
 
 ## Особенности интеграции
 
