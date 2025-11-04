@@ -120,120 +120,44 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = client.getGenerativeModel({ model: "gemini-2.5-flash-image" });
 
-const prompt = {
+const result = await model.generateContent({
   contents: [
     {
       role: "user",
-      parts: [
-        { text: "Add a knitted wizard hat to this cat" },
-        {
-          file_data: {
-            mime_type: "image/png",
-            file_uri: "files/cat-original"
-          }
-        }
-      ]
-    }
-  ]
-};
+      parts: [{ text: "Create a vintage postcard style photo of the Eiffel Tower" }],
+    },
+  ],
+});
 
-const result = await model.generateContent(prompt);
-const imageBase64 = result.response.candidates[0].content.parts[0].inline_data.data;
-// Платформа PhotoChanger декодирует base64 и сохраняет файл на диск под MEDIA_ROOT/results,
-// временно фиксируя исходную строку в Job.result_inline_base64, чтобы API могло отдать её DSLR,
-// и обновляя поля Job.result_* (result_file_path, MIME, размер, checksum). После отправки HTTP 200
-// поле result_inline_base64 очищается.
+const imageBase64 = result.response.candidates[0].content.parts[0].inlineData.data;
 ```
 
 ### Python (`google-generativeai`)
 
 ```python
-import base64
-import os
 import google.generativeai as genai
 
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 model = genai.GenerativeModel("gemini-2.5-flash-image")
 
-response = model.generate_content([
-    {
-        "role": "user",
-        "parts": [
-            {"text": "Combine the landscape and character into a matte painting"},
-            {"file_data": {"mime_type": "image/png", "file_uri": "files/landscape"}},
-            {"file_data": {"mime_type": "image/png", "file_uri": "files/character"}}
-        ],
-    }
-])
-
-image_base64 = response.candidates[0].content.parts[0].inline_data["data"]
-image_bytes = base64.b64decode(image_base64)
-# Платформа PhotoChanger записывает image_bytes в файл внутри MEDIA_ROOT/results,
-# проставляет Job.result_inline_base64 на время синхронного ответа ingest и
-# обновляет метаданные Job.result_* вместо долгосрочного хранения base64 в очереди.
-```
-
-### REST (inline изображение)
-
-```bash
-BASE64_IMAGE=$(base64 -w 0 source.png)
-
-curl \
-  -H "x-goog-api-key: $GEMINI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent" \
-  -d @- <<JSON
-{
-  "contents": [
-    {
-      "role": "user",
-      "parts": [
-        {"text": "Reimagine this room in Scandinavian minimalism"},
+response = model.generate_content(
+    [
         {
-          "inline_data": {
-            "mime_type": "image/png",
-            "data": "$BASE64_IMAGE"
-          }
+            "role": "user",
+            "parts": [
+                {"text": "Create a neon cyberpunk city skyline at night"},
+            ],
         }
-      ]
-    }
-  ]
-}
-JSON
-# Ответ Gemini вернёт inline_data с base64: сервис сохраняет результат как файл,
-# держит строку в Job.result_inline_base64 до завершения ответа ingest и
-# фиксирует путь в Job.result_file_path, очищая base64 сразу после финализации.
+    ]
+)
+
+image_base64 = response.candidates[0].content.parts[0].inline_data.data
 ```
 
-## Деградации и ретраи
+## Рекомендации для PhotoChanger
 
-### Files API зависает в `PROCESSING`
-- После загрузки файла проверяйте `file.state`. Если значение не сменилось на `ACTIVE` за 5 с, выполните `GET /files/{name}` повторно.
-- По превышении 10 с или получении `DEADLINE_EXCEEDED` завершайте операцию `provider_timeout`: очищайте временные ссылки, возвращайте 504.
-- Повторная загрузка допустима только при остатке ≥ 15 с в окне `T_sync_response`.
+- Сохраняйте `job.metadata["provider"]` и параметры слота, чтобы адаптер мог подставить нужную конфигурацию (операция, стили, дополнительные изображения).
+- Передавайте файлы через Files API при размере > 20 MB или при повторном использовании (`template_media`).
+- Следите за лимитами RPM/TPM: при `RESOURCE_EXHAUSTED` реализуйте экспоненциальный backoff.
+- При `PROCESSING`/`FAILED_PRECONDITION` делайте повторный опрос Files API, прежде чем запускать `generateContent`.
 
-### Ошибки валидации (`INVALID_ARGUMENT`, `FAILED_PRECONDITION`)
-- Причины — некорректная структура `contents`, неподдерживаемый MIME, отсутствующий `file_data`.
-- Ретраи запрещены: завершайте задачу `failure_reason='provider_error'`, фиксируйте проблему в логах, обновляйте валидацию слота.
-
-### Ограничения квот (`RESOURCE_EXHAUSTED`, `429`)
-- Первый ответ → backoff 5 с, повтор запрос допускается, если осталось ≥ 10 с SLA.
-- Повторный отказ → завершение `provider_error`, уведомление админа через UI (блок деградаций) и перевод слота в ограниченный режим.
-
-### Системные сбои (`UNAVAILABLE`, `500`, `503`)
-- Выполняйте один повторный вызов через 3 с. Если неудачно — задача завершается `provider_error`.
-- При двух и более подряд сбоях по одному слоту рекомендуется временно отключить слот и проинформировать эксплуатацию.
-
-### Массовые таймауты
-- Три и более подряд таймаута за 5 минут → включить «деградацию слота»:
-  1. Отключить слот (`slot.disabled=true`).
-  2. Создать запись для оповещения админа.
-  3. Собрать метрики/логи, проверить Files API и лимиты.
-
-## Ссылки
-
-1. [Gemini API — Image generation guide](https://ai.google.dev/gemini-api/docs/image-generation?utm_source=chatgpt.com)
-2. [Gemini API — Files API](https://ai.google.dev/gemini-api/docs/files?utm_source=chatgpt.com)
-3. [Gemini API — Image understanding guide](https://ai.google.dev/gemini-api/docs/image-understanding?utm_source=chatgpt.com)
-4. [Gemini API — Rate limits](https://ai.google.dev/gemini-api/docs/rate-limits?utm_source=chatgpt.com)
-5. [Introducing Gemini 2.5 Flash Image (Google Developers Blog)](https://developers.googleblog.com/en/introducing-gemini-2-5-flash-image/?utm_source=chatgpt.com)

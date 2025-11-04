@@ -5,12 +5,8 @@ from __future__ import annotations
 import logging
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 
-from .ingest_errors import (
-    ChecksumMismatchError,
-    PayloadTooLargeError,
-    UnsupportedMediaError,
-    UploadReadError,
-)
+from .ingest_errors import ChecksumMismatchError, PayloadTooLargeError, UnsupportedMediaError, UploadReadError
+from .ingest_models import FailureReason
 from .ingest_service import IngestService
 
 router = APIRouter(prefix="/api/ingest", tags=["ingest"])
@@ -49,24 +45,28 @@ async def submit_ingest(
     try:
         await service.validate_upload(job, file, hash_hex)
     except UnsupportedMediaError as exc:
+        service.record_failure(job, failure_reason=FailureReason.UNSUPPORTED_MEDIA_TYPE)
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail={"status": "error", "failure_reason": "unsupported_media_type"},
+            detail={"status": "error", "failure_reason": FailureReason.UNSUPPORTED_MEDIA_TYPE.value},
         ) from exc
     except PayloadTooLargeError as exc:
+        service.record_failure(job, failure_reason=FailureReason.PAYLOAD_TOO_LARGE)
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail={"status": "error", "failure_reason": "payload_too_large"},
+            detail={"status": "error", "failure_reason": FailureReason.PAYLOAD_TOO_LARGE.value},
         ) from exc
     except ChecksumMismatchError as exc:
+        service.record_failure(job, failure_reason=FailureReason.INVALID_REQUEST)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"status": "error", "failure_reason": "checksum_mismatch"},
+            detail={"status": "error", "failure_reason": FailureReason.INVALID_REQUEST.value},
         ) from exc
     except UploadReadError as exc:
+        service.record_failure(job, failure_reason=FailureReason.INVALID_REQUEST)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"status": "error", "failure_reason": "invalid_request"},
+            detail={"status": "error", "failure_reason": FailureReason.INVALID_REQUEST.value},
         ) from exc
 
     return {"status": "validated", "slot_id": job.slot_id}

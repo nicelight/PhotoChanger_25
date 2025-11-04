@@ -1,8 +1,8 @@
 """Factory for provider drivers."""
 
-from .base import ProviderDriver
-from .gemini import GeminiDriver
-from .turbotext import TurbotextDriver
+from .providers_base import ProviderDriver
+from .providers_gemini import GeminiDriver
+from .providers_turbotext import TurbotextDriver
 
 
 def create_driver(name: str) -> ProviderDriver:

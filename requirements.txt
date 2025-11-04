@@ -1,5 +1,19 @@
+# === Подсказки по установке (не выполняется) ===
+# 1) python -m venv .venv
+# 2) .\.venv\Scripts\Activate.ps1  
+# 2.1) deactivate # чтобы деактивировать виртуальное окружение
+# 3) pip install -U pip
+# 4) pip install -r requirements.txt
+
+# ===== ТЕСТЫ =====
+# py -m pytest tests/unit
+
+
 fastapi>=0.110
 uvicorn[standard]>=0.27
 structlog>=24.1
 sqlalchemy>=2.0
 alembic>=1.13
+httpx>=0.27
+pytest>=7.4
+pytest-asyncio>=0.23

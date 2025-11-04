@@ -19,3 +19,11 @@ class ChecksumMismatchError(IngestError):
 
 class UploadReadError(IngestError):
     """Raised when streaming the upload fails."""
+
+
+class ProviderTimeoutError(IngestError):
+    """Raised when provider does not finish before T_sync_response."""
+
+
+class ProviderExecutionError(IngestError):
+    """Raised when provider driver fails before producing a result."""
