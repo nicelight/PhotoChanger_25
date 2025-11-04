@@ -7,7 +7,7 @@ flowchart LR
         templateUpload["POST /api/template-media/register
 (upload reference/background/overlay assets)"]
         testUpload["POST /api/slots/{slot_id}/test-run
-(test_image, optional prompt override)"]
+(test_image from Admin UI)"]
     end
 
     subgraph DATA-STORE["PostgreSQL + Media FS"]
@@ -44,8 +44,7 @@ slot_settings, slot_template_media)"]
 - slot_template_media role→media_object_id
 - temp_payload_path (ingest/test image in temp)
 - upload (content_type, sha256)
-- metadata(provider, operation, source)
-- prompt_override (optional, only for UI tests)"]
+- metadata(provider, operation, source)"]
         invokeDriver["process(job)
 asyncio.wait_for(driver.process, timeout=T_sync_response)"]
         recordSuccess["record_success(job, payload, content_type)
@@ -57,7 +56,6 @@ asyncio.wait_for(driver.process, timeout=T_sync_response)"]
     subgraph GEMINI-DRIVER
         loadSettings["load slot_settings
 extract prompt, template_media, model, output"]
-        mergePrompt["apply prompt_override if present"]
         resolveTemplates["resolve template_media entries
 (media_kind/media_object_id → templateFile)"]
         readIngest["read temp_payload_path
@@ -83,11 +81,9 @@ https://.../generateContent"]
     templateFile --> resolveTemplates
     tempFile --> readIngest
     jobContext --> loadSettings
-    jobContext --> mergePrompt
     jobContext --> resolveTemplates
     jobContext --> readIngest
-    loadSettings --> mergePrompt
-    mergePrompt --> buildRequest
+    loadSettings --> buildRequest
     resolveTemplates --> buildRequest
     readIngest --> buildRequest
     buildRequest --> callGemini

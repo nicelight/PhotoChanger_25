@@ -160,7 +160,7 @@ graph TD
 6. Клиент может опрашивать `GET /api/jobs/{job_id}` до истечения TTL; поздние ответы провайдера игнорируются, потому что корутина отменяется `wait_for`.
 
 ### Тестовая обработка из Admin UI
-- Эндпоинт `POST /api/slots/{slot_id}/test-run` (только для авторизованных администраторов) принимает файл `test_image` (`UploadFile`) и опциональное описание (`prompt_override`).
+- Эндпоинт `POST /api/slots/{slot_id}/test-run` (только для авторизованных администраторов) принимает файл `test_image` (`UploadFile`).
 - Контроллер переиспользует `IngestService`:
   1. вызывает `prepare_job(slot_id)` (job_history фиксирует задачу как обычную, `job.metadata["source"]="ui_test"`),
   2. прогоняет `validate_upload` без проверки ingest-пароля,

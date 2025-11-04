@@ -9,7 +9,7 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session
 
-from ..db.db_models import MediaObjectModel
+from ..db.db_models import MediaObjectModel, SlotTemplateMediaModel
 from ..media.media_models import MediaObject
 
 
@@ -77,6 +77,39 @@ class MediaObjectRepository:
                 raise KeyError(f"Media object '{media_id}' not found")
             model.cleaned_at = cleaned_at
             session.commit()
+
+    def get_media(self, media_id: str) -> MediaObject:
+        """Return media object by ID, guarding against cleaned records."""
+        with self._session_factory() as session:
+            model = session.get(MediaObjectModel, media_id)
+            if model is None:
+                raise KeyError(f"Media object '{media_id}' not found")
+            if model.cleaned_at is not None:
+                raise KeyError(f"Media object '{media_id}' has been cleaned")
+            return self._to_domain(model)
+
+    def get_media_by_kind(self, slot_id: str, media_kind: str) -> MediaObject:
+        """Resolve single media object by slot and media kind."""
+        with self._session_factory() as session:
+            query = (
+                session.query(SlotTemplateMediaModel)
+                .filter(
+                    SlotTemplateMediaModel.slot_id == slot_id,
+                    SlotTemplateMediaModel.media_kind == media_kind,
+                )
+                .order_by(SlotTemplateMediaModel.created_at.desc())
+            )
+            rows = query.all()
+            if not rows:
+                raise KeyError(
+                    f"Template media kind '{media_kind}' not found for slot '{slot_id}'"
+                )
+            if len(rows) > 1:
+                raise ValueError(
+                    f"Multiple template media entries found for slot '{slot_id}' and kind '{media_kind}'"
+                )
+            media_id = rows[0].media_object_id
+        return self.get_media(media_id)
 
     def _register_media(
         self,

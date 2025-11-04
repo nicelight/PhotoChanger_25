@@ -436,3 +436,9 @@ egative_prompt, guidance_scale (0..10), опциональная маска (med
 - 2025-11-04 20:38 — Описал тестовую обработку из Admin UI: новый эндпоинт /api/slots/{slot_id}/test-run переиспользует IngestService, возвращает результат и маркирует source=ui_test.
 - 2025-11-04 20:44 — Обновил диаграмму gemini-data-flow (spec/docs/providers/gemini-data-flow.mmd) с учётом эндпоинта test-run и prompt_override.
 - 2025-11-04 20:48 — Спецификации обновлять не потребовалось: slot-settings схема уже покрывает prompt_override сценарием, данные фиксированы в PRD и диаграмме.
+- 2025-11-04 20:52 — Зафиксировал, что prompt всегда берётся из slot.settings; обновил PRD, диаграмму и задачи под backend-функционал test-run.
+- 2025-11-04 21:00 — Реализовал resolver шаблонных медиа (media_repo.get_media*, template_media_resolver) и добавил unit-тесты (py -X utf8 -m pytest tests/unit/providers/test_template_media_resolver.py).
+- 2025-11-04 21:08 — Реализовал GeminiDriver (httpx, retries, base64, template resolver) и подключил фабрику через dependencies.
+## T PHC-1.2.1g — тесты/контракты GeminiDriver
+- 2025-11-04 21:10 — План: мокать httpx.AsyncClient через monkeypatch, использовать tmp_path для файлов, покрыть успех, retry+успех, retry+ошибка, отсутствие inline данных, отсутствие GEMINI_API_KEY.
+- 2025-11-04 21:18 — Добавил тесты GeminiDriver (успех, retry, отсутствующий ключ, отсутствие inline, дубликаты) — py -X utf8 -m pytest tests/unit/providers/test_gemini_driver.py.

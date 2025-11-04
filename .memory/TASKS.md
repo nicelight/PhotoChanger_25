@@ -91,9 +91,9 @@ updated: 2025-11-04
         [x] T PHC-1.2.1b — REFLECT — определить структуру `slot.settings` для операций Gemini  
         [x] T PHC-1.2.1c — CONSULT — утвердить структуру `slot.settings` для Gemini у тимлида  
         [x] T PHC-1.2.1d — Обновить спецификации/схемы для `slot.settings` и операций Gemini  
-        [ ] T PHC-1.2.1e — Реализовать доступ к `template_media` (репозиторий + файловая система)  
-        [ ] T PHC-1.2.1f — Имплементация клиента Gemini + интеграция с JobContext  
-        [ ] T PHC-1.2.1g — Тесты/контракты для GeminiDriver (успех, timeout, ошибки)  
+        [x] T PHC-1.2.1e — Реализовать доступ к `template_media` (репозиторий + файловая система)  
+        [x] T PHC-1.2.1f — Имплементация клиента Gemini + интеграция с JobContext  
+        [x] T PHC-1.2.1g — Тесты/контракты для GeminiDriver (успех, timeout, ошибки)  
       [ ] T PHC-1.2.2 — Реализовать `TurbotextDriver` (polling, без публичных ссылок)  
         [ ] T PHC-1.2.2a — REFLECT — спроектировать адаптер Turbotext (polling, квоты, локальные данные)  
         [ ] T PHC-1.2.2b — Имплементация клиента Turbotext + обновление JobContext  
@@ -121,6 +121,13 @@ updated: 2025-11-04
     [ ] US PHC-2.1.1 — UI форм редактирования (HTMX)  
       [ ] T PHC-2.1.1.1 — Разметка и валидация формы слота  
       [ ] T PHC-2.1.1.2 — API `/api/slots` и `/api/settings`  
+    [ ] US PHC-2.1.2.GOV — Governance & Discovery  
+      [ ] T PHC-2.1.2.GOV.1 — REFLECT — определить требования к тестовому запуску слота (Admin UI → backend)  
+      [ ] T PHC-2.1.2.GOV.2 — CONSULT — утвердить контракт `/api/slots/{slot_id}/test-run` и маркировку задач  
+    [ ] US PHC-2.1.2 — Тестовый запуск конфигурации слота  
+      [ ] T PHC-2.1.2.1 — Реализовать эндпоинт `/api/slots/{slot_id}/test-run` и повторное использование IngestService  
+      [ ] T PHC-2.1.2.2 — Маркировать `job_history` (`source=ui_test`) и обновить логи/статистику  
+      [ ] T PHC-2.1.2.3 — Тесты и документация (OpenAPI/PRD/spec) для test-run  
   [ ] FEAT PHC-2.2 — Просмотр статистики и графики  
     [ ] T PHC-2.2.1.1 — REST `/api/stats/slots` (p95, доля 504)  
     [ ] T PHC-2.2.1.2 — UI-графики и таблицы SLA  
