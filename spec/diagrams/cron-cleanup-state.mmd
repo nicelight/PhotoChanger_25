@@ -1,0 +1,14 @@
+stateDiagram-v2
+    [*] --> waiting: Ожидание cron интервала (15 минут)
+    waiting --> running: Запуск scripts/cleanup_media.py
+    running --> scanning_temp: Сканирование media/temp
+    scanning_temp --> deleting_temp: Удаление просроченных temp файлов
+    deleting_temp --> scanning_results: Поиск просроченных media/results
+    scanning_results --> deleting_results: Удаление результатов с истекшим TTL
+    deleting_results --> updating_db: Обновить media_object.cleaned_at и job_history
+    updating_db --> logging: Записать лог и метрики
+    logging --> waiting: Завершение цикла, следующая итерация
+
+    running --> error: Исключение/ошибка IO
+    error --> alerting: Логировать инцидент, уведомить Ops
+    alerting --> waiting: Починить и ожидать следующего запуска

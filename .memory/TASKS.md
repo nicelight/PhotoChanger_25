@@ -1,6 +1,6 @@
 ﻿---
 id: tasks
-updated: 2025-11-02
+updated: 2025-11-04
 ---
 
 # Tasks (канбан)
@@ -20,7 +20,7 @@ updated: 2025-11-02
 
 ## TODO
 - [ ] EP PHC-1 — Синхронный ingest 15 слотов  
-  [ ] US PHC-1.GOV — Governance & Discovery  
+  [x] US PHC-1.GOV — Governance & Discovery  
     [x] T PHC-1.GOV.1 — CONSULT — подтвердить лимиты конкурентных ingest-запросов и необходимость внешнего rate limiting (тимлид)  
     [x] T PHC-1.GOV.2 — REFLECT — баланс KISS vs SLA при росте количества провайдеров  
     [x] T PHC-1.GOV.3 — CONSULT — утвердить состав SDD-пакета спецификаций (vision/context/glossary/domain-model/constraints-risks/nfr/use-cases/acceptance-criteria/test-plan)  
@@ -53,38 +53,48 @@ updated: 2025-11-02
       [x] T PHC-1.0.3.1 — Подготовить C4-диаграммы контекста/контейнера в `spec/diagrams/`
       [x] T PHC-1.0.3.2 — Добавить sequence/state диаграммы (Mermaid/PlantUML) для ключевых use-case в `spec/diagrams/`
 
-  [ ] FEAT PHC-1.1 — Построение ingest API и доменной модели  
-    [ ] US PHC-1.1.1 — Валидация payload и создание `JobContext`  
-        [ ] T PHC-1.1.1.1 — Ограничение размера файлов и MIME (JPEG/PNG/WebP)  
+  [x] FEAT PHC-1.1 — Построение ingest API и доменной модели  
+    [x] US PHC-1.1.1 — Валидация payload и создание `JobContext`  
+        [x] T PHC-1.1.1.1 — Ограничение размера файлов и MIME (JPEG/PNG/WebP)  
+
           [x] T PHC-1.1.1.1a — REFLECT — выбрать подход к потоковой валидации и определению MIME  
           [x] T PHC-1.1.1.1b — Реализовать проверку размера (per-slot + safety cap) на уровне ingest  
           [x] T PHC-1.1.1.1c — Интегрировать MIME-детекцию и ошибки 415 в ingest pipeline  
         [x] T PHC-1.1.1.1d — Добавить тесты и обновить контракты/документацию по валидации  
         [x] T PHC-1.1.1.1e — Инициализировать реальную БД, миграции и репозитории (`slot`, `job_history`, `media_object`, `settings`)
-      [ ] T PHC-1.1.1.2 — Хранение temp файлов с TTL = `T_sync_response`  
-          [ ] T PHC-1.1.1.2a — REFLECT — спроектировать управление temp-файлами и TTL (создание, обновление, очистка)  
-          [ ] T PHC-1.1.1.2b — Реализовать TempMediaStore (API, TTL-метаданные, файловая структура)  
-          [ ] T PHC-1.1.1.2c — Интегрировать TempMediaStore с JobContext и ingest сервисом  
-          [ ] T PHC-1.1.1.2d — Написать тесты на TTL/очистку temp-файлов и синхронизировать документацию  
-    [ ] US PHC-1.1.2 — Таймауты и статусы `pending/done/timeout/failed`  
-      [ ] T PHC-1.1.2.1 — REFLECT — описать переходы состояний, их связь с `JobContext`, БД и SLA  
-      [ ] T PHC-1.1.2.2 — Управление статусами и `failure_reason`  
-        [ ] T PHC-1.1.2.2a — Реализовать enum/модель статусов и обновление `job_history`  
-        [ ] T PHC-1.1.2.2b — Интегрировать установки статусов и `failure_reason` в `IngestService` (успех/ошибки провайдера)  
-        [ ] T PHC-1.1.2.2c — Синхронизировать API-ответы и логи с новой моделью статусов  
-      [ ] T PHC-1.1.2.3 — Обработка таймаута и очистки  
-        [ ] T PHC-1.1.2.3a — REFLECT — согласовать отмену `asyncio.wait_for`, очистку ресурсов и логирование  
-        [ ] T PHC-1.1.2.3b — Реализовать обработку таймаута: отмена провайдера, статус `timeout`, cleanup  
-        [ ] T PHC-1.1.2.3c — Написать тесты/контракты и обновить документацию по статусам/таймаутам  
+      [x] T PHC-1.1.1.2 — Хранение temp файлов с TTL = `T_sync_response`  
+          [x] T PHC-1.1.1.2a — REFLECT — спроектировать управление temp-файлами и TTL (создание, обновление, очистка)  
+          [x] T PHC-1.1.1.2b — Реализовать TempMediaStore (API, TTL-метаданные, файловая структура)  
+          [x] T PHC-1.1.1.2c — Интегрировать TempMediaStore с JobContext и ingest сервисом  
+          [x] T PHC-1.1.1.2d — Написать тесты на TTL/очистку temp-файлов и синхронизировать документацию  
+    [x] US PHC-1.1.2 — Таймауты и статусы `pending/done/timeout/failed`
+      [x] T PHC-1.1.2.1 — REFLECT — сверить переходы состояний с PRD (§4/§5), SDD (`spec/docs/use-cases.md`) и `ingest-errors.md`, подготовить диаграмму для `JobContext`/БД
+      [x] T PHC-1.1.2.2 — Управление статусами и `failure_reason`
+        [x] T PHC-1.1.2.2a — Сформировать enum статусов и перечень `failure_reason` на базе `spec/contracts/ingest-errors.md` и доменной модели
+        [x] T PHC-1.1.2.2b — Интегрировать установки статусов и `failure_reason` в `IngestService` (успех/ошибки провайдера)
+        [x] T PHC-1.1.2.2c — Синхронизировать API-ответы, логи, тесты и документацию (OpenAPI, PRD/SDD) с новой моделью статусов
+      [x] T PHC-1.1.2.3 — Обработка таймаута и очистки
+        [x] T PHC-1.1.2.3a — REFLECT — согласовать отмену `asyncio.wait_for`, очистку ресурсов и логирование с ограничениями SLA (`T_sync_response`, TTL)
+        [x] T PHC-1.1.2.3b — Реализовать обработку таймаута: отмена провайдера, статус `timeout`, cleanup
+        [ ] T PHC-1.1.2.3c — Написать тесты/контракты и обновить документацию по статусам/таймаутам
     [ ] FEAT PHC-1.2 — Интеграция провайдеров Gemini/Turbotext  
-      [ ] T PHC-1.2.1.1 — Реализовать `GeminiDriver` (Files API, inline, ошибки)  
-        [ ] T PHC-1.2.1.1a — REFLECT — спроектировать адаптер Gemini (Files API, retries, ограничения)  
-        [ ] T PHC-1.2.1.1b — Имплементация клиента Gemini + интеграция с JobContext  
-        [ ] T PHC-1.2.1.1c — Тесты/контракты для GeminiDriver (успех, timeout, ошибки)  
-      [ ] T PHC-1.2.1.2 — Реализовать `TurbotextDriver` (polling, публичные ссылки)  
-        [ ] T PHC-1.2.1.2a — REFLECT — спроектировать адаптер Turbotext (polling, публичные URL, квоты)  
-        [ ] T PHC-1.2.1.2b — Имплементация клиента Turbotext + обновление JobContext  
-        [ ] T PHC-1.2.1.2c — Тесты/контракты для TurbotextDriver (успех, очередь, ошибки)  
+      [ ] US PHC-1.2.0 — Инфраструктура провайдеров  
+        [x] T PHC-1.2.0.1 — REFLECT — продумать `_invoke_provider`, выбор драйвера и маппинг ошибок  
+        [x] T PHC-1.2.0.2 — Реализовать `_invoke_provider` и wiring фабрики драйверов в ingest  
+        [x] T PHC-1.2.0.3 — Написать unit-тесты на выбор провайдера и обработку ошибок  
+        [x] T PHC-1.2.0.4 — REFLECT — определить недостающие поля `Slot`/`slot` (settings_json, шаблоны, параметры провайдеров)  
+        [x] T PHC-1.2.0.5 — CONSULT — согласовать структуру слота и миграцию с тимлидом  
+        [x] T PHC-1.2.0.6 — Расширить модель слота (ORM, доменная модель, репозиторий, миграции)  
+        [x] T PHC-1.2.0.7 — Тесты и фиксация контрактов по обновлённому слоту  
+      [ ] T PHC-1.2.1 — Реализовать `GeminiDriver` (inline/ошибки)  
+        [ ] T PHC-1.2.1a — REFLECT — спроектировать адаптер Gemini (inline, retries, ограничения)  
+        [ ] T PHC-1.2.1b — Имплементация клиента Gemini + интеграция с JobContext  
+        [ ] T PHC-1.2.1c — Тесты/контракты для GeminiDriver (успех, timeout, ошибки)  
+      [ ] T PHC-1.2.2 — Реализовать `TurbotextDriver` (polling, без публичных ссылок)  
+        [ ] T PHC-1.2.2a — REFLECT — спроектировать адаптер Turbotext (polling, квоты, локальные данные)  
+        [ ] T PHC-1.2.2b — Имплементация клиента Turbotext + обновление JobContext  
+        [ ] T PHC-1.2.2c — Тесты/контракты для TurbotextDriver (успех, очередь, ошибки)
+
     [ ] FEAT PHC-1.3 — TTL и очистка медиа  
       [ ] T PHC-1.3.1.1 — Cron `scripts/cleanup_media.py`  
         [ ] T PHC-1.3.1.1a — REFLECT — определить стратегию очистки и инструменты (FS/DB)  
@@ -157,3 +167,4 @@ updated: 2025-11-02
     [ ] T XXX.GOV.1 — CONSULT — ключевой вопрос к тимлиду  
     [ ] T XXX.GOV.2 — REFLECT — анализ рисков/альтернатив  
   [ ] FEAT XXX.Y — Функциональный блок (открывать после закрытия GOV)
+

@@ -4,12 +4,12 @@
 - Гарантировать, что входящие multipart-запросы соответствуют лимитам размера и типу (`image/jpeg|png|webp`) до запуска провайдера.
 - Минимизировать использование памяти: чтение файла потоками, остановка при превышении лимита.
 - Записать метаданные (`content_length`, `content_type`, `sha256`) в `JobContext`.
-- Убедиться, что ошибки маппятся на контрактные коды `413 payload_too_large` и `415 unsupported_media_type`.
+- Убедиться, что ошибки маппятся на контрактные коды `413 payload_too_large`, `415 unsupported_media_type` и `400 invalid_request` (включая проверку checksum).
 
 ## Основные сущности
 - `SlotConfig`: включает `size_limit_mb` (пер-слот), `provider`, прочие настройки.
 - `IngestLimits`: глобальные константы — `default_slot_limit_mb` (15), `absolute_cap_bytes` (50 * MiB), допустимые MIME.
-- `UploadValidationResult`: DTO с полями `content_type`, `size_bytes`, `sha256`, `filename`, `stored_path`.
+- `UploadValidationResult`: DTO с полями `content_type`, `size_bytes`, `sha256`, `filename`.
 
 ## Поток
 1. FastAPI контроллер получает `UploadFile` от `multipart/form-data`.
@@ -24,12 +24,12 @@
      - Временно сохраняет в `SpooledTemporaryFile` (настройка FastAPI по умолчанию).
    - По окончании — возвращает `UploadValidationResult`, где `stored_path` = путь во временной директории FastAPI.
 3. `JobContext` дополняется полями:
-   - `content_type`, `content_length`, `payload_hash`, `upload_tempfile`.
+   - `content_type`, `content_length`, `payload_hash`, `temp_payload_path`.
    - `sync_deadline = now + T_sync_response` (уже зафиксировано в документации).
 4. При успешной обработке результат переносится в `media/results/{slot_id}/{job_id}/payload.<ext>`; temp-файл удаляется вручную (иначе останется в `/tmp`).
 5. При ошибке валидации:
-   - Генерируется `IngestValidationError` с `failure_reason`.
-   - Контроллер возвращает JSON-ошибку с HTTP 413 или 415.
+   - Генерируется доменное исключение (`UnsupportedMediaError`/`PayloadTooLargeError`) или `ChecksumMismatchError`.
+   - Контроллер фиксирует `job_history.status='failed'`, очищает temp/result каталоги и возвращает JSON-ошибку с кодом 413/415/400 и `failure_reason` из контракта.
 
 ## Исключения и маппинг
 | Исключение | HTTP статус | `failure_reason` | Детали |
@@ -71,11 +71,19 @@ async def ingest(slot_id: str,
                  hash_hex: str = Form(...),
                  file: UploadFile = File(...),
                  svc: IngestService = Depends(get_ingest_service)):
-    job_ctx = await svc.prepare_job(slot_id, password)
-    validation = await svc.validate_upload(file, job_ctx.slot_config)
-    if validation.sha256.lower() != hash_hex.lower():
-        raise HTTPException(status_code=400, detail=build_error("checksum_mismatch"))
-    job_ctx.attach_upload(validation, file)
+    job_ctx = svc.prepare_job(slot_id)
+    job_ctx.metadata["ingest_password"] = password  # проверка пароля — отдельная задача
+    try:
+        await svc.validate_upload(job_ctx, file, hash_hex)
+    except UnsupportedMediaError:
+        svc.record_failure(job_ctx, FailureReason.UNSUPPORTED_MEDIA_TYPE)
+        raise HTTPException(status_code=415, detail=build_error("unsupported_media_type"))
+    except PayloadTooLargeError:
+        svc.record_failure(job_ctx, FailureReason.PAYLOAD_TOO_LARGE)
+        raise HTTPException(status_code=413, detail=build_error("payload_too_large"))
+    except ChecksumMismatchError:
+        svc.record_failure(job_ctx, FailureReason.INVALID_REQUEST)
+        raise HTTPException(status_code=400, detail=build_error("invalid_request"))
     return await svc.process(job_ctx)
 ```
 

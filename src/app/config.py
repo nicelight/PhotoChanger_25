@@ -27,6 +27,7 @@ class MediaPaths:
     root: Path
     results: Path
     templates: Path
+    temp: Path
 
 
 @dataclass(slots=True)
@@ -38,12 +39,14 @@ class AppConfig:
     session_factory: sessionmaker[Session]
     result_ttl_hours: int
     sync_response_seconds: int
+    temp_ttl_seconds: int
 
 
 def _ensure_media_paths(paths: MediaPaths) -> None:
     paths.root.mkdir(parents=True, exist_ok=True)
     paths.results.mkdir(parents=True, exist_ok=True)
     paths.templates.mkdir(parents=True, exist_ok=True)
+    paths.temp.mkdir(parents=True, exist_ok=True)
 
 
 def load_config() -> AppConfig:
@@ -53,13 +56,14 @@ def load_config() -> AppConfig:
         root=root,
         results=root / "results",
         templates=root / "templates",
+        temp=root / "temp",
     )
     _ensure_media_paths(media_paths)
 
     ingest_limits = IngestLimits(
         allowed_content_types=("image/jpeg", "image/png", "image/webp"),
         slot_default_limit_mb=int(os.getenv("INGEST_SLOT_DEFAULT_LIMIT_MB", 15)),
-        absolute_cap_bytes=int(os.getenv("INGEST_ABSOLUTE_CAP_BYTES", 50 * 1024 * 1024)),
+        absolute_cap_bytes=int(os.getenv("INGEST_ABSOLUTE_CAP_BYTES", 20 * 1024 * 1024)),
         chunk_size_bytes=int(os.getenv("INGEST_CHUNK_SIZE_BYTES", 1 * 1024 * 1024)),
     )
 
@@ -69,6 +73,7 @@ def load_config() -> AppConfig:
 
     result_ttl_hours = int(os.getenv("RESULT_TTL_HOURS", 72))
     sync_response_seconds = int(os.getenv("T_SYNC_RESPONSE_SECONDS", 48))
+    temp_ttl_seconds = int(os.getenv("TEMP_TTL_SECONDS", sync_response_seconds))
 
     init_db(engine, session_factory)
 
@@ -80,4 +85,5 @@ def load_config() -> AppConfig:
         session_factory=session_factory,
         result_ttl_hours=result_ttl_hours,
         sync_response_seconds=sync_response_seconds,
+        temp_ttl_seconds=temp_ttl_seconds,
     )

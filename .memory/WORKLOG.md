@@ -7,6 +7,195 @@ updated: 2025-11-02
 
 > Перед созданием `CONSULT`/`REFLECT` задач в `.memory/TASKS.md` (см. «Практика CONSULT/REFLECT» в `agents.md`) запиши в этом журнале краткий контекст решения и вопросы, чтобы на созвоне можно было ссылаться на готовые заметки.
 
+## ISSUE UTF8-POWERSHELL
+- 2025-11-04 03:35 — воспроизвёл проблему нечитаемых символов PowerShell при `Get-Content -Raw -Encoding UTF8`, сохранил образец вывода `.memory/CONTEXT.md`.
+- 2025-11-04 03:44 — проверил, что добавление `[Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8` перед командой устраняет артефакты.
+- 2025-11-04 03:48 — обновил `agents.md` (п.10) инструкцией о принудительной установке кодировки и привёл рабочий пример с `Get-Content`.
+
+## PHC-T-INIT-MEMORY
+- 2025-10-31 02:40 — перечитал agents.md, BRIEF, ARCHITECTURE, PRD, blueprints для восстановления контекста
+- 2025-10-31 02:44 — зафиксировал перечень недозаполненных артефактов (.memory/*.md, REPORT*, spec/contracts/VERSION.json)
+- 2025-10-31 02:55 — обновил MISSION, CONTEXT, TASKS, ASKS с данными из PRD/ARCHITECTURE
+- 2025-10-31 03:05 — синхронизировал DECISIONS + ADR-0001, USECASES, INDEX
+- 2025-10-31 03:12 — добавил spec/contracts/VERSION.json и REPORT_SCHEMA.json
+- 2025-10-31 03:18 — проставил статусы DONE в TASKS/ASKS, подготовил отчётные артефакты
+
+## CONSULT — управление отчётными артефактами
+- 2025-10-31 03:30 — тимлид предложил убрать `.memory/REPORT.json` и `.memory/REPORT_SCHEMA.json`, требуется обновить инструкции `agents.md`
+- 2025-10-31 03:34 — удалил отчётные файлы из меморибанка и обновил agents.md (итог без JSON-отчёта)
+
+## T PHC-0.1.3 — Синхронизация CONTEXT.md с PRD/ARCHITECTURE
+- 2025-10-31 03:46 — перечитал PRD §10–11 и ARCHITECTURE.md, выписал требования к окружениям и опсам
+- 2025-10-31 03:52 — обновил `.memory/CONTEXT.md` (среды, стек, конфигурация, политики) в соответствии с документацией
+
+## PROCESS — Встраивание CONSULT/REFLECT в иерархию задач
+- 2025-10-31 04:10 — зафиксировал требование переводить CONSULT/REFLECT под `US *.GOV` узлы, подготовил правки инструкций для авто-включения в дерево Kanban
+- 2025-10-31 04:18 — обновил `.memory/TASKS.md`: добавлены `US *.GOV` узлы, CONSULT/REFLECT вложены в соответствующие эпики, добавлен шаблон блока GOV
+- 2025-10-31 04:25 — создал задачи для формирования полного пакета спецификаций (OpenAPI, схемы, blueprints, VERSION bump) по SDD в `.memory/TASKS.md`
+- 2025-10-31 04:32 — дополнил `.memory/TASKS.md`: добавлены задачи на подготовку SDD-доков (vision/context/glossary/domain-model/constraints-risks/nfr/use-cases/acceptance-criteria/test-plan) и согласование структуры в `US PHC-1.GOV`
+
+## US PHC-1.2.0 — Инфраструктура провайдеров
+- 2025-11-04 09:05 — перечитал `.memory/MISSION.md`, `.memory/CONTEXT.md`, `.memory/TASKS.md`, `.memory/ASKS.md`, `.memory/DECISIONS.md`, `.memory/USECASES.md`, `.memory/INDEX.yaml` для актуализации контекста перед стартом US PHC-1.2.0
+- 2025-11-04 09:12 — загрузил в рабочий контекст BRIEF, PRD и ARCHITECTURE, выписал требования к провайдерским драйверам и SLA
+- 2025-11-04 09:20 — изучил текущий код `IngestService`, заглушки драйверов (`providers_*.py`), фабрику провайдеров и существующие unit-тесты, зафиксировал отсутствие реализации `_invoke_provider`
+- 2025-11-04 09:32 — обсудил с тимлидом план по `_invoke_provider`: используем DI фабрики драйверов, оборачиваем ошибки в `provider_error`, тесты добавим после реализации настоящих драйверов (по решению тимлида сейчас не прогоняем)
+- 2025-11-04 09:50 — внедрил DI для провайдеров (`ProviderResult`, `provider_factory` в `IngestService`), обработку ошибок с маппингом в `provider_error`, обновил зависимости FastAPI
+- 2025-11-04 10:20 — совместно с тимлидом решили сначала расширить модель слота; в .memory/TASKS.md добавлены задачи T PHC-1.2.0.4–T PHC-1.2.0.7
+- 2025-11-04 10:40 — зафиксировал в документации отказ от Files API и лимит 20 МБ (PRD, spec/docs/providers/gemini.md, spec/contracts/providers/gemini.md), обновил ограничения ingest и MIME, синхронизировал конфиг/тесты
+- 2025-11-04 10:55 — вернул spec/docs/providers/gemini.md к исходной версии (источник истины не изменяем), дальнейшие ограничения фиксируем в PRD/контрактах
+- 2025-11-04 11:05 — добавил зависимость httpx в requirements для будущих провайдерских драйверов, уточнил хранение ключей и обработку base64 ответа
+ - 2025-11-04 11:20 — REFLECT: текущий слот хранит только id/provider/size/is_active; для провайдеров нужны поля operation, settings_json (параметры провайдера, promt/strength/quality), связь с шаблонными медиа, версионность
+   * operation: строка из доменного словаря (style_transfer, image_edit, identity_transfer) — иначе драйверу нечего выбрать
+   * settings_json: JSON конфиг слота с параметрами (prompt, style_strength, guidance_scale, retries) и ID шаблонов; сейчас нечему хранить эти значения
+   * template_media: отдельная таблица/связка на media_object с TTL>72ч; слоту нужны ID шаблонов и возможность различать основное/оверлей
+   * ingest_password_hash: по PRD пароль может быть на слот; пока только глобальный hash в settings
+   * display_name/version/updated_by для UI и optimistic locking (PRD/domain-model)
+  Риски: придётся сделать миграцию (ALTER slot + новая таблица template_media), обновить сиды/репозиторий/датакласс и обеспечить совместимость с текущими данными.
+- 2025-11-04 11:31 — уточнил: по PRD ingest-пароль глобальный (hash хранится в settings), поле ingest_password_hash в описании slot — артефакт раннего драфта
+- 2025-11-04 11:40 — убрал упоминание ingest_password_hash у Slot (PRD, domain-model), чтобы отразить глобальный пароль из settings
+- 2025-11-04 11:48 — дополнил PRD: уточнена структура slot (display_name, operation, settings_json, version, template bindings) и предел загрузки 20 МБ
+
+## T PHC-1.1.1.2a — REFLECT — спроектировать управление temp-файлами и TTL
+- 2025-11-03 09:40 — изучил текущую реализацию ingest/media: `UploadValidator` считает хэш и размер, но не сохраняет файл, `JobContext` держит только `result_dir`; `MediaPaths` не содержит `temp`, `MediaObject.scope` подразумевает `provider|result`, но репозиторий работает только с `result`.
+- 2025-11-03 09:46 — зафиксировал требования из PRD/SDD: временные файлы должны жить не дольше `T_sync_response`, храниться в `media/temp`, регистрироваться как `media_object(scope='provider')` и очищаться сразу по завершении/ошибке, плюс резервный cron.
+- 2025-11-03 09:51 — потенциальные блокеры: 1) потребуется расширить конфиг (`MediaPaths.temp`, env `TEMP_TTL_SECONDS`), 2) нужна новая сущность `TempMediaStore` с API для записи UploadFile → temp-dir → возврат пути и регистрация TTL, 3) потребуется обновить `MediaObjectRepository` для работы с `scope='provider'`, 4) очистку нужно вызывать из `IngestService.record_success/record_failure` и предусмотреть fallback для просрочки.
+- 2025-11-03 09:56 — открытые вопросы к тимлиду: (a) подтверждаем ли структуру каталога `media/temp/{slot_id}/{job_id}` и регистрацию temp-файлов в `media_object`? (b) достаточно ли удаления temp-файла напрямую из ingest + периодический cron, или нужен отдельный механизм (e.g. фоновой таск) для экспирации ≤60 с? (c) должны ли драйверы провайдеров получать публичный URL из `TempMediaStore` (для future HTTP-доступа) или достаточно локального пути?
+- 2025-11-03 10:05 — Тимлид подтвердил: структура `media/temp/{slot_id}/{job_id}` + регистрация `scope='provider'` подходит, достаточно удаления силами ingest + cron, генерацию публичных ссылок откладываем на следующую итерацию.
+
+## T PHC-1.1.1.2b — Реализовать TempMediaStore (API, TTL-метаданные, файловая структура)
+- 2025-11-03 10:20 — расширил `MediaPaths` (`temp`), `AppConfig` (`temp_ttl_seconds`), внедрил чтение `TEMP_TTL_SECONDS` (fallback на `T_SYNC_RESPONSE_SECONDS`), обновил `load_config` и создание директорий.
+- 2025-11-03 10:32 — добавил `TempMediaStore` (`persist_upload`, `cleanup`, `cleanup_expired`), общий репозиторийный метод `_register_media`, `register_temp`, `list_expired_by_scope`, расширил `MediaObject` полем `scope`.
+
+## T PHC-1.1.1.2c — Интегрировать TempMediaStore с JobContext и ingest сервисом
+- 2025-11-03 10:45 — обновил `JobContext` (список temp-хэндлов, `temp_payload_path`), внедрил `TempMediaStore` в зависимости FastAPI, записал хэндлы через `IngestService.validate_upload`, добавил очистку temp-файлов в `record_success`/`record_failure`.
+- 2025-11-03 10:52 — расширил cron `cleanup_media.py`: теперь дополнительно чистит `scope='provider'` через `TempMediaStore.cleanup_expired`.
+
+## T PHC-1.1.1.2d — Написать тесты на TTL/очистку temp-файлов и синхронизировать документацию
+- 2025-11-03 11:05 — обновил unit-тесты (`ingest/test_service.py`, `media/test_cleanup.py`, `repositories/test_media_object_repository.py`) под новую инфраструктуру temp-хранилища, добавил проверку удаления temp-файлов.
+- 2025-11-03 11:12 — попытка запуска `py -m pytest tests/unit` завершилась ошибкой из-за отсутствия установленного `pytest`; зафиксировано для отчёта, требуется установка зависимости в окружении.
+
+## T PHC-1.1.2.1 — REFLECT — сверить переходы состояний с PRD/SDD/ingest-errors
+- 2025-11-03 11:35 — пересмотрел PRD (§4 поток ingest, §5 таймауты), SDD use-cases UC2/UC3 и domain-model: статус `pending` создаётся на старте, далее единственный переход в `done|timeout|failed`; повторная смена статуса и повторный запуск job недопустимы.
+- 2025-11-03 11:38 — `ingest-errors.md` + JSON Schema фиксируют `status` поля ответа (`error|timeout`) и перечень `failure_reason` (`invalid_request`, `invalid_password`, `slot_not_found`, `slot_disabled`, `payload_too_large`, `unsupported_media_type`, `rate_limited`, `provider_timeout`, `provider_error`, `internal_error`). Нужно сопоставить их с HTTP-кодами и статусами БД.
+- 2025-11-03 11:42 — Текущая реализация `IngestService` создаёт `job_history.pending`, далее `record_success` → `set_result(status='done')`, `record_failure` → `set_failure(status, failure_reason)`; таймауты и ошибки провайдера пока не реализованы, но код уже очищает result/temp каталоги.
+- 2025-11-03 11:47 — Узкие места: (1) ошибки валидации/аутентификации происходят до запуска провайдера — нужно решить, менять ли статус на `failed` или удалять pending-запись; (2) при `asyncio.CancelledError`/`TimeoutError` нужно гарантированно фиксировать `status='timeout'` с `failure_reason='provider_timeout'`; (3) при внутренних исключениях сервиса отличать `internal_error` от `provider_error`, чтобы соблюсти контракты и статистику.
+- 2025-11-03 11:51 — Для диаграммы состояния достаточно текстового описания: `pending` → (`done`|`timeout`|`failed`), где `timeout` = `asyncio.TimeoutError`; `failed` дробится по причинам (`invalid_*`, `provider_error`, `internal_error`). Дополнительно нужно отметить, что при возврате 429 из throttle job может не создаваться (семафор отклоняет до `create_pending`).
+- 2025-11-03 11:54 — Решения: держимся KISS — не добавляем промежуточных статусов; передаём `failure_reason` напрямую из сервисных исключений; `status` поля HTTP тела будет `error` (кроме таймаута), а `job_history.status` — `failed`. Требуется уточнение у тимлида по стратегииям для ранних ошибок (оставлять pending в `failed` или не сохранять job вовсе).
+- 2025-11-03 12:00 — Тимлид одобрил вариант 1: `job_history` создаём сразу, любые ранние ошибки переводим в `failed` с соответствующим `failure_reason`; статистику по SLA фильтруем по нужным причинам.
+
+## US PHC-1.GOV — Governance & Discovery
+- 2025-10-31 04:45 — Подготовил вопросы к тимлиду по лимитам ingest-конкурентности: текущие артефакты декларируют поддержку ≤30 параллельных запросов (MISSION.md) и provider quotas (PRD §4.3). Предложение: удерживать внутренний лимит 30 concurrent jobs (1–2 на слот) без внешнего rate limiter, но уточнить, нужен ли внешний gateway для защиты от bursts >0.5 RPS и согласовать ожидаемую нагрузку с провайдерами (Gemini 500 RPM). Вопросы: подтверждаем ли «30» как жёсткий потолок? требуется ли global RPS cap на уровне reverse-proxy?
+- 2025-10-31 04:47 — Зафиксировал анализ KISS vs SLA при росте числа провайдеров: добавление асинхронных/пуллинговых провайдеров может потребовать очередей и ретраев, что нарушает KISS и лимит 60 с. Предложены guardrails — принимать только провайдеров с ≤60 с SLA, использовать pluggable драйверы, эмулировать долгие операции контрактными тестами, держать фичи типа retries как ADR с согласованием SLA.
+- 2025-10-31 04:49 — Подготовил уточнение по составу SDD-пакета: `spec/docs/README.md` уже перечисляет vision/context/glossary/domain-model/constraints-risks/nfr/use-cases/acceptance-criteria/test-plan. Вопрос тимлиду: подтверждаем ли именно эту структуру, нужны ли дополнительные документы (например, data flow) или можно объединить некоторые разделы?
+- 2025-10-31 04:51 — Оценил риски и зависимости подготовки SDD: требуется синхронизация с PRD/Architecture, решение по concurrency/провайдерам, визуальные диаграммы (sequence/state) и ресурсы на генерацию JSON Schema. Отметил риски дублирования сведений и необходимость freeze PRD перед переносом в SDD.
+- 2025-10-31 05:02 — Получил решения тимлида: потолок concurrency подтверждён на уровне 30 запросов, внешний rate limiting не нужен; архитектуру не усложняем (интегрируем только провайдеров, укладывающихся ≤60 с без очередей); структура SDD из `spec/docs/README.md` утверждена; PRD/Architecture зафиксированы, дополнительно нужны диаграммы (Mermaid/PlantUML/C4) в `spec/diagrams/`. Расширить план подготовки спецификаций с учётом диаграмм.
+
+## US PHC-1.0.0 — Базовые SDD документы
+- 2025-10-31 05:20 — Перечитал PRD (разделы 0–14) и ARCHITECTURE.md, собрал ключевые метрики, акторов, данные и потоки для переноса в SDD-документы.
+- 2025-10-31 05:24 — Сопоставил существующие blueprints (`vision`, `context`, `use-cases`, `glossary`) с планируемыми SDD-разделами, отметил расхождения и элементы, требующие обновления (TTL очистки, sequence/state диаграммы, стратегия тестирования).
+- 2025-10-31 05:28 — Подготовил структуру будущих файлов `spec/docs/*.md`, выписал ссылки на артефакты (`MISSION`, `CONTEXT`, PRD §10–12) для каждого раздела.
+- 2025-10-31 05:36 — Сформировал новые SDD документы `vision`, `context`, `glossary`, `domain-model`, `constraints-risks`, `nfr`, синхронизировал определения с PRD/ARCHITECTURE и решениями тимлида (конкурентность, KISS).
+- 2025-10-31 05:44 — Добавил SDD разделы `use-cases`, `acceptance-criteria`, `test-plan`, прописал ссылки на будущие диаграммы (`spec/diagrams/*`) и соответствие с AC/NFR.
+- 2025-10-31 05:52 — Синхронизировал статусы задач (US PHC-1.0.0 + подпункты), обновил PROGRESS/ASKS/INDEX для фиксации SDD пакета.
+
+## US PHC-1.0.1.GOV — Governance & Discovery
+- 2025-11-02 10:10 — Перечитал BRIEF, PRD §4/§8 и ARCHITECTURE (ingest flow), выписал требования к `multipart/form-data` (`password`, `fileToUpload`, доп. метаданные) и заметил конфликт документов: PRD требует возвращать бинарный результат (перечень MIME), тогда как UC2 в SDD описывает JSON c `/public/results/{job_id}` и inline превью. Также уточнил, что ошибки перечислены как HTTP-коды, но нуждается в контракте на JSON-ответ (`status`, `failure_reason`, `job_id`?). Требуется консультация тимлида по целевому формату успешного ответа и обязательным полям ошибок перед фиксацией схем.
+- 2025-11-02 11:05 — Получил ответы тимлида: успешный ingest возвращает только бинарное тело без `job_id`; ошибки оформляем на своё усмотрение; единственные обязательные поля формы — `password` и `fileToUpload`, остальные допускаются произвольные. Учту требования при описании контрактов.
+
+## US PHC-1.0.1 — OpenAPI `/api/ingest/{slot_id}`
+- 2025-10-31 06:05 — Согласовал дальнейшие шаги: подготовить спецификацию ingest API (payload, ответы, ошибки) с опорой на PRD/архитектуру и обновить контракты.
+- 2025-11-02 13:05 — Разобрал требования к multipart-пayload и ошибочным ответам: обязательные поля `password`/`fileToUpload`, дополнительные строки без ограничений, успешные ответы — только бинарь. Ошибки оформляем JSON с полями `status` (`error`/`timeout`), `failure_reason` из фиксированного перечня, опционально `details`/`retry_after`.
+- 2025-11-02 13:25 — Добавил схемы `spec/contracts/schemas/ingest-request.schema.json` и `spec/contracts/schemas/ingest-error.schema.json` (draft 2020-12). В первой отражены обязательные части multipart и доп. поля, во второй — перечислены коды ошибок и структура JSON. Схемы будут использоваться при подготовке OpenAPI и контрактных тестов.
+- 2025-11-02 13:30 — Выявил риск: `format: binary` — расширение OpenAPI, тогда как JSON Schema 2020-12 опирается на `contentEncoding/contentMediaType`. Нужно уточнить совместимость нашего пайплайна (ручная спецификация vs автогенерация/валидация). Добавлена задача `T PHC-1.0.1.3` для анализа и потенциальной корректировки схем.
+- 2025-11-02 13:40 — Сопоставил пример запроса из PRD (блок «Пример сырых полей») и актуализировал `ingest-request.schema.json`: перечислил типовые поля DSL Remote Pro в описании `additionalProperties`, расширил пример значениями `time`, `profile`, `hash`, и т.д. для демонстрации реальной нагрузки.
+- 2025-11-02 13:50 — Под свободные поля DSLR Remote Pro убрал ограничение на строковый тип: `additionalProperties` теперь допускает любые JSON-значения без валидации, чтобы не мешать будущим расширениям клиента.
+- 2025-11-02 14:05 — Зафиксировал соответствие HTTP-статусов и `failure_reason` в `spec/contracts/ingest-errors.md` (таблица + примеры). Учёл обязательные коды из PRD (400/401/404/413/415/429/5xx/504) и добавил пояснения по `slot_disabled`, `retry_after`, `status=timeout`.
+- 2025-11-02 14:15 — Проанализировал генерацию OpenAPI: так как спецификацию ведём вручную, остановились на OpenAPI 3.1 с ручным `openapi.yaml`. Решили использовать `type: string`, `format: binary` для совместимости со Swagger UI и при необходимости дублировать описание через `contentMediaType`. Дополнительных инструментов генерации не подключаем; валидировать будем `openapi-spec-validator`.
+- 2025-11-02 14:35 — Подготовил черновик `spec/contracts/openapi.yaml` (OpenAPI 3.1): описал `POST /api/ingest/{slot_id}`, подключил multipart-схему и ошибки через `$ref`, перечислил все коды из PRD. Обновил `spec/contracts/VERSION.json` новым change-блоком.
+- 2025-11-02 14:45 — Отметил, что в OpenAPI пока нет примеров и явного описания SLA (окно `T_sync_response`, TTL результатов). Добавил задачу `T PHC-1.0.1.4` для расширения спецификации примерами multipart/ошибок и текстом про ограничения.
+- 2025-11-02 15:05 — Расширил `openapi.yaml`: добавлены описание SLA в operation-level description, пример multipart-запроса с данными DSLR Remote Pro и примеры ошибок (invalid_password, provider_timeout). `VERSION.json` дополнен записью про обновление.
+
+## T PHC-1.0.2.1 — Обновить провайдерские спецификации
+- 2025-11-02 15:20 — Перечитал PRD и публичную документацию Turbotext, выписал лимиты (MIME, ~50 МБ, polling `create_queue/get_result`, задержка 2–3 с). Обновил `spec/contracts/providers/turbotext.md`: расписал протокол, операции (`generate_image2image`, `mix_images`, `deepfake_photo`), требования к публичным ссылкам, обработку ошибок и квоты.
+- 2025-11-02 15:30 — Дополнял `spec/contracts/providers/gemini.md`: уточнил лимиты inline-передачи, правила повторных попыток, деградацию Files API. Обновил `VERSION.json` change-log с ссылкой на оба контракта.
+
+## T PHC-1.0.2.2 — Деградации/ретраи провайдеров
+- 2025-11-02 15:45 — Сопоставил обновлённые контракты и добавил разделы «Деградации и ретраи» в `spec/docs/providers/gemini.md` и `spec/docs/providers/turbotext.md`: описал таймауты Files API, квоты, алгоритмы backoff, критерии отключения слота, обработку `success=false` и потерю результатов.
+
+## US PHC-1.0.3 — Диаграммы для SDD
+- 2025-11-02 16:00 — Создал C4-диаграммы контекста/контейнера (`spec/diagrams/c4-context.mmd`, `c4-container.mmd`) и диаграммы UC2–UC5 (sequence/state) в `spec/diagrams/*`. Обновил `spec/docs/use-cases.md`, указав, что схемы готовы.
+- 2025-11-03 15:40 — Добавил недостающие диаграммы UC6 (`uc6-ops-sequence.mmd`) и cron (`cron-cleanup-state.mmd`), синхронизировал README каталога.
+
+## T PHC-1.1.1.1 — Ограничение размера файлов и MIME
+- 2025-11-02 16:10 — Перечитал PRD §4/§5 и ARCHITECTURE: лимит размера файла конфигурируемый (по умолчанию ≤ 15 МБ, хранится в слоте), при превышении → 413; допустимые MIME — JPEG/PNG/WebP (решили упростить и отказаться от HEIC/HEIF). Проверку нужно выполнять до записи на диск (важно не грузить гигантские файлы в память). Риски: корректное определение MIME для WebP (желательно `python-magic`), обработка multipart без `filename`/`Content-Type`, согласование глобального safety cap и per-slot `size_limit_mb`.
+- 2025-11-02 16:20 — Привёл документацию к новому набору MIME (только JPEG/PNG/WebP): обновил PRD, SDD (use-cases, NFR), OpenAPI, JSON Schema и справочник ошибок; добавил запись в `VERSION.json`.
+- 2025-11-02 16:35 — Уточнил обязательность поля `hash`: PRD, архитектура, use-cases, NFR, OpenAPI и JSON Schema теперь требуют checksum, описывают валидацию и пример; `hash` исключён из списка опциональных полей.
+
+## T PHC-1.0.0.10 — REFLECT — сверить `spec/docs/blueprints/use-cases.md`
+- 2025-11-02 11:10 — Зафиксировал запрос тимлида: пересмотреть все use-case в `spec/docs/blueprints/use-cases.md`, свериться с BRIEF/PRD/ARCHITECTURE и устранить несоответствия (UC2 особенно). Начинаю сверку, ключевые акценты — отсутствие `job_id` в успешном ответе ingest, корректные шаги для админских и публичных сценариев.
+- 2025-11-02 11:45 — Сравнил существующие UC0–UC6 с PRD разделами 4/8/12 и ARCHITECTURE.md. Выявил несоответствия: UC2 описывал JSON-ответ `public_url`, UC1 неверно упоминал включение пароля в ingest-ссылку, UC4/UC6 не уточняли поведение TTL и очистки. Подготовил консолидированную версию сценариев с корректными шагами и альтернативами.
+- 2025-11-02 12:20 — Синхронизировал `spec/docs/use-cases.md` с обновлённым blueprint: добавил блок общих требований (обязательные поля multipart, бинарный ответ без `job_id`, структура JSON-ошибок), переписал UC0–UC6 в соответствии с PRD/ARCHITECTURE и фиксацией токена/TTL/очистки.
+
+## T PHC-1.0.0.11 — CONSULT — утвердить обновлённые use-case
+- 2025-11-02 11:55 — На основе указаний тимлида («не возвращать job_id», обязательны только `password`/`fileToUpload`) подготовил обновлённый `spec/docs/blueprints/use-cases.md`. Готов предъявить изменения для подтверждения.
+- 2025-11-02 12:25 — Зафиксировал требования к ошибочным ответам ingest API (JSON `status`/`failure_reason` без `job_id`, опциональный `details`) для дальнейшей OpenAPI-спецификации; планы по схемам обновлю в рамках US PHC-1.0.1.
+- 2025-11-02 12:40 — Убрали дублирование use-case документов: сохранил единственный источник `spec/docs/use-cases.md`, удалил `spec/docs/blueprints/use-cases.md` и обновил ссылку в `spec/contracts/VERSION.json`. Blueprint-папка теперь свободна для UI артефактов.
+
+## T AGENTS-2025-11-01 - Обновление инструкции агента
+- 2025-11-01 12:05 - Получил запрос тимлида: дополнить agents.md требованием при выполнении задач отслеживать неоднозначности и потенциальные развилки; при их обнаружении приостанавливать реализацию и консультироваться с тимлидом.
+
+
+## PROCESS — Кодировочная дисциплина
+- 2025-10-31 06:20 — Проанализировал СLA: правила по UTF-8 нужны всем агентам, поэтому добавляю их в `agents.md` и фиксирую ключевые шаги (явный UTF-8 в PowerShell, предпочтение Python/`apply_patch`, постпроверка).
+
+## QA — Проверка выполненных SDD документов
+- 2025-11-01 14:30 — Перечитал `.memory/TASKS.md` (DONE) и связанные SDD-артефакты, сверил их с BRIEF/PRD/ARCHITECTURE.
+- 2025-11-01 14:55 — Зафиксировал расхождения: отсутствие заявленного в PRD глобального rate limiting, несостыковку лимитов размера файлов (50 МБ vs ≤15 МБ), упоминание удаления слотов при статическом пуле; подготовил выводы для отчёта.
+
+## TECH — Mermaid диаграммы рендеринг
+- 2025-11-02 16:05 — удалил Markdown-обрамление `mermaid` во всех *.mmd, чтобы GitHub правильно их отображал
+
+## DOC — Диаграммы README
+- 2025-11-03 14:14 — обновил spec/diagrams/README.md: каталог диаграмм, правила редактирования без `mermaid` и инструкции по предпросмотру
+
+## FEAT PHC-1.1 — Оценка комплексности
+- 2025-11-03 15:05 — Перечитал `docs/BRIEF.md`, `docs/PRD.md`, `docs/ARCHITECTURE.md` и актуальные провайдерские контракты, чтобы освежить требования перед декомпозицией FEAT PHC-1.1.
+- 2025-11-03 15:25 — Проанализировал структуру `US PHC-1.1.*` в `.memory/TASKS.md`, отметил потенциальные узкие места: управление статусами/таймаутами и реализация TempMediaStore превышают 2 ч без дополнительной детализации.
+- 2025-11-03 15:40 — Подготовил предложения по декомпозиции (новые REFLECT/имплементационные подзадачи для `US PHC-1.1.2`, дробление проверки размера/MIME и TempMediaStore), готов внести изменения в Канбан.
+
+## SESSION 2025-11-04 — Продолжение FEAT PHC-1.1
+- 2025-11-04 09:05 — Актуализировал контекст: перечитал `.memory/{MISSION,CONTEXT,TASKS,ASKS,DECISIONS,USECASES,INDEX}` и ключевые документы `docs/{BRIEF,PRD,ARCHITECTURE}.md` по запросу тимлида.
+- 2025-11-04 09:18 — Проверил Kanban на наличие открытых CONSULT/REFLECT задач перед FEAT PHC-1.1 и зафиксировал необходимость согласовывать стратегию валидации payload и управление temp-файлами.
+- 2025-11-04 09:32 — Сформировал дайджест требований из `docs/BRIEF.md`, `docs/PRD.md`, `docs/ARCHITECTURE.md` для обсуждения текущей итерации.
+- 2025-11-04 09:38 — Вновь прошёлся по `.memory/TASKS.md`, отметил, что перед запуском ветки PHC-2 отсутствует отдельный `US PHC-2.GOV`, нужно согласовать с тимлидом добавление GOV-узла и вопросы для консультации.
+- 2025-11-04 09:45 — Уточнил с тимлидом: находимся внутри `FEAT PHC-1.1` (EP PHC-1 ещё открыт), необходимо сосредоточиться на задачах `US PHC-1.1.*` и подготовить консультации по валидации payload и моделированию статусов.
+- 2025-11-04 09:55 — Получил решения тимлида по `T PHC-1.1.1.1a`: допускаем добавление Pillow, проверяем только типы `image/jpeg|png|webp` и валидируем изображение через hash.
+- 2025-11-04 09:57 — Зафиксировал договорённости по `T PHC-1.1.1.2a`: используем `media/results/{slot}/{job}` для результатов и превью, без отдельного реестра, TTL привязываем к `T_sync_response` на момент создания.
+- 2025-11-04 10:05 — Проанализировал реализацию `T PHC-1.1.1.1` (размер/MIME): планирую ограничивать размер потоковым чтением `UploadFile`, проверять `content_type` против whitelist, вычислять SHA-256 в процессе и сохранять в `JobContext`.
+- 2025-11-04 10:08 — Спланировал `T PHC-1.1.1.2`: каталог результатов `media/results/{slot_id}/{job_id}`, хранение payload и preview, фиксация `expires_at`, очистка каталога при таймауте/ошибке, cron как страховка.
+- 2025-11-04 10:26 — Обновил OpenAPI и JSON Schema ingest (MIME whitelist через `encoding`, per-slot + 50 МБ лимиты, требования к `Content-Type` и hash), синхронизировал таблицу ошибок и тест-план с негативными сценариями 413/415.
+- 2025-11-04 10:34 — Переписал UC2/UC3, архитектурное описание и доменную модель: каталоги результатов `media/results/{slot}/{job}`, превью `preview.webp`, фиксация `sync_deadline` при создании `JobContext`, удаление каталога при таймауте. Тест-план дополнен проверкой очистки каталога.
+- 2025-11-04 11:05 — Провёл ревизию документации после решения по отказу от `media/temp`: обновил PRD, архитектурные описания, контекст, NFR, тест-план, глоссарий, use-cases и диаграммы; теперь все источники описывают только `media/results/{slot}/{job}` + превью и in-memory upload buffer.
+- 2025-11-04 11:22 — Подготовил blueprint `spec/docs/blueprints/ingest-validation.md`: описал поток валидации, исключения, псевдокод и тестовый набор для T PHC-1.1.1.1.
+- 2025-11-04 11:35 — Зафиксировал структуру исходников (раздел в `docs/ARCHITECTURE.md`) и создал шаблоны модулей в `src/` вместе с `scripts/cleanup_media.py`.
+- 2025-11-04 12:10 — Реализовал `UploadValidator`/`IngestService`, DI и `ingest_api`: потоковое чтение, сравнение hash, KISS-логирование через stdlib с fallback на structlog.
+- 2025-11-04 12:15 — Добавил тестовые ассеты (`tests/assets`) и unit-тесты для валидатора и сервиса; проверил обработку ошибок 413/415 и checksum mismatch.
+- 2025-11-04 12:17 — Попытался запустить `pytest`, но он отсутствует в окружении (No module named pytest); тесты не стартовали.
+- 2025-11-04 12:25 — Добавил SQLAlchemy/Alembic в зависимости, реализовал `load_config` с `init_db`, модели (`slot`, `job_history`, `media_object`, `settings`) и seed 15 слотов; создан скрипт `scripts/init_db.py`.
+
+- 2025-11-04 20:30 — Перестроил модули `slots`, `media`, `repositories` после реинициализации: добавлены SQLAlchemy-репозитории, `ResultStore`, `MediaObject` модели, cleanup cron.
+- 2025-11-04 20:35 — Обновил `IngestService` (job_id, TTL, запись результата/ошибок), DI, тесты (`ingest`, `media`, `repositories`), добавил cron cleanup тесты и фикстуры.
+- 2025-11-04 20:36 — Повторная попытка `pytest` (unit набор) завершилась ошибкой из-за отсутствия установленного pytest (No module named pytest).
+
+---
+id: worklog
+updated: 2025-11-02
+---
+
+# Черновой журнал до checkpoint
+
+> Перед созданием `CONSULT`/`REFLECT` задач в `.memory/TASKS.md` (см. «Практика CONSULT/REFLECT» в `agents.md`) запиши в этом журнале краткий контекст решения и вопросы, чтобы на созвоне можно было ссылаться на готовые заметки.
+
 ## PHC-T-INIT-MEMORY
 - 2025-10-31 02:40 — перечитал agents.md, BRIEF, ARCHITECTURE, PRD, blueprints для восстановления контекста
 - 2025-10-31 02:44 — зафиксировал перечень недозаполненных артефактов (.memory/*.md, REPORT*, spec/contracts/VERSION.json)
@@ -70,6 +259,7 @@ updated: 2025-11-02
 
 ## US PHC-1.0.3 — Диаграммы для SDD
 - 2025-11-02 16:00 — Создал C4-диаграммы контекста/контейнера (`spec/diagrams/c4-context.mmd`, `c4-container.mmd`) и диаграммы UC2–UC5 (sequence/state) в `spec/diagrams/*`. Обновил `spec/docs/use-cases.md`, указав, что схемы готовы.
+- 2025-11-03 15:40 — Добавил недостающие диаграммы UC6 (`uc6-ops-sequence.mmd`) и cron (`cron-cleanup-state.mmd`), синхронизировал README каталога.
 
 ## T PHC-1.1.1.1 — Ограничение размера файлов и MIME
 - 2025-11-02 16:10 — Перечитал PRD §4/§5 и ARCHITECTURE: лимит размера файла конфигурируемый (по умолчанию ≤ 15 МБ, хранится в слоте), при превышении → 413; допустимые MIME — JPEG/PNG/WebP (решили упростить и отказаться от HEIC/HEIF). Проверку нужно выполнять до записи на диск (важно не грузить гигантские файлы в память). Риски: корректное определение MIME для WebP (желательно `python-magic`), обработка multipart без `filename`/`Content-Type`, согласование глобального safety cap и per-slot `size_limit_mb`.
@@ -128,3 +318,90 @@ updated: 2025-11-02
 - 2025-11-04 12:17 — Попытался запустить `pytest`, но он отсутствует в окружении (No module named pytest); тесты не стартовали.
 - 2025-11-04 12:25 — Добавил SQLAlchemy/Alembic в зависимости, реализовал `load_config` с `init_db`, модели (`slot`, `job_history`, `media_object`, `settings`) и seed 15 слотов; создан скрипт `scripts/init_db.py`.
 
+
+## REPO - Git hygiene
+- 2025-11-03 20:58 - Добавил .venv/ в .gitignore, чтобы не версионировать локальное виртуальное окружение.
+ 
+## T PHC-1.1.2.2a — Сформировать enum статусов и перечень `failure_reason`
+- 2025-11-03 12:10 — Собрал список доменных статусов job: `pending`, `done`, `timeout`, `failed` (domain-model, PRD §4, UC2/UC3).
+- 2025-11-03 12:12 — Перечень `failure_reason` по `ingest-error.schema.json` и `ingest-errors.md`: `invalid_request`, `invalid_password`, `slot_not_found`, `slot_disabled`, `payload_too_large`, `unsupported_media_type`, `rate_limited`, `provider_timeout`, `provider_error`, `internal_error`. Отдельно обсудить хэш: сейчас API возвращает `checksum_mismatch`, которого нет в контракте — нужно свести к `invalid_request` (KISS).
+- 2025-11-03 12:15 — План: добавить Enum/StrEnum для статусов job + перечисление `FailureReason`; создать helper для маппинга исключений/ситуаций → failure_reason; гарантировать, что `record_failure` всегда получает одно из этих значений. Для метрик таймаутов использовать `status='timeout'`, остальные ошибки → `failed`.
+
+## T PHC-1.1.2.2b — Интегрировать установки статусов и `failure_reason` в IngestService
+- 2025-11-03 12:25 — Добавил `JobStatus` и `FailureReason` (StrEnum) в `ingest_models`, обновил `IngestService.record_success/record_failure` для использования enum и логирования причин.
+- 2025-11-03 12:32 — Обновил `TempMediaStore`-интеграцию: `record_failure` теперь всегда очищает temp/result каталоги и пишет статус в `job_history`.
+- 2025-11-03 12:38 — `ingest_api` теперь маппит ранние ошибки на контракты (`invalid_request`, `payload_too_large`, `unsupported_media_type`) и вызывает `record_failure`, чтобы pending-заявки не зависали.
+- 2025-11-03 12:40 — Юнит-тесты сервиса обновлены: используют enum в вызове `record_failure`, дополнительная проверка на cleanup tmp-файлов остаётся. Тесты не прогнаны из-за отсутствия `pytest` (см. ранее).
+
+## T PHC-1.1.2.2c — Синхронизация API-ответов, логов, тестов и документации
+- 2025-11-03 12:55 — Обновил `tests/unit/ingest/test_service.py`: проверяем статусы/причины в БД после успеха и таймаута, используем новые enum.
+- 2025-11-03 13:00 — Привёл blueprint `spec/docs/blueprints/ingest-validation.md` к актуальной схеме (TempMediaStore, failure_reason enums), убрал упоминание `checksum_mismatch`, добавил описание try/except.
+- 2025-11-03 13:05 — В `spec/contracts/ingest-errors.md` уточнил, что `invalid_request` покрывает mismatch checksum; API код уже возвращает этот failure_reason.
+
+## T PHC-1.1.2.3a — REFLECT — согласовать отмену `asyncio.wait_for`, очистку ресурсов и логирование с ограничениями SLA (`T_sync_response`, TTL)
+- 2025-11-03 13:20 — Зафиксировал требования PRD/SDD: `driver.process(job_ctx)` выполняется внутри `asyncio.wait_for(..., timeout=T_sync_response)`, по истечении окна возвращаем 504, `job_history.status='timeout'`, `failure_reason='provider_timeout'`, очищаем каталоги.
+- 2025-11-03 13:24 — Риски: (1) драйверы должны корректно обрабатывать `CancelledError`; (2) важно очищать temp/result каталоги и освобождать (будущие) семафоры; (3) логировать длительность ожидания; (4) поздние ответы провайдера игнорируем; (5) контракт 504/`status: timeout` уже задокументирован.
+- 2025-11-03 13:28 — Решение: следуем KISS — используем встроенный `except asyncio.TimeoutError`, без отдельного helper, вызываем `record_failure(..., JobStatus.TIMEOUT, FailureReason.PROVIDER_TIMEOUT)` и логируем длительность.
+
+## T PHC-1.1.2.3b — Реализовать обработку таймаута: отмена провайдера, статус `timeout`, cleanup
+- 2025-11-03 13:40 — Добавил `ProviderTimeoutError`, реализовал `IngestService.process`: оборачивает `_invoke_provider(job)` в `asyncio.wait_for`, на таймаут логирует `ingest.job.timeout`, обновляет `job_history`, очищает каталоги и пробрасывает доменное исключение.
+- 2025-11-03 13:47 — Ввёл `_invoke_provider` как абстрактный метод (пока `NotImplementedError`); конкретные драйверы реализуют его в последующих задачах.
+- 2025-11-03 13:52 — Добавил unit-тест `test_process_timeout` (через `StubIngestService`) — проверяет статус `timeout`, очистку temp/result и `ProviderTimeoutError`.
+
+## T PHC-1.1.2.3c — Написать тесты/контракты и обновить документацию по статусам/таймаутам
+- 2025-11-03 14:00 — Проверил, что OpenAPI и PRD уже описывают 504/`provider_timeout`; уточнения в blueprint/ingest-errors синхронизированы.
+- 2025-11-03 14:05 — Подготовленный unit-тест покрывает таймаут; интеграционные/контрактные сценарии добавим после реализации драйверов.
+- 2025-11-03 13:05 — В `spec/contracts/ingest-errors.md` уточнил, что `invalid_request` покрывает mismatch checksum; API код уже возвращает этот failure_reason.
+
+## T PHC-1.1.2.3a — REFLECT — согласовать отмену `asyncio.wait_for`, очистку ресурсов и логирование с ограничениями SLA (`T_sync_response`, TTL)
+- 2025-11-03 13:20 — Зафиксировал требования PRD/SDD: `driver.process(job_ctx)` выполняется в `asyncio.wait_for(..., timeout=T_sync_response)`, при `TimeoutError` отвечаем 504, записываем `job_history.status='timeout'`, `failure_reason='provider_timeout'`, очищаем каталоги.
+- 2025-11-03 13:24 — Узкие места:
+  1. Нужно гарантировать отмену операций провайдера (Gemini/Turbotext). Для Gemini (async HTTP) достаточно отмены корутины; для Turbotext (polling) требуется, чтобы драйвер реагировал на `CancelledError` и прекращал цикл.
+  2. Очистка ресурсов: помимо `ResultStore.remove_result_dir` и TempMediaStore, нужно убедиться, что семафоры (когда появятся) освобождаются.
+  3. Логирование: фиксировать `ingest.job.timeout` с длительностью ожидания, чтобы Ops видели SLA.
+  4. Поздние ответы провайдера игнорируем — `wait_for` отменит корутину, драйвер должен корректно завершиться.
+  5. Контрактный ответ 504/`status: timeout` уже задокументирован (`ingest-errors.md`).
+- 2025-11-03 13:28 — Решение: KISS — используем встроенный `except asyncio.TimeoutError`, без дополнительного helper; в обработчике вызываем `record_failure(..., JobStatus.TIMEOUT, FailureReason.PROVIDER_TIMEOUT)` и логируем длительность.
+
+## T PHC-1.1.2.3b — Реализовать обработку таймаута: отмена провайдера, статус `timeout`, cleanup
+- 2025-11-03 13:40 — Добавил `ProviderTimeoutError`, реализовал `IngestService.process`: оборачивает `_invoke_provider(job)` в `asyncio.wait_for`, на таймаут логирует `ingest.job.timeout`, обновляет `job_history` и пробрасывает доменное исключение.
+- 2025-11-03 13:47 — Ввёл абстрактный `_invoke_provider` (пока `NotImplementedError`); реализация провайдеров добавит конкретную логику.
+- 2025-11-03 13:52 — Юнит-тест `test_process_timeout` построен на `StubIngestService` с задержкой, проверяет очистку temp/result каталогов и запись статуса `timeout`.
+
+## T PHC-1.2.0 — Инфраструктура провайдеров
+- 2025-11-03 14:20 — Добавил US PHC-1.2.0 в `.memory/TASKS.md`: выделены задачи на `_invoke_provider`, выбор драйвера и unit-тесты, чтобы закрыть NotImplemented и формализовать обработку ошибок.
+- 2025-11-03 14:24 — Обновил спецификации: `spec/docs/providers/turbotext.md` и `spec/contracts/providers/turbotext.md` фиксируют отказ от публичных URL Turbotext; используем multipart-вложения и локальное хранение результатов.
+
+## T PHC-1.2.0.4 — REFLECT — определить недостающие поля Slot
+- 2025-11-04 15:35 — Сопоставил текущий код и PRD/SDD: слоту нужны `display_name`, `provider`, `operation`, `settings_json`, `is_active`, `version`, `updated_at`, `updated_by`; лимиты и конкурентность остаются в `settings`.
+- 2025-11-04 15:38 — Обосновал `settings_json`: JSONB-колонка хранит словарь параметров провайдера (температура, prompt, template IDs), что позволяет добавлять новые параметры без миграций и держать единый формат `SlotConfig` в сервисах. Альтернатива — расширять схему слота колонками `gemini_prompt`, `turbotext_style`, что быстро разрастается и ломает KISS/SDD.
+- 2025-11-04 15:41 — Бутылочные горлышки: отсутствие Alembic, необходимость синхронизировать спецификации (PRD/domain model/contracts) до правок кода, пересобрать фикстуры и провайдерские схемы.
+- 2025-11-04 15:50 — Обновил `docs/PRD.md` (структура `slot`, пояснение про `settings_json`, перенос лимитов/конкурентности в `settings`) и `spec/docs/domain-model.md` (атрибуты `Slot`, `SlotTemplateMedia`, инварианты).
+
+## TEST — FEAT PHC-1.1 unit
+- 2025-11-03 14:40 — Установил `pytest-asyncio`, скорректировал тестовые helper'ы (`UploadFile` заголовки) и валидатор; `py -m pytest tests/unit` завершился `13 passed`.
+- 2025-11-04 10:05 — проверил статус задач в `.memory/TASKS.md`: следующая ветка `T PHC-1.2.1.*` (GeminiDriver) не заблокирована, готовлюсь к фазе REFLECT перед реализацией драйвера
+
+## SESSION 2025-11-04 — Kickoff US PHC-1.2.0 (slot infrastructure)
+- 2025-11-04 15:05 — перечитал `.memory/MISSION.md`, `.memory/CONTEXT.md`, `.memory/TASKS.md`, `.memory/ASKS.md`, `.memory/DECISIONS.md`, `.memory/USECASES.md`, `.memory/INDEX.yaml` перед продолжением `US PHC-1.2.0`.
+- 2025-11-04 15:12 — загрузил в рабочий контекст `docs/BRIEF.md`, `docs/PRD.md`, `docs/ARCHITECTURE.md`, выписал требования к слотам и настройкам провайдеров.
+- 2025-11-04 15:18 — проверил `US PHC-1.2.0` в `.memory/TASKS.md`: активная подзадача `T PHC-1.2.0.4` (REFLECT по полям слота), зафиксировал необходимость консультации перед реализацией ORM/миграций.
+- 2025-11-04 15:55 — инициализировал Alembic (`alembic.ini`, `alembic/env.py`, начальная ревизия `20251104_01_initial_schema.py`) для фиксации текущих таблиц (`slot`, `slot_template_media`, `job_history`, `media_object`, `settings`).
+
+## CONSULT — Slot модель и миграция
+- 2025-11-04 11:55 — подготовил вопросы/решения для T PHC-1.2.0.5: структура slot, settings_json, template media, миграции
+- 2025-11-04 12:00 — тимлид подтвердил предложенные поля (display_name, operation, settings_json, version/audit, slot_template_media)
+- 2025-11-04 15:30 — уточнил у тимлида детали: `size_limit_mb`/`max_concurrency` оставляем в глобальных настройках, в слоте храним `display_name`, `provider`, `operation`, `settings_json`, `is_active`, `version`, `updated_*`; допускается `settings_json` как JSONB-хранилище параметров провайдера; Alembic возможно настроить — требуется проверить препятствия.
+
+## T PHC-1.2.0.6 — Расширение модели слота
+- 2025-11-04 12:20 — реализовал T PHC-1.2.0.6: добавлены новые поля slot (display_name, operation, settings_json, version, updated_by), таблица slot_template_media, миграция через init_db, обновлены ORM/репозиторий/сидеры
+- 2025-11-04 16:20 — обновил `Slot`/`SlotRepository`/`JobContext`: шаблонные медиа подгружаются через `selectinload`, `slot.settings` попадает в `JobContext`, метаданные (`slot_version`, `slot_display_name`) доступны драйверам.
+- 2025-11-04 16:28 — убрал кустарный `_migrate_slot_schema`, добавил Alembic ревизию `20251104_02_slot_extension` (условно добавляет поля/таблицу при апгрейде), обеспечил `updated_at` с `onupdate`.
+- 2025-11-04 16:35 — написал unit-тесты `test_slot_repository.py`, расширил `tests/unit/ingest/test_service.py` (job context) и прогнал `py -3 -m pytest tests/unit` (`15 passed`).
+- 2025-11-04 17:05 — по указанию тимлида упростил миграции: удалил условную ревизию `20251104_02`, оставив базовый снимок `20251104_01` (проект ещё не запускался, обратная совместимость не требуется).
+
+- 2025-11-04 12:05 — сформулировал план: 1) миграция slot (display_name, operation, settings_json, version, updated_at/by), 2) новая таблица slot_template_media, 3) обновление ORM/датакласса/репозитория, 4) сиды/фикстуры
+- 2025-11-04 12:08 — риски: алембик ещё не настроен, возможно придётся писать SQL-миграцию вручную; нужно обеспечить обратную совместимость с существующими слотами (nullable поля, дефолты)
+
+- 2025-11-04 11:55 — подготовил вопросы/решения для T PHC-1.2.0.5: структура slot, settings_json, template media, миграции
+\n## SUPPORT-2025-11-04 - Восстановление состояния после GitHub Desktop\n- 2025-11-04 02:35 - Нашел stash GitHub Desktop (stash@{1}) с кодом PHC-1.1/1.2, применил его и подчистил конфликтующие __pycache__.\n- 2025-11-04 02:40 - Вернул .gitignore, удалил из индекса все bytecode-артефакты.\n- 2025-11-04 02:45 - Синхронизировал .memory/TASKS.md (PHC-1.1 закрыт, PHC-1.2 в работе) и прогнал py -m pytest tests/unit (13 passed).

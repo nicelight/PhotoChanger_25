@@ -1,0 +1,1 @@
+"""Media result storage package."""

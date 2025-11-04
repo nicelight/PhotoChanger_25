@@ -28,28 +28,41 @@ class MediaObjectRepository:
         preview_path: Path | None,
         expires_at: datetime,
     ) -> str:
-        media_id = uuid.uuid4().hex
-        with self._session_factory() as session:
-            session.add(
-                MediaObjectModel(
-                    id=media_id,
-                    job_id=job_id,
-                    slot_id=slot_id,
-                    scope="result",
-                    path=str(path),
-                    preview_path=str(preview_path) if preview_path else None,
-                    expires_at=expires_at,
-                )
-            )
-            session.commit()
-        return media_id
+        return self._register_media(
+            scope="result",
+            job_id=job_id,
+            slot_id=slot_id,
+            path=path,
+            preview_path=preview_path,
+            expires_at=expires_at,
+        )
+
+    def register_temp(
+        self,
+        *,
+        job_id: str,
+        slot_id: str,
+        path: Path,
+        expires_at: datetime,
+    ) -> str:
+        return self._register_media(
+            scope="provider",
+            job_id=job_id,
+            slot_id=slot_id,
+            path=path,
+            preview_path=None,
+            expires_at=expires_at,
+        )
 
     def list_expired_results(self, reference_time: datetime) -> list[MediaObject]:
+        return self.list_expired_by_scope("result", reference_time)
+
+    def list_expired_by_scope(self, scope: str, reference_time: datetime) -> list[MediaObject]:
         with self._session_factory() as session:
             rows = (
                 session.query(MediaObjectModel)
                 .filter(
-                    MediaObjectModel.scope == "result",
+                    MediaObjectModel.scope == scope,
                     MediaObjectModel.cleaned_at.is_(None),
                     MediaObjectModel.expires_at <= reference_time,
                 )
@@ -65,6 +78,32 @@ class MediaObjectRepository:
             model.cleaned_at = cleaned_at
             session.commit()
 
+    def _register_media(
+        self,
+        *,
+        scope: str,
+        job_id: str,
+        slot_id: str,
+        path: Path,
+        preview_path: Path | None,
+        expires_at: datetime,
+    ) -> str:
+        media_id = uuid.uuid4().hex
+        with self._session_factory() as session:
+            session.add(
+                MediaObjectModel(
+                    id=media_id,
+                    job_id=job_id,
+                    slot_id=slot_id,
+                    scope=scope,
+                    path=str(path),
+                    preview_path=str(preview_path) if preview_path else None,
+                    expires_at=expires_at,
+                )
+            )
+            session.commit()
+        return media_id
+
     @staticmethod
     def _to_domain(model: MediaObjectModel) -> MediaObject:
         return MediaObject(
@@ -74,5 +113,6 @@ class MediaObjectRepository:
             path=Path(model.path),
             preview_path=Path(model.preview_path) if model.preview_path else None,
             expires_at=model.expires_at,
+            scope=model.scope,
             cleaned_at=model.cleaned_at,
         )
