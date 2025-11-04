@@ -410,3 +410,35 @@ updated: 2025-11-02
 ## REFLECT — надёжность очистки медиа
 - 2025-11-04 12:15 — перечитал .memory/* артефакты и код media_cleanup.py/temp_media_store.py, зафиксировал текущую логику пометки cleaned_at до удаления.
 - 2025-11-04 12:22 — подготовил оценку влияния корректировки (журналирование ошибок, проверка удаления, ретраи) для обсуждения с тимлидом.
+
+## T PHC-1.2.1a — REFLECT — спроектировать адаптер Gemini (inline, retries, ограничения)
+- 2025-11-04 18:30 — Сопоставил требования spec/contracts/providers/gemini.md и PRD §7 (API Gemini): подтвердил только inline_data, лимит 20 МБ, одна попытка повтора при RESOURCE_EXHAUSTED/DEADLINE_EXCEEDED.
+- 2025-11-04 18:36 — Проверил текущий JobContext: есть slot_settings/slot_template_media/temp_payload_path, но операция слота не сохраняется в metadata; для драйвера нужно либо добавить job.metadata["operation"], либо читать из slot_settings (в ней пока нет ключа).
+- 2025-11-04 18:42 — Зафиксировал bottlenecks: чтение ingest-файла (≤20 МБ) в asyncio, необходимость base64 без блокировки, трансляция ошибок Gemini (HTTP status + error.status), retry/backoff, контроль content_type из upload.
+- 2025-11-04 18:48 — Открытые вопросы к тимлиду: (1) подтверждаем форму slot.settings для Gemini (какие ключи для prompt/extra images?); (2) откуда брать байты template_media по media_object_id — добавляем репозиторий метод или пока игнорируем?; (3) допустим ли старт с image_edit-only (ingest+prompt) без Files API и как документировать ограничения?
+## T PHC-1.2.1b — REFLECT — определить структуру slot.settings для операций Gemini
+- 2025-11-04 19:20 — Проанализировал spec/contracts/providers/gemini.md и PRD §7: все операции идут через generateContent с inline_data ≤20 МБ, различаются только набором частей и подсказок.
+- 2025-11-04 19:24 — Выделил общие параметры для всех операций: model (по умолчанию gemini-2.5-flash-image), output_mime (JPEG/PNG/WebP), safety_threshold и политика ретраев (1 повтор при RESOURCE_EXHAUSTED/DEADLINE_EXCEEDED).
+- 2025-11-04 19:28 — Для image_edit: нужны текстовый промпт, optional 
+egative_prompt, guidance_scale (0..10), опциональная маска (media_kind="mask").
+- 2025-11-04 19:32 — Для style_transfer: обязательны связи с шаблоном стиля (media_kind="style"), опциональный промпт, коэффициент style_strength (0..1) и флаг preserve_colors.
+- 2025-11-04 19:36 — Для identity_transfer: требуются template_media с ролями ase (тело) и ace (замещаемое лицо), параметры lend_ratio (0..1) и lignment_mode (enum uto|strict).
+- 2025-11-04 19:40 — Предложил унифицированную структуру slot.settings: верхний уровень включает model, etry_policy, output, safety, а все параметры операции помещаются в operation_config (схемы различаются). operation_config.template_bindings хранит связи ролей с media_kind или прямыми media_object_id.
+- 2025-11-04 19:44 — Зависимости: нужно оформить JSON Schema в spec/contracts/schemas/slot-settings/gemini-*.schema.json, обновить PRD и providers/gemini.md, а также UI подсказки.
+- 2025-11-04 19:46 — Открытый вопрос: поддерживаем ли placeholder-выражения в prompt_template (например {userName}) или ограничиваемся статичными строками? Уточнить на CONSULT шаге.
+- 2025-11-04 19:55 — Добавил диаграмму потоков данных Gemini (spec/diagrams/gemini-data-flow.mmd) с прохождением настроек слота, шаблонных медиа, ingest-файла и результата через IngestService и GeminiDriver.
+- 2025-11-04 20:05 — удалил неактуальную версию диаграммы gemini-data-flow.mmd для переработки формата.
+- 2025-11-04 20:10 — пересоздал диаграмму gemini-data-flow.mmd без escape-последовательностей, добавил явные переносы строк в подписях.
+- 2025-11-04 20:15 — исправил диаграмму gemini-data-flow.mmd: показал поток slot.settings_json и template_media в prepare_job и явную связь с JobContext.
+## T PHC-1.2.1c — CONSULT — унификация настроек Gemini
+- 2025-11-04 20:25 — Согласовали с тимлидом переход на один универсальный метод Gemini: prompt + ingest фото + опциональные шаблоны. Планирую зафиксировать схему slot.settings и обновить документацию.
+- 2025-11-04 20:32 — Зафиксирована схема slot.settings для Gemini (spec/contracts/schemas/slot-settings-gemini.schema.json) и обновлены провайдерские документы/PRD/BRIEF под единый метод.
+- 2025-11-04 20:38 — Описал тестовую обработку из Admin UI: новый эндпоинт /api/slots/{slot_id}/test-run переиспользует IngestService, возвращает результат и маркирует source=ui_test.
+- 2025-11-04 20:44 — Обновил диаграмму gemini-data-flow (spec/docs/providers/gemini-data-flow.mmd) с учётом эндпоинта test-run и prompt_override.
+- 2025-11-04 20:48 — Спецификации обновлять не потребовалось: slot-settings схема уже покрывает prompt_override сценарием, данные фиксированы в PRD и диаграмме.
+- 2025-11-04 20:52 — Зафиксировал, что prompt всегда берётся из slot.settings; обновил PRD, диаграмму и задачи под backend-функционал test-run.
+- 2025-11-04 21:00 — Реализовал resolver шаблонных медиа (media_repo.get_media*, template_media_resolver) и добавил unit-тесты (py -X utf8 -m pytest tests/unit/providers/test_template_media_resolver.py).
+- 2025-11-04 21:08 — Реализовал GeminiDriver (httpx, retries, base64, template resolver) и подключил фабрику через dependencies.
+## T PHC-1.2.1g — тесты/контракты GeminiDriver
+- 2025-11-04 21:10 — План: мокать httpx.AsyncClient через monkeypatch, использовать tmp_path для файлов, покрыть успех, retry+успех, retry+ошибка, отсутствие inline данных, отсутствие GEMINI_API_KEY.
+- 2025-11-04 21:18 — Добавил тесты GeminiDriver (успех, retry, отсутствующий ключ, отсутствие inline, дубликаты) — py -X utf8 -m pytest tests/unit/providers/test_gemini_driver.py.

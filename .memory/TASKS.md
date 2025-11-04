@@ -86,10 +86,14 @@ updated: 2025-11-04
         [x] T PHC-1.2.0.5 — CONSULT — согласовать структуру слота и миграцию с тимлидом  
         [x] T PHC-1.2.0.6 — Расширить модель слота (ORM, доменная модель, репозиторий, миграции) 
         [x] T PHC-1.2.0.7 — Тесты и фиксация контрактов по обновлённому слоту  
-      [ ] T PHC-1.2.1 — Реализовать `GeminiDriver` (inline/ошибки)  
-        [ ] T PHC-1.2.1a — REFLECT — спроектировать адаптер Gemini (inline, retries, ограничения)  
-        [ ] T PHC-1.2.1b — Имплементация клиента Gemini + интеграция с JobContext  
-        [ ] T PHC-1.2.1c — Тесты/контракты для GeminiDriver (успех, timeout, ошибки)  
+      [~] T PHC-1.2.1 — Реализовать `GeminiDriver` (inline/ошибки)  
+        [x] T PHC-1.2.1a — REFLECT — спроектировать адаптер Gemini (inline, retries, ограничения)  
+        [x] T PHC-1.2.1b — REFLECT — определить структуру `slot.settings` для операций Gemini  
+        [x] T PHC-1.2.1c — CONSULT — утвердить структуру `slot.settings` для Gemini у тимлида  
+        [x] T PHC-1.2.1d — Обновить спецификации/схемы для `slot.settings` и операций Gemini  
+        [x] T PHC-1.2.1e — Реализовать доступ к `template_media` (репозиторий + файловая система)  
+        [x] T PHC-1.2.1f — Имплементация клиента Gemini + интеграция с JobContext  
+        [x] T PHC-1.2.1g — Тесты/контракты для GeminiDriver (успех, timeout, ошибки)  
       [ ] T PHC-1.2.2 — Реализовать `TurbotextDriver` (polling, без публичных ссылок)  
         [ ] T PHC-1.2.2a — REFLECT — спроектировать адаптер Turbotext (polling, квоты, локальные данные)  
         [ ] T PHC-1.2.2b — Имплементация клиента Turbotext + обновление JobContext  
@@ -117,27 +121,36 @@ updated: 2025-11-04
     [ ] US PHC-2.1.1 — UI форм редактирования (HTMX)  
       [ ] T PHC-2.1.1.1 — Разметка и валидация формы слота  
       [ ] T PHC-2.1.1.2 — API `/api/slots` и `/api/settings`  
+    [ ] US PHC-2.1.2.GOV — Governance & Discovery  
+      [ ] T PHC-2.1.2.GOV.1 — REFLECT — определить требования к тестовому запуску слота (Admin UI → backend)  
+      [ ] T PHC-2.1.2.GOV.2 — CONSULT — утвердить контракт `/api/slots/{slot_id}/test-run` и маркировку задач  
+    [ ] US PHC-2.1.2 — Тестовый запуск конфигурации слота  
+      [ ] T PHC-2.1.2.1 — Реализовать эндпоинт `/api/slots/{slot_id}/test-run` и повторное использование IngestService  
+      [ ] T PHC-2.1.2.2 — Маркировать `job_history` (`source=ui_test`) и обновить логи/статистику  
+      [ ] T PHC-2.1.2.3 — Тесты и документация (OpenAPI/PRD/spec) для test-run  
   [ ] FEAT PHC-2.2 — Просмотр статистики и графики  
     [ ] T PHC-2.2.1.1 — REST `/api/stats/slots` (p95, доля 504)  
     [ ] T PHC-2.2.1.2 — UI-графики и таблицы SLA  
 
-- [ ] EP PHC-3 — Ops и наблюдаемость  
-  [ ] US PHC-3.GOV — Governance & Discovery  
-    [ ] T PHC-3.GOV.1 — CONSULT — стратегия хранения секретов (Vault vs .env)  
-    [ ] T PHC-3.GOV.2 — REFLECT — сценарии деградации при недоступности Turbotext/Gemini  
-  [ ] FEAT PHC-3.0 — Спецификации наблюдаемости и релизных процедур  
-    [ ] US PHC-3.0.1 — Документировать мониторинг и алерты  
-      [ ] T PHC-3.0.1.1 — Описать `/metrics` и пороги SLA в `spec/contracts/schemas/metrics.yaml`  
-      [ ] T PHC-3.0.1.2 — Зафиксировать алертинг-плейбуки и деградации в `spec/docs/blueprints/ops.md`  
-    [ ] US PHC-3.0.2 — Процедуры выпуска и версии контрактов  
-      [ ] T PHC-3.0.2.1 — Обновить `spec/contracts/VERSION.json` (SemVer bump, summary)  
-      [ ] T PHC-3.0.2.2 — Синхронизировать `.memory/INDEX.yaml` и подготовить checklist для spec handoff  
-  [ ] FEAT PHC-3.1 — Мониторинг и алерты  
-    [ ] T PHC-3.1.1.1 — `/metrics` + экспортер p95/504  
-    [ ] T PHC-3.1.1.2 — Алерты на заполнение `media/` и рост 504  
-  [ ] FEAT PHC-3.2 — Процедуры выпуска  
-    [ ] T PHC-3.2.1.1 — Документация deploy checklist  
-    [ ] T PHC-3.2.1.2 — Авто-проверка cron очистки (smoke)  
+- [ ] EP PHC-3 — Фронтенд
+
+- [ ] EP PHC-4 — Ops и наблюдаемость  
+  [ ] US PHC-4.GOV — Governance & Discovery  
+    [ ] T PHC-4.GOV.1 — CONSULT — стратегия хранения секретов (Vault vs .env)  
+    [ ] T PHC-4.GOV.2 — REFLECT — сценарии деградации при недоступности Turbotext/Gemini  
+  [ ] FEAT PHC-4.0 — Спецификации наблюдаемости и релизных процедур  
+    [ ] US PHC-4.0.1 — Документировать мониторинг и алерты  
+      [ ] T PHC-4.0.1.1 — Описать `/metrics` и пороги SLA в `spec/contracts/schemas/metrics.yaml`  
+      [ ] T PHC-4.0.1.2 — Зафиксировать алертинг-плейбуки и деградации в `spec/docs/blueprints/ops.md`  
+    [ ] US PHC-4.0.2 — Процедуры выпуска и версии контрактов  
+      [ ] T PHC-4.0.2.1 — Обновить `spec/contracts/VERSION.json` (SemVer bump, summary)  
+      [ ] T PHC-4.0.2.2 — Синхронизировать `.memory/INDEX.yaml` и подготовить checklist для spec handoff  
+  [ ] FEAT PHC-4.1 — Мониторинг и алерты  
+    [ ] T PHC-4.1.1.1 — `/metrics` + экспортер p95/504  
+    [ ] T PHC-4.1.1.2 — Алерты на заполнение `media/` и рост 504  
+  [ ] FEAT PHC-4.2 — Процедуры выпуска  
+    [ ] T PHC-4.2.1.1 — Документация deploy checklist  
+    [ ] T PHC-4.2.1.2 — Авто-проверка cron очистки (smoke)  
 
 
 ## IN PROGRESS

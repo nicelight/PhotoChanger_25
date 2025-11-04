@@ -1,17 +1,18 @@
 """Factory for provider drivers."""
 
+from ..repositories.media_object_repository import MediaObjectRepository
 from .providers_base import ProviderDriver
 from .providers_gemini import GeminiDriver
 from .providers_turbotext import TurbotextDriver
 
 
-def create_driver(name: str) -> ProviderDriver:
+def create_driver(name: str, *, media_repo: MediaObjectRepository | None = None) -> ProviderDriver:
     """Instantiate provider driver by name."""
-    drivers: dict[str, type[ProviderDriver]] = {
-        "gemini": GeminiDriver,
-        "turbotext": TurbotextDriver,
-    }
-    try:
-        return drivers[name.lower()]()
-    except KeyError as exc:
-        raise ValueError(f"Unsupported provider '{name}'") from exc
+    lower = name.lower()
+    if lower == "gemini":
+        if media_repo is None:
+            raise ValueError("media_repo is required to instantiate GeminiDriver")
+        return GeminiDriver(media_repo=media_repo)
+    if lower == "turbotext":
+        return TurbotextDriver()
+    raise ValueError(f"Unsupported provider '{name}'")
