@@ -55,7 +55,7 @@ updated: 2025-11-02
 
   [ ] FEAT PHC-1.1 — Построение ingest API и доменной модели  
     [ ] US PHC-1.1.1 — Валидация payload и создание `JobContext`  
-        [x] T PHC-1.1.1.1 — Ограничение размера файлов и MIME (JPEG/PNG/WebP)  
+        [ ] T PHC-1.1.1.1 — Ограничение размера файлов и MIME (JPEG/PNG/WebP)  
           [x] T PHC-1.1.1.1a — REFLECT — выбрать подход к потоковой валидации и определению MIME  
           [x] T PHC-1.1.1.1b — Реализовать проверку размера (per-slot + safety cap) на уровне ingest  
           [x] T PHC-1.1.1.1c — Интегрировать MIME-детекцию и ошибки 415 в ingest pipeline  
