@@ -36,7 +36,14 @@ def client(tmp_path: Path, session_factory) -> TestClient:
     return TestClient(app)
 
 
-def add_media(session_factory, media_id: str, path: Path, *, expires_in_seconds: int = 60) -> None:
+def add_media(
+    session_factory,
+    media_id: str,
+    path: Path,
+    *,
+    expires_in_seconds: int = 60,
+    scope: str = "provider",
+) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(b"data")
     with session_factory() as session:
@@ -64,7 +71,7 @@ def add_media(session_factory, media_id: str, path: Path, *, expires_in_seconds:
                 id=media_id,
                 job_id=f"job-{media_id}",
                 slot_id="slot",
-                scope="provider",
+                scope=scope,
                 path=str(path),
                 preview_path=None,
                 expires_at=datetime.utcnow() + timedelta(seconds=expires_in_seconds),
@@ -91,3 +98,16 @@ def test_public_media_expired(client: TestClient, tmp_path: Path, session_factor
     add_media(session_factory, "media-expired", tmp_path / "provider" / "old.png", expires_in_seconds=-1)
     response = client.get("/public/provider-media/media-expired")
     assert response.status_code == 410
+
+
+def test_public_media_non_provider_scope_hidden(
+    client: TestClient, tmp_path: Path, session_factory
+) -> None:
+    add_media(
+        session_factory,
+        "media-secret",
+        tmp_path / "result" / "secret.png",
+        scope="result",
+    )
+    response = client.get("/public/provider-media/media-secret")
+    assert response.status_code == 404
