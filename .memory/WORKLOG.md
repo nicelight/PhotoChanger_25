@@ -423,7 +423,8 @@ updated: 2025-11-02
 egative_prompt, guidance_scale (0..10), опциональная маска (media_kind="mask").
 - 2025-11-04 19:32 — Для style_transfer: обязательны связи с шаблоном стиля (media_kind="style"), опциональный промпт, коэффициент style_strength (0..1) и флаг preserve_colors.
 - 2025-11-04 19:36 — Для identity_transfer: требуются template_media с ролями ase (тело) и ace (замещаемое лицо), параметры lend_ratio (0..1) и lignment_mode (enum uto|strict).
-- 2025-11-04 19:40 — Предложил унифицированную структуру slot.settings: верхний уровень включает model, etry_policy, output, safety, а все параметры операции помещаются в operation_config (схемы различаются). operation_config.template_bindings хранит связи ролей с media_kind или прямыми media_object_id.
+- 2025-11-04 19:40 — Предложил унифицированную структуру slot.settings: верхний уровень включает model, 
+etry_policy, output, safety, а все параметры операции помещаются в operation_config (схемы различаются). operation_config.template_bindings хранит связи ролей с media_kind или прямыми media_object_id.
 - 2025-11-04 19:44 — Зависимости: нужно оформить JSON Schema в spec/contracts/schemas/slot-settings/gemini-*.schema.json, обновить PRD и providers/gemini.md, а также UI подсказки.
 - 2025-11-04 19:46 — Открытый вопрос: поддерживаем ли placeholder-выражения в prompt_template (например {userName}) или ограничиваемся статичными строками? Уточнить на CONSULT шаге.
 - 2025-11-04 19:55 — Добавил диаграмму потоков данных Gemini (spec/diagrams/gemini-data-flow.mmd) с прохождением настроек слота, шаблонных медиа, ingest-файла и результата через IngestService и GeminiDriver.
@@ -442,3 +443,7 @@ egative_prompt, guidance_scale (0..10), опциональная маска (med
 ## T PHC-1.2.1g — тесты/контракты GeminiDriver
 - 2025-11-04 21:10 — План: мокать httpx.AsyncClient через monkeypatch, использовать tmp_path для файлов, покрыть успех, retry+успех, retry+ошибка, отсутствие inline данных, отсутствие GEMINI_API_KEY.
 - 2025-11-04 21:18 — Добавил тесты GeminiDriver (успех, retry, отсутствующий ключ, отсутствие inline, дубликаты) — py -X utf8 -m pytest tests/unit/providers/test_gemini_driver.py.
+
+## T PHC-1.2.2a — REFLECT Turbotext
+- 2025-11-04 21:30 — Turbotext требует URL. План: добавить GET /public/provider-media/{media_id}, отдающий файлы пока не истёк expires_at; драйвер формирует ссылки через resolver. Ingest/шаблонные медиа удаляются cron после T_sync_response.
+- 2025-11-04 21:35 — Уточнил Turbotext: используем временные ссылки `/public/provider-media/{media_id}`, которые живут до T_sync_response.

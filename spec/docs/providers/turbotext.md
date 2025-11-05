@@ -27,7 +27,68 @@
 | `original_language` | string | optional (default `ru`) | Язык исходного промпта. |
 | `user_id` | integer | optional (default `1`) | Служебный идентификатор аккаунта Turbotext. |
 
-**Ответ**: после `do=get_result` Turbotext возвращает `data.image` (массив путей, например `"image/generate_image2image_id12_0.png"`), промпт и параметры генерации. Поле `uploaded_image` используется драйвером только для одноразового скачивания результата и сохранения в `media/results`; публичных ссылок PhotoChanger не публикует.
+**Ответ**: после `do=get_result` Turbotext возвращает `data.image` (массив путей, например `"image/generate_image2image_id12_0.png"`), промпт и параметры генерации. Поле `uploaded_image` используется драйвером для одноразового скачивания результата. PhotoChanger перед выдачей результата сохраняет файл локально, а временные ссылки `/public/provider-media/{media_id}` предоставляются только на время обработки.
+
+
+#### API
+1. Запрос на создании очереди
+```
+/api_ai/generate_image2image HTTP/1.1
+Host: turbotext.ru
+Authorization: Bearer {APIKEY}
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 0
+
+do:create_queue
+user_id: int `# default: 1`
+url: string - required `# url with image (format: jpg, png, jpeg)`
+content: string - required ` # prompt for image2image`
+strength: int ` # degree of image change, 0 to 80, default: 40`
+seed: int `# min: 1, max: 10**10, default: random`
+scale: float `# min: 0.1, max: 20, default: 7.5`
+negative_prompt: string `# what to remove on image (max: 80 words), default: bad anatomy params`
+original_language: string `# default: ru` 
+```
+2. Ответ с данными очереди в формате JSON
+`{"success":true,"queueid":{QUEUEID}}`
+{QUEUEID} - Номер вашей очереди, далее обращаемся за получением результата использую этот массив данных.
+3.  Делаем запрос на получение результата
+```
+/api_ai/generate_image2image HTTP/1.1
+Host: turbotext.ru
+Authorization: Bearer {APIKEY}
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 0
+
+do:get_result
+queueid:{QUEUEID}  
+```
+4. Ответ с данными генерации в формате JSON
+Если генерация завершена вы получите success=true, если вы получили action=reconnect отправляем запрос заново, после получения success=true получаем данные генерации
+```
+{
+"success": true,
+"error": "",
+"data": {
+"user_id": 12,
+"image": [
+"image/generate_image2image_id12_0.png"
+],
+"prompt": "девушка в костюме супермена",
+"width": 768,
+"height": 768,
+"scale": 7.5,
+"seed": 5443937701,
+"strength": 50,
+"original_language": "ru"
+}
+} 
+```
+
+
+
+
+
 
 
 #### API
