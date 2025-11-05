@@ -25,6 +25,9 @@ class PublicMediaService:
         except KeyError as exc:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Media not found") from exc
 
+        if media.scope != "provider":
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Media not found")
+
         if media.expires_at and media.expires_at < datetime.utcnow():
             raise HTTPException(status_code=status.HTTP_410_GONE, detail="Media expired")
 
