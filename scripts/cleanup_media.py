@@ -51,7 +51,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = parse_args(argv or [])
+    args = parse_args(argv if argv is not None else sys.argv[1:])
     try:
         summary = perform_cleanup(dry_run=args.dry_run)
     except Exception as exc:
