@@ -452,3 +452,7 @@ etry_policy, output, safety, а все параметры операции по�
 - 2025-11-04 21:45 — REFLECT (T PHC-1.2.2a): Turbotext требует URL входного и шаблонных изображений. Решение — временный GET /public/provider-media/{media_id}, ttl <= T_sync_response. Драйвер: create_queue (multipart? нет, form-urlencoded, передаём url=...), polling get_result до таймаута, обработка статусов success/reconnect/error. Результат скачиваем по uploaded_image и сохраняем через ResultStore. Квоты: задержка между polling ~2-3s, максимум попыток = floor(T_sync_response / poll_interval).
 - 2025-11-04 21:52 — Реализовал публичный сервис/роутер (src/app/media/public_media_service.py, src/app/public/public_media_router.py), подключил в dependencies.
 - 2025-11-04 21:55 — Уточнил вызов create_driver: IngestService создаётся с lambda, передающей media_repo.
+- 2025-11-04 22:05 — Реализован TurbotextDriver (create_queue, polling 20 попыток, download) + тесты, вместе с публичным эндпоинтом.
+  * tests/unit/providers/test_template_media_resolver.py
+  * tests/unit/providers/test_turbotext_driver.py
+  * tests/unit/public/test_public_media_router.py
