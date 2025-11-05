@@ -94,7 +94,7 @@ updated: 2025-11-04
         [x] T PHC-1.2.1e — Реализовать доступ к `template_media` (репозиторий + файловая система)  
         [x] T PHC-1.2.1f — Имплементация клиента Gemini + интеграция с JobContext  
         [x] T PHC-1.2.1g — Тесты/контракты для GeminiDriver (успех, timeout, ошибки)  
-      [ ] T PHC-1.2.2 — Реализовать `TurbotextDriver` (polling, без публичных ссылок)  
+      [ ] T PHC-1.2.2 — Реализовать `TurbotextDriver`  
         [ ] T PHC-1.2.2a — REFLECT — спроектировать адаптер Turbotext (polling, квоты, локальные данные)  
         [ ] T PHC-1.2.2b — Имплементация клиента Turbotext + обновление JobContext  
         [ ] T PHC-1.2.2c — Тесты/контракты для TurbotextDriver (успех, очередь, ошибки)

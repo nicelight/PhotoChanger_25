@@ -27,7 +27,7 @@
 | `original_language` | string | optional (default `ru`) | Язык исходного промпта. |
 | `user_id` | integer | optional (default `1`) | Служебный идентификатор аккаунта Turbotext. |
 
-**Ответ**: после `do=get_result` Turbotext возвращает `data.image` (массив путей, например `"image/generate_image2image_id12_0.png"`), промпт и параметры генерации. Поле `uploaded_image` используется драйвером только для одноразового скачивания результата и сохранения в `media/results`; публичных ссылок PhotoChanger не публикует.
+**Ответ**: после `do=get_result` Turbotext возвращает `data.image` (массив путей, например `"image/generate_image2image_id12_0.png"`), промпт и параметры генерации. Поле `uploaded_image` используется драйвером для одноразового скачивания результата. PhotoChanger перед выдачей результата сохраняет файл локально, а временные ссылки `/public/provider-media/{media_id}` предоставляются только на время обработки.
 
 
 #### API
