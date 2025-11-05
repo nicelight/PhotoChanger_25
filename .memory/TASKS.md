@@ -19,7 +19,7 @@ updated: 2025-11-04
 
 
 ## TODO
-- [ ] EP PHC-1 — Синхронный ingest 15 слотов  
+- [x] EP PHC-1 — Синхронный ingest 15 слотов  
   [x] US PHC-1.GOV — Governance & Discovery  
     [x] T PHC-1.GOV.1 — CONSULT — подтвердить лимиты конкурентных ingest-запросов и необходимость внешнего rate limiting (тимлид)  
     [x] T PHC-1.GOV.2 — REFLECT — баланс KISS vs SLA при росте количества провайдеров  
@@ -76,9 +76,9 @@ updated: 2025-11-04
       [x] T PHC-1.1.2.3 — Обработка таймаута и очистки
         [x] T PHC-1.1.2.3a — REFLECT — согласовать отмену `asyncio.wait_for`, очистку ресурсов и логирование с ограничениями SLA (`T_sync_response`, TTL)
         [x] T PHC-1.1.2.3b — Реализовать обработку таймаута: отмена провайдера, статус `timeout`, cleanup
-        [ ] T PHC-1.1.2.3c — Написать тесты/контракты и обновить документацию по статусам/таймаутам
-    [ ] FEAT PHC-1.2 — Интеграция провайдеров Gemini/Turbotext  
-      [ ] US PHC-1.2.0 — Инфраструктура провайдеров  
+        [x] T PHC-1.1.2.3c — Написать тесты/контракты и обновить документацию по статусам/таймаутам
+    [x] FEAT PHC-1.2 — Интеграция провайдеров Gemini/Turbotext  
+      [x] US PHC-1.2.0 — Инфраструктура провайдеров  
         [x] T PHC-1.2.0.1 — REFLECT — продумать `_invoke_provider`, выбор драйвера и маппинг ошибок  
         [x] T PHC-1.2.0.2 — Реализовать `_invoke_provider` и wiring фабрики драйверов в ingest  
         [x] T PHC-1.2.0.3 — Написать unit-тесты на выбор провайдера и обработку ошибок  
@@ -86,7 +86,7 @@ updated: 2025-11-04
         [x] T PHC-1.2.0.5 — CONSULT — согласовать структуру слота и миграцию с тимлидом  
         [x] T PHC-1.2.0.6 — Расширить модель слота (ORM, доменная модель, репозиторий, миграции) 
         [x] T PHC-1.2.0.7 — Тесты и фиксация контрактов по обновлённому слоту  
-      [~] T PHC-1.2.1 — Реализовать `GeminiDriver` (inline/ошибки)  
+      [x] T PHC-1.2.1 — Реализовать `GeminiDriver` (inline/ошибки)  
         [x] T PHC-1.2.1a — REFLECT — спроектировать адаптер Gemini (inline, retries, ограничения)  
         [x] T PHC-1.2.1b — REFLECT — определить структуру `slot.settings` для операций Gemini  
         [x] T PHC-1.2.1c — CONSULT — утвердить структуру `slot.settings` для Gemini у тимлида  
@@ -95,7 +95,7 @@ updated: 2025-11-04
         [x] T PHC-1.2.1f — Имплементация клиента Gemini + интеграция с JobContext  
         [x] T PHC-1.2.1g — Тесты/контракты для GeminiDriver (успех, timeout, ошибки)  
 
-      [ ] T PHC-1.2.2 — Реализовать `TurbotextDriver`  
+      [x] T PHC-1.2.2 — Реализовать `TurbotextDriver`  
 
         [x] T PHC-1.2.2a — REFLECT — определить поток Turbotext (временные URL, polling, TTL, cleanup)  
         [x] T PHC-1.2.2b — CONSULT — утвердить публичный доступ `/public/provider-media/{media_id}` и параметры polling  
@@ -104,7 +104,6 @@ updated: 2025-11-04
         [x] T PHC-1.2.2d — Имплементация клиента Turbotext (create_queue, polling, скачивание результата)  
         [x] T PHC-1.2.2e — Тесты для TurbotextDriver и публичного эндпоинта (успех, timeout, ошибки)  
         [x] T PHC-1.2.2f — Обновить PRD и связанные артефакты (описание временных ссылок Turbotext)  
-9a5d5f5ed6d1dd584539a8a4bb4592e8
 
     [ ] FEAT PHC-1.3 — TTL и очистка медиа  
       [ ] T PHC-1.3.1.1 — Cron `scripts/cleanup_media.py`  
