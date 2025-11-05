@@ -4,8 +4,8 @@
 
 | ID | Сценарий | Критерии приемки |
 |----|----------|------------------|
-| AC-01 | Успешный ingest (UC2) | 1) `POST /api/ingest/{slot_id}` с валидным payload возвращает 200 ≤ `T_sync_response`; 2) `job_history.status = done`, `result_path` указывает на файл в `media/results`; 3) `/public/results/{job_id}` доступен 72 ч с корректным MIME. |
-| AC-02 | Таймаут ingest (UC3) | 1) При ручном ограничении драйвера > `T_sync_response` API отвечает 504; 2) `job_history.status = timeout`, `failure_reason = T_sync_response_exceeded`; 3) временные файлы удалены, повторный `GET` → `410 Gone`. |
+| AC-01 | Успешный ingest (UC2) | 1) `POST /api/ingest/{slot_id}` с валидным payload возвращает 200 ≤ `T_sync_response`; 2) `job_history.status = done`, `result_path` указывает на файл в `media/results`; 3) `/public/results/{job_id}` доступен 72 ч, отдаёт файл с `Content-Disposition`, до готовности или при неверном ID возвращает `404` и JSON `{"status":"error","failure_reason":"result_not_found"}`. |
+| AC-02 | Таймаут ingest (UC3) | 1) При ручном ограничении драйвера > `T_sync_response` API отвечает 504; 2) `job_history.status = timeout`, `failure_reason = T_sync_response_exceeded`; 3) временные файлы удалены, повторный `GET` → `410 Gone` с JSON `{"status":"error","failure_reason":"result_expired"}`. |
 | AC-03 | Ошибка провайдера | 1) Искусственный `provider_error` из драйвера даёт 502; 2) `job_history.status = failed`, лог содержит `provider_error` и идентификатор запроса; 3) статистика `/api/stats` отображает рост доли ошибок. |
 | AC-04 | Управление слотами (UC1) | 1) `PUT /api/slots/{slot_id}` валидирует схему и сохраняет конфигурацию; 2) версия слота увеличивается, журнал фиксирует изменение; 3) ingest использует обновлённый слот без перезапуска приложения. |
 | AC-05 | Ротация ingest-пароля (UC0) | 1) `PUT /api/settings` обновляет хэш пароля; 2) следующий ingest с новым паролем проходит, старый — получает `401`; 3) в `/api/settings` отображаются автор и время обновления. |

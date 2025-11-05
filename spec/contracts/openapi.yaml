@@ -1,7 +1,7 @@
-openapi: 3.1.0
+﻿openapi: 3.1.0
 info:
   title: PhotoChanger API
-  version: 0.1.0-draft
+  version: 0.2.0-draft
   description: >
     Draft specification for the PhotoChanger ingest endpoint. Covers synchronous
     processing via POST /api/ingest/{slot_id}. Successful responses return binary
@@ -87,10 +87,86 @@ paths:
           $ref: '#/components/responses/IngestProviderUnavailable'
         '504':
           $ref: '#/components/responses/IngestProviderTimeout'
+  /public/results/{job_id}:
+    get:
+      summary: Download a processed result by job identifier.
+      description: >
+        Returns the processed media file associated with `job_id`. Files are available for
+        72 hours (`T_result_retention`) after the ingest job succeeds, after which the link
+        responds with `410 Gone`.
+      tags:
+        - public-results
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          description: Identifier returned in the ingest response (`/api/ingest/{slot_id}`).
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Processed media file ready for download.
+          headers:
+            Content-Disposition:
+              description: Suggests filename for downloading the media asset.
+              schema:
+                type: string
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Result not found or not yet available.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicResultError'
+              examples:
+                resultNotFound:
+                  summary: Job not found or still processing
+                  value:
+                    status: error
+                    failure_reason: result_not_found
+        '410':
+          description: Result expired and is no longer available for download.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicResultError'
+              examples:
+                resultExpired:
+                  summary: Result removed after TTL
+                  value:
+                    status: error
+                    failure_reason: result_expired
 components:
   schemas:
     IngestError:
       $ref: "./schemas/ingest-error.schema.json"
+    PublicResultError:
+      type: object
+      required:
+        - status
+        - failure_reason
+      properties:
+        status:
+          type: string
+          enum:
+            - error
+        failure_reason:
+          type: string
+          enum:
+            - result_not_found
+            - result_expired
   responses:
     IngestErrorResponse:
       description: Canonical JSON error body.

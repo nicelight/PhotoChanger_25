@@ -53,7 +53,7 @@ updated: 2025-11-04
       [x] T PHC-1.0.3.1 — Подготовить C4-диаграммы контекста/контейнера в `spec/diagrams/`
       [x] T PHC-1.0.3.2 — Добавить sequence/state диаграммы (Mermaid/PlantUML) для ключевых use-case в `spec/diagrams/`
 
-  [~] FEAT PHC-1.1 — Построение ingest API и доменной модели  
+  [x] FEAT PHC-1.1 — Построение ingest API и доменной модели  
     [x] US PHC-1.1.1 — Валидация payload и создание `JobContext`  
         [x] T PHC-1.1.1.1 — Ограничение размера файлов и MIME (JPEG/PNG/WebP)  
 
@@ -77,10 +77,10 @@ updated: 2025-11-04
         [x] T PHC-1.1.2.3a — REFLECT — согласовать отмену `asyncio.wait_for`, очистку ресурсов и логирование с ограничениями SLA (`T_sync_response`, TTL)
         [x] T PHC-1.1.2.3b — Реализовать обработку таймаута: отмена провайдера, статус `timeout`, cleanup
         [x] T PHC-1.1.2.3c — Написать тесты/контракты и обновить документацию по статусам/таймаутам
-    [ ] US PHC-1.1.3 — Публичная выдача результатов `/public/results/{job_id}`
+    [x] US PHC-1.1.3 — Публичная выдача результатов `/public/results/{job_id}`
       [x] T PHC-1.1.3.1 — REFLECT — сценарии и ограничения публичной выдачи результатов
-      [ ] T PHC-1.1.3.2 — Реализовать сервис/роутер `/public/results/{job_id}` и интеграцию с `ResultStore`
-      [ ] T PHC-1.1.3.3 — Тесты выдачи результатов (unit/contract)
+      [x] T PHC-1.1.3.2 — Реализовать сервис/роутер `/public/results/{job_id}` и интеграцию с `ResultStore`
+      [x] T PHC-1.1.3.3 — Тесты выдачи результатов (unit/contract)
     [x] FEAT PHC-1.2 — Интеграция провайдеров Gemini/Turbotext  
       [x] US PHC-1.2.0 — Инфраструктура провайдеров  
         [x] T PHC-1.2.0.1 — REFLECT — продумать `_invoke_provider`, выбор драйвера и маппинг ошибок  
@@ -109,17 +109,17 @@ updated: 2025-11-04
         [x] T PHC-1.2.2e — Тесты для TurbotextDriver и публичного эндпоинта (успех, timeout, ошибки)  
         [x] T PHC-1.2.2f — Обновить PRD и связанные артефакты (описание временных ссылок Turbotext)  
 
-    [ ] FEAT PHC-1.3 — TTL и очистка медиа  
+    [x] FEAT PHC-1.3 — TTL и очистка медиа  
       [x] US PHC-1.3.GOV — Governance & Discovery  
         [x] T PHC-1.3.GOV.1 — CONSULT — утвердить формат логов cron cleanup   
-      [ ] US PHC-1.3.1 — Cron очистка медиа  
-        [ ] T PHC-1.3.1.1 — REFLECT — определить стратегию очистки и инструменты (FS/DB)  
-        [ ] T PHC-1.3.1.2 — Обновить `scripts/cleanup_media.py` (TTL, простые логи)  
-        [ ] T PHC-1.3.1.3 — Тесты/проверки для cron (unit/integration)  
-      [ ] US PHC-1.3.3 — Контракты и документация TTL  
-        [ ] T PHC-1.3.3.1 — REFLECT — определить сценарии тестирования TTL (results/public API)  
-        [ ] T PHC-1.3.3.2 — Реализовать контрактные тесты истечения (result TTL, 410)  
-        [ ] T PHC-1.3.3.3 — Обновить OpenAPI/PRD/репортинг результатов тестов  
+      [x] US PHC-1.3.1 — Cron очистка медиа  
+        [x] T PHC-1.3.1.1 — REFLECT — определить стратегию очистки и инструменты (FS/DB)  
+        [x] T PHC-1.3.1.2 — Обновить `scripts/cleanup_media.py` (TTL, простые логи)  
+        [x] T PHC-1.3.1.3 — Тесты/проверки для cron (unit/integration)  
+      [x] US PHC-1.3.3 — Контракты и документация TTL  
+        [x] T PHC-1.3.3.1 — REFLECT — определить сценарии тестирования TTL (results/public API)  
+        [x] T PHC-1.3.3.2 — Реализовать контрактные тесты истечения (result TTL, 410)  
+        [x] T PHC-1.3.3.3 — Обновить OpenAPI/PRD/репортинг результатов тестов  
 
 - [ ] EP PHC-2 — Админ-панель и статистика  
   [ ] FEAT PHC-2.0 — Спецификации админ API и UI  

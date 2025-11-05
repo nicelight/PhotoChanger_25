@@ -309,7 +309,7 @@ graph TD
 | `POST /api/ingest/{slot_id}` | Приём файла, запуск обработки | 200 (успех), 400 (валидация), 401 (неверный пароль), 404 (слот не найден), 504 (таймаут провайдера), 5xx (ошибка провайдера) |
 | `GET /api/jobs/{job_id}` | Проверка статуса обработки | 200 (объект статуса), 404 (job не найден/истёк TTL) |
 | `GET /public/slots/{slot_id}` | Публичная галерея результатов | 200, 404 |
-| `GET /public/results/{job_id}` | Скачивание результата | 200 (файл), 404 (не существует), 410 (TTL истёк) |
+| `GET /public/results/{job_id}` | Скачивание результата | 200 (файл, `Content-Disposition: attachment`), 404 (`{"status":"error","failure_reason":"result_not_found"}`), 410 (`{"status":"error","failure_reason":"result_expired"}`) |
 
 
 #### Админ-API
