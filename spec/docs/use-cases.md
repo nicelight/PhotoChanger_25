@@ -3,7 +3,7 @@
 Документ синхронизирован с `docs/BRIEF.md`, `docs/PRD.md` (Iteration 2) и `docs/ARCHITECTURE.md`. Диаграммы последовательностей/состояний будут размещены в `spec/diagrams/` (см. US PHC-1.0.3) и привязаны к сценариям ниже.
 
 ## Общие требования
-- Ingest-поток принимает `multipart/form-data`, обязательные поля формы — `password` (строка), `hash` (hex-checksum) и `fileToUpload` (часть с заголовком `Content-Type = image/jpeg|image/png|image/webp`, размер ≤ лимита слота и абсолютного капа 50 МБ). Дополнительные поля DSLR Remote Pro передаёт произвольно, система их не ограничивает.
+- Ingest-поток принимает `multipart/form-data`, обязательные поля формы — `password` (строка), `hash` (hex-checksum) и `fileToUpload` (часть с заголовком `Content-Type = image/jpeg|image/png|image/webp`, размер ≤ лимита слота и абсолютного капа 20 МБ). Дополнительные поля DSLR Remote Pro передаёт произвольно, система их не ограничивает.
 - Успешный ответ `POST /api/ingest/{slot_id}` — только бинарное изображение с заголовками `Content-Type` (одно из поддерживаемых значений), `Content-Length`, `Cache-Control: no-store`. `job_id` и JSON в ответе не возвращаются.
 - Ошибочные ответы ingest API оформляются как JSON: `{"status": "<error>|timeout", "failure_reason": "<строковый код>", "details": "<опциональный текст>"}`. Если верификация прошла до создания `job_id`, поле не передаётся. HTTP-коды соответствуют PRD: 400/401/404/413/415/429/500/502/503/504.
 - Cron `scripts/cleanup_media.py` запускается каждые 15 минут и удаляет просроченные каталоги `media/results/{slot_id}/{job_id}` (payload + preview), а также обновляет `media_object.cleaned_at`.

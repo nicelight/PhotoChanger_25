@@ -8,8 +8,8 @@
       "type": "init",
       "description": "Defined ingest flow expectations (`POST /api/ingest/{slot_id}`) and media TTL behaviour.",
       "artifacts": [
-        "spec/contracts/providers/gemini.md",
-        "spec/contracts/providers/turbotext.md"
+        "spec/docs/providers/gemini.md",
+        "spec/docs/providers/turbotext.md"
       ]
     },
     {
@@ -42,8 +42,8 @@
       "type": "docs",
       "description": "Refined provider contracts for Gemini and Turbotext (limits, protocols, error handling).",
       "artifacts": [
-        "spec/contracts/providers/gemini.md",
-        "spec/contracts/providers/turbotext.md"
+        "spec/docs/providers/gemini.md",
+        "spec/docs/providers/turbotext.md"
       ]
     },
     {

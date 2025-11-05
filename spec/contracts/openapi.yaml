@@ -36,12 +36,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: "./schemas/ingest-request.schema.json"
-            encoding:
-              fileToUpload:
-                contentType:
-                  - image/jpeg
-                  - image/png
-                  - image/webp
             examples:
               dslrSample:
                 summary: DSLR Remote Pro upload
@@ -131,7 +125,7 @@ components:
     IngestPayloadTooLarge:
       allOf:
         - $ref: '#/components/responses/IngestErrorResponse'
-      description: File exceeds the configured slot limit or the global 50 MB safety cap (`failure_reason=payload_too_large`).
+      description: File exceeds the configured slot limit or the global 20 MB safety cap (`failure_reason=payload_too_large`).
     IngestUnsupportedMedia:
       allOf:
         - $ref: '#/components/responses/IngestErrorResponse'

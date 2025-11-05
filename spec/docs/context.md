@@ -15,7 +15,7 @@
 | Ops/Мониторинг | `/metrics`, `/healthz`, cron `cleanup_media.py`, системные логи | Метрики SLA, статусы компонент, отчёты об очистке |
 
 ## 3. Основные интерфейсы
-- **Ingest API**: Multipart POST с полями `password`, `file`, optional metadata; проверяет ingest-пароль и слоты, создаёт `JobContext`.
+- **Ingest API**: Multipart POST с полями `password`, `fileToUpload`, optional metadata; проверяет ingest-пароль и слоты, создаёт `JobContext`.
 - **Provider Drivers**: реализация интерфейса `ProviderDriver.process(job_ctx)` для Gemini/Turbotext; управляют сетевыми вызовами и форматами.
 - **Admin API/UI**: JWT-аутентификация, CRUD слотов (15 штук), глобальные настройки, шаблонные медиа, статистика SLA.
 - **Public API**: доступ к результатам (`GET /public/results/{job_id}`), галерея последних 10 результатов по слоту.
