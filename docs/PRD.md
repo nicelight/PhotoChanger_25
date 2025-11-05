@@ -193,9 +193,10 @@ graph TD
 - `GeminiDriver` — асинхронный HTTP-клиент на `httpx.AsyncClient`, соблюдает ограничения сервиса по форматам/размерам, добавляет ingest-фото и шаблонные медиа в `inline_data` и возвращает байтовые данные результата.
 - Документация по провайдеру в `spec/docs/providers/gemini.md`
 
- #### Turbotext провайдер
+#### Turbotext провайдер
 - **`turbotext`** — предоставляет собственные сценарии (`style_transfer`, `image_edit`, `identity_transfer`), т.к. контракт провайдера жёстко задаёт режимы.
 - `TurbotextDriver` — асинхронный клиент с polling внутри одной корутины, ограниченный `asyncio.wait_for` на уровне сервиса; повторных попыток нет.
+- Для передачи изображений провайдеру PhotoChanger выдаёт временные ссылки вида `/public/provider-media/{media_id}` (ingest и шаблонные файлы). Ссылки действуют до истечения `T_sync_response`, далее cron удаляет файлы и эндпоинт возвращает `410 Gone`.
 - Документация по провайдеру в `spec/docs/providers/turbotext.md`
 
 

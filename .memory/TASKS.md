@@ -97,9 +97,12 @@ updated: 2025-11-04
 
       [ ] T PHC-1.2.2 — Реализовать `TurbotextDriver`  
 
-        [ ] T PHC-1.2.2a — REFLECT — спроектировать адаптер Turbotext (polling, квоты, локальные данные)  
-        [ ] T PHC-1.2.2b — Имплементация клиента Turbotext + обновление JobContext  
-        [ ] T PHC-1.2.2c — Тесты/контракты для TurbotextDriver (успех, очередь, ошибки)
+        [x] T PHC-1.2.2a — REFLECT — определить поток Turbotext (временные URL, polling, TTL, cleanup)  
+        [x] T PHC-1.2.2b — CONSULT — утвердить публичный доступ `/public/provider-media/{media_id}` и параметры polling  
+        [x] T PHC-1.2.2c — Реализовать генерацию ссылок и эндпоинт `/public/provider-media/{media_id}`  
+        [ ] T PHC-1.2.2d — Имплементация клиента Turbotext (create_queue, polling, скачивание результата)  
+        [ ] T PHC-1.2.2e — Тесты для TurbotextDriver и публичного эндпоинта (успех, timeout, ошибки)  
+        [ ] T PHC-1.2.2f — Обновить PRD и связанные артефакты (описание временных ссылок Turbotext)  
 
     [ ] FEAT PHC-1.3 — TTL и очистка медиа  
       [ ] T PHC-1.3.1.1 — Cron `scripts/cleanup_media.py`  

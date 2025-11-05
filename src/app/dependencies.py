@@ -1,4 +1,4 @@
-"""Dependency wiring helpers."""
+﻿"""Dependency wiring helpers."""
 
 from fastapi import FastAPI
 
@@ -7,8 +7,10 @@ from .ingest.ingest_api import router as ingest_router
 from .ingest.ingest_service import IngestService
 from .ingest.validation import UploadValidator
 from .media.media_service import ResultStore
+from .media.public_media_service import PublicMediaService
 from .media.temp_media_store import TempMediaStore
 from .providers.providers_factory import create_driver
+from .public.public_media_router import build_public_media_router
 from .repositories.job_history_repository import JobHistoryRepository
 from .repositories.media_object_repository import MediaObjectRepository
 from .slots.slots_repository import SlotRepository
@@ -44,4 +46,8 @@ def include_routers(app: FastAPI, config: AppConfig) -> None:
     app.state.result_store = result_store
     app.state.temp_store = temp_store
 
+    public_media_service = PublicMediaService(media_repo=media_repo)
+
     app.include_router(ingest_router)
+    app.include_router(build_public_media_router(public_media_service))
+
