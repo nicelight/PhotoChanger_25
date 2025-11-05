@@ -1,8 +1,8 @@
 {
-  "version": "0.1.0",
-  "released_at": "2025-10-08",
+  "version": "0.2.0",
+  "released_at": "2025-11-06",
   "stage": "draft",
-  "summary": "Initial PhotoChanger contracts for ingest, admin, provider integrations.",
+  "summary": "Adds public result download endpoint and updates ingest documentation.",
   "changes": [
     {
       "type": "init",
@@ -57,9 +57,17 @@
         "spec/contracts/ingest-errors.md",
         "spec/contracts/openapi.yaml"
       ]
+    },
+    {
+      "type": "docs",
+      "description": "Documented `/public/results/{job_id}` downloads, including 404/410 error payloads.",
+      "artifacts": [
+        "spec/contracts/openapi.yaml",
+        "docs/PRD.md"
+      ]
     }
   ],
   "deprecated": [],
   "breaking": false,
-  "notes": "Next minor release (0.2.x) expected after OpenAPI specifications are published."
+  "notes": "Next update will extend admin/API docs for slots and monitoring."
 }
