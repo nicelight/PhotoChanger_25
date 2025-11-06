@@ -46,6 +46,18 @@
     h1{ font-size:clamp(28px,4cqi,48px); margin:0 }
     label.title{ font-weight:700; display:block; margin-bottom:8px }
     input[type="text"], input[type="password"], select, textarea{ width:100%; border-radius:14px; padding:12px 14px; border:1px solid color-mix(in oklab, white 75%, #0f172a 25% / 35%); background:transparent; outline:none }
+    select{
+      appearance:none;
+      background:color-mix(in oklab, hsl(var(--h-a) var(--s) var(--l)), #0f172a 5%);
+      color:var(--text);
+      cursor:pointer;
+      box-shadow:0 2px 6px rgba(15,23,42,.12);
+    }
+    select:focus{ border-color:hsl(var(--h-a) var(--s) calc(var(--l) - 10%)); box-shadow:0 0 0 3px rgba(59,130,246,.25); }
+    select option{
+      background:color-mix(in oklab, hsl(var(--h-a) var(--s) var(--l)), #0f172a 8%);
+      color:var(--text);
+    }
     textarea{ resize:vertical }
 
     .muted-hint{ color:var(--muted); font-size:14px; margin-top:8px }
@@ -158,7 +170,7 @@
                   <option value="turbotext">Turbotext</option>
                 </select>
               </div>
-              <div>
+              <div id="operation-select-wrap">
                 <label class="title" for="operation">Операция</label>
                 <select id="operation" name="operation" aria-label="Выбор операции" disabled>
                   <option value="" selected disabled>— выберите провайдера —</option>
@@ -303,12 +315,15 @@
         turbotext: {
           label: 'TurboText',
           operations: {
+            image2image: { label: 'Image2Image (рекомендуем)', needs: { prompt:true, second:false, first:true } },
             style_transfer: { label: 'Style Transfer', needs: { prompt:true, second:true, first:true } },
             image_edit: { label: 'Image Edit', needs: { prompt:true, second:false, first:true } },
             identity_transfer: { label: 'Identity Transfer', needs: { prompt:false, second:true, first:true } }
           }
         }
       };
+      const TURBOTEXT_DEFAULT_OPERATION = 'image2image';
+      const GEMINI_DEFAULT_OPERATION = 'identity_transfer';
 
       // --- Helpers ---
       const $ = (id) => document.getElementById(id);
@@ -602,49 +617,71 @@
       // --- Provider → Operation → Required fields ---
       const providerSel = byId('provider');
       const operationSel = byId('operation');
+      const operationSelectWrap = byId('operation-select-wrap');
       const reqHint = byId('op-req');
+      const GEMINI_PROVIDER = 'gemini';
+      const TURBOTEXT_PROVIDER = 'turbotext';
 
       function resetOperation(){
         operationSel.innerHTML = '<option value="" disabled selected>— выберите операцию —</option>';
         operationSel.disabled = true;
+        slotMeta.operation = '';
         reqHint.style.display = 'none';
+        if(operationSelectWrap){ operationSelectWrap.style.display = ''; }
+      }
+
+      function setOperationValue(provider, opKey){
+        if(!provider || !opKey) return;
+        const cfg = CONFIG[provider];
+        if(!cfg || !cfg.operations || !cfg.operations[opKey]) return;
+        operationSel.value = opKey;
+        slotMeta.operation = opKey;
+        applyNeeds(cfg.operations[opKey].needs);
       }
 
       function applyNeeds(needs){
+        const normalized = needs || { prompt:true, second:false, first:true };
         // needs: {prompt, second, first}
         // Prompt field visibility
         const promptArea = byId('long').closest('.card');
         if(promptArea){
           // оставляем карту, но если prompt не нужен — просто подсказкой укажем, что он опционален
           const lbl = promptArea.querySelector('label.title');
-          if(lbl){ lbl.textContent = needs.prompt ? 'Параметры операции' : 'Параметры операции (промпт опционален)'; }
+          if(lbl){ lbl.textContent = normalized.prompt ? 'Параметры операции' : 'Параметры операции (промпт опционален)'; }
         }
         // Images toggles: автопоказ только если нужно — без блокировки ручного выключения
         const tFirst = byId('toggle-first');
         const tSecond = byId('toggle-second');
-        if(tFirst){ tFirst.checked = needs.first || tFirst.checked; tFirst.dispatchEvent(new Event('change')); }
-        if(tSecond){ tSecond.checked = needs.second || tSecond.checked; tSecond.dispatchEvent(new Event('change')); }
+        if(tFirst){ tFirst.checked = normalized.first || tFirst.checked; tFirst.dispatchEvent(new Event('change')); }
+        if(tSecond){ tSecond.checked = normalized.second || tSecond.checked; tSecond.dispatchEvent(new Event('change')); }
 
         // Compose human-readable requirements
         const req = [];
-        if(needs.first) req.push('нужно «Фото для тестов»');
-        if(needs.second) req.push('нужно «Изображение — Шаблон стиля»');
-        if(needs.prompt) req.push('нужен текстовый промпт');
+        if(normalized.first) req.push('нужно «Фото для тестов»');
+        if(normalized.second) req.push('нужно «Изображение — Шаблон стиля»');
+        if(normalized.prompt) req.push('нужен текстовый промпт');
         reqHint.textContent = req.length ? ('Для выбранной операции: ' + req.join('; ') + '.') : 'Для выбранной операции специальных требований нет.';
         reqHint.style.display = '';
+      }
+
+      function pickGeminiDefault(ops){
+        if(PRESET_OPERATION && ops[PRESET_OPERATION]) return PRESET_OPERATION;
+        if(ops[GEMINI_DEFAULT_OPERATION]) return GEMINI_DEFAULT_OPERATION;
+        const keys = Object.keys(ops || {});
+        return keys[0] || '';
       }
 
       providerSel.addEventListener('change', ()=>{
         const prov = providerSel.value;
         resetOperation();
-        if(!prov || !CONFIG[prov]){
+        const config = CONFIG[prov];
+        if(!prov || !config){
           slotMeta.provider = '';
           slotMeta.modelName = '';
-          slotMeta.operation = '';
           updateSlotHeader('');
           return;
         }
-        const ops = CONFIG[prov].operations;
+        const ops = config.operations || {};
         const frag = document.createDocumentFragment();
         Object.entries(ops).forEach(([key, meta])=>{
           const opt = document.createElement('option');
@@ -654,16 +691,33 @@
         operationSel.appendChild(frag);
         operationSel.disabled = false;
         slotMeta.provider = prov;
-        slotMeta.modelName = (prov === PRESET_PROVIDER && PRESET_MODEL_NAME) ? PRESET_MODEL_NAME : (CONFIG[prov].label || prov);
-        slotMeta.operation = '';
+        slotMeta.modelName = (prov === PRESET_PROVIDER && PRESET_MODEL_NAME) ? PRESET_MODEL_NAME : (config.label || prov);
+
+        if(prov === GEMINI_PROVIDER){
+          const defaultOp = pickGeminiDefault(ops);
+          if(operationSelectWrap){ operationSelectWrap.style.display = 'none'; }
+          setOperationValue(prov, defaultOp);
+        } else {
+          if(operationSelectWrap){ operationSelectWrap.style.display = ''; }
+          if(prov === TURBOTEXT_PROVIDER){
+            setOperationValue(prov, TURBOTEXT_DEFAULT_OPERATION);
+          }
+        }
+
         updateSlotHeader(prov);
       });
 
       operationSel.addEventListener('change', ()=>{
-        const prov = providerSel.value; const op = operationSel.value;
+        const prov = providerSel.value;
+        const op = operationSel.value;
         if(!prov || !op || !CONFIG[prov] || !CONFIG[prov].operations[op]) return;
-        applyNeeds(CONFIG[prov].operations[op].needs);
-        slotMeta.operation = op;
+        if(prov === TURBOTEXT_PROVIDER && op !== TURBOTEXT_DEFAULT_OPERATION){
+          toast('Эта операция пока ещё не работает в Turbotext. Используйте Image2Image.', 'error');
+          operationSel.value = TURBOTEXT_DEFAULT_OPERATION;
+          setOperationValue(prov, TURBOTEXT_DEFAULT_OPERATION);
+          return;
+        }
+        setOperationValue(prov, op);
       });
 
       // --- Предзаполнение данными слота из атрибутов body ---
@@ -671,8 +725,10 @@
         if(slotMeta.provider){
           providerSel.value = slotMeta.provider;
           providerSel.dispatchEvent(new Event('change'));
-          if(PRESET_OPERATION){
-            slotMeta.operation = PRESET_OPERATION;
+          if(slotMeta.provider === GEMINI_PROVIDER && PRESET_OPERATION){
+            setOperationValue(GEMINI_PROVIDER, PRESET_OPERATION);
+          }
+          if(slotMeta.provider === TURBOTEXT_PROVIDER && PRESET_OPERATION){
             operationSel.value = PRESET_OPERATION;
             operationSel.dispatchEvent(new Event('change'));
           }
@@ -698,7 +754,7 @@
       // --- Генерация ingest-ссылки (клиентская заглушка) ---
       const INGEST_BASE_URL = 'https://api.example.com/ingest/';
       function generateIngestURL(slotId, providerSlug){
-        if(providerSlug){
+        if(slotId && providerSlug){
           return `${INGEST_BASE_URL}${providerSlug}/${slotId}`;
         }
         return '';
@@ -744,14 +800,33 @@
         save.addEventListener('click', function(){
           const form = document.getElementById('upload-form');
           const title = (byId('title').value || '').trim();
-          const prov = byId('provider').value;
-          const op = byId('operation').value;
-          if(!title){ toast('Заполните название слота', 'error'); return pulse(form); }
-          if(!prov){ toast('Выберите провайдера', 'error'); return pulse(form); }
-          if(!op){ toast('Выберите операцию', 'error'); return pulse(form); }
+        const prov = byId('provider').value;
+        if(!title){ toast('Заполните название слота', 'error'); return pulse(form); }
+        if(!prov){ toast('Выберите провайдера', 'error'); return pulse(form); }
 
-          // Проверка обязательных полей по needs
-          const needs = CONFIG[prov]?.operations?.[op]?.needs || { };
+        const provConfig = CONFIG[prov];
+        if(!provConfig){
+          toast('Провайдер недоступен', 'error'); return pulse(form);
+        }
+        let op = slotMeta.operation || operationSel.value;
+        if(prov === GEMINI_PROVIDER && !op){
+          op = pickGeminiDefault(provConfig.operations || {});
+          setOperationValue(prov, op);
+        }
+        if(prov === TURBOTEXT_PROVIDER){
+          if(!op){ op = TURBOTEXT_DEFAULT_OPERATION; }
+          if(op !== TURBOTEXT_DEFAULT_OPERATION){
+            op = TURBOTEXT_DEFAULT_OPERATION;
+            setOperationValue(prov, op);
+          }
+        }
+        if(!op){
+          toast('Выберите операцию', 'error'); return pulse(form);
+        }
+        slotMeta.operation = op;
+
+        // Проверка обязательных полей по needs
+        const needs = provConfig?.operations?.[op]?.needs || { prompt:true, second:false, first:true };
           if(needs.first && byId('First_image_status').value !== 'present'){
             toast('Для этой операции требуется «Фото для тестов»', 'error'); return pulse(form);
           }
