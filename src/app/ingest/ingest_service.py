@@ -9,6 +9,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 from fastapi import UploadFile
 
@@ -21,8 +22,11 @@ from ..media.media_service import ResultStore
 from ..media.temp_media_store import TempMediaStore
 from .ingest_errors import (
     ChecksumMismatchError,
+    PayloadTooLargeError,
     ProviderExecutionError,
     ProviderTimeoutError,
+    UnsupportedMediaError,
+    UploadReadError,
 )
 from .ingest_models import FailureReason, JobContext, JobStatus, UploadValidationResult
 from .validation import UploadValidator
@@ -193,6 +197,37 @@ class IngestService:
             },
         )
 
+    async def run_test_job(
+        self,
+        slot_id: str,
+        upload: UploadFile,
+        *,
+        overrides: dict[str, Any] | None = None,
+        expected_hash: str | None = None,
+    ) -> tuple[JobContext, float]:
+        """Execute validate+process flow for admin test runs."""
+        job = self.prepare_job(slot_id, source="ui_test")
+        started_at = datetime.utcnow()
+
+        try:
+            await self.validate_upload(job, upload, expected_hash)
+        except UnsupportedMediaError:
+            self.record_failure(job, FailureReason.UNSUPPORTED_MEDIA_TYPE)
+            raise
+        except PayloadTooLargeError:
+            self.record_failure(job, FailureReason.PAYLOAD_TOO_LARGE)
+            raise
+        except (ChecksumMismatchError, UploadReadError):
+            self.record_failure(job, FailureReason.INVALID_REQUEST)
+            raise
+
+        if overrides:
+            self._apply_test_overrides(job, overrides)
+
+        await self.process(job)
+        duration = (datetime.utcnow() - started_at).total_seconds()
+        return job, duration
+
     async def process(self, job: JobContext) -> bytes:
         """Invoke provider driver with timeout and persist result."""
         if job.job_id is None:
@@ -268,3 +303,33 @@ class IngestService:
             "image/webp": "webp",
         }
         return mapping.get(content_type, "bin")
+
+    def _apply_test_overrides(self, job: JobContext, overrides: dict[str, Any]) -> None:
+        """Apply prompt/provider/template overrides for admin test runs."""
+        provider = overrides.get("provider")
+        if isinstance(provider, str) and provider:
+            job.metadata["provider"] = provider
+
+        operation = overrides.get("operation")
+        if isinstance(operation, str) and operation:
+            job.metadata["operation"] = operation
+
+        settings_override = overrides.get("settings")
+        if isinstance(settings_override, dict):
+            merged = dict(job.slot_settings or {})
+            merged.update(settings_override)
+            job.slot_settings = merged
+
+        template_overrides = overrides.get("template_media")
+        if isinstance(template_overrides, list):
+            job.slot_settings["template_media"] = template_overrides
+            template_map = {}
+            for item in template_overrides:
+                if not isinstance(item, dict):
+                    continue
+                media_kind = item.get("media_kind")
+                media_object_id = item.get("media_object_id")
+                if media_kind and media_object_id:
+                    template_map[str(media_kind)] = str(media_object_id)
+            if template_map:
+                job.slot_template_media = template_map
