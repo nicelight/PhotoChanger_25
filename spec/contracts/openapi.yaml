@@ -1,7 +1,7 @@
 ﻿openapi: 3.1.0
 info:
   title: PhotoChanger API
-  version: 0.2.0-draft
+  version: 0.4.0-draft
   description: >
     Draft specification for the PhotoChanger ingest endpoint. Covers synchronous
     processing via POST /api/ingest/{slot_id}. Successful responses return binary
@@ -273,14 +273,13 @@ paths:
             schema:
               type: object
               properties:
-                prompt:
-                  type: string
-                  description: Optional prompt override to use for this test execution.
-                template_media:
+                slot_payload:
                   type: string
                   description: >
-                    JSON array of `{ "media_kind": "...", "media_object_id": "..." }` items that temporarily replace
-                    the slot template bindings for this run. When omitted, the slot configuration is used as-is.
+                    JSON object with optional overrides for the slot being tested. Supported keys:
+                    `provider` (string), `operation` (string), `settings` (object, e.g. prompt overrides),
+                    `template_media` (array of `{ media_kind, media_object_id }`). When omitted, the saved slot
+                    configuration is used as-is.
                 test_image:
                   type: string
                   format: binary
@@ -615,6 +614,7 @@ components:
         - status
         - job_id
         - public_result_url
+        - completed_in_seconds
       properties:
         status:
           type: string
@@ -626,6 +626,10 @@ components:
           type: string
           format: uri
           description: Relative or absolute URL that serves the processed result (`/public/results/{job_id}`).
+        completed_in_seconds:
+          type: number
+          format: float
+          description: Total time the test run spent in validation + processing.
     SettingsResponse:
       type: object
       required:

@@ -1,8 +1,8 @@
 {
-  "version": "0.3.0",
-  "released_at": "2025-11-07",
+  "version": "0.4.0",
+  "released_at": "2025-11-09",
   "stage": "draft",
-  "summary": "Adds admin test-run endpoint and tracks job sources in job_history.",
+  "summary": "Refines admin test-run contract (slot_payload overrides, duration metric) and wires it through IngestService.",
   "changes": [
     {
       "type": "init",
@@ -74,9 +74,17 @@
         "docs/PRD.md",
         "spec/docs/domain-model.md"
       ]
+    },
+    {
+      "type": "breaking",
+      "description": "Replaced prompt/template form fields with `slot_payload` JSON overrides for `/api/slots/{slot_id}/test-run` and added `completed_in_seconds` to responses. Documentation updated accordingly.",
+      "artifacts": [
+        "spec/contracts/openapi.yaml",
+        "docs/PRD.md"
+      ]
     }
   ],
   "deprecated": [],
-  "breaking": false,
+  "breaking": true,
   "notes": "Next update will extend admin/API docs for slots and monitoring."
 }

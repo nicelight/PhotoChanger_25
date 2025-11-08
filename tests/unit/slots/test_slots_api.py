@@ -11,33 +11,29 @@ if str(ROOT) not in sys.path:  # pragma: no cover - test helper
     sys.path.append(str(ROOT))
 
 from src.app.ingest.ingest_errors import ProviderTimeoutError
-from src.app.ingest.ingest_models import JobContext, UploadValidationResult
+from src.app.ingest.ingest_models import JobContext
 from src.app.slots.slots_api import router
 
 
 class DummyIngestService:
     def __init__(self) -> None:
-        self.last_job: JobContext | None = None
-        self.failures: list[str] = []
+        self.calls: list[dict[str, Any]] = []
 
-    def prepare_job(self, slot_id: str, *, source: str = "ingest") -> JobContext:
+    async def run_test_job(
+        self,
+        slot_id: str,
+        upload,
+        *,
+        overrides: dict[str, Any] | None = None,
+        expected_hash: str | None = None,
+    ) -> tuple[JobContext, float]:
         if slot_id == "missing":
             raise KeyError(slot_id)
-        job = JobContext(slot_id=slot_id, job_id="job-123", slot_settings={"prompt": "default"})
-        job.metadata["source"] = source
-        return job
-
-    async def validate_upload(self, job: JobContext, upload, expected_hash: str | None) -> UploadValidationResult:
-        return UploadValidationResult(content_type="image/jpeg", size_bytes=3, sha256="abc", filename="file.jpg")
-
-    async def process(self, job: JobContext) -> bytes:
-        if job.slot_settings.get("prompt") == "timeout":
+        if overrides and overrides.get("settings", {}).get("prompt") == "timeout":
             raise ProviderTimeoutError("timeout")
-        self.last_job = job
-        return b"bytes"
-
-    def record_failure(self, job: JobContext, failure_reason: Any, status=None) -> None:  # pragma: no cover - trivial
-        self.failures.append(str(failure_reason))
+        job = JobContext(slot_id=slot_id, job_id="job-123")
+        self.calls.append({"slot_id": slot_id, "overrides": overrides, "filename": upload.filename})
+        return job, 1.23
 
 
 def build_client(service: DummyIngestService) -> TestClient:
@@ -47,15 +43,20 @@ def build_client(service: DummyIngestService) -> TestClient:
     return TestClient(app)
 
 
-def test_test_run_success_overrides_prompt_and_templates() -> None:
+def test_test_run_success_with_slot_payload_overrides() -> None:
     service = DummyIngestService()
     client = build_client(service)
+
+    slot_payload = {
+        "provider": "gemini",
+        "settings": {"prompt": "Custom prompt"},
+        "template_media": [{"media_kind": "style", "media_object_id": "media-1"}],
+    }
 
     response = client.post(
         "/api/slots/slot-001/test-run",
         data={
-            "prompt": "Custom prompt",
-            "template_media": json.dumps([{"media_kind": "style", "media_object_id": "media-1"}]),
+            "slot_payload": json.dumps(slot_payload),
         },
         files={"test_image": ("test.jpg", b"123", "image/jpeg")},
     )
@@ -64,18 +65,18 @@ def test_test_run_success_overrides_prompt_and_templates() -> None:
     payload = response.json()
     assert payload["job_id"] == "job-123"
     assert payload["public_result_url"].endswith("/job-123")
-    assert service.last_job is not None
-    assert service.last_job.slot_settings["prompt"] == "Custom prompt"
-    assert service.last_job.slot_settings["template_media"][0]["media_object_id"] == "media-1"
+    assert payload["completed_in_seconds"] == 1.23
+    assert service.calls[0]["overrides"]["settings"]["prompt"] == "Custom prompt"
+    assert service.calls[0]["overrides"]["template_media"][0]["media_object_id"] == "media-1"
 
 
-def test_test_run_invalid_template_media_returns_400() -> None:
+def test_test_run_invalid_slot_payload_returns_400() -> None:
     service = DummyIngestService()
     client = build_client(service)
 
     response = client.post(
         "/api/slots/slot-001/test-run",
-        data={"template_media": "not-json"},
+        data={"slot_payload": "not-json"},
         files={"test_image": ("test.jpg", b"123", "image/jpeg")},
     )
 
@@ -101,7 +102,7 @@ def test_test_run_provider_timeout_returns_504() -> None:
 
     response = client.post(
         "/api/slots/slot-001/test-run",
-        data={"prompt": "timeout"},
+        data={"slot_payload": json.dumps({"settings": {"prompt": "timeout"}})},
         files={"test_image": ("test.jpg", b"123", "image/jpeg")},
     )
 

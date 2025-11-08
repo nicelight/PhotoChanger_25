@@ -140,10 +140,14 @@ updated: 2025-11-07
     [x] US PHC-2.1.2.GOV — Governance & Discovery  
       [x] T PHC-2.1.2.GOV.1 — REFLECT — определить требования к тестовому запуску слота (Admin UI → backend)  
       [x] T PHC-2.1.2.GOV.2 — CONSULT — утвердить контракт `/api/slots/{slot_id}/test-run` и маркировку задач  
-    [ ] US PHC-2.1.2 — Тестовый ендпоинт слотов
-      [ ] T PHC-2.1.2.1 — Реализовать эндпоинт `/api/slots/{slot_id}/test-run` и повторное использование IngestService  
-      [ ] T PHC-2.1.2.2 — Маркировать `job_history` (`source=ui_test`) и обновить логи/статистику  
-      [ ] T PHC-2.1.2.3 — Тесты и документация (OpenAPI/PRD/spec) для test-run  
+    [x] US PHC-2.1.2 — Тестовый ендпоинт слотов
+      [x] T PHC-2.1.2.1 — Реализовать эндпоинт `/api/slots/{slot_id}/test-run` и повторное использование IngestService  
+      [x] T PHC-2.1.2.2 — Маркировать `job_history` (`source=ui_test`) и обновить логи/статистику  
+      [x] T PHC-2.1.2.3 — Тесты и документация (OpenAPI/PRD/spec) для test-run  
+    [x] US PHC-2.1.3.GOV — Governance & Discovery  
+      [x] T PHC-2.1.3.GOV.1 — REFLECT — декомпозировать DTO/валидацию для `/api/slots*` и `/api/settings*`, учесть `recent_results`, `template_media`, masking секретов  
+      [x] T PHC-2.1.3.GOV.2 — CONSULT — утвердить у тимлида состав editable полей (slots/settings), лимиты (`size_limit_mb ≤ 20`, глобальный `sync_response_seconds`), формат `provider_keys`  
+      [x] T PHC-2.1.3.GOV.3 — CONSULT — подтвердить форматы ответов/ошибок (чистый JSON, без optimistic locking) и требования к аудиту (`updated_by`, журнал)  
     [ ] US PHC-2.1.3 — REST API слотов и настроек  
       [ ] T PHC-2.1.3.1 — Реализовать `GET /api/slots` + `GET /api/slots/{slot_id}` (DTO, recent_results, template_media)  
       [ ] T PHC-2.1.3.2 — Реализовать `PUT /api/slots/{slot_id}` (валидация настроек, обновление template_media, журналирование)  
