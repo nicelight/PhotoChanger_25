@@ -134,7 +134,7 @@ updated: 2025-11-07
       [x] T PHC-2.0.2.2 — Подготовить мок-эндпоинты/пример HTML для HTMX в `spec/docs/ui/`  
   [ ] FEAT PHC-2.1 — CRUD слотов и глобальных настроек  
     [ ] US PHC-2.1.GOV — Governance & Discovery  
-      [ ] T PHC-2.1.GOV.1 — REFLECT — собрать требования к CRUD слотов и глобальных настроек (UI, optimistic locking, авторизация) и зафиксировать риски внедрения  
+      [ ] T PHC-2.1.GOV.1 — REFLECT — собрать требования к CRUD слотов и глобальных настроек (UI, авторизация, синхронизация данных) и зафиксировать риски внедрения  
       [ ] T PHC-2.1.GOV.2 — CONSULT — утвердить у тимлида минимальный набор полей/валидаций для форм слота и глобальных настроек в первой итерации  
       [ ] T PHC-2.1.GOV.3 — CONSULT — согласовать стратегию интеграции HTMX-форм с REST `/api/slots` и `/api/settings` (ответы, ошибки, версия слота)  
     [ ] US PHC-2.1.1 — UI форм редактирования (HTMX)  
@@ -152,6 +152,13 @@ updated: 2025-11-07
     [ ] T PHC-2.2.1.2 — UI-графики и таблицы SLA  
 
 - [ ] EP PHC-3 — Фронтенд
+  [ ] US PHC-3.1.GOV — Governance & Discovery  
+    [ ] T PHC-2.1.GOV.1 — REFLECT
+    [ ] T PHC-2.1.GOV.3 — CONSULT
+  [ ] FEAT PHC-3.2 — UX Слотов  
+    [ ] T PHC-3.2.1 — Подсветить поля форм слота и настроек при ответах 422 (JSON ошибки) 
+    [ ] T PHC-3.2.2 —  Рефакторинг и доработка страницы слота по шаблону из `spec/docs/ui/frontend-examples/slot-page.html` 
+
 
 - [ ] EP PHC-4 — Ops и наблюдаемость  
   [ ] US PHC-4.GOV — Governance & Discovery  
