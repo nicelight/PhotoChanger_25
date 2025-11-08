@@ -24,6 +24,7 @@ def make_record(tmp_path: Path, *, expires_delta: timedelta) -> JobHistoryRecord
     return JobHistoryRecord(
         job_id="job123",
         slot_id="slot-001",
+        source="ingest",
         status="done",
         failure_reason=None,
         result_path=str(result_file),

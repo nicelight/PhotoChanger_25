@@ -162,10 +162,10 @@ graph TD
 ### Тестовая обработка из Admin UI
 - Эндпоинт `POST /api/slots/{slot_id}/test-run` (только для авторизованных администраторов) принимает файл `test_image` (`UploadFile`).
 - Контроллер переиспользует `IngestService`:
-  1. вызывает `prepare_job(slot_id)` (job_history фиксирует задачу как обычную, `job.metadata["source"]="ui_test"`),
+  1. вызывает `prepare_job(slot_id, source='ui_test')` (в `job_history.source` сохраняется `ui_test`),
   2. прогоняет `validate_upload` без проверки ingest-пароля,
   3. формирует `JobContext` и передаёт его в `process`.
-- Результат возвращается в том же формате, что и ingest: бинарный ответ + публичная ссылка `/public/results/{job_id}`. В логах и статистике добавляется метка `source=ui_test`, чтобы отделять тестовые прогонки от боевых (при необходимости — через отдельное поле в `job_history`).
+- Результат возвращается синхронным JSON (`job_id`, `public_result_url`), после чего UI обновляет галерею, загружая свежие записи по `/api/slots/{slot_id}`. В логах и статистике используется поле `job_history.source` (`ingest`, `ui_test`, ...), чтобы отличать тестовые прогоны от боевых.
 - UI слота показывает кнопку «Протестировать конфигурацию», загружает фото через этот эндпоинт и отображает превью ответа, не затрагивая DSLR Remote Pro.
 
 ### Хранилища
@@ -174,7 +174,7 @@ graph TD
     - `settings_json` — JSON-конфигурация слота. Каждый драйвер имеет собственную JSON Schema (раздел 5.2), поэтому добавление параметров (`gemini.prompt`, `turbotext.mask_id`, и т.п.) не требует миграций БД и не раздувает таблицу десятками nullable-колонок.
     - `size_limit_mb*` — временное поле для обратной совместимости с ранними версиями ingest-валидации; целевое состояние — перенести лимиты и конкурентность в глобальные `settings`.
   - `slot_template_media(id, slot_id, media_kind, media_object_id)` — привязка шаблонных медиа к слотам с указанием роли (`style`, `base`, `overlay` и т.п.).
-  - `job_history(job_id, slot_id, status, provider_id, started_at, finished_at, duration_ms, failure_reason, result_path, result_expires_at)`.
+  - `job_history(job_id, slot_id, source, status, provider_id, started_at, finished_at, duration_ms, failure_reason, result_path, result_expires_at)`.
   - `media_object(id, job_id, slot_id, type, path, expires_at, cleaned_at)`.
   - `settings(key, value, version, updated_at, updated_by)`.
 - **Файловая система**:

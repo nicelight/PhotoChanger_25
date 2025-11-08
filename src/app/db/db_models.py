@@ -66,6 +66,7 @@ class JobHistoryModel(Base):
 
     job_id: Mapped[str] = mapped_column(String(64), primary_key=True)
     slot_id: Mapped[str] = mapped_column(String(32), ForeignKey("slot.id"), nullable=False, index=True)
+    source: Mapped[str] = mapped_column(String(32), nullable=False, default="ingest")
     status: Mapped[str] = mapped_column(String(32), nullable=False)
     failure_reason: Mapped[str | None] = mapped_column(String(64))
     started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)

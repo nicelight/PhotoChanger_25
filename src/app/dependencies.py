@@ -16,6 +16,7 @@ from .public.public_results_router import build_public_results_router
 from .repositories.job_history_repository import JobHistoryRepository
 from .repositories.media_object_repository import MediaObjectRepository
 from .slots.slots_repository import SlotRepository
+from .slots.slots_api import router as slots_router
 
 
 def include_routers(app: FastAPI, config: AppConfig) -> None:
@@ -52,5 +53,6 @@ def include_routers(app: FastAPI, config: AppConfig) -> None:
     public_result_service = PublicResultService(job_repo=job_repo)
 
     app.include_router(ingest_router)
+    app.include_router(slots_router)
     app.include_router(build_public_media_router(public_media_service))
     app.include_router(build_public_results_router(public_result_service))

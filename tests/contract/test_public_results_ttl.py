@@ -33,6 +33,7 @@ def test_public_results_contract_success(tmp_path: Path) -> None:
     record = JobHistoryRecord(
         job_id="job123",
         slot_id="slot01",
+        source="ingest",
         status="done",
         failure_reason=None,
         result_path=str(payload),
@@ -55,6 +56,7 @@ def test_public_results_contract_expired(tmp_path: Path) -> None:
     record = JobHistoryRecord(
         job_id="job999",
         slot_id="slot01",
+        source="ingest",
         status="done",
         failure_reason=None,
         result_path=str(payload),

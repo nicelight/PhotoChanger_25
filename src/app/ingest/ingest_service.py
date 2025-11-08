@@ -45,7 +45,7 @@ class IngestService:
     provider_factory: Callable[[str], ProviderDriver] = field(default_factory=lambda: create_driver)
     log: logging.Logger = field(default_factory=lambda: logger)
 
-    def prepare_job(self, slot_id: str) -> JobContext:
+    def prepare_job(self, slot_id: str, *, source: str = "ingest") -> JobContext:
         """Initialize context using slot configuration and persist pending job."""
         slot = self.slot_repo.get_slot(slot_id)
         job_id = uuid.uuid4().hex
@@ -57,6 +57,7 @@ class IngestService:
             slot_id=slot.id,
             started_at=started_at,
             sync_deadline=sync_deadline,
+            source=source,
         )
 
         result_dir = self.result_store.ensure_structure(slot.id, job_id)
@@ -78,13 +79,14 @@ class IngestService:
         if slot.updated_by:
             job.metadata["slot_updated_by"] = slot.updated_by
         job.metadata["slot_display_name"] = slot.display_name
+        job.metadata["source"] = source
         return job
 
     async def validate_upload(
         self,
         job: JobContext,
         upload: UploadFile,
-        expected_hash: str,
+        expected_hash: str | None,
     ) -> UploadValidationResult:
         slot = self.slot_repo.get_slot(job.slot_id)
         job.slot_settings = slot.settings
@@ -92,7 +94,7 @@ class IngestService:
         job.slot_version = slot.version
         result = await self.validator.validate(slot.size_limit_mb, upload)
 
-        if result.sha256.lower() != expected_hash.lower():
+        if expected_hash is not None and result.sha256.lower() != expected_hash.lower():
             self.log.warning(
                 "ingest.upload.checksum_mismatch",
                 extra={

@@ -250,6 +250,62 @@ paths:
                     example: accepted
         '404':
           description: Slot not found.
+  /api/slots/{slot_id}/test-run:
+    post:
+      summary: Execute a synchronous test run for the slot configuration.
+      description: >
+        Allows administrators to upload a test image and run the slot configuration directly from the UI.
+        The payload mirrors the ingest workflow (size/MIME limits, provider drivers, TTL) but is marked as
+        `source=ui_test` in job history so that production traffic remains distinguishable. Results remain
+        available through `/public/results/{job_id}` for the standard retention period.
+      tags:
+        - slots
+      parameters:
+        - name: slot_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                prompt:
+                  type: string
+                  description: Optional prompt override to use for this test execution.
+                template_media:
+                  type: string
+                  description: >
+                    JSON array of `{ "media_kind": "...", "media_object_id": "..." }` items that temporarily replace
+                    the slot template bindings for this run. When omitted, the slot configuration is used as-is.
+                test_image:
+                  type: string
+                  format: binary
+                  description: Test JPEG/PNG/WebP file that will be processed by the configured provider.
+              required:
+                - test_image
+      responses:
+        '200':
+          description: Test run completed and result stored in job history.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlotTestRunResponse'
+        '400':
+          $ref: '#/components/responses/IngestBadRequest'
+        '404':
+          $ref: '#/components/responses/IngestSlotNotFound'
+        '413':
+          $ref: '#/components/responses/IngestPayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/IngestUnsupportedMedia'
+        '502':
+          $ref: '#/components/responses/IngestProviderError'
+        '504':
+          $ref: '#/components/responses/IngestProviderTimeout'
   /api/settings:
     get:
       summary: Fetch global ingest/settings configuration.
@@ -553,6 +609,23 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SlotTemplateMediaBinding'
+    SlotTestRunResponse:
+      type: object
+      required:
+        - status
+        - job_id
+        - public_result_url
+      properties:
+        status:
+          type: string
+          example: done
+        job_id:
+          type: string
+          description: Identifier of the job stored in job_history.
+        public_result_url:
+          type: string
+          format: uri
+          description: Relative or absolute URL that serves the processed result (`/public/results/{job_id}`).
     SettingsResponse:
       type: object
       required:
