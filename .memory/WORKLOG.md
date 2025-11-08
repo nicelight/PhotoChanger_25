@@ -3,6 +3,27 @@ id: worklog
 updated: 2025-11-07
 ---
 
+- 2025-11-06 01:45 — Обновил PRD (админ API, примеры payload/settings) и OpenAPI (`/api/slots*`, `/api/settings`, `/api/slots/{slot_id}/cleanup`) с новыми схемами (SlotSummary/Details, SettingsResponse).
+
+## FEAT PHC-2.1 — Kickoff (2025-11-09)
+- 2025-11-09 02:16 — Перечитал `.memory/MISSION.md`, `.memory/CONTEXT.md`, `.memory/TASKS.md`, `.memory/ASKS.md`, `.memory/DECISIONS.md`, `.memory/USECASES.md`, `.memory/INDEX.yaml` перед продолжением FEAT PHC-2.1.
+- 2025-11-09 02:18 — Загрузил `docs/BRIEF.md`, `docs/PRD.md`, `docs/ARCHITECTURE.md`, `spec/contracts/*` в рабочий контекст, выписал требования к CRUD слотов/настроек и test-run.
+- 2025-11-09 02:20 — Проверил Kanban: у US PHC-2.1.2/2.1.3 отсутствовали или были незаполнены GOV-записи; добавил `US PHC-2.1.3.GOV` и отметил, что реализация заблокирована до завершения CONSULT.
+- 2025-11-09 02:32 — REFLECT (T PHC-2.1.GOV.1): собрал требования из PRD §3/§6 и BRIEF — CRUD охватывает slot (`id`, `display_name`, `provider`, `operation`, `size_limit_mb`, `is_active`, `settings`, `template_media`, `version`, `updated_by`) и глобальные настройки (`sync_response_seconds`, `result_ttl_hours`, ingest password metadata, provider key status). Требуются `recent_results` (10 job) и связка с `media_object`. Риски: нет DTO для provider settings, отсутствие optimistic locking, необходимость транзакционного обновления template_media и будущая интеграция с авторизацией.
+- 2025-11-09 02:37 — REFLECT (T PHC-2.1.1.GOV.1): по PRD §6.2 и `slot-page.html` UI состоит из блоков базовых полей, prompt/provider settings и списков template_media + recent_results; формы работают через Fetch+JSON. Секреты показываем только метаданными, ошибки должны быть пригодными для подсветки на клиенте.
+- 2025-11-09 02:40 — REFLECT (T PHC-2.1.2.GOV.1): test-run должен переиспользовать IngestService, принимать `test_image` + текущие параметры формы, помечать `job_history.source='ui_test'`, возвращать ссылку на результат и не мешать боевому ingest. Узкие места: делёж семафоров, очистка временных файлов, обновление статистики.
+- 2025-11-09 02:52 — CONSULT (T PHC-2.1.GOV.3): тимлид подтвердил отказ от HTMX и работу только с HTML+JSON, optimistic locking не нужен, ошибки и успехи возвращаем JSON; фронт сам обновляет recent_results.
+- 2025-11-09 02:53 — CONSULT (T PHC-2.1.1.GOV.2): достаточно toast-уведомлений, отдельные индикаторы/модалки и autosave не требуются.
+- 2025-11-09 02:54 — CONSULT (T PHC-2.1.1.GOV.3): подтверждён чистый JSON (без HTML-фрагментов), предупреждения можно возвращать массивом `warnings`.
+- 2025-11-09 03:10 — CONSULT (T PHC-2.1.GOV.2): согласован минимальный состав payload/валидации — `PUT /api/slots/{slot_id}` принимает базовые поля (`display_name`, `provider`, `operation`, `is_active`, `size_limit_mb ≤20`), объект `settings` (prompt + provider options), массив `template_media`; `GET /api/slots*` возвращают `recent_results` (10 job) только в детальном ответе. `/api/settings` редактирует лишь `sync_response_seconds` (глобально), `result_ttl_hours`, `ingest_password`, `provider_keys`; сервер хэширует пароль и логирует `updated_by`.
+- 2025-11-09 03:12 — CONSULT (T PHC-2.1.2.GOV.2): утвердили контракт test-run — FormData с `test_image` + опциональным `slot_payload` (JSON overrides). Эндпоинт переиспользует IngestService, помечает `job_history.source='ui_test'`, возвращает JSON `{status, job_id, public_result_url, completed_in_seconds}`; ошибки — по схеме ingest. Отдельных прогресс-ручек не делаем, SLA = `T_sync_response`.
+- 2025-11-09 03:14 — REFLECT (T PHC-2.1.3.GOV.1): собрал требования к REST API — список/детали слотов должен включать версии, `recent_results` (топ-10 job с превью), `template_media` и провайдерские настройки; `/api/settings` возвращает только метаданные секретов. Валидацию придётся строить на Pydantic + jsonschema провайдеров; masking секретов важно для ответов.
+- 2025-11-09 03:15 — CONSULT (T PHC-2.1.3.GOV.2): тимлид подтвердил editable поля — `display_name`, `provider`, `operation`, `is_active`, `size_limit_mb≤20`, `settings` (prompt + provider-specific), `template_media`; глобальный `sync_response_seconds`, `result_ttl_hours`, `ingest_password`, `provider_keys`. Сервер логирует автора, пароль хэшируется.
+- 2025-11-09 03:16 — CONSULT (T PHC-2.1.3.GOV.3): договорились, что ответы/ошибки чистый JSON, optimistic locking не делаем, audit ограничивается `updated_at/by` и системными логами; warnings можно возвращать отдельным массивом.
+- 2025-11-09 03:40 — Реализовал `IngestService.run_test_job` (slot overrides, единый validate+process, duration), добавил `_apply_test_overrides`, расширил обработку ошибок (`UnsupportedMediaError`, `PayloadTooLargeError`, `UploadReadError`).
+- 2025-11-09 03:42 — Переписал `/api/slots/{slot_id}/test-run`: теперь принимает `slot_payload` JSON, вызывает новый сервисный метод и возвращает `completed_in_seconds`; добавлены проверки payload и бэк-компат для `prompt`.
+- 2025-11-09 03:44 — Обновил unit-тесты (`tests/unit/slots/test_slots_api.py`) под новый контракт (slot_payload, duration, ошибки).
+- 2025-11-09 03:50 — Синхронизировал OpenAPI (описание slot_payload, `SlotTestRunResponse.completed_in_seconds`), PRD (разделы админ-теста и UI) и поднял `spec/contracts/VERSION.json` → 0.4.0 (breaking change).
 # Черновой журнал до checkpoint
 
 > Перед созданием `CONSULT`/`REFLECT` задач в `.memory/TASKS.md` (см. «Практика CONSULT/REFLECT» в `agents.md`) запиши в этом журнале краткий контекст решения и вопросы, чтобы на созвоне можно было ссылаться на готовые заметки.

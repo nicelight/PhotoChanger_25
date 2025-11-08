@@ -160,12 +160,12 @@ graph TD
 6. Клиент может опрашивать `GET /api/jobs/{job_id}` до истечения TTL; поздние ответы провайдера игнорируются, потому что корутина отменяется `wait_for`.
 
 ### Тестовая обработка из Admin UI
-- Эндпоинт `POST /api/slots/{slot_id}/test-run` (только для авторизованных администраторов) принимает файл `test_image` (`UploadFile`).
+- Эндпоинт `POST /api/slots/{slot_id}/test-run` (только для авторизованных администраторов) принимает файл `test_image` (`UploadFile`) и опциональный `slot_payload` — JSON с overrides полей формы (`provider`, `operation`, `settings`, `template_media`).
 - Контроллер переиспользует `IngestService`:
   1. вызывает `prepare_job(slot_id, source='ui_test')` (в `job_history.source` сохраняется `ui_test`),
   2. прогоняет `validate_upload` без проверки ingest-пароля,
   3. формирует `JobContext` и передаёт его в `process`.
-- Результат возвращается синхронным JSON (`job_id`, `public_result_url`), после чего UI обновляет галерею, загружая свежие записи по `/api/slots/{slot_id}`. В логах и статистике используется поле `job_history.source` (`ingest`, `ui_test`, ...), чтобы отличать тестовые прогоны от боевых.
+- Результат возвращается синхронным JSON (`job_id`, `public_result_url`, `completed_in_seconds`), после чего UI обновляет галерею, загружая свежие записи по `/api/slots/{slot_id}`. В логах и статистике используется поле `job_history.source` (`ingest`, `ui_test`, ...), чтобы отличать тестовые прогоны от боевых.
 - UI слота показывает кнопку «Протестировать конфигурацию», загружает фото через этот эндпоинт и отображает превью ответа, не затрагивая DSLR Remote Pro.
 
 ### Хранилища
@@ -619,9 +619,9 @@ JSON
  * второго изображения (шаблон стиля/замены лица/фона),
  * тестового фото (для локальной проверки).
 3. Для шаблонного изображения (№2) — drag&drop/клик по зоне с валидацией JPG/PNG: успешная загрузка вызывает `POST /api/template-media/register` (Fetch + `FormData`), сохраняет `template_media_id` и обновляет превью; при сохранении или тестовом запуске фронтенд добавляет массив `template_media` (например `[{ "media_kind": "style_reference", "media_object_id": "tmpl-style-001" }]`) в JSON/`FormData`. Кнопка «Убрать» инициирует `DELETE /api/template-media/{id}` и очищает привязку. Когда выбран провайдер Turbotext (или любой с `requires_public_media=true`), фронтенд предлагает только JPEG/PNG/WEBP и подсвечивает ошибку при попытке выбрать другой формат.
-4. Кнопка «Тест1» не делает промежуточных загрузок: собранные данные (`prompt`, `provider`, `operation`, `template_media`, `test_image`) пакуются в `FormData` и отправляются на `POST /api/slots/{slot_id}/test-run`, после чего галерея результатов обновляется по API.
+4. Кнопка «Тест1» не делает промежуточных загрузок: собранные данные (JSON со значениями формы и `test_image`) пакуются в `FormData` (`slot_payload` + файл) и отправляются на `POST /api/slots/{slot_id}/test-run`, после чего галерея результатов обновляется по API.
 5. Скрытые поля `*_status` помечают, загружен ли файл (`present/removed`), чтобы фронтенд понимал, нужно ли включать `template_media` и `test_image` в запрос.
-6. **Тест1**: при наличии тестового фото и обязательных полей выполняет `POST /api/slots/{slot_id}/test-run`, показывает тост об успехе или ошибке; при отсутствии файла — сообщает об этом и не ходит в API.
+6. **Тест1**: при наличии тестового фото и обязательных полей выполняет `POST /api/slots/{slot_id}/test-run`, показывает тост об успехе или ошибке; при отсутствии файла — сообщает об этом и не ходит в API. Ответ включает `job_id`, `public_result_url` и `completed_in_seconds`, чтобы UI мог показать тайминг.
 7. **Сохранить1**: отправляет JSON `PUT /api/slots/{slot_id}`. Поле «Параметры операции» (prompt) записывается в `settings.prompt` и всегда попадает в драйверы Gemini/Turbotext; ingest-ссылка и шапка обновляются из ответа сервера.
 
 ###### Модули и логика (верхний уровень) 
@@ -645,7 +645,7 @@ role="button", aria-label, sr-only, фокус-обводки, большие з
 * HTML + CSS (кастомные свойства, gradients, blur)
 UI-оформление, фон «дышит», стекло-эффект у формы, адаптивные размеры. 
 * Vanilla JS + Fetch API
-Тумблеры, drop-зоны, превью, тосты, хелпер анимации pulse, а также отправка JSON запросов для `PUT /api/slots/{slot_id}` (содержит `settings.prompt` и список `template_media`) и `FormData` для `POST /api/slots/{slot_id}/test-run` (передаёт тестовое фото, prompt и привязанные шаблоны). 
+ Тумблеры, drop-зоны, превью, тосты, хелпер анимации pulse, а также отправка JSON запросов для `PUT /api/slots/{slot_id}` (содержит `settings.prompt` и список `template_media`) и `FormData` для `POST /api/slots/{slot_id}/test-run` (передаёт тестовое фото и `slot_payload` JSON с текущими значениями формы).
 
 ###### TODO на будущее (интеграция)
 - Расширить фронтенд-подсветку ошибок при ответах 422 (`T PHC-3.0.1`).
