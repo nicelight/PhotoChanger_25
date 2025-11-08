@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import hashlib
+import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
@@ -21,12 +21,22 @@ class SettingsService:
     ingest_service: IngestService
     config: AppConfig
     _cache: dict[str, str] = field(default_factory=dict)
+    _snapshot: dict[str, Any] | None = None
 
     def load(self) -> dict[str, Any]:
-        """Return current snapshot merged with defaults."""
+        """Return current snapshot merged with defaults and apply runtime settings."""
         store = self.repo.read_all()
         self._cache = store
-        return self._hydrate(store)
+        snapshot = self._hydrate(store)
+        self._apply_runtime(snapshot)
+        self._snapshot = snapshot
+        return snapshot
+
+    def snapshot(self) -> dict[str, Any]:
+        """Return cached snapshot, loading from storage if necessary."""
+        if self._snapshot is None:
+            return self.load()
+        return self._snapshot
 
     def update(self, payload: dict[str, Any], actor: str | None = None) -> dict[str, Any]:
         """Persist changes (sync_response_seconds, result_ttl_hours, passwords, provider keys)."""
@@ -36,11 +46,9 @@ class SettingsService:
 
         if (value := payload.get("sync_response_seconds")) is not None:
             updates["sync_response_seconds"] = str(value)
-            self.ingest_service.sync_response_seconds = value
 
         if (value := payload.get("result_ttl_hours")) is not None:
             updates["result_ttl_hours"] = str(value)
-            self.ingest_service.result_ttl_hours = value
 
         if (password := payload.get("ingest_password")):
             hashed = hashlib.sha256(password.encode("utf-8")).hexdigest()
@@ -60,7 +68,10 @@ class SettingsService:
 
         merged = self.repo.read_all()
         self._cache = merged
-        return self._hydrate(merged)
+        snapshot = self._hydrate(merged)
+        self._apply_runtime(snapshot)
+        self._snapshot = snapshot
+        return snapshot
 
     def _hydrate(self, store: dict[str, str]) -> dict[str, Any]:
         def int_or_default(key: str, default: int) -> int:
@@ -94,6 +105,13 @@ class SettingsService:
             "ingest_password_rotated_by": ingest_password_rotated_by,
             "provider_keys": provider_statuses,
         }
+
+    def _apply_runtime(self, snapshot: dict[str, Any]) -> None:
+        """Propagate stored values to services/config so API reflects real state."""
+        self.ingest_service.sync_response_seconds = snapshot["sync_response_seconds"]
+        self.ingest_service.result_ttl_hours = snapshot["result_ttl_hours"]
+        self.config.sync_response_seconds = snapshot["sync_response_seconds"]
+        self.config.result_ttl_hours = snapshot["result_ttl_hours"]
 
 
 def _parse_datetime(value: str | None) -> datetime | None:

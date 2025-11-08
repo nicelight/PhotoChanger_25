@@ -31,6 +31,7 @@ updated: 2025-11-07
 - 2025-11-09 04:40 — Реализовал статистику: добавлены `StatsRepository` (агрегаты по job_history, per-slot counters) и `StatsService` (окно, измерение storage_usage_mb).
 - 2025-11-09 04:45 — Обновил `/api/stats/overview` и зависимости: сервис регистрируется в app.state, эндпоинт принимает `window_minutes` и возвращает данные из репозитория + использование хранилища.
 - 2025-11-09 04:48 — Добавил unit-тесты (`tests/unit/stats/test_stats_service.py`, `tests/unit/stats/test_stats_api.py`) и прогнал pytest по слотам/настройкам/статистике (11 тестов).
+- 2025-11-09 05:05 — Исправил рассинхрон настроек: SettingsService теперь при `load/update` применяет значения к `IngestService` и `AppConfig`, `slots_api` читает `sync_response_seconds` из snapshot. Добавлен стартовый `load()` в dependency и обновлены тесты.
 # Черновой журнал до checkpoint
 
 > Перед созданием `CONSULT`/`REFLECT` задач в `.memory/TASKS.md` (см. «Практика CONSULT/REFLECT» в `agents.md`) запиши в этом журнале краткий контекст решения и вопросы, чтобы на созвоне можно было ссылаться на готовые заметки.

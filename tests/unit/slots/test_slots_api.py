@@ -2,7 +2,6 @@
 
 import json
 import sys
-from types import SimpleNamespace
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Sequence
@@ -113,17 +112,32 @@ class DummyJobRepo:
         ]
 
 
+class DummySettingsService:
+    def __init__(self, sync_seconds: int = 48, ttl_hours: int = 72) -> None:
+        self._snapshot = {
+            "sync_response_seconds": sync_seconds,
+            "result_ttl_hours": ttl_hours,
+            "ingest_password_rotated_at": None,
+            "ingest_password_rotated_by": None,
+            "provider_keys": {},
+        }
+
+    def snapshot(self) -> dict[str, Any]:
+        return self._snapshot
+
+
 def build_client(
     service: DummyIngestService,
     slot_repo: DummySlotRepository | None = None,
     job_repo: DummyJobRepo | None = None,
+    settings_service: DummySettingsService | None = None,
 ) -> TestClient:
     app = FastAPI()
     app.include_router(router)
     app.state.ingest_service = service
     app.state.slot_repo = slot_repo or DummySlotRepository()
     app.state.job_repo = job_repo or DummyJobRepo()
-    app.state.config = SimpleNamespace(sync_response_seconds=48)
+    app.state.settings_service = settings_service or DummySettingsService()
     return TestClient(app)
 
 

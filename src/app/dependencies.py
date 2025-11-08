@@ -52,6 +52,7 @@ def include_routers(app: FastAPI, config: AppConfig) -> None:
 
     settings_repo = SettingsRepository(config.session_factory)
     settings_service = SettingsService(repo=settings_repo, ingest_service=ingest_service, config=config)
+    settings_service.load()
     stats_repo = StatsRepository(config.session_factory)
     stats_service = StatsService(repo=stats_repo, media_paths=config.media_paths)
 

@@ -7,7 +7,6 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 
-from ..config import AppConfig
 from ..ingest.ingest_errors import (
     PayloadTooLargeError,
     ProviderExecutionError,
@@ -19,6 +18,7 @@ from ..ingest.ingest_models import FailureReason
 from ..ingest.ingest_service import IngestService
 from ..repositories.job_history_repository import JobHistoryRepository
 from ..repositories.media_object_repository import MediaObjectRepository
+from ..settings.settings_service import SettingsService
 from .slots_models import Slot
 from .slots_repository import SlotRepository
 from .slots_schemas import (
@@ -61,11 +61,11 @@ def get_media_repo(request: Request) -> MediaObjectRepository:
         raise RuntimeError("MediaObjectRepository is not configured") from exc
 
 
-def get_config(request: Request) -> AppConfig:
+def get_settings_service(request: Request) -> SettingsService:
     try:
-        return request.app.state.config  # type: ignore[attr-defined]
+        return request.app.state.settings_service  # type: ignore[attr-defined]
     except AttributeError as exc:  # pragma: no cover - defensive path
-        raise RuntimeError("AppConfig missing from application state") from exc
+        raise RuntimeError("SettingsService is not configured") from exc
 
 
 @router.get("/")
@@ -81,7 +81,7 @@ def fetch_slot(
     slot_id: str,
     slot_repo: SlotRepository = Depends(get_slot_repo),
     job_repo: JobHistoryRepository = Depends(get_job_repo),
-    config: AppConfig = Depends(get_config),
+    settings_service: SettingsService = Depends(get_settings_service),
 ) -> SlotDetailsResponse:
     try:
         slot = slot_repo.get_slot(slot_id)
@@ -90,7 +90,7 @@ def fetch_slot(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={"status": "error", "failure_reason": FailureReason.SLOT_NOT_FOUND.value},
         ) from None
-    return _slot_details(slot, job_repo, config)
+    return _slot_details(slot, job_repo, settings_service)
 
 
 @router.put("/{slot_id}")
@@ -99,7 +99,7 @@ def update_slot(
     payload: SlotUpdateRequest,
     slot_repo: SlotRepository = Depends(get_slot_repo),
     job_repo: JobHistoryRepository = Depends(get_job_repo),
-    config: AppConfig = Depends(get_config),
+    settings_service: SettingsService = Depends(get_settings_service),
 ) -> SlotDetailsResponse:
     try:
         updated = slot_repo.update_slot(
@@ -121,7 +121,7 @@ def update_slot(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={"status": "error", "failure_reason": FailureReason.SLOT_NOT_FOUND.value},
         ) from None
-    return _slot_details(updated, job_repo, config)
+    return _slot_details(updated, job_repo, settings_service)
 
 
 def _bad_request(details: str) -> HTTPException:
@@ -272,7 +272,7 @@ def _slot_summary(slot: Slot) -> SlotSummaryResponse:
     )
 
 
-def _slot_details(slot: Slot, job_repo: JobHistoryRepository, config: AppConfig) -> SlotDetailsResponse:
+def _slot_details(slot: Slot, job_repo: JobHistoryRepository, settings_service: SettingsService) -> SlotDetailsResponse:
     template_media = [
         SlotTemplateMediaPayload(
             media_kind=binding.media_kind,
@@ -298,10 +298,12 @@ def _slot_details(slot: Slot, job_repo: JobHistoryRepository, config: AppConfig)
                 expires_at=record.result_expires_at,
             )
         )
+    runtime = settings_service.snapshot()
+
     return SlotDetailsResponse(
         **_slot_summary(slot).model_dump(),
         size_limit_mb=slot.size_limit_mb,
-        sync_response_seconds=config.sync_response_seconds,
+        sync_response_seconds=runtime["sync_response_seconds"],
         settings=slot.settings or {},
         template_media=template_media,
         recent_results=recent_results,
