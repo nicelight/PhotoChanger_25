@@ -1,10 +1,10 @@
-﻿# Машиночитаемый индекс актуальности артефактов
-updated: 2025-11-06
+# Машиночитаемый индекс актуальности артефактов
+updated: 2025-11-07
 
 spec/contracts:
-  version: "0.2.0"
-  released_at: "2025-11-06"
-  notes: "Adds `/public/results/{job_id}` (TTL 404/410) и синхронизированные документы."
+  version: "0.3.0"
+  released_at: "2025-11-07"
+  notes: "Добавлен `/api/slots/{slot_id}/test-run` и колонка `job_history.source`."
 
 spec/adr:
   count: 1
@@ -14,8 +14,8 @@ spec/adr:
     ADR-0001: "Монолит FastAPI + cron, без очередей"
 
 spec/docs:
-  updated: "2025-11-06"
-  baseline: "FEAT PHC-1.3 — TTL и очистка медиа (runbook, cron README, UC/AC/Test Plan)."
+  updated: "2025-11-07"
+  baseline: "FEAT PHC-2.1 — CRUD слотов и test-run (Vanilla JS UI, job_history.source)."
 
 runbooks:
   cron_cleanup: "docs/runbooks/cron_cleanup.md (2025-11-06)"
@@ -23,9 +23,9 @@ runbooks:
 memory:
   mission: 2025-10-31
   context: 2025-10-31
-  tasks: 2025-11-06
+  tasks: 2025-11-07
   asks: 2025-11-06
   usecases: 2025-11-06
   progress: 2025-11-06
-  worklog: 2025-11-06
+  worklog: 2025-11-07
   reports: "deprecated 2025-10-31 (REPORT.json/REPORT_SCHEMA.json removed)"

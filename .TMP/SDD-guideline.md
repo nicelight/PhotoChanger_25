@@ -10,7 +10,7 @@ https://developer.ideogram.ai/api-reference/api-reference/edit-v3
 
 
 **1. SDD MCP → формирование “источника истины”**
-Вход: ваш повествовательный бриф + контекст по стеку (FastAPI + HTMX + Vanilla JS; без Redis/MinIO/WebSocket), ограничения, цели.
+Вход: ваш повествовательный бриф + контекст по стеку (FastAPI + HTML + Vanilla JS; без Redis/MinIO/WebSocket), ограничения, цели.
 Задачи SDD MCP:
 - Разложить бриф на артефакты SDD:
    - Vision
@@ -37,7 +37,7 @@ https://developer.ideogram.ai/api-reference/api-reference/edit-v3
 
 Первый промпт: 
 ```markdown
-Вот бриф. Сконструируй полный пакет SDD под стек FastAPI+HTMX+VanillaJS (без Redis/MinIO/WebSocket). Контракт-first: сгенерируй OpenAPI и JSON Schema первыми. Далее: NFR, Use-cases, Domain, Sequence, Acceptance Criteria, Test Plan. Разложи по папкам /spec, /contracts, /adr, дай короткий индекс артефактов.
+Вот бриф. Сконструируй полный пакет SDD под стек FastAPI+HTML+VanillaJS (без Redis/MinIO/WebSocket). Контракт-first: сгенерируй OpenAPI и JSON Schema первыми. Далее: NFR, Use-cases, Domain, Sequence, Acceptance Criteria, Test Plan. Разложи по папкам /spec, /contracts, /adr, дай короткий индекс артефактов.
 Используй  spec-driven MCP
 ```
 Последующие промпты:
@@ -54,7 +54,7 @@ https://developer.ideogram.ai/api-reference/api-reference/edit-v3
    - Sequence/Deployment диаграмм (по спекам)
    - ADR заготовок из принятых решений
    - README/CONTRIBUTING
-   - DevRunbook (как поднять FastAPI, HTMX-фрагменты, миграции)
+   - DevRunbook (как поднять FastAPI, миграции)
    - Test docs (матрицы кейсов, фикстуры)
 - “Док-дрейф-детектор”: сопоставить текущий код со спецификацией и подсветить расхождения (diff-отчёт), чтобы вы вернулись в SDD MCP и поправили спецификацию/контракты **до** правки кода.
 **3. Цикл синхронизации (крутите до готовности)**
@@ -75,4 +75,3 @@ https://developer.ideogram.ai/api-reference/api-reference/edit-v3
 
 **Контракты неизменны?** → если менялись, код не правим, пока Code-Doc MCP не пересоберёт доки и не пройдёт diff.
 NFR покрыты тест-планом? → Code-Doc MCP должен держать чек-лист производительности/безопасности/наблюдаемости.
-HTMX-фрагменты документированы как интерфейсы (вход/выход, partials, hx-маршруты).

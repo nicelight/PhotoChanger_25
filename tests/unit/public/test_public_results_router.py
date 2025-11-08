@@ -33,6 +33,7 @@ def test_public_results_router_success(tmp_path: Path) -> None:
     record = JobHistoryRecord(
         job_id="job123",
         slot_id="slot",
+        source="ingest",
         status="done",
         failure_reason=None,
         result_path=str(result_file),
@@ -54,6 +55,7 @@ def test_public_results_router_expired(tmp_path: Path) -> None:
     record = JobHistoryRecord(
         job_id="job123",
         slot_id="slot",
+        source="ingest",
         status="done",
         failure_reason=None,
         result_path=str(result_file),

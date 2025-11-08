@@ -17,6 +17,7 @@ class JobHistoryRecord:
 
     job_id: str
     slot_id: str
+    source: str
     status: str
     failure_reason: str | None
     result_path: str | None
@@ -36,12 +37,14 @@ class JobHistoryRepository:
         slot_id: str,
         started_at: datetime,
         sync_deadline: datetime,
+        source: str = "ingest",
     ) -> None:
         with self._session_factory() as session:
             session.add(
                 JobHistoryModel(
                     job_id=job_id,
                     slot_id=slot_id,
+                    source=source,
                     status="pending",
                     started_at=started_at,
                     sync_deadline=sync_deadline,
@@ -93,6 +96,7 @@ class JobHistoryRepository:
             return JobHistoryRecord(
                 job_id=model.job_id,
                 slot_id=model.slot_id,
+                source=model.source,
                 status=model.status,
                 failure_reason=model.failure_reason,
                 result_path=model.result_path,

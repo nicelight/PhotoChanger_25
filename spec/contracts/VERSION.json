@@ -1,8 +1,8 @@
 {
-  "version": "0.2.0",
-  "released_at": "2025-11-06",
+  "version": "0.3.0",
+  "released_at": "2025-11-07",
   "stage": "draft",
-  "summary": "Adds public result download endpoint and updates ingest documentation.",
+  "summary": "Adds admin test-run endpoint and tracks job sources in job_history.",
   "changes": [
     {
       "type": "init",
@@ -64,6 +64,15 @@
       "artifacts": [
         "spec/contracts/openapi.yaml",
         "docs/PRD.md"
+      ]
+    },
+    {
+      "type": "feature",
+      "description": "Introduced `/api/slots/{slot_id}/test-run` and `job_history.source` to distinguish admin test executions.",
+      "artifacts": [
+        "spec/contracts/openapi.yaml",
+        "docs/PRD.md",
+        "spec/docs/domain-model.md"
       ]
     }
   ],

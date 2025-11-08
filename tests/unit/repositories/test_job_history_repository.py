@@ -20,6 +20,7 @@ def test_create_pending_records_job() -> None:
         slot_id="slot-001",
         started_at=now,
         sync_deadline=now + timedelta(seconds=48),
+        source="ui_test",
     )
 
     with session_factory() as session:
@@ -27,3 +28,4 @@ def test_create_pending_records_job() -> None:
         assert row is not None
         assert row.status == "pending"
         assert row.slot_id == "slot-001"
+        assert row.source == "ui_test"
