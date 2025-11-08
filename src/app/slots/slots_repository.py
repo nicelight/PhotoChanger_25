@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Callable
-from typing import Sequence
+from collections.abc import Callable, Sequence
+from datetime import datetime
+from typing import Iterable
 
+from sqlalchemy import delete
 from sqlalchemy.orm import Session, selectinload
 
 from ..db.db_models import SlotModel, SlotTemplateMediaModel
@@ -50,6 +52,53 @@ class SlotRepository:
             )
             return [self._to_template_domain(row) for row in rows]
 
+    def update_slot(
+        self,
+        slot_id: str,
+        *,
+        display_name: str,
+        provider: str,
+        operation: str,
+        is_active: bool,
+        size_limit_mb: int,
+        settings: dict,
+        template_media: Iterable[dict[str, str]],
+        updated_by: str | None = None,
+    ) -> Slot:
+        """Persist slot configuration and return updated domain object."""
+        with self._session_factory() as session:
+            row = (
+                session.query(SlotModel)
+                .options(selectinload(SlotModel.template_media))
+                .filter(SlotModel.id == slot_id)
+                .one_or_none()
+            )
+            if row is None:
+                raise KeyError(f"Slot '{slot_id}' not found")
+
+            row.display_name = display_name
+            row.provider = provider
+            row.operation = operation
+            row.is_active = is_active
+            row.size_limit_mb = size_limit_mb
+            row.settings_json = json.dumps(settings or {})
+            row.updated_by = updated_by
+            row.version += 1
+            row.updated_at = datetime.utcnow()
+
+            session.execute(delete(SlotTemplateMediaModel).where(SlotTemplateMediaModel.slot_id == slot_id))
+            for binding in template_media:
+                session.add(
+                    SlotTemplateMediaModel(
+                        slot_id=slot_id,
+                        media_kind=binding["media_kind"],
+                        media_object_id=binding["media_object_id"],
+                    )
+                )
+            session.commit()
+            session.refresh(row)
+            return self._to_domain(row)
+
     @staticmethod
     def _to_domain(model: SlotModel) -> Slot:
         settings = {}
@@ -69,6 +118,7 @@ class SlotRepository:
             version=model.version,
             updated_by=model.updated_by,
             template_media=[SlotRepository._to_template_domain(media) for media in model.template_media],
+            updated_at=model.updated_at,
         )
 
     @staticmethod

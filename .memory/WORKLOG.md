@@ -24,6 +24,10 @@ updated: 2025-11-07
 - 2025-11-09 03:42 — Переписал `/api/slots/{slot_id}/test-run`: теперь принимает `slot_payload` JSON, вызывает новый сервисный метод и возвращает `completed_in_seconds`; добавлены проверки payload и бэк-компат для `prompt`.
 - 2025-11-09 03:44 — Обновил unit-тесты (`tests/unit/slots/test_slots_api.py`) под новый контракт (slot_payload, duration, ошибки).
 - 2025-11-09 03:50 — Синхронизировал OpenAPI (описание slot_payload, `SlotTestRunResponse.completed_in_seconds`), PRD (разделы админ-теста и UI) и поднял `spec/contracts/VERSION.json` → 0.4.0 (breaking change).
+- 2025-11-09 04:05 — Спроектировал админский CRUD слотов/настроек: добавил Pydantic схемы (`slots_schemas`, `settings_schemas`), расширил SlotRepository (update, template_media замена) и JobHistoryRepository (list_recent).
+- 2025-11-09 04:18 — Реализовал `/api/slots` (list/get/put): сериализация template_media + recent_results, глобальный `sync_response_seconds`, обновление слота с версионностью; покрыто unit-тестами.
+- 2025-11-09 04:26 — Внедрил SettingsRepository/SettingsService: хранение key-value, хеширование ingest_password, обновление `IngestService` параметров, API `GET/PUT /api/settings` + unit-тесты.
+- 2025-11-09 04:32 — Обновил `dependencies.include_routers`: зарегистрированы slot/job/media репозитории и settings_service в app.state, подключены новые роуты; прогнал pytest (slots + settings API).
 # Черновой журнал до checkpoint
 
 > Перед созданием `CONSULT`/`REFLECT` задач в `.memory/TASKS.md` (см. «Практика CONSULT/REFLECT» в `agents.md`) запиши в этом журнале краткий контекст решения и вопросы, чтобы на созвоне можно было ссылаться на готовые заметки.
