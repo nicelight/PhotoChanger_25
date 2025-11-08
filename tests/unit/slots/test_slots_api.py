@@ -36,7 +36,16 @@ class DummyIngestService:
     ) -> tuple[JobContext, float]:
         if slot_id == "missing":
             raise KeyError(slot_id)
-        if overrides and overrides.get("settings", {}).get("prompt") == "timeout":
+        job = JobContext(slot_id=slot_id, job_id="job-123", slot_settings={"prompt": "default"})
+        job.metadata["source"] = source
+        return job
+
+    async def validate_upload(self, job: JobContext, upload, expected_hash: str | None) -> UploadValidationResult:
+        job.slot_settings = {"prompt": "default"}
+        return UploadValidationResult(content_type="image/jpeg", size_bytes=3, sha256="abc", filename="file.jpg")
+
+    async def process(self, job: JobContext) -> bytes:
+        if job.slot_settings.get("prompt") == "timeout":
             raise ProviderTimeoutError("timeout")
         job = JobContext(slot_id=slot_id, job_id="job-123")
         self.calls.append({"slot_id": slot_id, "overrides": overrides, "filename": upload.filename})

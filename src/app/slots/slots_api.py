@@ -236,6 +236,12 @@ async def run_test_slot(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"status": "error", "failure_reason": FailureReason.INVALID_REQUEST.value},
         ) from exc
+
+    if overrides:
+        job.slot_settings = _apply_overrides(job.slot_settings, overrides)
+
+    try:
+        await service.process(job)
     except ProviderTimeoutError as exc:
         raise HTTPException(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
