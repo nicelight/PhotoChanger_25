@@ -23,8 +23,8 @@ class JobHistoryRecord:
     failure_reason: str | None
     result_path: str | None
     result_expires_at: datetime | None
-    completed_at: datetime | None
-    started_at: datetime
+    completed_at: datetime | None = None
+    started_at: datetime | None = None
 
 
 class JobHistoryRepository:
