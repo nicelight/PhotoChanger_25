@@ -1,4 +1,4 @@
-"""Admin slot routes (test-run, CRUD stubs)."""
+"""Admin slot routes (test-run, CRUD)."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 
+from ..config import AppConfig
 from ..ingest.ingest_errors import (
     PayloadTooLargeError,
     ProviderExecutionError,
@@ -16,6 +17,17 @@ from ..ingest.ingest_errors import (
 )
 from ..ingest.ingest_models import FailureReason
 from ..ingest.ingest_service import IngestService
+from ..repositories.job_history_repository import JobHistoryRepository
+from ..repositories.media_object_repository import MediaObjectRepository
+from .slots_models import Slot
+from .slots_repository import SlotRepository
+from .slots_schemas import (
+    SlotDetailsResponse,
+    SlotRecentResultPayload,
+    SlotSummaryResponse,
+    SlotTemplateMediaPayload,
+    SlotUpdateRequest,
+)
 
 router = APIRouter(prefix="/api/slots", tags=["slots"])
 
@@ -26,6 +38,90 @@ def get_ingest_service(request: Request) -> IngestService:
         return request.app.state.ingest_service  # type: ignore[attr-defined]
     except AttributeError as exc:  # pragma: no cover - defensive path
         raise RuntimeError("IngestService is not configured") from exc
+
+
+def get_slot_repo(request: Request) -> SlotRepository:
+    try:
+        return request.app.state.slot_repo  # type: ignore[attr-defined]
+    except AttributeError as exc:  # pragma: no cover - defensive path
+        raise RuntimeError("SlotRepository is not configured") from exc
+
+
+def get_job_repo(request: Request) -> JobHistoryRepository:
+    try:
+        return request.app.state.job_repo  # type: ignore[attr-defined]
+    except AttributeError as exc:  # pragma: no cover - defensive path
+        raise RuntimeError("JobHistoryRepository is not configured") from exc
+
+
+def get_media_repo(request: Request) -> MediaObjectRepository:
+    try:
+        return request.app.state.media_repo  # type: ignore[attr-defined]
+    except AttributeError as exc:  # pragma: no cover - defensive path
+        raise RuntimeError("MediaObjectRepository is not configured") from exc
+
+
+def get_config(request: Request) -> AppConfig:
+    try:
+        return request.app.state.config  # type: ignore[attr-defined]
+    except AttributeError as exc:  # pragma: no cover - defensive path
+        raise RuntimeError("AppConfig missing from application state") from exc
+
+
+@router.get("/")
+def list_slots(
+    slot_repo: SlotRepository = Depends(get_slot_repo),
+) -> list[SlotSummaryResponse]:
+    slots = slot_repo.list_slots()
+    return [_slot_summary(slot) for slot in slots]
+
+
+@router.get("/{slot_id}")
+def fetch_slot(
+    slot_id: str,
+    slot_repo: SlotRepository = Depends(get_slot_repo),
+    job_repo: JobHistoryRepository = Depends(get_job_repo),
+    config: AppConfig = Depends(get_config),
+) -> SlotDetailsResponse:
+    try:
+        slot = slot_repo.get_slot(slot_id)
+    except KeyError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"status": "error", "failure_reason": FailureReason.SLOT_NOT_FOUND.value},
+        ) from None
+    return _slot_details(slot, job_repo, config)
+
+
+@router.put("/{slot_id}")
+def update_slot(
+    slot_id: str,
+    payload: SlotUpdateRequest,
+    slot_repo: SlotRepository = Depends(get_slot_repo),
+    job_repo: JobHistoryRepository = Depends(get_job_repo),
+    config: AppConfig = Depends(get_config),
+) -> SlotDetailsResponse:
+    try:
+        updated = slot_repo.update_slot(
+            slot_id,
+            display_name=payload.display_name,
+            provider=payload.provider,
+            operation=payload.operation,
+            is_active=payload.is_active,
+            size_limit_mb=payload.size_limit_mb,
+            settings=payload.settings,
+            template_media=[
+                {"media_kind": binding.media_kind, "media_object_id": binding.media_object_id}
+                for binding in payload.template_media
+            ],
+            updated_by="admin-ui",
+        )
+    except KeyError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"status": "error", "failure_reason": FailureReason.SLOT_NOT_FOUND.value},
+        ) from None
+    return _slot_details(updated, job_repo, config)
 
 
 def _bad_request(details: str) -> HTTPException:
@@ -162,3 +258,51 @@ async def run_test_slot(
         "public_result_url": f"/public/results/{job.job_id}",
         "completed_in_seconds": duration,
     }
+
+
+def _slot_summary(slot: Slot) -> SlotSummaryResponse:
+    return SlotSummaryResponse(
+        slot_id=slot.id,
+        display_name=slot.display_name,
+        provider=slot.provider,
+        operation=slot.operation,
+        is_active=slot.is_active,
+        version=slot.version,
+        updated_at=slot.updated_at,
+    )
+
+
+def _slot_details(slot: Slot, job_repo: JobHistoryRepository, config: AppConfig) -> SlotDetailsResponse:
+    template_media = [
+        SlotTemplateMediaPayload(
+            media_kind=binding.media_kind,
+            media_object_id=binding.media_object_id,
+            preview_url=f"/public/provider-media/{binding.media_object_id}",
+        )
+        for binding in slot.template_media
+    ]
+    recent_records = job_repo.list_recent_by_slot(slot.id, limit=10)
+    recent_results: list[SlotRecentResultPayload] = []
+    for record in recent_records:
+        if record.status not in {"done", "failed", "timeout"}:
+            continue
+        finished_at = record.completed_at or record.started_at
+        if finished_at is None:
+            continue
+        recent_results.append(
+            SlotRecentResultPayload(
+                job_id=record.job_id,
+                status=record.status,
+                finished_at=finished_at,
+                public_url=f"/public/results/{record.job_id}",
+                expires_at=record.result_expires_at,
+            )
+        )
+    return SlotDetailsResponse(
+        **_slot_summary(slot).model_dump(),
+        size_limit_mb=slot.size_limit_mb,
+        sync_response_seconds=config.sync_response_seconds,
+        settings=slot.settings or {},
+        template_media=template_media,
+        recent_results=recent_results,
+    )

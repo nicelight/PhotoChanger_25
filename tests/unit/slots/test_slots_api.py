@@ -1,7 +1,11 @@
+
+
 import json
 import sys
+from types import SimpleNamespace
+from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -12,12 +16,16 @@ if str(ROOT) not in sys.path:  # pragma: no cover - test helper
 
 from src.app.ingest.ingest_errors import ProviderTimeoutError
 from src.app.ingest.ingest_models import JobContext
+from src.app.repositories.job_history_repository import JobHistoryRecord
 from src.app.slots.slots_api import router
+from src.app.slots.slots_models import Slot, SlotTemplateMedia
 
 
 class DummyIngestService:
     def __init__(self) -> None:
         self.calls: list[dict[str, Any]] = []
+        self.sync_response_seconds = 48
+        self.result_ttl_hours = 72
 
     async def run_test_job(
         self,
@@ -36,10 +44,86 @@ class DummyIngestService:
         return job, 1.23
 
 
-def build_client(service: DummyIngestService) -> TestClient:
+class DummySlotRepository:
+    def __init__(self) -> None:
+        self.slot = Slot(
+            id="slot-001",
+            provider="gemini",
+            operation="image_edit",
+            display_name="Slot 1",
+            settings={"prompt": "Hi"},
+            size_limit_mb=15,
+            is_active=True,
+            version=1,
+            updated_by="serg",
+            template_media=[
+                SlotTemplateMedia(id="tmpl-1", slot_id="slot-001", media_kind="style", media_object_id="media-1")
+            ],
+            updated_at=datetime(2025, 11, 8, 10, 0, 0),
+        )
+
+    def list_slots(self) -> Sequence[Slot]:
+        return [self.slot]
+
+    def get_slot(self, slot_id: str) -> Slot:
+        if slot_id != self.slot.id:
+            raise KeyError(slot_id)
+        return self.slot
+
+    def update_slot(self, *_args, **kwargs) -> Slot:
+        self.slot = Slot(
+            id="slot-001",
+            provider=kwargs["provider"],
+            operation=kwargs["operation"],
+            display_name=kwargs["display_name"],
+            settings=kwargs["settings"],
+            size_limit_mb=kwargs["size_limit_mb"],
+            is_active=kwargs["is_active"],
+            version=2,
+            updated_by=kwargs.get("updated_by"),
+            template_media=[
+                SlotTemplateMedia(
+                    id="tmpl-2",
+                    slot_id="slot-001",
+                    media_kind=item["media_kind"],
+                    media_object_id=item["media_object_id"],
+                )
+                for item in kwargs["template_media"]
+            ],
+            updated_at=datetime(2025, 11, 8, 11, 0, 0),
+        )
+        return self.slot
+
+
+class DummyJobRepo:
+    def list_recent_by_slot(self, slot_id: str, limit: int = 10) -> Sequence[JobHistoryRecord]:
+        base = datetime(2025, 11, 8, 12, 0, 0)
+        return [
+            JobHistoryRecord(
+                job_id="job-1",
+                slot_id=slot_id,
+                source="ingest",
+                status="done",
+                failure_reason=None,
+                result_path="media/results/slot-001/job-1/payload.png",
+                result_expires_at=base + timedelta(hours=72),
+                completed_at=base,
+                started_at=base - timedelta(seconds=30),
+            )
+        ]
+
+
+def build_client(
+    service: DummyIngestService,
+    slot_repo: DummySlotRepository | None = None,
+    job_repo: DummyJobRepo | None = None,
+) -> TestClient:
     app = FastAPI()
     app.include_router(router)
     app.state.ingest_service = service
+    app.state.slot_repo = slot_repo or DummySlotRepository()
+    app.state.job_repo = job_repo or DummyJobRepo()
+    app.state.config = SimpleNamespace(sync_response_seconds=48)
     return TestClient(app)
 
 
@@ -107,3 +191,50 @@ def test_test_run_provider_timeout_returns_504() -> None:
     )
 
     assert response.status_code == 504
+
+
+def test_get_slots_returns_summaries() -> None:
+    client = build_client(DummyIngestService())
+
+    response = client.get("/api/slots")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data[0]["slot_id"] == "slot-001"
+    assert data[0]["version"] == 1
+
+
+def test_get_slot_details_includes_recent_results() -> None:
+    client = build_client(DummyIngestService())
+
+    response = client.get("/api/slots/slot-001")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["display_name"] == "Slot 1"
+    assert payload["template_media"][0]["preview_url"].endswith("media-1")
+    assert payload["recent_results"][0]["job_id"] == "job-1"
+
+
+def test_update_slot_persists_changes() -> None:
+    repo = DummySlotRepository()
+    client = build_client(DummyIngestService(), slot_repo=repo)
+
+    response = client.put(
+        "/api/slots/slot-001",
+        json={
+            "display_name": "Renamed",
+            "provider": "gemini",
+            "operation": "image_edit",
+            "is_active": False,
+            "size_limit_mb": 18,
+            "settings": {"prompt": "New"},
+            "template_media": [{"media_kind": "style", "media_object_id": "media-2"}],
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["display_name"] == "Renamed"
+    assert payload["is_active"] is False
+    assert payload["template_media"][0]["media_object_id"] == "media-2"

@@ -149,14 +149,14 @@ updated: 2025-11-07
       [x] T PHC-2.1.3.GOV.2 — CONSULT — утвердить у тимлида состав editable полей (slots/settings), лимиты (`size_limit_mb ≤ 20`, глобальный `sync_response_seconds`), формат `provider_keys`  
       [x] T PHC-2.1.3.GOV.3 — CONSULT — подтвердить форматы ответов/ошибок (чистый JSON, без optimistic locking) и требования к аудиту (`updated_by`, журнал)  
 
-    [ ] US PHC-2.1.3 — REST API слотов и настроек  
-      [ ] T PHC-2.1.3.1 — Реализовать `GET /api/slots` + `GET /api/slots/{slot_id}` (DTO, recent_results, template_media)  
-      [ ] T PHC-2.1.3.2 — Реализовать `PUT /api/slots/{slot_id}` (валидация настроек, обновление template_media, журналирование)  
-      [ ] T PHC-2.1.3.3 — Реализовать `GET /api/settings` (агрегация TTL/T_sync/password metadata)  
-      [ ] T PHC-2.1.3.4 — Реализовать `PUT /api/settings` (sync_response_seconds, result_ttl_hours, ingest_password, provider_keys)  
-      [ ] T PHC-2.1.3.5 — Unit/contract тесты и обновление OpenAPI/PRD для админских API  
+    [x] US PHC-2.1.3 — REST API слотов и настроек  
+      [x] T PHC-2.1.3.1 — Реализовать `GET /api/slots` + `GET /api/slots/{slot_id}` (DTO, recent_results, template_media)  
+      [x] T PHC-2.1.3.2 — Реализовать `PUT /api/slots/{slot_id}` (валидация настроек, обновление template_media, журналирование)  
+      [x] T PHC-2.1.3.3 — Реализовать `GET /api/settings` (агрегация TTL/T_sync/password metadata)  
+      [x] T PHC-2.1.3.4 — Реализовать `PUT /api/settings` (sync_response_seconds, result_ttl_hours, ingest_password, provider_keys)  
+      [x] T PHC-2.1.3.5 — Unit/contract тесты и обновление OpenAPI/PRD для админских API  
   [ ] FEAT PHC-2.2 — Просмотр статистики и графики  
-    [ ] T PHC-2.2.1.1 — REST `/api/stats/slots` (p95, доля 504)  
+    [ ] T PHC-2.2.1.1 — REST `/api/stats/slots`
     [ ] T PHC-2.2.1.2 — UI-графики и таблицы SLA  
   [ ] FEAT PHC-2.3 — Авторизация админов (JWT)  
     [ ] T PHC-2.3.1 — REFLECT — описать требования к JWT-слою (аккаунты, срок жизни токена, области доступа)  

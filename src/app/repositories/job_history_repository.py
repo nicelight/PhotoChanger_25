@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from datetime import datetime
 
+from sqlalchemy import nullslast
 from sqlalchemy.orm import Session
 
 from ..db.db_models import JobHistoryModel
@@ -22,6 +23,8 @@ class JobHistoryRecord:
     failure_reason: str | None
     result_path: str | None
     result_expires_at: datetime | None
+    completed_at: datetime | None
+    started_at: datetime
 
 
 class JobHistoryRepository:
@@ -93,12 +96,32 @@ class JobHistoryRepository:
             model = session.get(JobHistoryModel, job_id)
             if model is None:
                 raise KeyError(f"Job '{job_id}' not found")
-            return JobHistoryRecord(
-                job_id=model.job_id,
-                slot_id=model.slot_id,
-                source=model.source,
-                status=model.status,
-                failure_reason=model.failure_reason,
-                result_path=model.result_path,
-                result_expires_at=model.result_expires_at,
+            return self._to_record(model)
+
+    def list_recent_by_slot(self, slot_id: str, limit: int = 10) -> Sequence[JobHistoryRecord]:
+        with self._session_factory() as session:
+            rows = (
+                session.query(JobHistoryModel)
+                .filter(JobHistoryModel.slot_id == slot_id)
+                .order_by(
+                    nullslast(JobHistoryModel.completed_at.desc()),
+                    JobHistoryModel.started_at.desc(),
+                )
+                .limit(limit)
+                .all()
             )
+            return [self._to_record(row) for row in rows]
+
+    @staticmethod
+    def _to_record(model: JobHistoryModel) -> JobHistoryRecord:
+        return JobHistoryRecord(
+            job_id=model.job_id,
+            slot_id=model.slot_id,
+            source=model.source,
+            status=model.status,
+            failure_reason=model.failure_reason,
+            result_path=model.result_path,
+            result_expires_at=model.result_expires_at,
+            completed_at=model.completed_at,
+            started_at=model.started_at,
+        )
