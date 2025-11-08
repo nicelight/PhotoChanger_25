@@ -1,0 +1,158 @@
+﻿<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Слот slot-011 — AI обработка</title>
+  <link rel="stylesheet" href="assets/slot.css" />
+</head>
+<body
+  data-slot-id="slot-011"
+  data-provider="turbotext"
+  data-model-name="TurboText Portrait"
+  data-operation="image2image"
+  data-slot-api="/api/slots/slot-011"
+  data-slot-save="/api/slots/slot-011"
+  data-test-run="/api/slots/slot-011/test-run"
+  data-template-upload="/api/template-media/register?slot_id=slot-011"
+  data-template-media-kind="style_reference"
+  data-template-media-id=""
+  data-slot-limit-mb="15"
+  data-slot-sync="48"
+  data-ingest-base="https://api.example.com/ingest/"
+>
+  <div class="bg">
+    <main>
+      <div class="shell">
+        <form id="upload-form" onsubmit="return false;">
+          <div class="card slot-heading">
+            <div class="slot-heading__meta">
+              <h1>Слот — AI обработка</h1>
+              <p class="slot-heading__model" id="slot-model-label" aria-live="polite">
+                <span id="slot-model-text">AI-модель: — выберите провайдера —</span>
+                <span class="slot-heading__separator" aria-hidden="true">•</span>
+                <span>Слот <span id="slot-id-value">slot-011</span></span>
+              </p>
+              <p class="slot-heading__slot muted-hint">Значение выдаётся бэкендом: ingest-ссылка привязана к слоту и выбранной модели.</p>
+            </div>
+            <label class="title" for="title">Название</label>
+            <input id="title" name="title" type="text" placeholder="Например: Корпоративный портрет для сайта" />
+            <p class="muted-hint">Название появится в списке слотов на главной странице.</p>
+          </div>
+
+          <div class="card">
+            <div class="grid-2">
+              <div>
+                <label class="title" for="provider">Провайдер</label>
+                <select id="provider" name="provider" aria-label="Выбор AI-провайдера">
+                  <option value="" selected disabled>— выберите —</option>
+                  <option value="gemini">Gemini</option>
+                  <option value="turbotext">Turbotext</option>
+                </select>
+              </div>
+              <div id="operation-select-wrap">
+                <label class="title" for="operation">Операция</label>
+                <select id="operation" name="operation" aria-label="Выбор операции" disabled>
+                  <option value="" selected disabled>— выберите провайдера —</option>
+                </select>
+              </div>
+            </div>
+            <p id="op-req" class="muted-hint" style="display:none"></p>
+          </div>
+
+          <div class="card" id="params-card">
+            <label class="title" for="long">Параметры операции</label>
+            <textarea id="long" name="long" rows="6" placeholder="Промпт к ИИ…"></textarea>
+            <p class="muted-hint">Опишите желаемую обработку. Если операция использует шаблонное изображение, называйте его как «Изображение №2».</p>
+          </div>
+
+          <div class="card" data-block="second-wrap-card">
+            <div class="switch-row">
+              <input id="toggle-second" class="switch" type="checkbox" />
+              <label class="switch-label" for="toggle-second">Добавить второе изображение</label>
+            </div>
+            <div id="second-wrap" class="uploads">
+              <label class="drop large" id="drop-second" tabindex="0" role="button" aria-label="Загрузка изображения-шаблона">
+                <span class="sr-only">Нажмите или перетащите файл (JPG/PNG) сюда</span>
+                <button type="button" class="remove-btn" data-action="remove" data-for="Second_image">Убрать</button>
+                <img id="preview-second" class="drop-preview" alt="Превью шаблона" loading="lazy" decoding="async" />
+                <div class="placeholder">
+                  <strong>Изображение — Шаблон стиля</strong>
+                  <small>Кликните или перетащите JPG/PNG</small>
+                </div>
+                <input id="input-second" name="Second_image" type="file" accept="image/jpeg,image/png" />
+                <input type="hidden" name="Second_image_status" id="Second_image_status" value="removed" />
+                <input type="hidden" id="Second_image_media_id" value="" />
+              </label>
+              <div id="error-second" class="error" style="display:none"></div>
+            </div>
+          </div>
+
+          <div class="card" data-block="first-wrap-card">
+            <div class="switch-row">
+              <input id="toggle-first" class="switch" type="checkbox" />
+              <label class="switch-label" for="toggle-first">Протестировать AI обработку</label>
+            </div>
+            <p id="hint-first" class="muted-hint" style="display:none">Добавьте фотографию, которую нужно обработать</p>
+
+            <div id="first-wrap" class="uploads">
+              <label class="drop large" id="drop-first" tabindex="0" role="button" aria-label="Загрузка тестового изображения">
+                <span class="sr-only">Нажмите или перетащите файл (JPG/PNG) сюда</span>
+                <button type="button" class="remove-btn" data-action="remove" data-for="First_image">Убрать</button>
+                <img id="preview-first" class="drop-preview" alt="Превью фото" loading="lazy" decoding="async" />
+                <div class="placeholder">
+                  <strong>Фото для тестов</strong>
+                  <small>Кликните или перетащите JPG/PNG</small>
+                </div>
+                <input id="input-first" name="First_image" type="file" accept="image/jpeg,image/png" />
+                <input type="hidden" name="First_image_status" id="First_image_status" value="removed" />
+              </label>
+              <div id="error-first" class="error" style="display:none"></div>
+              <div class="uploads-actions">
+                <button id="btn-test1" type="button" class="btn">Тест1</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="grid-2" style="align-items:end">
+              <div>
+                <label class="title" for="ingest-url">Ingest-ссылка слота</label>
+                <div class="inline">
+                  <input id="ingest-url" type="text" readonly placeholder="Появится после выбора модели" />
+                  <button id="btn-copy" type="button" class="btn" disabled>Копировать</button>
+                </div>
+                <p class="muted-hint">Ссылка совпадает с отображаемой на главной странице и используется DSLR Remote Pro.</p>
+              </div>
+              <div class="btns">
+                <button type="button" class="btn" id="btn-save1">Сохранить слот</button>
+              </div>
+            </div>
+            <p id="server-response" style="color:var(--muted);margin-top:8px"></p>
+          </div>
+        </form>
+
+        <section class="card slot-results" id="slot-results" aria-labelledby="slot-results-title">
+          <div class="slot-results__header">
+            <div>
+              <h2 id="slot-results-title">Последние результаты</h2>
+              <p class="muted-hint">Показываем превью успешно обработанных изображений. Ссылки на скачивание активны 72&nbsp;часа после готовности файла.</p>
+            </div>
+            <button type="button" class="btn -ghost" id="results-refresh">Обновить</button>
+          </div>
+          <p id="slot-results-error" class="slot-results__error" role="status" style="display:none"></p>
+          <div id="slot-results-empty" class="slot-results__empty muted-hint">Пока нет готовых изображений для этого слота.</div>
+          <div id="slot-results-grid" class="slot-results__grid" role="list"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" aria-live="polite" aria-atomic="true"></div>
+  <script src="assets/slot-config.js" defer></script>
+  <script src="assets/slot-dom.js" defer></script>
+  <script src="assets/slot-api.js" defer></script>
+  <script src="assets/slot-main.js" defer></script>
+</body>
+</html>
+

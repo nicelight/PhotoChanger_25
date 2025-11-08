@@ -16,7 +16,7 @@ owner: techlead
 - **Backend:** однопроцессное FastAPI-приложение на Python ≥ 3.11 (uvicorn). Конфигурация собирается через `AppConfig` (`app/main.py`), модули `ingest`, `media`, `slots`, `settings`, `stats` подключаются через `Depends`. `IngestService` ограничивает обработку `asyncio.wait_for(..., timeout=T_sync_response)`.
 - **Provider drivers:** `GeminiDriver` и `TurbotextDriver` используют `httpx.AsyncClient`, соблюдают лимиты провайдеров и возвращают путь/байты результата.
 - **Data stores:** PostgreSQL 15 (`slot`, `settings`, `job_history`, `media_object`) и файловая система `media/results` с `T_result_retention = 72 ч`. Входящие файлы буферизуются в памяти; очередей и фоновых воркеров нет (KISS, ADR-0001).
-- **Frontend:** Админ-UI и публичная галерея — статические страницы/HTMX + Vanilla JS (шаблоны в `spec/docs/ui/frontend-examples/`), работают поверх REST (`/api/login`, `/api/slots`, `/api/settings`, `/api/stats`, `/public/results/{job_id}`).
+- **Frontend:** Админ-UI и публичная галерея — статические страницы + Vanilla JS (шаблоны в `spec/docs/ui/frontend-examples/`), работают поверх REST (`/api/login`, `/api/slots`, `/api/settings`, `/api/stats`, `/public/results/{job_id}`).
 - **Observability:** `structlog` для ingest/ошибок, Prometheus `/metrics`, `/healthz` проверяет БД, файловую систему и быстродоступность провайдеров.
 
 ## Конфигурация и секреты
