@@ -132,6 +132,11 @@ async def run_test_slot(
 
     if overrides:
         job.slot_settings = _apply_overrides(job.slot_settings, overrides)
+        if "template_media" in overrides:
+            job.slot_template_media = {
+                entry["media_kind"]: entry["media_object_id"]
+                for entry in overrides["template_media"]
+            }
 
     try:
         await service.process(job)
