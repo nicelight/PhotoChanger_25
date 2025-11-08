@@ -133,6 +133,9 @@ async def run_test_slot(
             detail={"status": "error", "failure_reason": FailureReason.INVALID_REQUEST.value},
         ) from exc
 
+    if overrides:
+        job.slot_settings = _apply_overrides(job.slot_settings, overrides)
+
     try:
         await service.process(job)
     except ProviderTimeoutError as exc:

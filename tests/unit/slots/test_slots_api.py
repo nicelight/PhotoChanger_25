@@ -28,6 +28,7 @@ class DummyIngestService:
         return job
 
     async def validate_upload(self, job: JobContext, upload, expected_hash: str | None) -> UploadValidationResult:
+        job.slot_settings = {"prompt": "default"}
         return UploadValidationResult(content_type="image/jpeg", size_bytes=3, sha256="abc", filename="file.jpg")
 
     async def process(self, job: JobContext) -> bytes:
