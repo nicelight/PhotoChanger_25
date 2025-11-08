@@ -7,6 +7,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 
+from ..config import AppConfig
 from ..ingest.ingest_errors import (
     PayloadTooLargeError,
     ProviderExecutionError,
