@@ -109,9 +109,6 @@ async def run_test_slot(
         overrides["template_media"] = bindings
     if prompt is not None:
         overrides["prompt"] = prompt
-    if overrides:
-        job.slot_settings = _apply_overrides(job.slot_settings, overrides)
-
     try:
         await service.validate_upload(job, test_image, expected_hash=None)
     except UnsupportedMediaError as exc:
@@ -132,6 +129,14 @@ async def run_test_slot(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"status": "error", "failure_reason": FailureReason.INVALID_REQUEST.value},
         ) from exc
+
+    if overrides:
+        job.slot_settings = _apply_overrides(job.slot_settings, overrides)
+        if "template_media" in overrides:
+            job.slot_template_media = {
+                entry["media_kind"]: entry["media_object_id"]
+                for entry in overrides["template_media"]
+            }
 
     try:
         await service.process(job)
