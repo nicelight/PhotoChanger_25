@@ -133,17 +133,17 @@ updated: 2025-11-07
       [x] T PHC-2.0.2.1 — Обновить `docs/PRD.md` и `spec/docs/use-cases.md` (CRUD слотов, статистика)  
       [x] T PHC-2.0.2.2 — Подготовить мок-эндпоинты/пример HTML в `spec/docs/ui/`  
   [ ] FEAT PHC-2.1 — CRUD слотов и глобальных настроек  
-    [ ] US PHC-2.1.GOV — Governance & Discovery  
+    [x] US PHC-2.1.GOV — Governance & Discovery  
       [x] T PHC-2.1.GOV.1 — REFLECT — собрать требования к CRUD слотов и глобальных настроек (UI, авторизация, синхронизация данных) и зафиксировать риски внедрения  
       [x] T PHC-2.1.GOV.2 — CONSULT — утвердить у тимлида минимальный набор полей/валидаций для форм слота и глобальных настроек в первой итерации  
       [x] T PHC-2.1.GOV.3 — CONSULT — согласовать стратегию интеграции HTML-форм с REST `/api/slots` и `/api/settings` (ответы, ошибки, версия слота)  
     [x] US PHC-2.1.2.GOV — Governance & Discovery  
       [x] T PHC-2.1.2.GOV.1 — REFLECT — определить требования к тестовому запуску слота (Admin UI → backend)  
       [x] T PHC-2.1.2.GOV.2 — CONSULT — утвердить контракт `/api/slots/{slot_id}/test-run` и маркировку задач  
-    [ ] US PHC-2.1.2 — Тестовый ендпоинт слотов
-      [ ] T PHC-2.1.2.1 — Реализовать эндпоинт `/api/slots/{slot_id}/test-run` и повторное использование IngestService  
-      [ ] T PHC-2.1.2.2 — Маркировать `job_history` (`source=ui_test`) и обновить логи/статистику  
-      [ ] T PHC-2.1.2.3 — Тесты и документация (OpenAPI/PRD/spec) для test-run  
+    [x] US PHC-2.1.2 — Тестовый ендпоинт слотов
+      [x] T PHC-2.1.2.1 — Реализовать эндпоинт `/api/slots/{slot_id}/test-run` и повторное использование IngestService  
+      [x] T PHC-2.1.2.2 — Маркировать `job_history` (`source=ui_test`) и обновить логи/статистику  
+      [x] T PHC-2.1.2.3 — Тесты и документация (OpenAPI/PRD/spec) для test-run  
     [ ] US PHC-2.1.3 — REST API слотов и настроек  
       [ ] T PHC-2.1.3.1 — Реализовать `GET /api/slots` + `GET /api/slots/{slot_id}` (DTO, recent_results, template_media)  
       [ ] T PHC-2.1.3.2 — Реализовать `PUT /api/slots/{slot_id}` (валидация настроек, обновление template_media, журналирование)  
