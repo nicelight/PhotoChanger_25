@@ -28,6 +28,9 @@ updated: 2025-11-07
 - 2025-11-09 04:18 — Реализовал `/api/slots` (list/get/put): сериализация template_media + recent_results, глобальный `sync_response_seconds`, обновление слота с версионностью; покрыто unit-тестами.
 - 2025-11-09 04:26 — Внедрил SettingsRepository/SettingsService: хранение key-value, хеширование ingest_password, обновление `IngestService` параметров, API `GET/PUT /api/settings` + unit-тесты.
 - 2025-11-09 04:32 — Обновил `dependencies.include_routers`: зарегистрированы slot/job/media репозитории и settings_service в app.state, подключены новые роуты; прогнал pytest (slots + settings API).
+- 2025-11-09 04:40 — Реализовал статистику: добавлены `StatsRepository` (агрегаты по job_history, per-slot counters) и `StatsService` (окно, измерение storage_usage_mb).
+- 2025-11-09 04:45 — Обновил `/api/stats/overview` и зависимости: сервис регистрируется в app.state, эндпоинт принимает `window_minutes` и возвращает данные из репозитория + использование хранилища.
+- 2025-11-09 04:48 — Добавил unit-тесты (`tests/unit/stats/test_stats_service.py`, `tests/unit/stats/test_stats_api.py`) и прогнал pytest по слотам/настройкам/статистике (11 тестов).
 # Черновой журнал до checkpoint
 
 > Перед созданием `CONSULT`/`REFLECT` задач в `.memory/TASKS.md` (см. «Практика CONSULT/REFLECT» в `agents.md`) запиши в этом журнале краткий контекст решения и вопросы, чтобы на созвоне можно было ссылаться на готовые заметки.
