@@ -1,11 +1,10 @@
- <!-- (HTML + CSS + VanillaJS + HTMX) -->
+ <!-- (HTML + CSS + Vanilla JS) -->
 <!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Слот — AI обработка — HTMX + VanillaJS</title>
-  <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+  <title>Слот — AI обработка — Vanilla JS</title>
   <style>
     :root{ --h-a:195; --h-b:8; --h-c:54; --s:100%; --l:93%; --text:#0f172a; --muted:#334155cc; --glass:18px; --gap:clamp(12px,2vw,18px); --pad:clamp(14px,1.8vw,22px); }
     @property --l{syntax:'<percentage>';inherits:true;initial-value:93%}
@@ -61,6 +60,7 @@
     textarea{ resize:vertical }
 
     .muted-hint{ color:var(--muted); font-size:14px; margin-top:8px }
+    .has-error{ border-color:#ef4444 !important; box-shadow:0 0 0 2px rgba(239,68,68,.18) }
 
     /* Switch */
     .switch-row{ display:flex; align-items:center; gap:10px }
@@ -137,7 +137,20 @@
     #upload-form.-pulse { animation: pulseForm .4s ease }
   </style>
 </head>
-<body data-slot-id="slot-001" data-provider="gemini" data-model-name="Gemini Ultra Portrait" data-operation="identity_transfer" data-slot-api="/api/slots/slot-001">
+<body
+  data-slot-id="slot-001"
+  data-provider="gemini"
+  data-model-name="Gemini Ultra Portrait"
+  data-operation="identity_transfer"
+  data-slot-api="/api/slots/slot-001"
+  data-slot-save="/api/slots/slot-001"
+  data-test-run="/api/slots/slot-001/test-run"
+  data-template-upload="/api/template-media/register?slot_id=slot-001"
+  data-template-media-kind="style_reference"
+  data-template-media-id="tmpl-style-001"
+  data-slot-size-limit="15"
+  data-slot-sync="48"
+>
   <div class="bg">
     <main>
       <div class="shell">
@@ -202,8 +215,9 @@
                   <strong>Изображение — Шаблон стиля</strong>
                   <small>Кликните или перетащите JPG/PNG</small>
                 </div>
-                <input id="input-second" name="Second_image" type="file" accept="image/jpeg,image/png" />
-                <input type="hidden" name="Second_image_status" id="Second_image_status" value="removed" />
+                 <input id="input-second" name="Second_image" type="file" accept="image/jpeg,image/png" />
+                 <input type="hidden" name="Second_image_status" id="Second_image_status" value="removed" />
+                <input type="hidden" id="Second_image_media_id" value="tmpl-style-001" />
               </label>
               <div id="error-second" class="error" style="display:none"></div>
             </div>
@@ -332,12 +346,35 @@
         id: document.body.dataset.slotId || 'slot-001',
         provider: document.body.dataset.provider || '',
         operation: document.body.dataset.operation || '',
-        modelName: document.body.dataset.modelName || ''
+        modelName: document.body.dataset.modelName || '',
+        sizeLimitMb: Number(document.body.dataset.slotSizeLimit || 15),
+        syncResponseSeconds: Number(document.body.dataset.slotSync || 48),
       };
       const PRESET_PROVIDER = slotMeta.provider;
       const PRESET_MODEL_NAME = slotMeta.modelName;
       const PRESET_OPERATION = slotMeta.operation;
+      const promptInput = byId('long');
       const SLOT_DETAILS_ENDPOINT = document.body.dataset.slotApi || `/api/slots/${slotMeta.id}`;
+      const SLOT_SAVE_ENDPOINT = document.body.dataset.slotSave || SLOT_DETAILS_ENDPOINT;
+      const SLOT_TEST_RUN_ENDPOINT = document.body.dataset.testRun || `${SLOT_DETAILS_ENDPOINT}/test-run`;
+      const TEMPLATE_UPLOAD_ENDPOINT =
+        document.body.dataset.templateUpload || `/api/template-media/register?slot_id=${slotMeta.id}`;
+      const templateMediaState = {
+        kind: document.body.dataset.templateMediaKind || 'style_reference',
+        mediaId: document.body.dataset.templateMediaId || '',
+        pendingFile: null,
+      };
+      const testImageState = { file: null };
+      const secondMediaHidden = byId('Second_image_media_id');
+      if (secondMediaHidden && secondMediaHidden.value && !templateMediaState.mediaId) {
+        templateMediaState.mediaId = secondMediaHidden.value;
+      }
+      if (templateMediaState.mediaId) {
+        const secondStatus = byId('Second_image_status');
+        if (secondStatus) {
+          secondStatus.value = 'present';
+        }
+      }
       const slotModelLabel = byId('slot-model-label');
       const slotModelText = byId('slot-model-text');
       const slotIdValue = byId('slot-id-value');
@@ -458,6 +495,7 @@
             throw new Error(`API ответил статусом ${response.status}`);
           }
           const data = await response.json();
+          hydrateSlotFromServer(data);
           return data;
         }catch(err){
           throw err;
@@ -515,6 +553,184 @@
       }
       window.toast = toast;
 
+      const FIELD_MAP = {
+        display_name: '#title',
+        provider: '#provider',
+        operation: '#operation',
+        'settings.prompt': '#long',
+        template_media: '#drop-second',
+      };
+
+      function clearFieldErrors(){
+        document.querySelectorAll('.has-error').forEach((node)=>{
+          node.classList.remove('has-error');
+          node.removeAttribute('aria-invalid');
+        });
+      }
+
+      function normalizeIssues(payload){
+        if(!payload) return [];
+        if(Array.isArray(payload.errors)) return payload.errors;
+        if(Array.isArray(payload.detail)) return payload.detail;
+        return [];
+      }
+
+      function applyFieldErrors(payload){
+        const issues = normalizeIssues(payload);
+        if(!issues.length) return false;
+        issues.forEach((issue)=>{
+          const fieldPath = issue.field || (Array.isArray(issue.loc) ? issue.loc.filter(Boolean).join('.') : '');
+          const selector = FIELD_MAP[fieldPath];
+          if(!selector) return;
+          const el = document.querySelector(selector);
+          if(!el) return;
+          el.classList.add('has-error');
+          el.setAttribute('aria-invalid','true');
+          if(issue.message){
+            el.dataset.errorMessage = issue.message;
+          }
+        });
+        return true;
+      }
+
+      function needsTemplateMedia(){
+        const status = byId('Second_image_status');
+        return !!(status && status.value === 'present');
+      }
+
+      async function ensureTemplateMediaBinding(){
+        if(templateMediaState.pendingFile){
+          const formData = new FormData();
+          formData.append('slot_id', slotMeta.id);
+          formData.append('media_kind', templateMediaState.kind);
+          formData.append(
+            'file',
+            templateMediaState.pendingFile,
+            templateMediaState.pendingFile.name || 'template-image.png'
+          );
+          const response = await fetch(TEMPLATE_UPLOAD_ENDPOINT, {
+            method: 'POST',
+            body: formData,
+          });
+          if(!response.ok){
+            throw new Error(`Не удалось загрузить шаблонное изображение (HTTP ${response.status})`);
+          }
+          const data = await response.json();
+          templateMediaState.mediaId = data.media_object_id || data.id || '';
+          templateMediaState.pendingFile = null;
+          if(secondMediaHidden && templateMediaState.mediaId){
+            secondMediaHidden.value = templateMediaState.mediaId;
+          }
+        }
+        if(templateMediaState.mediaId){
+          return [{
+            media_kind: templateMediaState.kind,
+            media_object_id: templateMediaState.mediaId,
+          }];
+        }
+        return [];
+      }
+
+      async function collectTemplateMediaBindings(){
+        if(!needsTemplateMedia()){
+          return [];
+        }
+        const bindings = await ensureTemplateMediaBinding();
+        if(!bindings.length){
+          throw new Error('Добавьте шаблонное изображение или отключите блок «Изображение — Шаблон стиля».');
+        }
+        return bindings;
+      }
+
+      function getPromptValue(){
+        return (promptInput?.value || '').trim();
+      }
+
+      function collectProviderSettings(provider){
+        const settings = { prompt: getPromptValue() };
+        if(provider === 'gemini'){
+          settings.output = { mime_type: 'image/png' };
+        }
+        return settings;
+      }
+
+      async function persistSlot(payload){
+        const response = await fetch(SLOT_SAVE_ENDPOINT, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+        if(response.status === 422){
+          const body = await response.json().catch(()=> ({}));
+          applyFieldErrors(body);
+          throw new Error('Проверьте выделенные поля');
+        }
+        if(!response.ok){
+          throw new Error(`Сервис вернул статус ${response.status}`);
+        }
+        const data = await response.json().catch(()=> ({}));
+        hydrateSlotFromServer(data);
+        return data;
+      }
+
+      function hydrateSlotFromServer(payload){
+        if(!payload) return;
+        const slot = payload.slot || payload;
+        if(!slot || typeof slot !== 'object') return;
+        slotMeta.provider = slot.provider || slotMeta.provider;
+        slotMeta.operation = slot.operation || slotMeta.operation;
+        slotMeta.modelName = slot.display_name || slotMeta.modelName;
+        if(typeof slot.size_limit_mb === 'number'){ slotMeta.sizeLimitMb = slot.size_limit_mb; }
+        if(typeof slot.sync_response_seconds === 'number'){ slotMeta.syncResponseSeconds = slot.sync_response_seconds; }
+        if(promptInput && slot.settings && typeof slot.settings.prompt === 'string'){
+          promptInput.value = slot.settings.prompt;
+        }
+        if(slot.template_media && slot.template_media.length){
+          const binding = slot.template_media[0];
+          templateMediaState.mediaId = binding.media_object_id;
+          templateMediaState.pendingFile = null;
+          if(secondMediaHidden){ secondMediaHidden.value = binding.media_object_id; }
+          const status = byId('Second_image_status');
+          if(status){ status.value = 'present'; }
+          const toggleSecond = byId('toggle-second');
+          if(toggleSecond && !toggleSecond.checked){
+            toggleSecond.checked = true;
+            toggleSecond.dispatchEvent(new Event('change'));
+          }
+        }
+        updateSlotHeader(slot.provider || slotMeta.provider);
+      }
+
+      async function runSlotTest(templateMediaBindings){
+        if(!testImageState.file){
+          throw new Error('Загрузите файл «Фото для тестов».');
+        }
+        const formData = new FormData();
+        formData.append('prompt', getPromptValue());
+        formData.append('provider', providerSel.value);
+        formData.append('operation', slotMeta.operation || operationSel.value);
+        formData.append('test_image', testImageState.file, testImageState.file.name || 'test-image.jpg');
+        if(templateMediaBindings?.length){
+          formData.append('template_media', JSON.stringify(templateMediaBindings));
+        }
+        const response = await fetch(SLOT_TEST_RUN_ENDPOINT, {
+          method: 'POST',
+          body: formData,
+        });
+        if(response.status === 422){
+          const body = await response.json().catch(()=> ({}));
+          applyFieldErrors(body);
+          throw new Error('Исправьте ошибки тестового запуска.');
+        }
+        if(!response.ok){
+          throw new Error(`Test-run завершился статусом ${response.status}`);
+        }
+        return response.json().catch(()=> ({}));
+      }
+
       // --- Toggles ---
       function bindToggle(toggleId, panelId){
         const t = byId(toggleId); const panel = byId(panelId);
@@ -560,6 +776,14 @@
           }
           if(drop){ drop.classList.remove('has-image'); }
           setStatus(hiddenName,false);
+          if(hiddenName === 'Second_image'){
+            templateMediaState.pendingFile = null;
+            templateMediaState.mediaId = '';
+            if(secondMediaHidden){ secondMediaHidden.value = ''; }
+          }
+          if(hiddenName === 'First_image'){
+            testImageState.file = null;
+          }
         }
         function onFile(file){
           if(!file) return;
@@ -579,6 +803,14 @@
           preview.style.opacity='0';
           requestAnimationFrame(()=>{ preview.style.opacity='1'; });
           setStatus(hiddenName,true);
+          if(hiddenName === 'Second_image'){
+            templateMediaState.pendingFile = file;
+            templateMediaState.mediaId = '';
+            if(secondMediaHidden){ secondMediaHidden.value = ''; }
+          }
+          if(hiddenName === 'First_image'){
+            testImageState.file = file;
+          }
         }
 
         if(input){ input.addEventListener('change', ()=> onFile(input.files && input.files[0])); }
@@ -741,13 +973,34 @@
       (function(){
         const b = document.getElementById('btn-test1');
         if(!b) return;
-        b.addEventListener('click', function(){
+        b.addEventListener('click', async function(){
+          clearFieldErrors();
           const st = document.getElementById('First_image_status');
           if(!st || st.value !== 'present'){
-            return toast('Загрузите тестовое фото перед запуском «Тест1»', 'error');
+            return toast('Загрузите тестовое фото перед запуском «Тест1».', 'error');
           }
-          pulse(document.getElementById('upload-form'));
-          toast('Нажата кнопка «Тест1»', 'success');
+          if(!(slotMeta.provider || providerSel.value)){
+            return toast('Сначала выберите провайдера и операцию.', 'error');
+          }
+          const prov = slotMeta.provider || providerSel.value;
+          const op = slotMeta.operation || operationSel.value;
+          const provConfig = CONFIG[prov];
+          const needs = provConfig?.operations?.[op]?.needs || { prompt:true, second:false, first:true };
+          if(needs.prompt && !getPromptValue()){
+            return toast('Добавьте промпт перед тестовым запуском.', 'error');
+          }
+          if(needs.second && byId('Second_image_status').value !== 'present'){
+            return toast('Для выбранной операции нужен шаблон «Изображение — Шаблон стиля».', 'error');
+          }
+          try{
+            const templateBindings = await collectTemplateMediaBindings();
+            await runSlotTest(templateBindings);
+            pulse(document.getElementById('upload-form'));
+            toast('Тестовый запуск отправлен. Смотрите обновления в галерее ниже.', 'success');
+          }catch(err){
+            console.warn('[Test run]', err);
+            toast(err.message || 'Не удалось выполнить тест', 'error');
+          }
         });
       })();
 
@@ -797,55 +1050,70 @@
       (function(){
         const save = document.getElementById('btn-save1');
         if(!save) return;
-        save.addEventListener('click', function(){
+        save.addEventListener('click', async function(){
           const form = document.getElementById('upload-form');
+          if(!form) return;
+          clearFieldErrors();
           const title = (byId('title').value || '').trim();
-        const prov = byId('provider').value;
-        if(!title){ toast('Заполните название слота', 'error'); return pulse(form); }
-        if(!prov){ toast('Выберите провайдера', 'error'); return pulse(form); }
+          const prov = byId('provider').value;
+          if(!title){ toast('Заполните название слота', 'error'); return pulse(form); }
+          if(!prov){ toast('Выберите провайдера', 'error'); return pulse(form); }
 
-        const provConfig = CONFIG[prov];
-        if(!provConfig){
-          toast('Провайдер недоступен', 'error'); return pulse(form);
-        }
-        let op = slotMeta.operation || operationSel.value;
-        if(prov === GEMINI_PROVIDER && !op){
-          op = pickGeminiDefault(provConfig.operations || {});
-          setOperationValue(prov, op);
-        }
-        if(prov === TURBOTEXT_PROVIDER){
-          if(!op){ op = TURBOTEXT_DEFAULT_OPERATION; }
-          if(op !== TURBOTEXT_DEFAULT_OPERATION){
-            op = TURBOTEXT_DEFAULT_OPERATION;
+          const provConfig = CONFIG[prov];
+          if(!provConfig){
+            toast('Провайдер недоступен', 'error'); return pulse(form);
+          }
+          let op = slotMeta.operation || operationSel.value;
+          if(prov === GEMINI_PROVIDER && !op){
+            op = pickGeminiDefault(provConfig.operations || {});
             setOperationValue(prov, op);
           }
-        }
-        if(!op){
-          toast('Выберите операцию', 'error'); return pulse(form);
-        }
-        slotMeta.operation = op;
+          if(prov === TURBOTEXT_PROVIDER){
+            if(!op){ op = TURBOTEXT_DEFAULT_OPERATION; }
+            if(op !== TURBOTEXT_DEFAULT_OPERATION){
+              op = TURBOTEXT_DEFAULT_OPERATION;
+              setOperationValue(prov, op);
+            }
+          }
+          if(!op){
+            toast('Выберите операцию', 'error'); return pulse(form);
+          }
+          slotMeta.operation = op;
 
-        // Проверка обязательных полей по needs
-        const needs = provConfig?.operations?.[op]?.needs || { prompt:true, second:false, first:true };
-          if(needs.first && byId('First_image_status').value !== 'present'){
-            toast('Для этой операции требуется «Фото для тестов»', 'error'); return pulse(form);
+          const needs = provConfig?.operations?.[op]?.needs || { prompt:true, second:false, first:true };
+          if(needs.prompt && !getPromptValue()){
+            toast('Добавьте текстовый промпт для операции', 'error'); return pulse(form);
           }
           if(needs.second && byId('Second_image_status').value !== 'present'){
             toast('Для этой операции требуется «Изображение — Шаблон стиля»', 'error'); return pulse(form);
           }
-          if(needs.prompt && !(byId('long').value || '').trim()){
-            toast('Добавьте текстовый промпт для операции', 'error'); return pulse(form);
-          }
 
-          // Имитация успешного сохранения слота и подтверждения ingest URL от бэкенда
-          slotMeta.provider = prov;
-          slotMeta.modelName = (prov === PRESET_PROVIDER && PRESET_MODEL_NAME) ? PRESET_MODEL_NAME : (CONFIG[prov]?.label || prov);
-          slotMeta.operation = op;
-          updateSlotHeader(prov);
-          if(copyBtn){ copyBtn.disabled = false; }
-          pulse(form);
-          toast('Слот сохранён. Ingest-ссылка готова.', 'success');
-          byId('server-response').textContent = 'Слот «' + title + '» сохранён локально (демо). Статическая ingest-ссылка: ' + (ingestInput ? ingestInput.value : '') + '.';
+          try{
+            const templateMedia = await collectTemplateMediaBindings();
+            const payload = {
+              slot_id: slotMeta.id,
+              display_name: title,
+              provider: prov,
+              operation: op,
+              is_active: true,
+              size_limit_mb: slotMeta.sizeLimitMb,
+              sync_response_seconds: slotMeta.syncResponseSeconds,
+              settings: collectProviderSettings(prov),
+              template_media: templateMedia,
+            };
+            await persistSlot(payload);
+            slotMeta.provider = prov;
+            slotMeta.modelName = (prov === PRESET_PROVIDER && PRESET_MODEL_NAME) ? PRESET_MODEL_NAME : (CONFIG[prov]?.label || prov);
+            updateSlotHeader(prov);
+            if(copyBtn){ copyBtn.disabled = false; }
+            pulse(form);
+            toast('Конфигурация сохранена через PUT /api/slots/{slot_id}', 'success');
+            const message = `Слот «${title}» обновлён через ${SLOT_SAVE_ENDPOINT}.`;
+            byId('server-response').textContent = message;
+          }catch(err){
+            console.warn('[Save slot]', err);
+            toast(err.message || 'Не удалось сохранить слот', 'error');
+          }
         });
       })();
 
