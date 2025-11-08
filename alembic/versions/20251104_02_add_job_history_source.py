@@ -15,10 +15,14 @@ depends_on = None
 def upgrade() -> None:
     op.add_column(
         "job_history",
-        sa.Column("source", sa.String(length=32), nullable=False, server_default="ingest"),
+        sa.Column(
+            "source",
+            sa.String(length=32),
+            nullable=False,
+            server_default="ingest",
+        ),
     )
-    op.execute("UPDATE job_history SET source = 'ingest' WHERE source IS NULL")
-    op.alter_column("job_history", "source", server_default=None)
+    op.execute(sa.text("UPDATE job_history SET source = 'ingest' WHERE source IS NULL"))
 
 
 def downgrade() -> None:
