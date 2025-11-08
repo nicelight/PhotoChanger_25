@@ -148,6 +148,174 @@ paths:
                   value:
                     status: error
                     failure_reason: result_expired
+  /api/slots:
+    get:
+      summary: List configured slots.
+      description: >
+        Returns all 15 static slots with minimal metadata for the admin UI.
+      tags:
+        - slots
+      responses:
+        '200':
+          description: List of slot summaries.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SlotSummary'
+        '401':
+          description: Admin authentication failed.
+    post:
+      summary: Placeholder (slots are static).
+      description: >
+        Slots are static; POST is reserved for future use and currently returns 405.
+      tags:
+        - slots
+      responses:
+        '405':
+          description: Not implemented.
+  /api/slots/{slot_id}:
+    get:
+      summary: Retrieve slot configuration.
+      tags:
+        - slots
+      parameters:
+        - name: slot_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Slot configuration with template media and recent results.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlotDetails'
+        '404':
+          description: Slot not found.
+    put:
+      summary: Update slot configuration.
+      description: >
+        Allows admins to change provider, operation, settings, limits and template media bindings.
+      tags:
+        - slots
+      parameters:
+        - name: slot_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SlotUpdateRequest'
+      responses:
+        '200':
+          description: Updated slot configuration.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlotDetails'
+        '400':
+          description: Validation error (invalid template media, provider settings, or limits).
+        '404':
+          description: Slot not found.
+  /api/slots/{slot_id}/cleanup:
+    post:
+      summary: Trigger cleanup of expired results for a specific slot.
+      description: >
+        Schedules background cleanup of expired `media/results/{slot_id}/` artifacts. Does not delete fresh results.
+      tags:
+        - slots
+      parameters:
+        - name: slot_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Cleanup accepted for processing.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: accepted
+        '404':
+          description: Slot not found.
+  /api/settings:
+    get:
+      summary: Fetch global ingest/settings configuration.
+      tags:
+        - settings
+      responses:
+        '200':
+          description: Current settings snapshot without exposing secrets.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SettingsResponse'
+        '401':
+          description: Admin authentication failed.
+    put:
+      summary: Update global ingest/settings configuration.
+      tags:
+        - settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SettingsUpdateRequest'
+      responses:
+        '200':
+          description: Updated settings snapshot.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SettingsResponse'
+        '400':
+          description: Validation error (e.g., invalid timeout or password length).
+        '401':
+          description: Admin authentication failed.
+        '422':
+          description: Payload missing required fields or violates constraints.
+  /api/stats/overview:
+    get:
+      summary: Return admin statistics snapshot.
+      description: >
+        Provides lightweight aggregates for the whole system and each slot. Designed for admin
+        dashboards without expensive queries.
+      tags:
+        - stats
+      parameters:
+        - name: window_minutes
+          in: query
+          required: false
+          description: Size of the rolling window for per-slot/system counters (default 60 minutes).
+          schema:
+            type: integer
+            minimum: 5
+            maximum: 240
+            default: 60
+      responses:
+        '200':
+          description: Snapshot with system-level and per-slot metrics.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsOverview'
+        '401':
+          description: Admin authentication failed.
+        '403':
+          description: Not enough privileges for admin statistics.
 components:
   schemas:
     IngestError:
@@ -167,6 +335,281 @@ components:
           enum:
             - result_not_found
             - result_expired
+    StatsOverview:
+      type: object
+      required:
+        - window_minutes
+        - system
+        - slots
+      properties:
+        window_minutes:
+          type: integer
+          description: Размер окна, за которое собраны агрегаты.
+          example: 60
+        system:
+          $ref: '#/components/schemas/StatsSystemSummary'
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatsSlotSummary'
+    StatsSystemSummary:
+      type: object
+      required:
+        - jobs_total
+        - jobs_last_window
+        - timeouts_last_window
+        - provider_errors_last_window
+        - storage_usage_mb
+      properties:
+        jobs_total:
+          type: integer
+          example: 15234
+        jobs_last_window:
+          type: integer
+          example: 248
+        timeouts_last_window:
+          type: integer
+          example: 3
+        provider_errors_last_window:
+          type: integer
+          example: 1
+        storage_usage_mb:
+          type: number
+          format: float
+          example: 912.4
+    StatsSlotSummary:
+      type: object
+      required:
+        - slot_id
+        - display_name
+        - is_active
+        - jobs_last_window
+        - timeouts_last_window
+        - provider_errors_last_window
+        - last_success_at
+      properties:
+        slot_id:
+          type: string
+          example: slot-001
+        display_name:
+          type: string
+          example: Slot 1 (Gemini)
+        is_active:
+          type: boolean
+          example: true
+        jobs_last_window:
+          type: integer
+          example: 22
+        timeouts_last_window:
+          type: integer
+          example: 1
+        provider_errors_last_window:
+          type: integer
+          example: 0
+        last_success_at:
+          type: string
+          format: date-time
+        last_error_reason:
+          type: string
+          nullable: true
+    SlotSummary:
+      type: object
+      required:
+        - slot_id
+        - display_name
+        - provider
+        - operation
+        - is_active
+        - version
+        - updated_at
+      properties:
+        slot_id:
+          type: string
+          example: slot-001
+        display_name:
+          type: string
+          example: Slot 1 (Gemini)
+        provider:
+          type: string
+          example: gemini
+        operation:
+          type: string
+          example: image_edit
+        is_active:
+          type: boolean
+          example: true
+        version:
+          type: integer
+          example: 4
+        updated_at:
+          type: string
+          format: date-time
+    SlotDetails:
+      allOf:
+        - $ref: '#/components/schemas/SlotSummary'
+        - type: object
+          required:
+            - size_limit_mb
+            - sync_response_seconds
+            - settings
+            - template_media
+            - recent_results
+          properties:
+            size_limit_mb:
+              type: integer
+              example: 20
+            sync_response_seconds:
+              type: integer
+              example: 48
+            settings:
+              type: object
+              description: Provider-specific JSON (see provider schema docs).
+              example:
+                provider: gemini
+                prompt: "Studio portrait"
+            template_media:
+              type: array
+              items:
+                $ref: '#/components/schemas/SlotTemplateMediaBinding'
+            recent_results:
+              type: array
+              items:
+                $ref: '#/components/schemas/SlotRecentResult'
+    SlotTemplateMediaBinding:
+      type: object
+      required:
+        - media_kind
+        - media_object_id
+      properties:
+        media_kind:
+          type: string
+          example: background
+        media_object_id:
+          type: string
+          example: 8b6f0fa6b5b0459fb887c249f2eb5b21
+        preview_url:
+          type: string
+          format: uri
+          nullable: true
+    SlotRecentResult:
+      type: object
+      required:
+        - job_id
+        - status
+        - finished_at
+        - public_url
+        - expires_at
+      properties:
+        job_id:
+          type: string
+        status:
+          type: string
+          enum:
+            - done
+            - failed
+            - timeout
+        finished_at:
+          type: string
+          format: date-time
+        public_url:
+          type: string
+          format: uri
+        expires_at:
+          type: string
+          format: date-time
+    SlotUpdateRequest:
+      type: object
+      required:
+        - display_name
+        - provider
+        - operation
+        - is_active
+        - size_limit_mb
+        - sync_response_seconds
+        - settings
+        - template_media
+      properties:
+        display_name:
+          type: string
+        provider:
+          type: string
+          description: Provider identifier (`gemini`, `turbotext`, ...).
+        operation:
+          type: string
+        is_active:
+          type: boolean
+        size_limit_mb:
+          type: integer
+          minimum: 1
+          maximum: 20
+        sync_response_seconds:
+          type: integer
+          minimum: 10
+          maximum: 60
+        settings:
+          type: object
+          description: Provider-specific JSON.
+        template_media:
+          type: array
+          items:
+            $ref: '#/components/schemas/SlotTemplateMediaBinding'
+    SettingsResponse:
+      type: object
+      required:
+        - sync_response_seconds
+        - result_ttl_hours
+        - ingest_password_rotated_at
+        - provider_keys
+      properties:
+        sync_response_seconds:
+          type: integer
+          example: 48
+        result_ttl_hours:
+          type: integer
+          example: 72
+        ingest_password_rotated_at:
+          type: string
+          format: date-time
+          nullable: true
+        ingest_password_rotated_by:
+          type: string
+          nullable: true
+        provider_keys:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ProviderKeyStatus'
+    SettingsUpdateRequest:
+      type: object
+      properties:
+        sync_response_seconds:
+          type: integer
+          minimum: 10
+          maximum: 60
+        result_ttl_hours:
+          type: integer
+          minimum: 24
+          maximum: 168
+        ingest_password:
+          type: string
+          minLength: 8
+          maxLength: 64
+        provider_keys:
+          type: object
+          additionalProperties:
+            type: string
+            description: Plain provider API key (stored securely server-side).
+      additionalProperties: false
+    ProviderKeyStatus:
+      type: object
+      required:
+        - configured
+      properties:
+        configured:
+          type: boolean
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
   responses:
     IngestErrorResponse:
       description: Canonical JSON error body.

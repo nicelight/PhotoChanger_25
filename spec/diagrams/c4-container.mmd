@@ -14,7 +14,7 @@ graph TD
     Cron["cleanup_media.py"]
 
     DSLR["DSLR Remote Pro"] -->|"POST /api/ingest/{slot_id}"| Ingest
-    Admin["Admin UI / REST"] -->|"JWT /api/slots, /api/settings, /api/stats"| API
+    Admin["Admin UI / REST"] -->|"JWT /api/slots, /api/settings, /api/stats/overview"| API
     Public["Публичные клиенты"] -->|"GET /public/results/{job_id}"| MediaSvc
     Ops["Monitoring / Logs"] -->|"GET /metrics, /healthz"| API
 

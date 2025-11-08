@@ -1,6 +1,6 @@
 ﻿---
 id: tasks
-updated: 2025-11-06
+updated: 2025-11-07
 ---
 
 # Tasks (канбан)
@@ -122,14 +122,21 @@ updated: 2025-11-06
         [x] T PHC-1.3.3.3 — Обновить OpenAPI/PRD/репортинг результатов тестов  
 
 - [ ] EP PHC-2 — Админ-панель и статистика  
-  [ ] FEAT PHC-2.0 — Спецификации админ API и UI  
-    [ ] US PHC-2.0.1 — OpenAPI `/api/slots`, `/api/settings`, `/api/stats`  
-      [ ] T PHC-2.0.1.1 — Описать схемы запросов/ответов и ошибки в `spec/contracts/schemas/`  
-      [ ] T PHC-2.0.1.2 — Зафиксировать аутентификацию/авторизацию и бизнес-правила в OpenAPI  
-    [ ] US PHC-2.0.2 — Документация UI и blueprints  
-      [ ] T PHC-2.0.2.1 — Обновить `docs/PRD.md` и `spec/docs/use-cases.md` (CRUD слотов, статистика)  
-      [ ] T PHC-2.0.2.2 — Подготовить мок-эндпоинты/пример HTML для HTMX в `spec/docs/ui/`  
+  [ ] US PHC-2.GOV — Governance & Discovery  
+    [x] T PHC-2.GOV.1 — REFLECT — определить границы админ-панели (API, UI, статистика, доступы)  
+    [x] T PHC-2.GOV.2 — CONSULT — согласовать ключевые контракты `/api/slots`, `/api/settings`, `/api/stats`, test-run  
+  [x] FEAT PHC-2.0 — Спецификации админ API и UI  
+    [x] US PHC-2.0.1 — OpenAPI `/api/slots`, `/api/settings`, `/api/stats/overview`  
+      [x] T PHC-2.0.1.1 — Описать схемы запросов/ответов и ошибки в `spec/contracts/schemas/`  
+      [x] T PHC-2.0.1.2 — Зафиксировать аутентификацию/авторизацию и бизнес-правила в OpenAPI  
+    [x] US PHC-2.0.2 — Документация UI и blueprints  
+      [x] T PHC-2.0.2.1 — Обновить `docs/PRD.md` и `spec/docs/use-cases.md` (CRUD слотов, статистика)  
+      [x] T PHC-2.0.2.2 — Подготовить мок-эндпоинты/пример HTML для HTMX в `spec/docs/ui/`  
   [ ] FEAT PHC-2.1 — CRUD слотов и глобальных настроек  
+    [ ] US PHC-2.1.GOV — Governance & Discovery  
+      [ ] T PHC-2.1.GOV.1 — REFLECT — собрать требования к CRUD слотов и глобальных настроек (UI, optimistic locking, авторизация) и зафиксировать риски внедрения  
+      [ ] T PHC-2.1.GOV.2 — CONSULT — утвердить у тимлида минимальный набор полей/валидаций для форм слота и глобальных настроек в первой итерации  
+      [ ] T PHC-2.1.GOV.3 — CONSULT — согласовать стратегию интеграции HTMX-форм с REST `/api/slots` и `/api/settings` (ответы, ошибки, версия слота)  
     [ ] US PHC-2.1.1 — UI форм редактирования (HTMX)  
       [ ] T PHC-2.1.1.1 — Разметка и валидация формы слота  
       [ ] T PHC-2.1.1.2 — API `/api/slots` и `/api/settings`  

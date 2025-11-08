@@ -10,7 +10,7 @@ sequenceDiagram
     Slots->>DB: Получить конфигурацию и recent_results
     Slots-->>Admin: Конфигурация + 10 последних результатов
 
-    Admin->>Stats: GET /api/stats/slots
+    Admin->>Stats: GET /api/stats/overview
     Stats->>DB: Считать агрегированные метрики (p95, 504 rate)
     Stats-->>Admin: Показать SLA и counters
 

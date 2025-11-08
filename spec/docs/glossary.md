@@ -14,6 +14,6 @@
 | Ingest password | Глобальный секрет, проверяемый при каждом `POST /api/ingest/{slot_id}`; хранится в `app_settings` (`ingest.dslr_password`) в виде хэша и обновляется через `/api/settings`. | `docs/PRD.md` §4 |
 | AppConfig | Центральная функция сборки FastAPI-приложения: подключает БД, подготавливает драйверы провайдеров, загружает настройки окружения, используется также в тестах. | `docs/ARCHITECTURE.md` §2 |
 | Admin JWT | Статический JWT для администраторов (`serg`, `igor`), выдаётся `/api/login`, используется в Admin UI/API. | `docs/PRD.md` §3 |
-| StatsService | Модуль статистики SLA; агрегирует p95 времени обработки, долю 504, загрузку диска, публикует `/api/stats`. | `docs/ARCHITECTURE.md` §6 |
+| StatsService | Модуль статистики SLA; агрегирует лёгкие counters (jobs, timeouts, provider_errors, storage) и публикует `/api/stats/overview`. | `docs/ARCHITECTURE.md` §6 |
 | Cleanup cron | Сценарий `scripts/cleanup_media.py`, запускаемый каждые 15 мин для удаления просроченных медиа и обновления `media_object.cleaned_at`. | `docs/PRD.md` §10 |
 | Public Result Link | Временный URL `/public/results/{job_id}` с TTL 72 ч; после истечения возвращает `410 Gone`. | `.memory/USECASES.md` UC4 |

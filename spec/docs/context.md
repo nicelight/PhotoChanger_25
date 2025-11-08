@@ -9,7 +9,7 @@
 | Актор | Запросы к PhotoChanger | Ответы/зависимость |
 |-------|-----------------------|--------------------|
 | DSLR Remote Pro | `POST /api/ingest/{slot_id}` (multipart) | HTTP 200 + ссылка на результат или 504/ошибка |
-| Администратор | `/api/login`, `/api/slots`, `/api/settings`, `/api/stats`, Admin UI | JWT, конфигурации слотов, статистика, отчёты |
+| Администратор | `/api/login`, `/api/slots`, `/api/settings`, `/api/stats/overview`, Admin UI | JWT, конфигурации слотов, статистика, отчёты |
 | Провайдер AI | `GET` временных ссылок (`media_object`), обработка через драйверы | Путь к исходным медиа, доставка результата в пределах `T_sync_response` |
 | Пользователь публичной ссылки | `GET /public/results/{job_id}` | Итоговый файл 72 ч, `410 Gone` после истечения TTL |
 | Ops/Мониторинг | `/metrics`, `/healthz`, cron `cleanup_media.py`, системные логи | Метрики SLA, статусы компонент, отчёты об очистке |

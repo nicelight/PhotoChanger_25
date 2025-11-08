@@ -1,11 +1,15 @@
 """Routes for statistics exposure."""
 
+from __future__ import annotations
+
+from typing import Any
+
 from fastapi import APIRouter
 
 router = APIRouter(prefix="/api/stats", tags=["stats"])
 
 
-@router.get("/slots")
-async def slot_stats() -> list[dict[str, str]]:
-    """Return placeholder slot statistics."""
-    return []
+@router.get("/overview")
+async def stats_overview() -> dict[str, Any]:
+    """Return placeholder statistics snapshot."""
+    return {"window_minutes": 60, "system": {}, "slots": []}
