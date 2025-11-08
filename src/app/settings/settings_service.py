@@ -1,14 +1,123 @@
 """Manage global application settings."""
 
-from dataclasses import dataclass
+from __future__ import annotations
+
+import hashlib
+import json
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any
+
+from ..config import AppConfig
+from ..ingest.ingest_service import IngestService
+from .settings_repository import SettingsRepository
 
 
 @dataclass(slots=True)
 class SettingsService:
-    """Provide read/write access to global settings (stub)."""
+    """Provide read/write access to global settings stored in DB."""
 
-    repo: "SettingsRepository"
+    repo: SettingsRepository
+    ingest_service: IngestService
+    config: AppConfig
+    _cache: dict[str, str] = field(default_factory=dict)
+    _snapshot: dict[str, Any] | None = None
 
-    def read(self) -> dict:
-        """Return settings dictionary."""
-        return self.repo.read()
+    def load(self) -> dict[str, Any]:
+        """Return current snapshot merged with defaults and apply runtime settings."""
+        store = self.repo.read_all()
+        self._cache = store
+        snapshot = self._hydrate(store)
+        self._apply_runtime(snapshot)
+        self._snapshot = snapshot
+        return snapshot
+
+    def snapshot(self) -> dict[str, Any]:
+        """Return cached snapshot, loading from storage if necessary."""
+        if self._snapshot is None:
+            return self.load()
+        return self._snapshot
+
+    def update(self, payload: dict[str, Any], actor: str | None = None) -> dict[str, Any]:
+        """Persist changes (sync_response_seconds, result_ttl_hours, passwords, provider keys)."""
+        store = self.repo.read_all()
+
+        updates: dict[str, str] = {}
+
+        if (value := payload.get("sync_response_seconds")) is not None:
+            updates["sync_response_seconds"] = str(value)
+
+        if (value := payload.get("result_ttl_hours")) is not None:
+            updates["result_ttl_hours"] = str(value)
+
+        if (password := payload.get("ingest_password")):
+            hashed = hashlib.sha256(password.encode("utf-8")).hexdigest()
+            updates["ingest_password_hash"] = hashed
+            updates["ingest_password_rotated_at"] = datetime.utcnow().isoformat()
+            updates["ingest_password_rotated_by"] = actor or "admin-ui"
+
+        if (provider_keys := payload.get("provider_keys")):
+            existing = json.loads(store.get("provider_keys", "{}") or "{}")
+            now = datetime.utcnow().isoformat()
+            for provider, key in provider_keys.items():
+                existing[provider] = {"value": key, "updated_at": now}
+            updates["provider_keys"] = json.dumps(existing)
+
+        if updates:
+            self.repo.bulk_upsert(updates, updated_by=actor)
+
+        merged = self.repo.read_all()
+        self._cache = merged
+        snapshot = self._hydrate(merged)
+        self._apply_runtime(snapshot)
+        self._snapshot = snapshot
+        return snapshot
+
+    def _hydrate(self, store: dict[str, str]) -> dict[str, Any]:
+        def int_or_default(key: str, default: int) -> int:
+            try:
+                return int(store.get(key, default))
+            except (TypeError, ValueError):
+                return default
+
+        sync_response_seconds = int_or_default("sync_response_seconds", self.config.sync_response_seconds)
+        result_ttl_hours = int_or_default("result_ttl_hours", self.config.result_ttl_hours)
+        ingest_password_rotated_at = store.get("ingest_password_rotated_at")
+        ingest_password_rotated_by = store.get("ingest_password_rotated_by")
+
+        provider_keys_raw = store.get("provider_keys", "{}") or "{}"
+        try:
+            provider_store = json.loads(provider_keys_raw)
+        except json.JSONDecodeError:
+            provider_store = {}
+
+        provider_statuses: dict[str, dict[str, Any]] = {}
+        for name, data in provider_store.items():
+            provider_statuses[name] = {
+                "configured": bool(data.get("value")),
+                "updated_at": _parse_datetime(data.get("updated_at")),
+            }
+
+        return {
+            "sync_response_seconds": sync_response_seconds,
+            "result_ttl_hours": result_ttl_hours,
+            "ingest_password_rotated_at": _parse_datetime(ingest_password_rotated_at),
+            "ingest_password_rotated_by": ingest_password_rotated_by,
+            "provider_keys": provider_statuses,
+        }
+
+    def _apply_runtime(self, snapshot: dict[str, Any]) -> None:
+        """Propagate stored values to services/config so API reflects real state."""
+        self.ingest_service.sync_response_seconds = snapshot["sync_response_seconds"]
+        self.ingest_service.result_ttl_hours = snapshot["result_ttl_hours"]
+        self.config.sync_response_seconds = snapshot["sync_response_seconds"]
+        self.config.result_ttl_hours = snapshot["result_ttl_hours"]
+
+
+def _parse_datetime(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        return None

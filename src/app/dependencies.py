@@ -17,6 +17,12 @@ from .repositories.job_history_repository import JobHistoryRepository
 from .repositories.media_object_repository import MediaObjectRepository
 from .slots.slots_repository import SlotRepository
 from .slots.slots_api import router as slots_router
+from .settings.settings_api import router as settings_router
+from .settings.settings_repository import SettingsRepository
+from .settings.settings_service import SettingsService
+from .stats.stats_api import router as stats_router
+from .stats.stats_repository import StatsRepository
+from .stats.stats_service import StatsService
 
 
 def include_routers(app: FastAPI, config: AppConfig) -> None:
@@ -44,15 +50,28 @@ def include_routers(app: FastAPI, config: AppConfig) -> None:
         provider_factory=lambda provider_name: create_driver(provider_name, media_repo=media_repo),
     )
 
+    settings_repo = SettingsRepository(config.session_factory)
+    settings_service = SettingsService(repo=settings_repo, ingest_service=ingest_service, config=config)
+    settings_service.load()
+    stats_repo = StatsRepository(config.session_factory)
+    stats_service = StatsService(repo=stats_repo, media_paths=config.media_paths)
+
     app.state.config = config
     app.state.ingest_service = ingest_service
     app.state.result_store = result_store
     app.state.temp_store = temp_store
+    app.state.slot_repo = slot_repo
+    app.state.job_repo = job_repo
+    app.state.media_repo = media_repo
+    app.state.settings_service = settings_service
+    app.state.stats_service = stats_service
 
     public_media_service = PublicMediaService(media_repo=media_repo)
     public_result_service = PublicResultService(job_repo=job_repo)
 
     app.include_router(ingest_router)
     app.include_router(slots_router)
+    app.include_router(settings_router)
+    app.include_router(stats_router)
     app.include_router(build_public_media_router(public_media_service))
     app.include_router(build_public_results_router(public_result_service))

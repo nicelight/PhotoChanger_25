@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any
 
 
@@ -18,6 +19,7 @@ class Slot:
     version: int = 1
     updated_by: str | None = None
     template_media: list["SlotTemplateMedia"] = field(default_factory=list)
+    updated_at: datetime | None = None
 
 
 @dataclass(slots=True)
