@@ -19,6 +19,7 @@ spec/docs:
 
 runbooks:
   cron_cleanup: "docs/runbooks/cron_cleanup.md (2025-11-06)"
+  stats_ui: "docs/runbooks/stats_ui_local.md (2025-11-09)"
 
 memory:
   mission: 2025-10-31

@@ -155,13 +155,15 @@ updated: 2025-11-09
       [x] T PHC-2.1.3.3 — Реализовать `GET /api/settings` (агрегация TTL/T_sync/password metadata)  
       [x] T PHC-2.1.3.4 — Реализовать `PUT /api/settings` (sync_response_seconds, result_ttl_hours, ingest_password, provider_keys)  
       [x] T PHC-2.1.3.5 — Unit/contract тесты и обновление OpenAPI/PRD для админских API  
-  [x] FEAT PHC-2.2 — Просмотр статистики и графики  
+  [~] FEAT PHC-2.2 — Просмотр статистики и графики  
     [x] US PHC-2.2.GOV — Governance & Discovery  
       [x] T PHC-2.2.GOV.1 — REFLECT — сформулировать требования к метрикам SLA и визуализациям страницы статистики  
       [x] T PHC-2.2.GOV.2 — CONSULT — утвердить формат `/api/stats/slots` и набор графиков/таблиц у тимлида  
     [x] US PHC-2.2.1 — API и UI статистики слотов  
       [x] T PHC-2.2.1.1 — REST `/api/stats/slots`
       [x] T PHC-2.2.1.2 — UI-графики и таблицы SLA  
+    [ ] US PHC-2.2.2 — Тесты UI статистики  
+      [ ] T PHC-2.2.2.1 — Добавить e2e сценарий `/ui/stats` (Playwright/Cypress, happy-path обновление данных)  
   [ ] FEAT PHC-2.3 — Авторизация админов (JWT)  
     [ ] T PHC-2.3.1 — REFLECT — описать требования к JWT-слою (аккаунты, срок жизни токена, области доступа)  
     [ ] T PHC-2.3.2 — CONSULT — утвердить подход к аутентификации и перечень защищаемых эндпоинтов  

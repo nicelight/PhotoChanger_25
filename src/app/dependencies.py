@@ -1,6 +1,9 @@
 ﻿"""Dependency wiring helpers."""
 
+from pathlib import Path
+
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from .config import AppConfig
 from .ingest.ingest_api import router as ingest_router
@@ -23,6 +26,10 @@ from .settings.settings_service import SettingsService
 from .stats.stats_api import router as stats_router
 from .stats.stats_repository import StatsRepository
 from .stats.stats_service import StatsService
+from .ui.stats_router import router as ui_stats_router
+
+
+FRONTEND_ROOT = Path(__file__).resolve().parents[2] / "frontend"
 
 
 def include_routers(app: FastAPI, config: AppConfig) -> None:
@@ -73,5 +80,13 @@ def include_routers(app: FastAPI, config: AppConfig) -> None:
     app.include_router(slots_router)
     app.include_router(settings_router)
     app.include_router(stats_router)
+    app.include_router(ui_stats_router)
     app.include_router(build_public_media_router(public_media_service))
     app.include_router(build_public_results_router(public_result_service))
+
+    if FRONTEND_ROOT.exists():
+        app.mount(
+            "/ui/static",
+            StaticFiles(directory=FRONTEND_ROOT),
+            name="ui-static",
+        )

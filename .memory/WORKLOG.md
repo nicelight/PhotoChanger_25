@@ -19,6 +19,9 @@ updated: 2025-11-09
 - 2025-11-09 06:25 — Проанализировал требования T PHC-2.2.1.2: страница статистики должна оставаться статическим HTML/Vanilla JS, палитра — по образцу `frontend/slots/template.html`, данные приходят из `/api/stats/overview` и `/api/stats/slots`, графики разрешены в виде лёгких бар-чартов без внешних библиотек.
 - 2025-11-09 06:40 — Создал `frontend/stats/index.html` + `assets/stats.css`: переиспользовал стеклянный фон, добавил блоки с глобальными агрегатами, таблицей SLA и секцией графиков; формы позволяют выбирать окно и запускать обновление.
 - 2025-11-09 06:55 — Написал `frontend/stats/assets/stats.js`: fetch обоих эндпоинтов, отображение KPI, форматирование чисел/дат, обработка ошибок и простые визуализации долей успехов/таймаутов; задействованы существующие стили, без сторонних зависимостей.
+- 2025-11-09 07:05 — Подключил статическую выдачу `/ui/stats`: создан `stats_router`, смонтирован `/ui/static` для каталога `frontend`, обновлён HTML (абсолютные пути), добавлен unit-тест маршрута.
+- 2025-11-09 07:15 — Описал runbook `docs/runbooks/stats_ui_local.md` (пререквизиты, запуск uvicorn, проверка API/страницы, трблшутинг).
+- 2025-11-09 07:18 — Добавил в Kanban `US PHC-2.2.2` → `T PHC-2.2.2.1` (e2e тест `/ui/stats`), обновлены `.memory/TASKS.md`, `.memory/INDEX.yaml`, `.memory/ASKS.md`, `.memory/PROGRESS.md`.
 
 ## FEAT PHC-2.1 — Kickoff (2025-11-09)
 - 2025-11-09 02:16 — Перечитал `.memory/MISSION.md`, `.memory/CONTEXT.md`, `.memory/TASKS.md`, `.memory/ASKS.md`, `.memory/DECISIONS.md`, `.memory/USECASES.md`, `.memory/INDEX.yaml` перед продолжением FEAT PHC-2.1.
