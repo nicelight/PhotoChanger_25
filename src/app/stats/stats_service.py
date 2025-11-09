@@ -62,13 +62,19 @@ class StatsService:
     @staticmethod
     def _augment_slot_metrics(slot: dict[str, Any]) -> dict[str, Any]:
         enriched = dict(slot)
-        total_jobs = enriched.get("jobs_last_window", 0) or 0
+        total_jobs_started = enriched.get("jobs_last_window", 0) or 0
+        completed_jobs = enriched.get("completed_last_window")
+        if completed_jobs is None:
+            completed_jobs = total_jobs_started
+        completed_jobs = completed_jobs or 0
         success = enriched.get("success_last_window", 0) or 0
         timeouts = enriched.get("timeouts_last_window", 0) or 0
-        if total_jobs > 0:
-            enriched["success_rate"] = round(success / total_jobs, 4)
-            enriched["timeout_rate"] = round(timeouts / total_jobs, 4)
+        if completed_jobs > 0:
+            enriched["success_rate"] = round(success / completed_jobs, 4)
+            enriched["timeout_rate"] = round(timeouts / completed_jobs, 4)
         else:
             enriched["success_rate"] = 0.0
             enriched["timeout_rate"] = 0.0
+        enriched["completed_last_window"] = completed_jobs
+        enriched["jobs_last_window"] = total_jobs_started
         return enriched
