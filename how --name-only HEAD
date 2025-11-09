@@ -1,0 +1,1416 @@
+* [33m952326c[m[33m ([m[1;34mgrafted[m[33m, [m[1;36mHEAD[m[33m -> [m[1;32mcode-review-consistency-logic[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m 1
+* [33meeba55d[m[33m ([m[1;31morigin/1-aa[m[33m)[m Align slot success rates with completion counts (#324)
+[31m|[m * [33ma4ed66a[m[33m ([m[1;31morigin/codex/fix-high-priority-bug-in-sla-metrics[m[33m)[m Align slot success rates with completion counts
+[31m|[m[31m/[m  
+* [33m35759ae[m Add slot-level SLA metrics and stats dashboard UI
+* [33mb7fc87c[m Add governance tasks and worklog for stats feature
+* [33m7ba0df9[m Add migration for job source and fix slot test overrides (#322)
+[32m|[m *   [33m9ea3e59[m[33m ([m[1;31morigin/codex/github-mention-add-migration-for-job-source-and-fix-test-ov[m[33m)[m Merge branch 'main' into codex/github-mention-add-migration-for-job-source-and-fix-test-ov
+[32m|[m [33m|[m[32m\[m  
+[32m|[m [33m|[m[32m/[m  
+[32m|[m[32m/[m[33m|[m   
+* [33m|[m [33m40479a2[m Add python-multipart dependency for admin test-run (#321)
+[34m|[m * [33mfd7b04c[m Add migration for job source and fix slot test overrides
+[34m|[m [34m|[m * [33m0b0ce32[m[33m ([m[1;31morigin/codex/github-mention-api-slots-api-settings[m[33m)[m Add python-multipart dependency for admin test-run
+[34m|[m [34m|[m[34m/[m  
+[34m|[m[34m/[m[34m|[m   
+* [34m|[m [33mc7667c8[m Api slots api settings (#320)
+[35m|[m [34m|[m *   [33m3f57ef6[m[33m ([m[1;31morigin/api-slots-api-settings[m[33m)[m Merge branch 'main' into api-slots-api-settings
+[35m|[m [34m|[m [36m|[m[35m\[m  
+[35m|[m [34m|[m[35m_[m[36m|[m[35m/[m  
+[35m|[m[35m/[m[34m|[m [36m|[m   
+* [34m|[m [36m|[m [33m229eb0c[m[33m ([m[1;31morigin/api-stats[m[33m)[m Implement admin CRUD API for slots and settings (#318)
+[1;31m|[m [34m|[m * [33m3ebfa5b[m Sync runtime settings with SettingsService snapshot
+[1;31m|[m [34m|[m * [33ma9f2421[m Update TASKS.md
+[1;31m|[m [34m|[m * [33m55f4179[m 1
+[1;31m|[m [34m|[m * [33mc3508da[m Default job history timestamps to None (#319)
+[1;31m|[m [34m|[m [1;31m|[m * [33m11a5f0c[m[33m ([m[1;31morigin/codex/fix-issues-from-codex-review-for-pr-#318[m[33m)[m Default job history timestamps to None
+[1;31m|[m [34m|[m [1;31m|[m[1;31m/[m  
+[1;31m|[m [34m|[m * [33m56a8e5a[m Implement admin CRUD API for slots and settings
+[1;31m|[m [34m|[m[1;31m/[m  
+[1;31m|[m[1;31m/[m[34m|[m   
+* [34m|[m   [33mff3f21d[m Merge branch 'main' of https://github.com/nicelight/PhotoChanger_25
+[1;33m|[m[1;34m\[m [34m\[m  
+[1;33m|[m * [34m|[m [33m13af2c0[m Refactor admin test-run endpoint with slot_payload overrides (#317)
+[1;33m|[m [34m|[m[34m/[m  
+* [34m/[m [33mdcf0d8a[m Update TASKS.md
+[34m|[m[34m/[m  
+[34m|[m * [33m5f03c81[m[33m ([m[1;31morigin/crud--2[m[33m)[m Refactor admin test-run endpoint with slot_payload overrides
+[34m|[m[34m/[m  
+* [33m7d390fa[m Crud  1 (#314)
+[1;35m|[m * [33mc4fff93[m[33m ([m[1;31morigin/crud--1[m[33m)[m Add migration for job source and fix test overrides (#316)
+[1;35m|[m [1;36m|[m *   [33m4578d07[m[33m ([m[1;31morigin/codex/fix-critical-and-high-priority-bugs-in-crud-1[m[33m)[m Merge branch 'crud--1' into codex/fix-critical-and-high-priority-bugs-in-crud-1
+[1;35m|[m [1;36m|[m [31m|[m[1;36m\[m  
+[1;35m|[m [1;36m|[m [31m|[m[1;36m/[m  
+[1;35m|[m [1;36m|[m[1;36m/[m[31m|[m   
+[1;35m|[m * [31m|[m [33m6a378de[m Add migration for job_history source and reapply overrides (#315)
+[1;35m|[m [32m|[m * [33m5762537[m Add migration for job source and fix test overrides
+[1;35m|[m [32m|[m[32m/[m  
+[1;35m|[m [32m|[m * [33mf07c831[m[33m ([m[1;31morigin/codex/fix-codex-review-issues-for-crud-1[m[33m)[m Add migration for job_history source and reapply overrides
+[1;35m|[m [32m|[m[32m/[m  
+[1;35m|[m * [33m5e7965e[m Refactor frontend slot UI to static HTML and shared assets
+[1;35m|[m * [33me34ee6a[m Add admin test-run endpoint and job source tracking
+[1;35m|[m[1;35m/[m  
+* [33mce92fc7[m Refactor slot page to use Vanilla JS and Fetch API (#313)
+[33m|[m * [33m8eaca93[m[33m ([m[1;31morigin/ROUTERS_1[m[33m)[m Refactor slot page to use Vanilla JS and Fetch API
+[33m|[m[33m/[m  
+* [33m11361aa[m[33m ([m[1;31morigin/CRUD_1[m[33m)[m Add admin API specs and stats overview endpoint
+* [33me7cdced[m 123
+* [33m959647e[m 111 (#311)
+[34m|[m * [33m4c08346[m[33m ([m[1;31morigin/results_EndPoint[m[33m)[m Fix cleanup_media CLI argument default (#312)
+[34m|[m [35m|[m * [33m1c41d93[m[33m ([m[1;31morigin/codex/fix-cli-args-handling-in-cleanup_media[m[33m)[m Fix cleanup_media CLI argument default
+[34m|[m [35m|[m[35m/[m  
+[34m|[m * [33m413d1bc[m 111
+[34m|[m[34m/[m  
+* [33me099447[m[33m ([m[1;31morigin/444[m[33m)[m 1
+* [33m0792d53[m 2
+* [33md6fd967[m 1
+*   [33m73d0e8e[m Merge branch 'main' of https://github.com/nicelight/PhotoChanger_25
+[1;31m|[m[1;32m\[m  
+[1;31m|[m * [33m4b8d15d[m 23Turbotext implementation (#309)
+[1;31m|[m [1;32m|[m * [33m176e9ce[m[33m ([m[1;31morigin/Turbotext_implementation[m[33m)[m Restrict public media access to provider scope (#310)
+[1;31m|[m [1;32m|[m [1;33m|[m * [33m97bb040[m[33m ([m[1;31morigin/codex/fix-high-priority-bug-in-public-media-service[m[33m)[m Restrict public media access to provider scope
+[1;31m|[m [1;32m|[m [1;33m|[m[1;33m/[m  
+[1;31m|[m [1;32m|[m * [33m32a860d[m 2
+[1;31m|[m [1;32m|[m[1;31m/[m  
+[1;31m|[m[1;31m/[m[1;32m|[m   
+* [1;32m|[m [33m874a310[m 1
+[1;32m|[m[1;32m/[m  
+*   [33m9c8133d[m Merge branch 'Roo_started'
+[1;35m|[m[1;36m\[m  
+[1;35m|[m * [33mc603b2f[m[33m ([m[1;31morigin/Roo_started[m[33m)[m 1
+[1;35m|[m * [33m550e62b[m 3
+[1;35m|[m * [33mf311f93[m 1
+* [1;36m|[m [33m3369bec[m Roo started (#307)
+[1;36m|[m[1;36m/[m  
+* [33maffa1a9[m Codex last one
+* [33ma3335a0[m 44-44
+* [33m4fdb85a[m RESTORED_FROM___ZIP (#306)
+* [33m69411b6[m RESTORED_FROM___ZIP (#305)
+[1;36m|[m *   [33m5c3fc16[m[33m ([m[1;31morigin/created_from_old[m[33m)[m Merge branch 'main' into created_from_old
+[1;36m|[m [31m|[m[1;36m\[m  
+[1;36m|[m [31m|[m[1;36m/[m  
+[1;36m|[m[1;36m/[m[31m|[m   
+* [31m|[m [33mc333fde[m 1
+[32m|[m * [33m879763e[m RESTORED_FROM___ZIP
+[32m|[m[32m/[m  
+* [33m6b6a3a7[m 555-555
+* [33ma6c2b91[m откат к старому коммиту
+[32m|[m * [33mb113c14[m[33m ([m[1;31morigin/4-11-25-4-02[m[33m)[m 1.2.0.6
+[32m|[m * [33m0c8444a[m 2
+[32m|[m [33m|[m * [33m6404ce3[m[33m ([m[1;31morigin/First-self-PR[m[33m)[m Guard slot schema migration for SQLite (#303)
+[32m|[m [33m|[m [34m|[m * [33m5b722f1[m[33m ([m[1;31morigin/codex/fix-high-priority-bug-in-db_init.py[m[33m)[m Guard slot schema migration for SQLite
+[32m|[m [33m|[m [34m|[m[34m/[m  
+[32m|[m [33m|[m * [33m6f8c507[m test
+[32m|[m [33m|[m[33m/[m  
+[32m|[m * [33md900440[m 222
+[32m|[m * [33m90a83a6[m 54321
+[32m|[m * [33mc0ae665[m 77777
+[32m|[m * [33mb201f1c[m[33m ([m[1;31morigin/restored_after_bad_gitting[m[33m)[m TASKS.md processed
+[32m|[m * [33m231dc33[m 5
+[32m|[m *   [33mf30b437[m Merge branch 'main' of https://github.com/nicelight/PhotoChanger_25
+[32m|[m [36m|[m[1;31m\[m  
+[32m|[m [36m|[m * [33me11f91d[m Revise US PHC-1.1.2 planning after full spec review (#301)
+[32m|[m * [1;31m|[m [33me3da687[m 4
+[32m|[m * [1;31m|[m [33m0931ab9[m 4
+[32m|[m * [1;31m|[m [33ma56ec69[m 3
+[32m|[m [1;31m|[m[1;31m/[m  
+[32m|[m * [33m3c0b5aa[m 2
+[32m|[m * [33mc5b8035[m 1
+[32m|[m [1;31m|[m * [33med13d43[m[33m ([m[1;31morigin/codex/review-us-phc-1.1.2-complexity[m[33m)[m Revise US PHC-1.1.2 planning after full spec review
+[32m|[m [1;31m|[m[1;31m/[m  
+[32m|[m * [33m2d0c842[m Merge branch 'main' of https://github.com/nicelight/PhotoChanger_25
+[32m|[m[32m/[m[1;34m|[m 
+[32m|[m * [33m67025ed[m Add UC6 and cleanup diagrams to SDD (#300)
+* [1;34m|[m [33m7267ed7[m 1
+[1;34m|[m[1;34m/[m  
+[1;34m|[m * [33m124bbac[m[33m ([m[1;31morigin/codex/verify-consistency-and-integrity-of-tasks.md[m[33m)[m Add UC6 and cleanup diagrams to SDD
+[1;34m|[m[1;34m/[m  
+* [33m5317bea[m 1
+* [33m6db69dc[m 1
+* [33ma7b205c[m 1
+* [33me9efde6[m 1
+* [33m186f7dd[m[33m ([m[1;31morigin/Iteration_2-KISS[m[33m)[m 1
+* [33mbed69c2[m 1
+* [33m52d2901[m 1
+* [33mc0ffbb5[m 1
+* [33m4541b69[m[33m ([m[1;33mtag: [m[1;33mCOMPLEX_TOO_MUCH[m[33m)[m Update agents.md
+* [33mf75fa82[m Sort WORKLOG entries chronologically (#299)
+[1;35m|[m * [33m911b494[m[33m ([m[1;31morigin/codex/fix-log-ordering-by-date[m[33m)[m Sort WORKLOG entries chronologically
+[1;35m|[m[1;35m/[m  
+* [33m3186e0a[m Document review of task 4.5.9 (#298)
+[1;36m|[m * [33m2591ccf[m[33m ([m[1;31morigin/codex/verify-task-4.5.9-and-update-statuses[m[33m)[m Document review of task 4.5.9
+[1;36m|[m[1;36m/[m  
+* [33m24df172[m Add admin settings tests (#297)
+[31m|[m * [33me7f6172[m[33m ([m[1;31morigin/codex/update-.memory/tasks.md-for-task-4.5.9c[m[33m)[m Add admin settings tests
+[31m|[m[31m/[m  
+* [33me309d94[m Implement admin settings endpoints (#296)
+[32m|[m * [33ma24975a[m[33m ([m[1;31morigin/codex/implement-tasks-4.5.9a-and-4.5.9b[m[33m)[m Implement admin settings endpoints
+[32m|[m[32m/[m  
+* [33m4cd5080[m Document verification of task 4.5.8 (#295)
+[33m|[m * [33mdd7dac6[m[33m ([m[1;31morigin/codex/verify-task-4.5.8-completion[m[33m)[m Document verification of task 4.5.8
+[33m|[m[33m/[m  
+* [33m492ff2c[m Implement bearer authentication guard for admin API (#294)
+* [33mb64f791[m Update TASKS.md
+[34m|[m * [33m4eb48e9[m[33m ([m[1;31morigin/codex/implement-task-4.5.8-in-.memory/tasks.md[m[33m)[m Implement bearer authentication guard for admin API
+[34m|[m[34m/[m  
+*   [33m1da168a[m Merge pull request #289 from nicelight/codex/update-.memory/tasks.md-for-task-4.5.7b
+[36m|[m[1;31m\[m  
+[36m|[m *   [33me1898d3[m[33m ([m[1;31morigin/codex/update-.memory/tasks.md-for-task-4.5.7b[m[33m)[m Merge branch 'main' into codex/update-.memory/tasks.md-for-task-4.5.7b
+[36m|[m [1;32m|[m[36m\[m  
+[36m|[m [1;32m|[m[36m/[m  
+[36m|[m[36m/[m[1;32m|[m   
+* [1;32m|[m   [33m8d872b0[m Merge pull request #288 from nicelight/codex/update-.memory/tasks.md-for-task-4.5.7c
+[1;34m|[m[1;35m\[m [1;32m\[m  
+[1;34m|[m [1;35m|[m * [33m7eeed43[m Implement admin login flow tests
+[1;34m|[m [1;35m|[m[1;34m/[m  
+[1;34m|[m[1;34m/[m[1;35m|[m   
+[1;34m|[m [1;35m|[m * [33m580d76a[m[33m ([m[1;31morigin/codex/fix-codex-review-issues-in-admin-login-tests[m[33m)[m Restore auth error expectations to contract values (#293)
+[1;34m|[m [1;35m|[m [1;36m|[m * [33m0ae114c[m[33m ([m[1;31morigin/codex/fix-auth-tests-to-align-with-contract-spec[m[33m)[m Restore auth error expectations to contract values
+[1;34m|[m [1;35m|[m [1;36m|[m[1;36m/[m  
+[1;34m|[m [1;35m|[m * [33me4700d0[m Align auth tests with current error payloads
+[1;34m|[m [1;35m|[m [31m|[m * [33mb6af8b9[m[33m ([m[1;31morigin/codex/fix-integration-tests-for-admin-login[m[33m)[m Align auth tests with current error payloads (#292)
+[1;34m|[m [1;35m|[m [31m|[m[31m/[m  
+[1;34m|[m [1;35m|[m * [33me82319d[m Align login tests with contract error codes
+[1;34m|[m [1;35m|[m[1;35m/[m  
+[1;34m|[m [1;35m|[m * [33m832049e[m[33m ([m[1;31morigin/codex/update-.memory/tasks.md-for-task-4.5.7c[m[33m)[m Align login tests with contract error codes (#291)
+[1;34m|[m [1;35m|[m[1;35m/[m  
+[1;34m|[m * [33mf24e1d6[m Add integration tests for admin login
+[1;34m|[m[1;34m/[m  
+* [33m679ba4e[m Update TASKS.md
+* [33m31b82d6[m Implement admin login error responses and caching headers (#287)
+* [33m8f130c2[m Update agents.md
+* [33m0faca3e[m Update PROGRESS.md
+[33m|[m * [33m99f9266[m[33m ([m[1;31morigin/codex/implement-/api/login-with-jwt-authentication[m[33m)[m Restore invalid login error payload contract (#290)
+[33m|[m [34m|[m * [33mee395fc[m[33m ([m[1;31morigin/codex/fix-login-error-payload-alignment-issue[m[33m)[m Restore invalid login error payload contract
+[33m|[m [34m|[m[34m/[m  
+[33m|[m * [33m6892894[m Implement admin login error responses and caching headers
+[33m|[m[33m/[m  
+* [33m3356b7b[m Implement admin JWT authentication (#286)
+*   [33mb58f764[m Merge branch 'main' of https://github.com/nicelight/PhotoChanger_25
+[36m|[m[1;31m\[m  
+* [1;31m|[m [33m57118a2[m 1
+[1;31m|[m [1;31m|[m * [33ma6c3e10[m[33m ([m[1;31morigin/codex/implement-/api/login-for-jwt-authentication[m[33m)[m Implement admin JWT authentication
+[1;31m|[m [1;31m|[m[1;31m/[m  
+[1;31m|[m * [33m74ce2c1[m Define admin login contract and tests (#282)
+[1;31m|[m * [33mb632f13[m Handle provider errors without retrying (#281)
+[1;31m|[m [1;32m|[m * [33m941ff45[m[33m ([m[1;31morigin/codex/fix-critical-and-high-priority-bugs[m[33m)[m Parse pytest production DSN opt-in flag as boolean (#285)
+[1;31m|[m [1;32m|[m [1;33m|[m * [33m9895a1a[m[33m ([m[1;31morigin/codex/fix-guard-for-pytest-dsn-defaults[m[33m)[m Parse pytest production DSN opt-in flag as boolean
+[1;31m|[m [1;32m|[m [1;33m|[m[1;33m/[m  
+[1;31m|[m [1;32m|[m * [33me3e5543[m Guard tests from production DSN and isolate db sensitive suite
+[1;31m|[m [1;32m|[m [1;34m|[m * [33me8a9704[m[33m ([m[1;31morigin/codex/verify-postgresql-compatibility-after-sqlite-removal[m[33m)[m Handle transient HTTP client exceptions from optional libraries (#284)
+[1;31m|[m [1;32m|[m [1;34m|[m [1;35m|[m * [33mfcbec76[m[33m ([m[1;31morigin/codex/fix-retry-logic-for-provider-submissions[m[33m)[m Handle transient HTTP client exceptions from optional libraries
+[1;31m|[m [1;32m|[m [1;34m|[m [1;35m|[m[1;35m/[m  
+[1;31m|[m [1;32m|[m [1;34m|[m * [33mb44db98[m Handle provider errors without retrying
+[1;31m|[m [1;32m|[m [1;34m|[m[1;32m/[m  
+[1;31m|[m [1;32m|[m[1;32m/[m[1;34m|[m   
+[1;31m|[m [1;32m|[m [1;34m|[m * [33m6425f45[m[33m ([m[1;31morigin/codex/refactor-tests-for-production-database-use[m[33m)[m Guard tests from production DSN and isolate db sensitive suite (#283)
+[1;31m|[m [1;32m|[m [1;34m|[m[1;34m/[m  
+[1;31m|[m [1;32m|[m * [33m4605e80[m Use production database for tests and isolate schema changes
+[1;31m|[m [1;32m|[m [31m|[m * [33maca863e[m[33m ([m[1;31morigin/codex/implement-post-/api/login-contract-for-admin-api[m[33m)[m Define admin login contract and tests
+[1;31m|[m [1;32m|[m [31m|[m[1;32m/[m  
+[1;31m|[m [1;32m|[m[1;32m/[m[31m|[m   
+[1;31m|[m * [31m|[m [33m4ca93e2[m Use production database for tests and isolate schema changes (#280)
+[1;31m|[m * [31m|[m [33mcdb0788[m Handle binary payloads in queue worker (#277)
+[1;31m|[m [31m|[m[31m/[m  
+[1;31m|[m [31m|[m * [33m4d6370e[m[33m ([m[1;31morigin/codex/switch-test-to-postgresql[m[33m)[m Fix stats repository test transaction ordering (#279)
+[1;31m|[m [31m|[m [33m|[m * [33m0441780[m[33m ([m[1;31morigin/codex/fix-high-priority-bug-in-postgresql-unit-test[m[33m)[m Fix stats repository test transaction ordering
+[1;31m|[m [31m|[m [33m|[m[33m/[m  
+[1;31m|[m [31m|[m * [33m09fd07f[m Switch stats repository unit test to PostgreSQL
+[1;31m|[m [31m|[m [34m|[m * [33mf748a6d[m[33m ([m[1;31morigin/codex/fix-inline-results-loss-in-finalize_job[m[33m)[m Persist inline preview removal to the queue (#278)
+[1;31m|[m [31m|[m [34m|[m [35m|[m * [33m81868ac[m[33m ([m[1;31morigin/codex/fix-high-priority-inline-previews-bug[m[33m)[m Persist inline preview removal to the queue
+[1;31m|[m [31m|[m [34m|[m [35m|[m[35m/[m  
+[1;31m|[m [31m|[m [34m|[m * [33m900274f[m Preserve inline preview during job finalization
+[1;31m|[m [31m|[m [34m|[m [36m|[m * [33m0ca15d1[m[33m ([m[1;31morigin/codex/update-queueworker-for-binary-payloads[m[33m)[m Handle binary payloads in queue worker
+[1;31m|[m [31m|[m [34m|[m[31m_[m[36m|[m[31m/[m  
+[1;31m|[m [31m|[m[31m/[m[34m|[m [36m|[m   
+[1;31m|[m * [34m|[m [36m|[m [33m3368542[m Preserve inline preview during job finalization (#276)
+[1;31m|[m * [34m|[m [36m|[m [33m3f80e09[m Add shared PostgreSQL DSN normalization utility (#275)
+[1;31m|[m * [34m|[m [36m|[m   [33m0250f19[m Merge pull request #274 from nicelight/codex/update-test_sqlalchemy_stats_repository-for-postgresql
+[1;31m|[m [36m|[m[1;33m\[m [34m\[m [36m\[m  
+[1;31m|[m [36m|[m [1;33m|[m[36m_[m[34m|[m[36m/[m  
+[1;31m|[m [36m|[m[36m/[m[1;33m|[m [34m|[m   
+[1;31m|[m [36m|[m * [34m|[m [33md87d4a7[m[33m ([m[1;31morigin/codex/update-test_sqlalchemy_stats_repository-for-postgresql[m[33m)[m Align stats repository test with migrated Postgres schema
+[1;31m|[m [36m|[m[36m/[m [34m/[m  
+[1;31m|[m * [34m/[m [33m3571504[m Switch stats repository unit test to PostgreSQL (#272)
+[1;31m|[m [34m|[m[34m/[m  
+[1;31m|[m [34m|[m * [33mc2fb55f[m[33m ([m[1;31morigin/codex/normalize-dsn-formats-for-postgresql[m[33m)[m Add shared PostgreSQL DSN normalization utility
+[1;31m|[m [34m|[m[34m/[m  
+[1;31m|[m [34m|[m * [33m1160639[m[33m ([m[1;31morigin/codex/test-project-functionality-after-removing-sqlite[m[33m)[m Refactor stats repository test to use Postgres
+[1;31m|[m [34m|[m[34m/[m  
+[1;31m|[m * [33mad7886b[m Update CONTEXT.md
+[1;31m|[m *   [33m6b17b0d[m Merge pull request #268 from nicelight/codex/assess-and-split-task-4.5.11-complexity
+[1;31m|[m [1;36m|[m[31m\[m  
+[1;31m|[m [1;36m|[m *   [33m9cca6fa[m[33m ([m[1;31morigin/codex/assess-and-split-task-4.5.11-complexity[m[33m)[m Merge branch 'main' into codex/assess-and-split-task-4.5.11-complexity
+[1;31m|[m [1;36m|[m [32m|[m[1;36m\[m  
+[1;31m|[m [1;36m|[m [32m|[m[1;36m/[m  
+[1;31m|[m [1;36m|[m[1;36m/[m[32m|[m   
+[1;31m|[m * [32m|[m [33m8d48405[m Require PostgreSQL for stats and repository tests (#267)
+[1;31m|[m [33m|[m * [33m0669a14[m Decompose template media admin task
+[1;31m|[m [33m|[m[33m/[m  
+[1;31m|[m * [33mf13dfae[m Decompose admin stats endpoints task (#265)
+[1;31m|[m [33m|[m * [33me15a354[m[33m ([m[1;31morigin/codex/fix-global-aggregate-upsert-for-null-slot_id[m[33m)[m Add unique index for processing log aggregate upserts (#271)
+[1;31m|[m [33m|[m [34m|[m * [33m4179cf9[m[33m ([m[1;31morigin/codex/fix-aggregate-upsert-issues-in-stats_repository[m[33m)[m Add unique index for processing log aggregate upserts
+[1;31m|[m [33m|[m [34m|[m[34m/[m  
+[1;31m|[m [33m|[m * [33me84e3ef[m Fix global aggregate upserts for null slot scope
+[1;31m|[m [33m|[m [35m|[m * [33m6f25874[m[33m ([m[1;31morigin/codex/remove-in-memory-sqlite-support-completely[m[33m)[m Handle libpq DSNs for async repository tests (#270)
+[1;31m|[m [33m|[m [35m|[m [36m|[m * [33m052e38b[m[33m ([m[1;31morigin/codex/fix-postgresql-dsn-handling-in-tests[m[33m)[m Handle libpq DSNs for async repository tests
+[1;31m|[m [33m|[m [35m|[m [36m|[m[36m/[m  
+[1;31m|[m [33m|[m [35m|[m * [33m4a5bbae[m Require PostgreSQL for stats and repository tests
+[1;31m|[m [33m|[m [35m|[m [1;31m|[m * [33ma06af7b[m[33m ([m[1;31morigin/codex/fix-concurrency-issue-in-stats-upsert[m[33m)[m Fix global aggregate upserts for null slot scope (#269)
+[1;31m|[m [33m|[m [35m|[m [1;31m|[m[35m/[m  
+[1;31m|[m [33m|[m [35m|[m[35m/[m[1;31m|[m   
+[1;31m|[m [33m|[m * [1;31m|[m [33m3263945[m Make aggregate upsert concurrency-safe
+[1;31m|[m [33m|[m [1;32m|[m [1;31m|[m * [33m6e4bbfb[m[33m ([m[1;31morigin/codex/fix-statistics-updates-in-cachedstatsservice[m[33m)[m Make aggregate upsert concurrency-safe (#266)
+[1;31m|[m [33m|[m [1;32m|[m [1;31m|[m[1;32m/[m  
+[1;31m|[m [33m|[m [1;32m|[m[1;32m/[m[1;31m|[m   
+[1;31m|[m [33m|[m * [1;31m|[m [33maf17985[m Fix stats aggregates after storing processing logs
+[1;31m|[m [33m|[m [1;33m|[m [1;31m|[m * [33m4e7ea18[m[33m ([m[1;31morigin/codex/evaluate-task-4.5.12-complexity[m[33m)[m Decompose admin stats endpoints task
+[1;31m|[m [33m|[m [1;33m|[m[33m_[m[1;31m|[m[33m/[m  
+[1;31m|[m [33m|[m[33m/[m[1;33m|[m [1;31m|[m   
+[1;31m|[m * [1;33m|[m [1;31m|[m [33m5745212[m Fix stats aggregates after storing processing logs (#264)
+[1;31m|[m * [1;33m|[m [1;31m|[m [33m54a8537[m Refine admin login task decomposition (#263)
+[1;31m|[m [1;31m|[m [1;33m|[m[1;31m/[m  
+[1;31m|[m [1;31m|[m[1;31m/[m[1;33m|[m   
+[1;31m|[m [1;31m|[m [1;33m|[m * [33m53729af[m[33m ([m[1;31morigin/codex/evaluate-task-complexity-in-tasks.md[m[33m)[m Refine admin login task decomposition
+[1;31m|[m [1;31m|[m [1;33m|[m[1;31m/[m  
+[1;31m|[m [1;31m|[m[1;31m/[m[1;33m|[m   
+[1;31m|[m * [1;33m|[m [33maab5f44[m Use app_config when bootstrapping dependencies (#262)
+[1;31m|[m [1;33m|[m[1;33m/[m  
+[1;31m|[m [1;33m|[m * [33m3b8cc82[m[33m ([m[1;31morigin/codex/fix-instances-of-config-to-app_config[m[33m)[m Use app_config when bootstrapping dependencies
+[1;31m|[m [1;33m|[m[1;33m/[m  
+[1;31m|[m * [33me80acfb[m chore: decompose admin settings tasks (#261)
+[1;31m|[m * [33mfccfff9[m chore: break down admin slot crud tasks (#260)
+[1;31m|[m * [33m0c0a231[m Fix worker startup config references (#259)
+[1;31m|[m * [33m60ce519[m docs: document optional dependencies for stats pipeline (#258)
+[1;31m|[m [1;36m|[m * [33m099edfd[m[33m ([m[1;31morigin/codex/review-task-4.5.9-complexity-and-split-if-needed[m[33m)[m chore: decompose admin settings tasks
+[1;31m|[m [1;36m|[m[1;36m/[m  
+[1;31m|[m [1;36m|[m * [33m07e09db[m[33m ([m[1;31morigin/codex/review-task-4.5.10-complexity[m[33m)[m chore: break down admin slot crud tasks
+[1;31m|[m [1;36m|[m[1;36m/[m  
+[1;31m|[m [1;36m|[m * [33m16a792e[m[33m ([m[1;31morigin/codex/review-code-for-logical-errors[m[33m)[m Fix worker startup config references
+[1;31m|[m [1;36m|[m[1;36m/[m  
+[1;31m|[m [1;36m|[m * [33mfe8e6c8[m[33m ([m[1;31morigin/codex/check-project-code-for-consistency[m[33m)[m docs: document optional dependencies for stats pipeline
+[1;31m|[m [1;36m|[m[1;36m/[m  
+[1;31m|[m * [33m54711f5[m Mark tasks as completed in TASKS.md
+[1;31m|[m * [33mdb085f1[m Update CONTEXT.md
+[1;31m|[m * [33mb4fdf7f[m Update quality policy to include KISS principle
+[1;31m|[m * [33m8ea50bc[m Harden tests against missing optional dependencies (#256)
+[1;31m|[m [34m|[m * [33mb068514[m[33m ([m[1;31morigin/codex/implement-processinglog-contract-and-validators[m[33m)[m Defer ProcessingLog validator initialisation (#257)
+[1;31m|[m [34m|[m [35m|[m * [33m6b7412e[m[33m ([m[1;31morigin/codex/fix-issues-from-codex-review-#256[m[33m)[m Defer ProcessingLog validator initialisation
+[1;31m|[m [34m|[m [35m|[m[35m/[m  
+[1;31m|[m [34m|[m * [33m4fb28ab[m Harden tests against missing optional dependencies
+[1;31m|[m [34m|[m[34m/[m  
+[1;31m|[m * [33m14ebcc1[m Add stats pipeline smoke test and stats config updates (#254)
+[1;31m|[m [36m|[m * [33mc0fa394[m[33m ([m[1;31morigin/codex/implement-smoke-test-for-stats-pipeline[m[33m)[m Fix worker pool config reference (#255)
+[1;31m|[m [36m|[m [1;31m|[m * [33m8bd102f[m[33m ([m[1;31morigin/codex/fix-critical-bug-in-app.py-startup[m[33m)[m Fix worker pool config reference
+[1;31m|[m [36m|[m [1;31m|[m[1;31m/[m  
+[1;31m|[m [36m|[m * [33m35d1f94[m Add stats pipeline smoke test and stats config updates
+[1;31m|[m [36m|[m[36m/[m  
+[1;31m|[m * [33m2d67365[m Use Postgres-backed stats by default (#253)
+[1;31m|[m * [33m9de7c0a[m Document Docker-based production deployment (#252)
+[1;31m|[m [1;32m|[m * [33me0e76fc[m[33m ([m[1;31morigin/codex/implement-default-postgres-cache-handling[m[33m)[m Use Postgres-backed stats by default
+[1;31m|[m [1;32m|[m[1;32m/[m  
+[1;31m|[m [1;32m|[m * [33me71ddcd[m[33m ([m[1;31morigin/codex/remove-kubernetes-references-from-project[m[33m)[m Document Docker-based production deployment
+[1;31m|[m [1;32m|[m[1;32m/[m  
+[1;31m|[m * [33m1cc82b3[m Implement stats publication for queue processing (#251)
+[1;31m|[m * [33m8624898[m Merge pull request #250 from nicelight/codex/analyze-memory-bank-logic-for-inconsistencies-6g69ms
+[1;31m|[m[1;31m/[m[1;36m|[m 
+[1;31m|[m *   [33m870fdca[m[33m ([m[1;31morigin/codex/analyze-memory-bank-logic-for-inconsistencies-6g69ms[m[33m)[m Merge branch 'main' into codex/analyze-memory-bank-logic-for-inconsistencies-6g69ms
+[1;31m|[m [31m|[m[1;31m\[m  
+[1;31m|[m [31m|[m[1;31m/[m  
+[1;31m|[m[1;31m/[m[31m|[m   
+[1;31m|[m * [33m754314a[m Align memory references with spec docs layout
+[1;31m|[m [32m|[m * [33md5d70e5[m[33m ([m[1;31morigin/codex/implement-processing-log-workflow[m[33m)[m Implement stats publication for queue processing
+[1;31m|[m [32m|[m[1;31m/[m  
+[1;31m|[m[1;31m/[m[32m|[m   
+* [32m|[m [33m863077b[m Update CONTEXT.md
+* [32m|[m [33mf09de63[m Update memory index metadata (#249)
+[32m|[m[32m/[m  
+[32m|[m * [33m72b4ecc[m[33m ([m[1;31morigin/codex/analyze-memory-bank-logic-for-inconsistencies[m[33m)[m Update memory index metadata
+[32m|[m[32m/[m  
+* [33m34f7f1d[m Wire cached stats service infrastructure (#248)
+[34m|[m * [33m922cbb5[m[33m ([m[1;31morigin/codex/add-cachedstatsservice-and-statsrepository-registration[m[33m)[m Wire cached stats service infrastructure
+[34m|[m[34m/[m  
+* [33m8b1ff2e[m Add cache invalidation coverage for stats recent results (#247)
+[35m|[m *   [33maae849f[m[33m ([m[1;31morigin/codex/implement-statsrepository-with-recent-results-method-8oqqjt[m[33m)[m Merge branch 'main' into codex/implement-statsrepository-with-recent-results-method-8oqqjt
+[35m|[m [36m|[m[35m\[m  
+[35m|[m [36m|[m[35m/[m  
+[35m|[m[35m/[m[36m|[m   
+* [36m|[m [33ma470da7[m Update TASKS.md
+* [36m|[m [33m7302475[m Implement stats repository recent results and caching (#246)
+[1;31m|[m * [33mb1a4f82[m Add cache invalidation coverage for stats recent results
+[1;31m|[m[1;31m/[m  
+[1;31m|[m * [33med06b18[m[33m ([m[1;31morigin/codex/implement-statsrepository-with-recent-results-method[m[33m)[m Implement stats repository recent results and caching
+[1;31m|[m[1;31m/[m  
+* [33mc5cdcee[m Add recent job results refresh for slot management (#245)
+[1;32m|[m * [33m41dd04c[m[33m ([m[1;31morigin/codex/add-method-to-get-recent-successful-jobs[m[33m)[m Add recent job results refresh for slot management
+[1;32m|[m[1;32m/[m  
+* [33m93d2445[m Reorder phase 4.5.6 ProcessingLog tasks (#244)
+[1;33m|[m * [33m9903493[m[33m ([m[1;31morigin/codex/review-processinglog-generation-locations[m[33m)[m Reorder phase 4.5.6 ProcessingLog tasks
+[1;33m|[m[1;33m/[m  
+* [33me126ed6[m chore: expand admin stats integration planning (#243)
+[1;34m|[m * [33m5708923[m[33m ([m[1;31morigin/codex/prepare-and-break-down-4.5.6-tasks[m[33m)[m chore: expand admin stats integration planning
+[1;34m|[m[1;34m/[m  
+* [33m26be482[m Add template media repository implementation (#242)
+[1;35m|[m * [33mfe9ae4f[m[33m ([m[1;31morigin/codex/execute-task-4.5.2b-in-.memory/tasks.md[m[33m)[m Add template media repository implementation
+[1;35m|[m[1;35m/[m  
+* [33me9c0aca[m Update task statuses for admin schema and repositories (#241)
+[1;36m|[m * [33m50860e1[m[33m ([m[1;31morigin/codex/check-and-mark-tasks-4.5.1,-4.5.2[m[33m)[m Update task statuses for admin schema and repositories
+[1;36m|[m[1;36m/[m  
+* [33m985836c[m Document SettingsService get_settings contract in specs (#240)
+[31m|[m *   [33mdfc7e83[m[33m ([m[1;31morigin/codex/refactor-settings_service-and-update-usage-wk7ipk[m[33m)[m Merge branch 'main' into codex/refactor-settings_service-and-update-usage-wk7ipk
+[31m|[m [32m|[m[31m\[m  
+[31m|[m [32m|[m[31m/[m  
+[31m|[m[31m/[m[32m|[m   
+* [32m|[m [33m2ebc581[m Refine SettingsService public interface (#239)
+[33m|[m * [33me8fe8d4[m Document SettingsService get_settings contract in specs
+[33m|[m[33m/[m  
+[33m|[m * [33m715f1ec[m[33m ([m[1;31morigin/codex/refactor-settings_service-and-update-usage[m[33m)[m Refine SettingsService public interface
+[33m|[m[33m/[m  
+* [33m8e25f50[m Update tasks with dataclass fix follow-up (#237)
+[34m|[m *   [33md1b1cbf[m[33m ([m[1;31morigin/codex/implement-task-4.5.3-in-tasks.md-zb2t79[m[33m)[m Merge branch 'main' into codex/implement-task-4.5.3-in-tasks.md-zb2t79
+[34m|[m [35m|[m[34m\[m  
+[34m|[m [35m|[m[34m/[m  
+[34m|[m[34m/[m[35m|[m   
+* [35m|[m [33m0bc9888[m Implement stats cache ttl separation (#236)
+[36m|[m * [33m364b48a[m Update tasks with dataclass fix follow-up
+[36m|[m [36m|[m * [33m126d8a8[m[33m ([m[1;31morigin/codex/complete-task-4.5.5-in-.memory/tasks.md[m[33m)[m Guard naive since datetimes when normalising stats range (#238)
+[36m|[m [36m|[m [1;31m|[m * [33me725abc[m[33m ([m[1;31morigin/codex/fix-high-priority-bug-in-stats.py[m[33m)[m Guard naive since datetimes when normalising stats range
+[36m|[m [36m|[m [1;31m|[m[1;31m/[m  
+[36m|[m [36m|[m * [33m9bb69a5[m Implement stats cache ttl separation
+[36m|[m [36m|[m[36m/[m  
+[36m|[m[36m/[m[36m|[m   
+* [36m|[m [33m1f3387c[m Implement slot service validation and tests (#235)
+[1;32m|[m [36m|[m * [33m6893efc[m[33m ([m[1;31morigin/codex/implement-task-4.5.4-in-.memory/tasks.md[m[33m)[m Implement slot service validation and tests
+[1;32m|[m [36m|[m[1;32m/[m  
+[1;32m|[m[1;32m/[m[36m|[m   
+* [36m|[m   [33mb3be631[m Merge pull request #233 from nicelight/codex/implement-task-4.5.3-in-tasks.md
+[36m|[m[1;35m\[m [36m\[m  
+[36m|[m [1;35m|[m[36m/[m  
+[36m|[m[36m/[m[1;35m|[m   
+[36m|[m [1;35m|[m * [33meaae0b5[m[33m ([m[1;31morigin/codex/implement-task-4.5.3-in-tasks.md[m[33m)[m Expose get_settings alias on SettingsService interface (#234)
+[36m|[m [1;35m|[m[1;35m/[m  
+[36m|[m [1;35m|[m * [33m2793150[m[33m ([m[1;31morigin/codex/fix-codex-review-issues-for-pr-#233[m[33m)[m Expose get_settings alias on SettingsService interface
+[36m|[m [1;35m|[m[1;35m/[m  
+[36m|[m * [33mf052d0a[m Add SettingsService interface and unify settings access
+[36m|[m[36m/[m  
+*   [33m569fc6c[m Merge pull request #232 from nicelight/codex/conduct-code-review-for-tasks-4.5.3-to-4.5.5
+[32m|[m[33m\[m  
+[32m|[m * [33m87b4380[m[33m ([m[1;31morigin/codex/conduct-code-review-for-tasks-4.5.3-to-4.5.5[m[33m)[m docs: confirm completion of settings service tasks
+[32m|[m[32m/[m  
+*   [33m1387412[m Merge pull request #230 from nicelight/codex/document-validation-rules-for-settings_json
+[34m|[m[35m\[m  
+[34m|[m [35m|[m * [33m3a1d03d[m[33m ([m[1;31morigin/codex/document-validation-rules-for-settings_json[m[33m)[m Merge pull request #231 from nicelight/codex/fix-issues-from-codex-review-#230
+[34m|[m [35m|[m[35m/[m[1;31m|[m 
+[34m|[m [35m|[m * [33ma7fa383[m[33m ([m[1;31morigin/codex/fix-issues-from-codex-review-#230[m[33m)[m Fix settings service imports and usage
+[34m|[m [35m|[m[35m/[m  
+[34m|[m *   [33mf1294fa[m Merge branch 'main' into codex/document-validation-rules-for-settings_json
+[34m|[m [1;32m|[m[34m\[m  
+[34m|[m [1;32m|[m[34m/[m  
+[34m|[m[34m/[m[1;32m|[m   
+* [1;32m|[m   [33m1fa516f[m Merge pull request #229 from nicelight/codex/implement-settings-service-contract-and-integration
+[1;34m|[m[1;35m\[m [1;32m\[m  
+[1;34m|[m * [1;32m\[m   [33m4a0bb35[m[33m ([m[1;31morigin/codex/implement-settings-service-contract-and-integration[m[33m)[m Merge branch 'main' into codex/implement-settings-service-contract-and-integration
+[1;34m|[m [1;36m|[m[1;34m\[m [1;32m\[m  
+[1;34m|[m [1;36m|[m[1;34m/[m [1;32m/[m  
+[1;34m|[m[1;34m/[m[1;36m|[m [1;32m|[m   
+* [1;36m|[m [1;32m|[m [33m62337e0[m Implement cached stats service with aggregation models (#228)
+[31m|[m * [1;32m|[m [33m908fb9e[m Improve optional dependency handling for tests
+[31m|[m * [1;32m|[m [33m221b511[m Implement settings service contract and security support
+[31m|[m[31m/[m [1;32m/[m  
+[31m|[m * [33mbc16773[m Implement slot management service with validation
+[31m|[m[31m/[m  
+[31m|[m * [33m8557fa8[m[33m ([m[1;31morigin/codex/implement-stats-aggregation-models-and-service[m[33m)[m Implement cached stats service with aggregation models
+[31m|[m[31m/[m  
+* [33m7b5665a[m Implement SQLAlchemy repositories with DTOs and tests (#226)
+[32m|[m *   [33ma871441[m[33m ([m[1;31morigin/codex/refine-interfaces-and-implement-sqlalchemy-repositories[m[33m)[m Merge pull request #227 from nicelight/codex/fix-dto-dataclass-import-issues
+[32m|[m [33m|[m[34m\[m  
+[32m|[m [33m|[m * [33m974c35e[m[33m ([m[1;31morigin/codex/fix-dto-dataclass-import-issues[m[33m)[m Fix dataclass ordering for repository DTOs
+[32m|[m [33m|[m[33m/[m  
+[32m|[m * [33m3667019[m Implement SQLAlchemy repositories with DTOs and tests
+[32m|[m[32m/[m  
+*   [33m4913d68[m Merge pull request #224 from nicelight/codex/update-unique-index-for-global-aggregates
+[35m|[m[36m\[m  
+[35m|[m [36m|[m * [33mfacdfe7[m[33m ([m[1;31morigin/codex/update-unique-index-for-global-aggregates[m[33m)[m Merge pull request #225 from nicelight/codex/fix-codex-review-issues-in-pr-#224
+[35m|[m [36m|[m[36m/[m[1;32m|[m 
+[35m|[m [36m|[m * [33m8d3b56d[m[33m ([m[1;31morigin/codex/fix-codex-review-issues-in-pr-#224[m[33m)[m Align processing log aggregate index with migration
+[35m|[m [36m|[m[36m/[m  
+[35m|[m * [33mdc64ab9[m Fix admin aggregates uniqueness and seed data
+[35m|[m[35m/[m  
+* [33m9b85113[m Relocate Docs into spec/docs and update references (#223)
+[1;32m|[m * [33m996f344[m[33m ([m[1;31morigin/codex/remove-docs-folder-and-relocate-files[m[33m)[m Relocate Docs into spec/docs and update references
+[1;32m|[m[1;32m/[m  
+* [33m3026ea6[m 1
+*   [33mb17001c[m Merge pull request #222 from nicelight/codex/complete-subtasks-4.5.c2-and-4.5.q1
+[1;34m|[m[1;35m\[m  
+[1;34m|[m *   [33m105d19f[m[33m ([m[1;31morigin/codex/complete-subtasks-4.5.c2-and-4.5.q1[m[33m)[m Merge branch 'main' into codex/complete-subtasks-4.5.c2-and-4.5.q1
+[1;34m|[m [1;36m|[m[1;34m\[m  
+[1;34m|[m [1;36m|[m[1;34m/[m  
+[1;34m|[m[1;34m/[m[1;36m|[m   
+* [1;36m|[m [33m11a0224[m Move admin DB schema doc under spec (#221)
+[31m|[m * [33m755ea16[m Record admin stats defaults and UX decisions
+[31m|[m[31m/[m  
+[31m|[m * [33m8092d81[m[33m ([m[1;31morigin/codex/design-database-models-and-migrations[m[33m)[m Move admin DB schema doc under spec
+[31m|[m[31m/[m  
+*   [33md036166[m Merge pull request #220 from nicelight/codex/fix-memory-bank-for-codex-agent-kaciye
+[33m|[m[34m\[m  
+[33m|[m *   [33m54a7112[m[33m ([m[1;31morigin/codex/fix-memory-bank-for-codex-agent-kaciye[m[33m)[m Merge branch 'main' into codex/fix-memory-bank-for-codex-agent-kaciye
+[33m|[m [35m|[m[33m\[m  
+[33m|[m [35m|[m[33m/[m  
+[33m|[m[33m/[m[35m|[m   
+* [35m|[m [33m1391081[m Record admin consult decisions (#219)
+* [35m|[m [33m9b805e2[m Emphasize simplicity as top priority in memory bank (#218)
+[36m|[m * [33m70c7af1[m Clarify simplicity trade-off reporting
+[36m|[m[36m/[m  
+[36m|[m * [33m6f4fe34[m[33m ([m[1;31morigin/codex/analyze-task-4.5.r1-requirements[m[33m)[m Record admin consult decisions
+[36m|[m [1;31m|[m * [33mc8786f5[m[33m ([m[1;31morigin/codex/fix-memory-bank-for-codex-agent[m[33m)[m Emphasize simplicity as top priority in memory bank
+[36m|[m [1;31m|[m[36m/[m  
+[36m|[m[36m/[m[1;31m|[m   
+* [1;31m|[m [33m92c96a0[m Update TASKS.md
+* [1;31m|[m [33m7bb30d4[m Align stats metrics on shared schema (#217)
+* [1;31m|[m [33m97ca4bf[m 1
+[1;31m|[m[1;31m/[m  
+[1;31m|[m * [33m37072d9[m[33m ([m[1;31morigin/codex/refactor-contracts-and-update-tasks.md[m[33m)[m Align stats metrics on shared schema
+[1;31m|[m[1;31m/[m  
+* [33m86b32bc[m chore: expand phase 4.5 admin roadmap tasks (#216)
+[1;33m|[m * [33mf41639c[m[33m ([m[1;31morigin/codex/analyze-phase-4.5-tasks-for-complexity[m[33m)[m chore: expand phase 4.5 admin roadmap tasks
+[1;33m|[m[1;33m/[m  
+* [33m218bc27[m Refine admin roadmap and tasks (#215)
+[1;34m|[m * [33me90c32b[m[33m ([m[1;31morigin/codex/analyze-readiness-for-phase-4.5[m[33m)[m Refine admin roadmap and tasks
+[1;34m|[m[1;34m/[m  
+* [33m27bed72[m Complete phase 4.4 public results implementation (#213)
+[1;35m|[m * [33m41df5ed[m[33m ([m[1;31morigin/codex/prepare-phase-4.4-completion-report[m[33m)[m Guard TestClient follow_redirects shim for older FastAPI (#214)
+[1;35m|[m [1;36m|[m * [33m95650fb[m[33m ([m[1;31morigin/codex/fix-high-priority-bug-in-allow_redirects[m[33m)[m Guard TestClient follow_redirects shim for older FastAPI
+[1;35m|[m [1;36m|[m[1;36m/[m  
+[1;35m|[m * [33m60853c5[m Complete phase 4.4 public results implementation
+[1;35m|[m[1;35m/[m  
+* [33ma238f4d[m Add fixtures and tests for public result cleanup (#212)
+* [33mc353e7a[m Document result retention cleanup decisions (#211)
+[31m|[m * [33m35f04eb[m[33m ([m[1;31morigin/codex/prepare-tests-based-on-issues-3-and-4[m[33m)[m Add fixtures and tests for public result cleanup
+[31m|[m[31m/[m  
+[31m|[m * [33m473f103[m[33m ([m[1;31morigin/codex/update-documentation-and-contracts-as-needed[m[33m)[m Document result retention cleanup decisions
+[31m|[m[31m/[m  
+* [33mbabb770[m Add periodic media cleanup scheduler and TTL purge (#208)
+* [33m67f6e04[m Implement public result redirect with TTL enforcement (#207)
+[33m|[m * [33mcbcd771[m[33m ([m[1;31morigin/codex/fix-high-priority-bug-in-media-cleanup[m[33m)[m Define expected metadata in queue failure test (#210)
+[33m|[m [34m|[m * [33m237554a[m[33m ([m[1;31morigin/codex/fix-test-metadata-definition-in-queue-failure-test[m[33m)[m Define expected metadata in queue failure test
+[33m|[m [34m|[m[34m/[m  
+[33m|[m * [33me5b087a[m Fix purge to keep TTL metadata on persistence failure
+[33m|[m [35m|[m * [33m13fd4f2[m[33m ([m[1;31morigin/codex/implement-periodic-media-cleanup-task[m[33m)[m Fix purge to keep TTL metadata on persistence failure (#209)
+[33m|[m [35m|[m[35m/[m  
+[33m|[m * [33m9139dcd[m Resolve job service override naming
+[33m|[m * [33m9f9a84e[m Add periodic media cleanup for expired results
+[33m|[m[33m/[m  
+[33m|[m * [33m66c166e[m[33m ([m[1;31morigin/codex/implement-public-api-redirection-and-tests[m[33m)[m Implement public result redirect with TTL enforcement
+[33m|[m[33m/[m  
+* [33m280d82f[m Implement result persistence helpers (#205)
+* [33mbe62bf5[m Document TTL policies review (#204)
+[1;31m|[m * [33m3429d65[m[33m ([m[1;31morigin/codex/implement-media-result-processing-enhancements[m[33m)[m Preserve inline preview when result media missing (#206)
+[1;31m|[m [1;32m|[m * [33mc920a2e[m[33m ([m[1;31morigin/codex/fix-inline-preview-preservation-bug[m[33m)[m Preserve inline preview when result media missing
+[1;31m|[m [1;32m|[m[1;32m/[m  
+[1;31m|[m * [33mb09cd19[m Implement result persistence helpers
+[1;31m|[m[1;31m/[m  
+[1;31m|[m * [33mead26f3[m[33m ([m[1;31morigin/codex/audit-ttl-policies-and-update-documentation[m[33m)[m Document TTL policies review
+[1;31m|[m[1;31m/[m  
+* [33m94de79a[m feat: persist results through media service (#202)
+[1;34m|[m * [33me86782c[m[33m ([m[1;31morigin/codex/locate-codex-usage-in-codebase[m[33m)[m Guard PostgreSQL fixtures instead of skipping entire suite (#203)
+[1;34m|[m [1;35m|[m * [33me282d61[m[33m ([m[1;31morigin/codex/fix-postgresql-test-skipping-behavior[m[33m)[m Guard PostgreSQL fixtures instead of skipping entire suite
+[1;34m|[m [1;35m|[m[1;35m/[m  
+[1;34m|[m * [33m9fe2c57[m Skip PostgreSQL integration tests when psycopg is unavailable
+[1;34m|[m [1;36m|[m * [33maa5f08b[m[33m ([m[1;31morigin/codex/complete-task-4.4.1-in-.memory/tasks.md[m[33m)[m feat: persist results through media service
+[1;34m|[m [1;36m|[m[1;34m/[m  
+[1;34m|[m[1;34m/[m[1;36m|[m   
+[1;34m|[m [1;36m|[m * [33m51f6889[m[33m ([m[1;31morigin/Tasks_4.4.1-4.4.5[m[33m)[m 1
+[1;34m|[m [1;36m|[m[1;34m/[m  
+[1;34m|[m[1;34m/[m[1;36m|[m   
+* [1;36m|[m [33mf65368a[m 233
+* [1;36m|[m [33me6b3bb4[m Update Phase 4.4 decisions in tasks log (#201)
+[32m|[m [1;36m|[m * [33m36e9ba7[m[33m ([m[1;31morigin/codex/analyze-subtasks-in-tasks.md[m[33m)[m Update Phase 4.4 decisions in tasks log
+[32m|[m [1;36m|[m[32m/[m  
+[32m|[m[32m/[m[1;36m|[m   
+* [1;36m|[m [33mf2c8233[m Skip PostgreSQL integration tests when psycopg is unavailable (#200)
+[1;36m|[m[1;36m/[m  
+* [33m01e4580[m Persist provider results to media storage (#199)
+*   [33m6b89170[m Merge branch 'main' of https://github.com/nicelight/PhotoChanger_25
+[34m|[m[35m\[m  
+[34m|[m * [33m1f65d9e[m Update TASKS.md
+* [35m|[m [33m085415f[m Merge branch 'main' of https://github.com/nicelight/PhotoChanger_25
+[36m|[m[35m\[m[35m|[m 
+* [35m|[m [33mf5dfdcb[m 1
+[1;31m|[m [35m|[m * [33ma03bf59[m[33m ([m[1;31morigin/codex/fix-queueworker-handle_timeout-for-fastapi[m[33m)[m Persist provider results to media storage
+[1;31m|[m [35m|[m[35m/[m  
+[1;31m|[m * [33m2c29acd[m Offload queue worker persistence to threads (#195)
+[1;31m|[m [1;32m|[m * [33mb7dc221[m[33m ([m[1;31morigin/codex/fix-cancellation-safety-in-queue-worker[m[33m)[m Shield job acquisition future during cancellation (#198)
+[1;31m|[m [1;32m|[m [1;33m|[m * [33mc4c1ed9[m[33m ([m[1;31morigin/codex/fix-high-priority-bug-in-job-acquisition[m[33m)[m Shield job acquisition future during cancellation
+[1;31m|[m [1;32m|[m [1;33m|[m[1;33m/[m  
+[1;31m|[m [1;32m|[m * [33ma91def3[m Handle cancellations during job acquisition
+[1;31m|[m [1;32m|[m [1;34m|[m * [33m7bf68b6[m[33m ([m[1;31morigin/codex/fix-cancellation-issues-in-queue-worker[m[33m)[m Handle cancellation while acquiring jobs
+[1;31m|[m [1;32m|[m [1;34m|[m[1;34m/[m  
+[1;31m|[m [1;32m|[m [1;34m|[m * [33m59fe6a1[m[33m ([m[1;31morigin/codex/fix-queue-worker-cancellation-handling-issues[m[33m)[m Handle cancellations during job acquisition (#196)
+[1;31m|[m [1;32m|[m [1;34m|[m[1;34m/[m  
+[1;31m|[m [1;32m|[m * [33m656448c[m Offload queue worker persistence to threads
+[1;31m|[m [1;32m|[m[1;32m/[m  
+[1;31m|[m * [33me763ba0[m Harden queue worker cancellation and defaults (#191)
+[1;31m|[m [1;36m|[m * [33m1ac8914[m[33m ([m[1;31morigin/codex/fix-blocking-event-loop-in-queue-worker[m[33m)[m Shield job acquisition from cancellation (#194)
+[1;31m|[m [1;36m|[m [31m|[m * [33m70dea4c[m[33m ([m[1;31morigin/codex/fix-job-acquisition-cancellation-issue[m[33m)[m Shield job acquisition from cancellation
+[1;31m|[m [1;36m|[m [31m|[m[31m/[m  
+[1;31m|[m [1;36m|[m * [33m938b4fe[m Offload queue worker DB operations to executor
+[1;31m|[m [1;36m|[m [32m|[m * [33mc63967f[m[33m ([m[1;31morigin/codex/prepare-subtasks-for-task-workers-implementation[m[33m)[m Clarify ingest worker startup instructions (#193)
+[1;31m|[m [1;36m|[m [32m|[m [33m|[m * [33ma14b1ef[m[33m ([m[1;31morigin/codex/fix-codex-review-issues-for-pr-#190[m[33m)[m Clarify ingest worker startup instructions
+[1;31m|[m [1;36m|[m [32m|[m [33m|[m[33m/[m  
+[1;31m|[m [1;36m|[m [32m|[m * [33me1ca7a9[m Document worker plan and update tasks
+[1;31m|[m [1;36m|[m [32m|[m [34m|[m * [33mf3b93c3[m[33m ([m[1;31morigin/codex/complete-all-tasks-in-4.3-memory[m[33m)[m Offload queue worker DB operations to executor (#192)
+[1;31m|[m [1;36m|[m [32m|[m [34m|[m[32m/[m  
+[1;31m|[m [1;36m|[m [32m|[m[32m/[m[34m|[m   
+[1;31m|[m [1;36m|[m * [34m|[m [33maad731f[m Harden queue worker cancellation and defaults
+[1;31m|[m [1;36m|[m[1;36m/[m [34m/[m  
+[1;31m|[m * [34m/[m [33mb4e7e3c[m Document worker plan and update tasks (#190)
+[1;31m|[m [34m|[m[34m/[m  
+[1;31m|[m * [33m8b4ed83[m Expand phase 6 planning tasks (#189)
+[1;31m|[m [35m|[m * [33m5adbbef[m[33m ([m[1;31morigin/codex/analyze-phase-6-subtasks-for-complexity[m[33m)[m Expand phase 6 planning tasks
+[1;31m|[m [35m|[m[35m/[m  
+[1;31m|[m * [33m54f2200[m Create loc.yml
+[1;31m|[m * [33m1447d72[m Document queue back-pressure defaults (#187)
+[1;31m|[m * [33mdf0f611[m Annotate phase 5 tasks with complexity analysis (#186)
+[1;31m|[m [36m|[m * [33m818eb09[m[33m ([m[1;31morigin/codex/start-subtasks-in-.memory/tasks.md[m[33m)[m Make initial queue migration idempotent (#188)
+[1;31m|[m [36m|[m [1;31m|[m * [33m9380597[m[33m ([m[1;31morigin/codex/fix-high-priority-bug-in-migration[m[33m)[m Make initial queue migration idempotent
+[1;31m|[m [36m|[m [1;31m|[m[1;31m/[m  
+[1;31m|[m [36m|[m * [33m75597bb[m Document queue back-pressure defaults
+[1;31m|[m [36m|[m[36m/[m  
+[1;31m|[m [36m|[m * [33m581feb7[m[33m ([m[1;31morigin/codex/analyze-phase-5-subtasks-for-complexity[m[33m)[m Annotate phase 5 tasks with complexity analysis
+[1;31m|[m [36m|[m[36m/[m  
+[1;31m|[m * [33m2409c24[m Document SQLAlchemy and Alembic adoption (#185)
+[1;31m|[m [1;33m|[m * [33m73e40dc[m[33m ([m[1;31morigin/codex/analyze-migration-tools-for-postgresjobqueue[m[33m)[m Document SQLAlchemy and Alembic adoption
+[1;31m|[m [1;33m|[m[1;33m/[m  
+[1;31m|[m * [33m2bc4168[m chore: update phase 4 task status (#183)
+[1;31m|[m [1;34m|[m * [33m92e133f[m[33m ([m[1;31morigin/codex/update-task-status-in-.memory/tasks.md[m[33m)[m chore: update phase 4 task status
+[1;31m|[m [1;34m|[m[1;34m/[m  
+[1;31m|[m * [33m8c103d2[m Switch tests to PostgreSQL-backed queue (#180)
+[1;31m|[m [1;35m|[m *   [33m2b183ad[m[33m ([m[1;31morigin/codex/remove-sqlite-support-from-job-queue[m[33m)[m Merge pull request #182 from nicelight/codex/fix-postgresql-queue-fallback-issues-28nrp2
+[1;31m|[m [1;35m|[m [1;36m|[m[31m\[m  
+[1;31m|[m [1;35m|[m [1;36m|[m *   [33mcdaa2eb[m[33m ([m[1;31morigin/codex/fix-postgresql-queue-fallback-issues-28nrp2[m[33m)[m Merge branch 'codex/remove-sqlite-support-from-job-queue' into codex/fix-postgresql-queue-fallback-issues-28nrp2
+[1;31m|[m [1;35m|[m [1;36m|[m [32m|[m[1;36m\[m  
+[1;31m|[m [1;35m|[m [1;36m|[m [32m|[m[1;36m/[m  
+[1;31m|[m [1;35m|[m [1;36m|[m[1;36m/[m[32m|[m   
+[1;31m|[m [1;35m|[m * [32m|[m [33md8b4eb6[m Restore in-memory backend for Postgres job queue tests (#181)
+[1;31m|[m [1;35m|[m [33m|[m * [33m0778594[m Document injectable backend for PostgresJobQueue
+[1;31m|[m [1;35m|[m [33m|[m * [33meb77936[m Refactor test Postgres queue DSN usage
+[1;31m|[m [1;35m|[m [33m|[m * [33m24b62a1[m Clarify backend selection in PostgresJobQueue
+[1;31m|[m [1;35m|[m [33m|[m * [33m5369cab[m Remove SQLite fallback from Postgres queue
+[1;31m|[m [1;35m|[m [33m|[m[33m/[m  
+[1;31m|[m [1;35m|[m [33m|[m * [33m7d3a0da[m[33m ([m[1;31morigin/codex/fix-postgresql-queue-fallback-issues[m[33m)[m Restore in-memory backend for Postgres job queue tests
+[1;31m|[m [1;35m|[m [33m|[m[33m/[m  
+[1;31m|[m [1;35m|[m * [33m005889b[m Remove SQLite fallback from Postgres queue
+[1;31m|[m [1;35m|[m [34m|[m * [33m5211e75[m[33m ([m[1;31morigin/codex/migrate-tests-to-postgresql-and-remove-sqlite[m[33m)[m Switch tests to PostgreSQL-backed queue
+[1;31m|[m [1;35m|[m [34m|[m[1;35m/[m  
+[1;31m|[m [1;35m|[m[1;35m/[m[34m|[m   
+[1;31m|[m * [34m|[m [33mb27a029[m Remove SQLite fallback from Postgres queue (#179)
+[1;31m|[m [34m|[m[34m/[m  
+[1;31m|[m * [33m93d349b[m Update agents.md
+[1;31m|[m * [33mf8bd326[m Delete REPORT.json
+[1;31m|[m * [33m9493f39[m Delete REPORT.md
+[1;31m|[m * [33m41967f2[m Move consult workflow guidance to core guide (#178)
+[1;31m|[m * [33md1b2943[m Update Phase 4/5 planning tasks (#177)
+[1;31m|[m [35m|[m * [33ma8a7218[m[33m ([m[1;31morigin/codex/redesign-agent-workflow-with-memory-bank[m[33m)[m Move consult workflow guidance to core guide
+[1;31m|[m [35m|[m[35m/[m  
+[1;31m|[m [35m|[m *   [33m061d0fb[m[33m ([m[1;31morigin/codex/update-.memory/tasks.md[m[33m)[m Merge branch 'main' into codex/update-.memory/tasks.md
+[1;31m|[m [35m|[m [1;31m|[m[35m\[m  
+[1;31m|[m [35m|[m [1;31m|[m[35m/[m  
+[1;31m|[m [35m|[m[35m/[m[1;31m|[m   
+[1;31m|[m * [1;31m|[m   [33m7963a3e[m Merge pull request #175 from nicelight/codex/analyze-unfinished-phase-4-tasks
+[1;31m|[m [1;33m|[m[1;34m\[m [1;31m\[m  
+[1;31m|[m [1;33m|[m * [1;31m\[m   [33m00b9a25[m[33m ([m[1;31morigin/codex/analyze-unfinished-phase-4-tasks[m[33m)[m Merge branch 'main' into codex/analyze-unfinished-phase-4-tasks
+[1;31m|[m [1;33m|[m [1;35m|[m[1;33m\[m [1;31m\[m  
+[1;31m|[m [1;33m|[m [1;35m|[m[1;33m/[m [1;31m/[m  
+[1;31m|[m [1;33m|[m[1;33m/[m[1;35m|[m [1;31m|[m   
+[1;31m|[m [1;33m|[m * [1;31m|[m [33mc847408[m Update phase 4 task plan with follow-up steps
+[1;31m|[m [1;33m|[m [1;36m|[m * [33me5f4f5f[m Resolve task list conflicts for worker, storage, stats
+[1;31m|[m [1;33m|[m [1;36m|[m * [33ma8d0c9c[m Refine phase 4-5 planning tasks
+[1;31m|[m [1;33m|[m [1;36m|[m[1;33m/[m  
+[1;31m|[m [1;33m|[m[1;33m/[m[1;36m|[m   
+[1;31m|[m * [1;36m|[m [33m33f3d83[m Implement Postgres queue backend with sqlite fallback (#174)
+[1;31m|[m [1;36m|[m[1;36m/[m  
+[1;31m|[m [1;36m|[m * [33m32384ff[m[33m ([m[1;31morigin/codex/implement-postgresql-job-queue[m[33m)[m Serialize Postgres log details as JSONB (#176)
+[1;31m|[m [1;36m|[m [31m|[m * [33m2dc515c[m[33m ([m[1;31morigin/codex/fix-high-priority-bug-in-postgres-queue[m[33m)[m Serialize Postgres log details as JSONB
+[1;31m|[m [1;36m|[m [31m|[m[31m/[m  
+[1;31m|[m [1;36m|[m * [33me4925d6[m Implement Postgres queue backend with sqlite fallback
+[1;31m|[m [1;36m|[m[1;36m/[m  
+[1;31m|[m * [33m5edcbaf[m Mark ingest helper tests as unit and sync tasks (#173)
+[1;31m|[m [32m|[m * [33m484d7f3[m[33m ([m[1;31morigin/codex/implement-subtasks-4.1.9-4.1.10[m[33m)[m Mark ingest helper tests as unit and sync tasks
+[1;31m|[m [32m|[m[32m/[m  
+[1;31m|[m * [33mad9b5c2[m Reconcile phase 4 backlog state (#172)
+[1;31m|[m [33m|[m * [33m722be99[m[33m ([m[1;31morigin/codex/conduct-phase-4-quality-verification-audit[m[33m)[m Reconcile phase 4 backlog state
+[1;31m|[m [33m|[m[33m/[m  
+[1;31m|[m * [33m5e64cb4[m Fix ingest payload TTL to match spec (#168)
+[1;31m|[m [34m|[m * [33m67960e7[m[33m ([m[1;31morigin/codex/implement-production-ready-ingest-endpoint[m[33m)[m Preserve inline result metadata when clearing previews (#171)
+[1;31m|[m [34m|[m [35m|[m * [33mdb3dacc[m[33m ([m[1;31morigin/codex/fix-metadata-preservation-in-clear_inline_preview[m[33m)[m Preserve inline result metadata when clearing previews
+[1;31m|[m [34m|[m [35m|[m[35m/[m  
+[1;31m|[m [34m|[m * [33m2051936[m Preserve job result metadata when clearing inline preview (#169)
+[1;31m|[m [34m|[m [36m|[m * [33mbf600d2[m[33m ([m[1;31morigin/codex/fix-inline-preview-metadata-clearing-bug[m[33m)[m Update inline preview test for metadata retention (#170)
+[1;31m|[m [34m|[m [36m|[m [1;31m|[m * [33m80ef297[m[33m ([m[1;31morigin/codex/fix-metadata-retention-after-preview-cleanup[m[33m)[m Update inline preview test for metadata retention
+[1;31m|[m [34m|[m [36m|[m [1;31m|[m[1;31m/[m  
+[1;31m|[m [34m|[m [36m|[m * [33mbfd0e04[m Preserve job result metadata when clearing inline preview
+[1;31m|[m [34m|[m [36m|[m[36m/[m  
+[1;31m|[m [34m|[m * [33mad7e0ea[m Fix ingest payload TTL to match spec
+[1;31m|[m [34m|[m[34m/[m  
+[1;31m|[m * [33m76529e1[m feat: align ingest core with specs (#167)
+[1;31m|[m [1;32m|[m * [33m447dfaa[m[33m ([m[1;31morigin/codex/implement-ingest-api-core-phase-4-tasks[m[33m)[m feat: align ingest core with specs
+[1;31m|[m [1;32m|[m[1;32m/[m  
+[1;31m|[m * [33m4bf6884[m Fix ASKS history table formatting (#165)
+[1;31m|[m [1;33m|[m * [33m4f846d0[m[33m ([m[1;31morigin/codex/fix-queue-worker-provider-dispatch-and-di-gaps[m[33m)[m Fix Turbotext result retention TTL (#166)
+[1;31m|[m [1;33m|[m [1;34m|[m * [33m90da0c9[m[33m ([m[1;31morigin/codex/fix-high-priority-bug-in-queue-worker[m[33m)[m Fix Turbotext result retention TTL
+[1;31m|[m [1;33m|[m [1;34m|[m[1;34m/[m  
+[1;31m|[m [1;33m|[m * [33m29e7e00[m Update memory for queue worker dispatch
+[1;31m|[m [1;33m|[m [1;35m|[m * [33m256a1ca[m[33m ([m[1;31morigin/codex/fix-broken-table-in-asks.md[m[33m)[m Fix ASKS history table formatting
+[1;31m|[m [1;33m|[m [1;35m|[m[1;33m/[m  
+[1;31m|[m [1;33m|[m[1;33m/[m[1;35m|[m   
+[1;31m|[m * [1;35m|[m [33m051df28[m Update memory for queue worker dispatch (#164)
+[1;31m|[m [1;35m|[m[1;35m/[m  
+[1;31m|[m * [33m67f53ea[m Add detailed prompt for worker DI remediation (#163)
+[1;31m|[m [1;36m|[m * [33mcd9a37b[m[33m ([m[1;31morigin/codex/analyze-project-for-phase-4-issues[m[33m)[m Add detailed prompt for worker DI remediation
+[1;31m|[m [1;36m|[m[1;36m/[m  
+[1;31m|[m * [33m540626f[m docs: expand phase 4 task breakdown (#162)
+[1;31m|[m[1;31m/[m  
+[1;31m|[m * [33ma584891[m[33m ([m[1;31morigin/codex/decompose-phase-4-tasks-into-subtasks[m[33m)[m docs: expand phase 4 task breakdown
+[1;31m|[m[1;31m/[m  
+* [33m6e21512[m Refresh phase 3 test evidence (#159)
+[32m|[m * [33mfa133d4[m[33m ([m[1;31morigin/codex/verify-phase-3-tasks-completion[m[33m)[m Normalize artifact expiry timezone handling (#161)
+[32m|[m [33m|[m * [33m00b0d63[m[33m ([m[1;31morigin/codex/fix-timezone-awareness-issue-in-artifact-deadlines[m[33m)[m Normalize artifact expiry timezone handling
+[32m|[m [33m|[m[33m/[m  
+[32m|[m * [33m1a7afd8[m Refresh phase 3 test evidence
+[32m|[m[32m/[m  
+* [33m9011383[m fix: align gemini mock payload (#158)
+[34m|[m * [33m1ed2605[m[33m ([m[1;31morigin/codex/implement-mocks-for-provider-integration-tests[m[33m)[m fix: wrap gemini mock inline data parts (#160)
+[34m|[m [35m|[m * [33m2648bc2[m[33m ([m[1;31morigin/codex/fix-gemini-mock-payload-as-per-review[m[33m)[m fix: wrap gemini mock inline data parts
+[34m|[m [35m|[m[35m/[m  
+[34m|[m * [33mba09516[m fix: align gemini mock payload
+[34m|[m[34m/[m  
+* [33mca0c85d[m Update memory logs for queue integration tests (#157)
+[36m|[m * [33m64f2a97[m[33m ([m[1;31morigin/codex/set-up-integration-tests-for-queue[m[33m)[m Update memory logs for queue integration tests
+[36m|[m[36m/[m  
+* [33m1cc7c96[m Add phase 3 testing guide for test suite (#154)
+[1;31m|[m * [33mde6dccf[m[33m ([m[1;31morigin/codex/implement-contract-tests-for-api-endpoints[m[33m)[m Enforce oneOf semantics in schema validator (#156)
+[1;31m|[m [1;32m|[m * [33md19a222[m[33m ([m[1;31morigin/codex/fix-oneof-constraint-handling-in-validator[m[33m)[m Enforce oneOf semantics in schema validator
+[1;31m|[m [1;32m|[m[1;32m/[m  
+[1;31m|[m * [33m623773b[m Add contract test fixtures and schemas validator
+[1;31m|[m [1;33m|[m * [33m1ffbf47[m[33m ([m[1;31morigin/codex/fix-critical-dataclass-ordering-issues[m[33m)[m Reorder TemplateMedia fields to satisfy dataclass requirements (#155)
+[1;31m|[m [1;33m|[m [1;34m|[m * [33m602791b[m[33m ([m[1;31morigin/codex/fix-dataclass-field-ordering-in-models[m[33m)[m Reorder TemplateMedia fields to satisfy dataclass requirements
+[1;31m|[m [1;33m|[m [1;34m|[m[1;34m/[m  
+[1;31m|[m [1;33m|[m * [33mad4a08f[m Reorder TemplateMedia defaults after created_at (#151)
+[1;31m|[m [1;33m|[m [1;35m|[m * [33mde64327[m[33m ([m[1;31morigin/codex/explain-phase-3-testing-and-tasks[m[33m)[m Add phase 3 testing guide for test suite
+[1;31m|[m [1;33m|[m[1;31m_[m[1;35m|[m[1;31m/[m  
+[1;31m|[m[1;31m/[m[1;33m|[m [1;35m|[m   
+* [1;33m|[m [1;35m|[m [33m50e185a[m Add contract test fixtures and schemas validator (#153)
+[1;33m|[m[1;33m/[m [1;35m/[m  
+* [1;35m|[m [33m739b64e[m chore(memory): record phase 2 completion (#145)
+[1;36m|[m [1;35m|[m * [33ma4d9e55[m[33m ([m[1;31morigin/codex/implement-stubs-and-scaffolding-for-photochanger-b6baap[m[33m)[m Ensure binary schema fields map to bytes (#152)
+[1;36m|[m [1;35m|[m [31m|[m * [33m654bffb[m[33m ([m[1;31morigin/codex/fix-high-priority-bug-in-models.py[m[33m)[m Ensure binary schema fields map to bytes
+[1;36m|[m [1;35m|[m [31m|[m[31m/[m  
+[1;36m|[m [1;35m|[m * [33m9707ad9[m Fix binary schema fields to use bytes (#149)
+[1;36m|[m [1;35m|[m [32m|[m * [33m1863d43[m[33m ([m[1;31morigin/codex/fix-dataclass-field-ordering-issue[m[33m)[m Reorder TemplateMedia defaults after created_at
+[1;36m|[m [1;35m|[m [32m|[m[1;35m/[m  
+[1;36m|[m [1;35m|[m[1;35m/[m[32m|[m   
+[1;36m|[m * [32m|[m [33mea8a017[m Fix dataclass field ordering violations
+[1;36m|[m [33m|[m [32m|[m * [33mab2f8a5[m[33m ([m[1;31morigin/codex/implement-domain-services-and-repositories-0ijl6p[m[33m)[m Fix dataclass field ordering violations (#150)
+[1;36m|[m [33m|[m [32m|[m[33m/[m  
+[1;36m|[m [33m|[m[33m/[m[32m|[m   
+[1;36m|[m * [32m|[m [33m500c7c1[m Align domain scaffolding with SDD contracts
+[1;36m|[m [34m|[m [32m|[m * [33m26f3c1a[m[33m ([m[1;31morigin/codex/fix-high-priority-bug-in-binary-schema[m[33m)[m Fix binary schema fields to use bytes
+[1;36m|[m [34m|[m [32m|[m[32m/[m  
+[1;36m|[m [34m|[m * [33m93587ad[m Update memory records for infrastructure scaffolding
+[1;36m|[m [34m|[m [35m|[m * [33mc154680[m[33m ([m[1;31morigin/codex/implement-phase-2-api-controllers-and-dtos[m[33m)[m Handle ingest multipart payload (#148)
+[1;36m|[m [34m|[m [35m|[m [36m|[m * [33m5927822[m[33m ([m[1;31morigin/codex/fix-ingest-endpoint-to-accept-multipart-data[m[33m)[m Handle ingest multipart payload
+[1;36m|[m [34m|[m [35m|[m [36m|[m[36m/[m  
+[1;36m|[m [34m|[m [35m|[m * [33m0c84584[m Add API scaffolding routers, schemas, and typed client stubs
+[1;36m|[m [34m|[m [35m|[m [1;31m|[m * [33m660bb85[m[33m ([m[1;31morigin/codex/check-progress-of-subtasks-2.1,-2.2,-2.3[m[33m)[m Fix Job import in Postgres queue stub (#147)
+[1;36m|[m [34m|[m [35m|[m [1;31m|[m [1;32m|[m * [33med7613c[m[33m ([m[1;31morigin/codex/fix-import-error-in-postgres-queue[m[33m)[m Fix Job import in Postgres queue stub
+[1;36m|[m [34m|[m [35m|[m [1;31m|[m [1;32m|[m[1;32m/[m  
+[1;36m|[m [34m|[m [35m|[m [1;31m|[m * [33ma334e56[m Add phase 2 scaffolding for deadlines, queue and UI config
+[1;36m|[m [34m|[m [35m|[m [1;31m|[m [1;33m|[m * [33mb3db483[m[33m ([m[1;31morigin/codex/implement-stubs-and-scaffolding-for-photochanger[m[33m)[m Fix BaseSettings fallback when pydantic-settings missing (#146)
+[1;36m|[m [34m|[m [35m|[m [1;31m|[m [1;33m|[m [1;34m|[m * [33m8718f84[m[33m ([m[1;31morigin/codex/fix-high-priority-bug-in-config.py[m[33m)[m Fix BaseSettings fallback when pydantic-settings missing
+[1;36m|[m [34m|[m [35m|[m [1;31m|[m [1;33m|[m [1;34m|[m[1;34m/[m  
+[1;36m|[m [34m|[m [35m|[m [1;31m|[m [1;33m|[m * [33m9fbbd2f[m Improve stub generation scaffolding
+[1;36m|[m [34m|[m [35m|[m [1;31m|[m[35m_[m[1;33m|[m[35m/[m  
+[1;36m|[m [34m|[m [35m|[m[35m/[m[1;31m|[m [1;33m|[m   
+[1;36m|[m [34m|[m [35m|[m [1;31m|[m [1;33m|[m * [33m9d36472[m[33m ([m[1;31morigin/codex/-2[m[33m)[m chore(memory): record phase 2 completion
+[1;36m|[m [34m|[m[1;36m_[m[35m|[m[1;36m_[m[1;31m|[m[1;36m_[m[1;33m|[m[1;36m/[m  
+[1;36m|[m[1;36m/[m[34m|[m [35m|[m [1;31m|[m [1;33m|[m   
+* [34m|[m [35m|[m [1;31m|[m [1;33m|[m [33m1c8f0da[m Add scaffolding smoke tests and tidy type stubs (#144)
+[1;36m|[m [34m|[m [35m|[m [1;31m|[m [1;33m|[m * [33mb1403c4[m[33m ([m[1;31morigin/codex/implement-stubs-and-scaffolding-for-phase-2[m[33m)[m Add scaffolding smoke tests and tidy type stubs
+[1;36m|[m [34m|[m[1;36m_[m[35m|[m[1;36m_[m[1;31m|[m[1;36m_[m[1;33m|[m[1;36m/[m  
+[1;36m|[m[1;36m/[m[34m|[m [35m|[m [1;31m|[m [1;33m|[m   
+* [34m|[m [35m|[m [1;31m|[m [1;33m|[m [33m3a8a52a[m Refine scaffolding docs and smoke tests (#143)
+[31m|[m [34m|[m [35m|[m [1;31m|[m [1;33m|[m * [33m5a36677[m[33m ([m[1;31morigin/codex/implement-scaffolding-for-photochanger[m[33m)[m Refine scaffolding docs and smoke tests
+[31m|[m [34m|[m[31m_[m[35m|[m[31m_[m[1;31m|[m[31m_[m[1;33m|[m[31m/[m  
+[31m|[m[31m/[m[34m|[m [35m|[m [1;31m|[m [1;33m|[m   
+* [34m|[m [35m|[m [1;31m|[m [1;33m|[m [33mbca8e31[m Align UI stubs with contract field names (#142)
+[32m|[m [34m|[m [35m|[m [1;31m|[m [1;33m|[m * [33m3e7648f[m[33m ([m[1;31morigin/codex/implement-ui-scaffolding-without-business-logic[m[33m)[m Align UI stubs with contract field names
+[32m|[m [34m|[m[32m_[m[35m|[m[32m_[m[1;31m|[m[32m_[m[1;33m|[m[32m/[m  
+[32m|[m[32m/[m[34m|[m [35m|[m [1;31m|[m [1;33m|[m   
+* [34m|[m [35m|[m [1;31m|[m [1;33m|[m [33m5d40a50[m Add phase 2 scaffolding for deadlines, queue and UI config (#141)
+[1;33m|[m [34m|[m[1;33m_[m[35m|[m[1;33m_[m[1;31m|[m[1;33m/[m  
+[1;33m|[m[1;33m/[m[34m|[m [35m|[m [1;31m|[m   
+* [34m|[m [35m|[m [1;31m|[m [33m3c0c089[m Update agents.md
+* [34m|[m [35m|[m [1;31m|[m [33me9987f5[m Delete agents_old.md
+* [34m|[m [35m|[m [1;31m|[m [33m613bc61[m Update memory records for infrastructure scaffolding (#140)
+* [34m|[m [35m|[m [1;31m|[m [33md092460[m Improve stub generation scaffolding (#139)
+[35m|[m [34m|[m[35m/[m [1;31m/[m  
+[35m|[m[35m/[m[34m|[m [1;31m|[m   
+* [34m|[m [1;31m|[m [33mab0bf3b[m Align domain scaffolding with SDD contracts (#138)
+* [34m|[m [1;31m|[m [33ma500252[m Merge branch 'main' of https://github.com/nicelight/PhotoChanger_25
+[34m|[m[34m\[m[34m|[m [1;31m|[m 
+[34m|[m * [1;31m|[m [33m9c69647[m Complete scaffolding refresh for subtask 2.1 (#137)
+* [35m|[m [1;31m|[m [33md4d4fa6[m 1
+[35m|[m[35m/[m [1;31m/[m  
+[35m|[m [1;31m|[m * [33m5587f4c[m[33m ([m[1;31morigin/codex/verify-subtask-2.1-completion-and-update-.memory[m[33m)[m Complete scaffolding refresh for subtask 2.1
+[35m|[m [1;31m|[m[35m/[m  
+[35m|[m[35m/[m[1;31m|[m   
+* [1;31m|[m [33m3a695ac[m Add domain models and service scaffolding (#136)
+[36m|[m [1;31m|[m * [33m48497d4[m[33m ([m[1;31morigin/codex/implement-domain-services-and-repositories[m[33m)[m Add domain models and service scaffolding
+[36m|[m [1;31m|[m[36m/[m  
+[36m|[m[36m/[m[1;31m|[m   
+* [1;31m|[m [33m3179b82[m Add API scaffolding routers, schemas, and typed client stubs (#135)
+* [1;31m|[m [33m67be2b0[m Merge branch 'main' of https://github.com/nicelight/PhotoChanger_25
+[1;32m|[m[1;31m\[m[1;31m|[m 
+[1;32m|[m * [33m458005d[m Add operationIds to API contract (#134)
+[1;32m|[m * [33md40fc0e[m Add helper scripts for development and stub generation (#133)
+* [1;33m|[m [33m7e8cfcb[m 1
+[1;33m|[m[1;33m/[m  
+[1;33m|[m * [33m6862685[m[33m ([m[1;31morigin/codex/add-operationid-to-key-endpoints[m[33m)[m Add operationIds to API contract
+[1;33m|[m[1;33m/[m  
+* [33m7fdcf11[m 1
+[1;34m|[m * [33maaf70bd[m[33m ([m[1;31morigin/codex/-scripts[m[33m)[m Add helper scripts for development and stub generation
+[1;34m|[m[1;34m/[m  
+* [33m8bb65c5[m 1
+* [33m36b00a3[m chore: record phase 1 completion in memory (#132)
+[1;35m|[m * [33me89a9b7[m[33m ([m[1;31morigin/codex/update-memory-bank-files-if-needed[m[33m)[m chore: record phase 1 completion in memory
+[1;35m|[m[1;35m/[m  
+*   [33mc6c73be[m Merge pull request #131 from nicelight/codex/implement-tasks-from-.memory/tasks.md
+[31m|[m[32m\[m  
+[31m|[m *   [33mbe72453[m[33m ([m[1;31morigin/codex/implement-tasks-from-.memory/tasks.md[m[33m)[m Merge branch 'main' into codex/implement-tasks-from-.memory/tasks.md
+[31m|[m [33m|[m[31m\[m  
+[31m|[m [33m|[m[31m/[m  
+[31m|[m[31m/[m[33m|[m   
+* [33m|[m [33m9e26564[m Align OpenAPI and JSON schemas for phase 1 review (#130)
+[34m|[m * [33m1192234[m Correct provider docs to match source references
+[34m|[m[34m/[m  
+[34m|[m * [33m652f9f4[m[33m ([m[1;31morigin/codex/implement-openapi-review-and-json-schema-validation[m[33m)[m Align OpenAPI and JSON schemas for phase 1 review
+[34m|[m[34m/[m  
+*   [33m1dd53a5[m Merge pull request #129 from nicelight/codex/number-all-tasks-in-tasks.md-t9a4xn
+[36m|[m[1;31m\[m  
+[36m|[m *   [33m66714a0[m[33m ([m[1;31morigin/codex/number-all-tasks-in-tasks.md-t9a4xn[m[33m)[m Merge branch 'main' into codex/number-all-tasks-in-tasks.md-t9a4xn
+[36m|[m [1;32m|[m[36m\[m  
+[36m|[m [1;32m|[m[36m/[m  
+[36m|[m[36m/[m[1;32m|[m   
+* [1;32m|[m [33m716b1a3[m Number tasks and subtasks in TASKS.md (#128)
+[1;33m|[m * [33m91ea6cc[m Mark phase 0 as complete
+[1;33m|[m[1;33m/[m  
+[1;33m|[m * [33m5cd656c[m[33m ([m[1;31morigin/codex/number-all-tasks-in-tasks.md[m[33m)[m Number tasks and subtasks in TASKS.md
+[1;33m|[m[1;33m/[m  
+* [33md142d90[m Update WORKLOG.md
+* [33m0fdb4dd[m Refine roadmap tasks with actionable checklists (#127)
+[1;34m|[m * [33m3134bfb[m[33m ([m[1;31morigin/codex-yt0wh9[m[33m)[m Refine roadmap tasks with actionable checklists
+[1;34m|[m[1;34m/[m  
+* [33m5158d18[m 1
+* [33md86270b[m Align src templates with specifications (#126)
+* [33mb4c8f31[m Document Phase 1 task risks and decomposition (#125)
+[1;35m|[m * [33ma6cffc1[m[33m ([m[1;31morigin/codex/-/src[m[33m)[m Align src templates with specifications
+[1;35m|[m[1;35m/[m  
+[1;35m|[m * [33m0b5ec9d[m[33m ([m[1;31morigin/codex/analyze-phase-1-tasks-for-issues[m[33m)[m Document Phase 1 task risks and decomposition
+[1;35m|[m[1;35m/[m  
+* [33m8365bb4[m Adjust Phase 0 status and restore template sections (#124)
+[31m|[m *   [33m722bec3[m[33m ([m[1;31morigin/codex/populate-.memory/tasks.md-from-docs/roadmap.md-q04a4u[m[33m)[m Merge branch 'main' into codex/populate-.memory/tasks.md-from-docs/roadmap.md-q04a4u
+[31m|[m [32m|[m[31m\[m  
+[31m|[m [32m|[m[31m/[m  
+[31m|[m[31m/[m[32m|[m   
+* [32m|[m [33m97548cd[m Sync tasks backlog with roadmap (#123)
+[33m|[m * [33m2f50b6f[m Adjust Phase 0 status and restore template sections
+[33m|[m[33m/[m  
+[33m|[m * [33m19a880d[m[33m ([m[1;31morigin/codex/populate-.memory/tasks.md-from-docs/roadmap.md[m[33m)[m Sync tasks backlog with roadmap
+[33m|[m[33m/[m  
+* [33mb52caa8[m 1
+*   [33mdbb9220[m Merge pull request #122 from nicelight/codex/fill-memory-bank-files-with-business-context-2hpemb
+[35m|[m[36m\[m  
+[35m|[m *   [33m772750f[m[33m ([m[1;31morigin/codex/fill-memory-bank-files-with-business-context-2hpemb[m[33m)[m Merge branch 'main' into codex/fill-memory-bank-files-with-business-context-2hpemb
+[35m|[m [1;31m|[m[35m\[m  
+[35m|[m [1;31m|[m[35m/[m  
+[35m|[m[35m/[m[1;31m|[m   
+* [1;31m|[m [33md13d6e3[m Remove line-number references from memory bank (#121)
+[1;32m|[m * [33m40092ce[m Expand glossary with domain TTL and provider terms
+[1;32m|[m[1;32m/[m  
+[1;32m|[m * [33m95b6373[m[33m ([m[1;31morigin/codex/fill-memory-bank-files-with-business-context[m[33m)[m Remove line-number references from memory bank
+[1;32m|[m[1;32m/[m  
+* [33m48b368f[m 1
+* [33m1a66626[m Refine memory bank roadmap tasks (#120)
+[1;33m|[m * [33m49902fe[m[33m ([m[1;31morigin/codex/analyze-and-convert-roadmap.md-to-tasks[m[33m)[m Refine memory bank roadmap tasks
+[1;33m|[m[1;33m/[m  
+* [33mbe91b1c[m Уточнить состав кода перед фазой контрактных тестов (#119)
+[1;34m|[m * [33mca2484a[m[33m ([m[1;31morigin/codex/create-project-implementation-roadmap[m[33m)[m Уточнить состав кода перед фазой контрактных тестов
+[1;34m|[m[1;34m/[m  
+* [33m50eb529[m 1
+* [33m87153cf[m Update brief with slot count and statistics page (#118)
+[1;35m|[m *   [33m1e4d316[m[33m ([m[1;31morigin/codex/add-mention-of-statistics-endpoints-to-brief[m[33m)[m Merge branch 'main' into codex/add-mention-of-statistics-endpoints-to-brief
+[1;35m|[m [1;36m|[m[1;35m\[m  
+[1;35m|[m [1;36m|[m[1;35m/[m  
+[1;35m|[m[1;35m/[m[1;36m|[m   
+* [1;36m|[m [33m4962728[m Уточнить источник дедлайна задач (#117)
+* [1;36m|[m [33m12c9021[m Отражены предустановленные администраторы в брифе (#116)
+[31m|[m * [33m8135573[m Update brief with slot count and statistics page
+[31m|[m[31m/[m  
+[31m|[m * [33m7bf3571[m[33m ([m[1;31morigin/codex/refactor-domain-specification-for-job-deadline[m[33m)[m Уточнить источник дедлайна задач
+[31m|[m[31m/[m  
+[31m|[m * [33m279ab67[m[33m ([m[1;31morigin/codex/update-brief-to-specify-admin-accounts[m[33m)[m Отражены предустановленные администраторы в брифе
+[31m|[m[31m/[m  
+* [33m8ce2a7d[m Remove brief references from specs (#115)
+[33m|[m * [33m249f398[m[33m ([m[1;31morigin/codex/remove-all-references-to-brief-from-specifications[m[33m)[m Remove brief references from specs
+[33m|[m[33m/[m  
+* [33mfb5107b[m Update codex-automerge.yml
+* [33m6015a4e[m 12
+* [33m0c7bcbb[m docs: detail ingest polling workflow (#114)
+* [33m6f03f2d[m 123
+* [33me349350[m docs: analyze job completion notifier gap (#113)
+* [33maad012a[m 123
+[34m|[m * [33mecccd7b[m[33m ([m[1;31morigin/codex/add-jobcompletionnotifier-to-ingest-api-f4xseg[m[33m)[m docs: detail ingest polling workflow
+[34m|[m[34m/[m  
+[34m|[m * [33meebd4f7[m[33m ([m[1;31morigin/codex/add-jobcompletionnotifier-to-ingest-api[m[33m)[m docs: analyze job completion notifier gap
+[34m|[m[34m/[m  
+*   [33m05e758a[m Merge pull request #112 from nicelight/codex/fix-hardcoded-timeout_sec-in-provider-specs
+[1;31m|[m[1;32m\[m  
+[1;31m|[m * [33m5a900f0[m[33m ([m[1;31morigin/codex/fix-hardcoded-timeout_sec-in-provider-specs[m[33m)[m docs: align provider timeouts with settings
+* [1;32m|[m [33ma2eb24b[m Update codex-automerge.yml
+* [1;32m|[m [33m44ea839[m Update codex-labeler.yml
+* [1;32m|[m [33m3ca83ea[m Update codex-automerge.yml
+* [1;32m|[m   [33mf2c0414[m Merge pull request #111 from nicelight/codex/fix-gatewaytimeout-handling-and-simplify-logic
+[1;33m|[m[1;34m\[m [1;32m\[m  
+[1;33m|[m * [1;32m|[m [33m9781057[m[33m ([m[1;31morigin/codex/fix-gatewaytimeout-handling-and-simplify-logic[m[33m)[m Align GatewayTimeout contract with brief
+[1;33m|[m [1;32m|[m[1;32m/[m  
+* [1;32m|[m [33m847ee0b[m Update codex-automerge.yml
+* [1;32m|[m   [33m8d94dbe[m Merge pull request #110 from nicelight/codex/remove-user_id-field-from-slot-schemas
+[1;35m|[m[1;36m\[m [1;32m\[m  
+[1;35m|[m * [1;32m|[m [33mc021e1d[m[33m ([m[1;31morigin/codex/remove-user_id-field-from-slot-schemas[m[33m)[m Remove user binding from slot schemas
+[1;35m|[m [1;32m|[m[1;32m/[m  
+* [1;32m|[m   [33m62fc4e6[m Merge pull request #109 from nicelight/codex/expand-project-brief-and-specifications-wiq6ls
+[1;32m|[m[32m\[m [1;32m\[m  
+[1;32m|[m [32m|[m[1;32m/[m  
+[1;32m|[m[1;32m/[m[32m|[m   
+[1;32m|[m *   [33m3081abf[m[33m ([m[1;31morigin/codex/expand-project-brief-and-specifications-wiq6ls[m[33m)[m Merge branch 'main' into codex/expand-project-brief-and-specifications-wiq6ls
+[1;32m|[m [33m|[m[34m\[m  
+[1;32m|[m * [34m|[m [33m45eead2[m docs: показать превью и скачивание результатов слота
+* [34m|[m [34m|[m [33me0d9de3[m Update codex-automerge.yml
+[34m|[m [34m|[m[34m/[m  
+[34m|[m[34m/[m[34m|[m   
+* [34m|[m   [33m232119f[m Merge pull request #108 from nicelight/codex/expand-project-brief-and-specifications
+[35m|[m[36m\[m [34m\[m  
+[35m|[m * [34m\[m   [33m73f7bf8[m[33m ([m[1;31morigin/codex/expand-project-brief-and-specifications[m[33m)[m Merge branch 'main' into codex/expand-project-brief-and-specifications
+[35m|[m [1;31m|[m[35m\[m [34m\[m  
+[35m|[m [1;31m|[m[35m/[m [34m/[m  
+[35m|[m[35m/[m[1;31m|[m [34m|[m   
+* [1;31m|[m [34m|[m [33md2c25cf[m Update codex-automerge.yml
+* [1;31m|[m [34m|[m   [33m1287807[m Merge pull request #106 from nicelight/codex/fix-provider-external-identifier-naming-issue
+[1;33m|[m[1;34m\[m [1;31m\[m [34m\[m  
+* [1;34m\[m [1;31m\[m [34m\[m   [33m4d59c4f[m Merge pull request #107 from nicelight/codex/fix-late-provider-response-handling
+[34m|[m[1;36m\[m [1;34m\[m [1;31m\[m [34m\[m  
+[34m|[m [1;36m|[m[34m_[m[1;34m|[m[34m_[m[1;31m|[m[34m/[m  
+[34m|[m[34m/[m[1;36m|[m [1;34m|[m [1;31m|[m   
+[34m|[m * [1;34m|[m [1;31m|[m [33mdea092c[m[33m ([m[1;31morigin/codex/fix-late-provider-response-handling[m[33m)[m docs: clarify QA expectations for 504 timeout scenario
+[34m|[m[34m/[m [1;34m/[m [1;31m/[m  
+[34m|[m [1;34m|[m * [33m8c088fc[m docs: зафиксировать независимый TTL итоговых файлов
+[34m|[m [1;34m|[m[34m/[m  
+[34m|[m[34m/[m[1;34m|[m   
+[34m|[m [1;34m|[m * [33m8fb065f[m[33m ([m[1;31morigin/codex/fix-provider-external-identifier-naming-issue[m[33m)[m Update codex-automerge.yml
+[34m|[m [1;34m|[m[1;34m/[m  
+[34m|[m * [33m386291c[m Update codex-automerge.yml
+[34m|[m * [33m6957f8b[m Fix provider job reference naming
+[34m|[m[34m/[m  
+*   [33ma661ffa[m Merge pull request #105 from nicelight/codex/analyze-t_sync_response-time-characteristics
+[32m|[m[33m\[m  
+[32m|[m * [33m970ac1a[m[33m ([m[1;31morigin/codex/analyze-t_sync_response-time-characteristics[m[33m)[m Align job and media TTLs with sync timeout
+* [33m|[m [33m4a89cdd[m Update codex-automerge.yml
+[33m|[m[33m/[m  
+*   [33m214fbad[m Merge pull request #104 from nicelight/codex/remove-turbotext-webhook-support
+[34m|[m[35m\[m  
+[34m|[m * [33mfbf3cbf[m[33m ([m[1;31morigin/codex/remove-turbotext-webhook-support[m[33m)[m Refine Turbotext integration for polling-only flow
+* [35m|[m [33m3c13dd8[m Create old_BIG_brief.md
+[35m|[m[35m/[m  
+*   [33m0283fc9[m Merge pull request #103 from nicelight/codex/optimize-brief-file-and-remove-unnecessary-info
+[36m|[m[1;31m\[m  
+[36m|[m * [33m81d1dd7[m[33m ([m[1;31morigin/codex/optimize-brief-file-and-remove-unnecessary-info[m[33m)[m Restore high cohesion principle in brief
+[36m|[m[36m/[m  
+*   [33m9965beb[m Merge pull request #102 from nicelight/codex/integrate-deadline-guard.md-into-invariants
+[1;32m|[m[1;33m\[m  
+[1;32m|[m * [33m00453f0[m[33m ([m[1;31morigin/codex/integrate-deadline-guard.md-into-invariants[m[33m)[m docs: embed deadline guard rules into domain invariants
+* [1;33m|[m [33m474915c[m Update codex-labeler.yml
+* [1;33m|[m [33m0daf2c5[m Update codex-automerge.yml
+[1;33m|[m[1;33m/[m  
+* [33m5e78dd1[m Create deadline-guard.md
+* [33m286ffb7[m Update README.md
+* [33mefe8a65[m Rename PROMTS.md to PROMTS.md
+* [33mfabee49[m Delete PROMT_CONSTRUCTION.md
+* [33m42adcda[m Rename PROMTS.md to TMP/PROMTS.md
+* [33ma264ac6[m Delete spec/docs/blueprints/deadline-guard.md
+* [33m3f083f6[m Create codex-automerge.yml
+* [33m9f9e844[m Create codex-labeler.yml
+* [33mabdb0b5[m Delete spec/docs/blueprints/architecture-review.md
+* [33m426cb49[m Delete spec/adr/0001-job-result-simplification.md
+* [33mcc8ac41[m Delete .roo directory
+*   [33md7e0184[m Merge pull request #101 from nicelight/codex/remove-deadlineguard-and-implement-direct-deadline-calculati
+[1;34m|[m[1;35m\[m  
+[1;34m|[m * [33me3a03fe[m[33m ([m[1;31morigin/codex/remove-deadlineguard-and-implement-direct-deadline-calculati[m[33m)[m Fix architecture review findings summary
+[1;34m|[m[1;34m/[m  
+*   [33maab8e03[m Merge pull request #100 from nicelight/codex/fix-specification-for-output-storage-method
+[1;36m|[m[31m\[m  
+[1;36m|[m * [33medfd9b6[m[33m ([m[1;31morigin/codex/fix-specification-for-output-storage-method[m[33m)[m docs: уточняем очистку result_inline_base64 при 504
+* [31m|[m   [33mca0bd2a[m Merge pull request #99 from nicelight/codex/analyze-project-architecture-for-issues
+[32m|[m[33m\[m [31m\[m  
+[32m|[m * [31m|[m [33m566a661[m[33m ([m[1;31morigin/codex/analyze-project-architecture-for-issues[m[33m)[m Simplify statistics schemas by removing complex aggregates
+[32m|[m [31m|[m[31m/[m  
+* [31m|[m   [33m1055361[m Merge pull request #98 from nicelight/codex/update-ttl-settings-brief-and-specifications
+[31m|[m[35m\[m [31m\[m  
+[31m|[m [35m|[m[31m/[m  
+[31m|[m[31m/[m[35m|[m   
+[31m|[m * [33m0660c35[m[33m ([m[1;31morigin/codex/update-ttl-settings-brief-and-specifications[m[33m)[m Перенос настройки T_sync_response на страницу настроек
+[31m|[m[31m/[m  
+*   [33m5c51216[m Merge pull request #97 from nicelight/codex/update-ttl-settings-and-specifications
+[36m|[m[1;31m\[m  
+[36m|[m * [33mc09b4f3[m[33m ([m[1;31morigin/codex/update-ttl-settings-and-specifications[m[33m)[m Уточнение диапазона T_sync_response в документации
+* [1;31m|[m   [33m846f1f8[m Merge pull request #96 from nicelight/codex/analyze-documentation-to-add-missing-json-schema
+[1;32m|[m[1;33m\[m [1;31m\[m  
+[1;32m|[m * [1;31m|[m [33m1fa3dcf[m[33m ([m[1;31morigin/codex/analyze-documentation-to-add-missing-json-schema[m[33m)[m Clarify admin job response schemas
+[1;32m|[m[1;32m/[m [1;31m/[m  
+* [1;31m|[m   [33md69970e[m Merge pull request #95 from nicelight/codex/add-jobs-tag-to-openapi-spec
+[1;31m|[m[1;35m\[m [1;31m\[m  
+[1;31m|[m [1;35m|[m[1;31m/[m  
+[1;31m|[m[1;31m/[m[1;35m|[m   
+[1;31m|[m * [33mc7a11fb[m[33m ([m[1;31morigin/codex/add-jobs-tag-to-openapi-spec[m[33m)[m Add missing job response schemas
+[1;31m|[m * [33m4268256[m docs: declare jobs tag in openapi
+[1;31m|[m[1;31m/[m  
+*   [33mad72482[m Merge pull request #94 from nicelight/codex/synchronize-photochanger-sdd-package-with-authentication-bri
+[1;36m|[m[31m\[m  
+[1;36m|[m * [33mbc5f7b6[m[33m ([m[1;31morigin/codex/synchronize-photochanger-sdd-package-with-authentication-bri[m[33m)[m docs: sync auth responsibilities with brief
+* [31m|[m   [33m437b02b[m Merge pull request #93 from nicelight/codex/fix-nfr-specifications-for-auto-cleanup
+[31m|[m[33m\[m [31m\[m  
+[31m|[m [33m|[m[31m/[m  
+[31m|[m[31m/[m[33m|[m   
+[31m|[m * [33me7307e0[m[33m ([m[1;31morigin/codex/fix-nfr-specifications-for-auto-cleanup[m[33m)[m Синхронизировать NFR с автоочисткой результатов
+[31m|[m[31m/[m  
+*   [33m953b491[m Merge pull request #86 from nicelight/codex-1e7pxx
+[34m|[m[35m\[m  
+[34m|[m *   [33mdbd4ab7[m[33m ([m[1;31morigin/codex-1e7pxx[m[33m)[m Merge branch 'main' into codex-1e7pxx
+[34m|[m [36m|[m[34m\[m  
+[34m|[m [36m|[m[34m/[m  
+[34m|[m[34m/[m[36m|[m   
+* [36m|[m   [33mc90c4b2[m Merge pull request #92 from nicelight/codex/update-documentation-to-include-admin-api-endpoints
+[1;32m|[m[1;33m\[m [36m\[m  
+[1;32m|[m * [36m|[m [33md6fc7e5[m[33m ([m[1;31morigin/codex/update-documentation-to-include-admin-api-endpoints[m[33m)[m docs: describe admin jobs monitoring
+[1;32m|[m[1;32m/[m [36m/[m  
+* [36m|[m   [33m817b3c8[m Merge pull request #90 from nicelight/codex/update-vision-to-confirm-60s-ttl
+[1;34m|[m[1;35m\[m [36m\[m  
+[1;34m|[m * [36m|[m [33m40f5770[m[33m ([m[1;31morigin/codex/update-vision-to-confirm-60s-ttl[m[33m)[m Синхронизация TTL медиа-хранилища с брифом
+* [1;35m|[m [36m|[m   [33m350b59d[m Merge pull request #91 from nicelight/codex/change-parameter-format-to-date-time
+[1;36m|[m[31m\[m [1;35m\[m [36m\[m  
+[1;36m|[m * [1;35m|[m [36m|[m [33m1b0ebc6[m[33m ([m[1;31morigin/codex/change-parameter-format-to-date-time[m[33m)[m Allow date-time range for global stats
+[1;36m|[m [1;35m|[m[1;35m/[m [36m/[m  
+* [1;35m|[m [36m|[m   [33m4e5b013[m Merge pull request #89 from nicelight/codex-wdehw8
+[1;35m|[m[33m\[m [1;35m\[m [36m\[m  
+[1;35m|[m [33m|[m[1;35m/[m [36m/[m  
+[1;35m|[m[1;35m/[m[33m|[m [36m|[m   
+[1;35m|[m * [36m|[m [33m2e63564[m[33m ([m[1;31morigin/codex-wdehw8[m[33m)[m Уточнить TTL временных файлов в спецификациях
+* [33m|[m [36m|[m   [33m8a366ff[m Merge pull request #88 from nicelight/codex/implement-enum-for-slotid-in-api-specs
+[33m|[m[35m\[m [33m\[m [36m\[m  
+[33m|[m [35m|[m[33m/[m [36m/[m  
+[33m|[m[33m/[m[35m|[m [36m|[m   
+[33m|[m * [36m|[m [33m58ba98f[m[33m ([m[1;31morigin/codex/implement-enum-for-slotid-in-api-specs[m[33m)[m Limit slot identifiers to predefined set
+[33m|[m[33m/[m [36m/[m  
+* [36m|[m   [33me720a87[m Merge pull request #87 from nicelight/codex/fix-documentation-discrepancies-for-job.expires_at
+[36m|[m[1;31m\[m [36m\[m  
+[36m|[m * [36m|[m [33m36bd6b6[m[33m ([m[1;31morigin/codex/fix-documentation-discrepancies-for-job.expires_at[m[33m)[m Уточнить дедлайн Job по брифу
+[36m|[m[36m/[m [36m/[m  
+* [36m|[m   [33m83bc2e6[m Merge pull request #85 from nicelight/codex-g5b4bs
+[1;32m|[m[1;33m\[m [36m\[m  
+[1;32m|[m * [36m|[m [33m5b90393[m[33m ([m[1;31morigin/codex-g5b4bs[m[33m)[m Fix TTL inconsistencies in blueprints
+[1;32m|[m[1;32m/[m [36m/[m  
+[1;32m|[m * [33m8954c33[m Align contracts with brief by removing undocumented jobs API
+[1;32m|[m[1;32m/[m  
+*   [33m58ea8f3[m Merge pull request #84 from nicelight/codex/remove-download_quota-from-domain-model
+[1;34m|[m[1;35m\[m  
+[1;34m|[m * [33m0e00012[m[33m ([m[1;31morigin/codex/remove-download_quota-from-domain-model[m[33m)[m Remove download quota from MediaObject spec
+[1;34m|[m[1;34m/[m  
+*   [33m55bed56[m Merge pull request #83 from nicelight/codex-x1chkh
+[1;36m|[m[31m\[m  
+[1;36m|[m * [33m7950857[m[33m ([m[1;31morigin/codex-x1chkh[m[33m)[m Синхронизация спецификаций аутентификации и статистики
+* [31m|[m   [33ma448663[m Merge pull request #82 from nicelight/codex/remove-expires_at-from-ingest-response
+[32m|[m[33m\[m [31m\[m  
+[32m|[m * [31m|[m [33mf758106[m[33m ([m[1;31morigin/codex/remove-expires_at-from-ingest-response[m[33m)[m Согласовать DeadlineGuard с контрактом ingest
+[32m|[m[32m/[m [31m/[m  
+* [31m|[m   [33md297b02[m Merge pull request #81 from nicelight/codex/fix-inconsistency-in-ttl-calculation
+[34m|[m[35m\[m [31m\[m  
+[34m|[m * [31m|[m [33m6a6a3a1[m[33m ([m[1;31morigin/codex/fix-inconsistency-in-ttl-calculation[m[33m)[m Update DeadlineGuard docs for consistent media TTL
+[34m|[m[34m/[m [31m/[m  
+* [31m|[m   [33m2466001[m Merge pull request #80 from nicelight/codex/check-contracts-for-deadlines-and-metrics
+[36m|[m[1;31m\[m [31m\[m  
+[36m|[m * [31m|[m [33m78971bf[m[33m ([m[1;31morigin/codex/check-contracts-for-deadlines-and-metrics[m[33m)[m spec: расширить контракты админ-API очереди
+[36m|[m[36m/[m [31m/[m  
+* [31m|[m   [33m99a0f43[m Merge pull request #79 from nicelight/codex-v0936v
+[31m|[m[1;33m\[m [31m\[m  
+[31m|[m [1;33m|[m[31m/[m  
+[31m|[m[31m/[m[1;33m|[m   
+[31m|[m * [33m198ce28[m[33m ([m[1;31morigin/codex-v0936v[m[33m)[m docs: review architecture alignment
+[31m|[m[31m/[m  
+*   [33m9175afc[m Merge pull request #78 from nicelight/codex/prepare-design-for-deadlineguard
+[1;34m|[m[1;35m\[m  
+[1;34m|[m * [33m8928e16[m[33m ([m[1;31morigin/codex/prepare-design-for-deadlineguard[m[33m)[m Синхронизировать бриф и спеки с дизайном DeadlineGuard
+[1;34m|[m[1;34m/[m  
+*   [33m5ba93f2[m Merge pull request #77 from nicelight/codex/analyze-brief-and-specs-for-consistency-hlbhw9
+[1;36m|[m[31m\[m  
+[1;36m|[m * [33m1a63c9c[m[33m ([m[1;31morigin/codex/analyze-brief-and-specs-for-consistency-hlbhw9[m[33m)[m Align slot specs and media retention with brief
+[1;36m|[m[1;36m/[m  
+*   [33m6c6118c[m Merge pull request #76 from nicelight/codex/refactor-brief-and-specs
+[32m|[m[33m\[m  
+[32m|[m * [33m86c1a20[m[33m ([m[1;31morigin/codex/refactor-brief-and-specs[m[33m)[m Обновить описание TTL медиа и настройки
+[32m|[m[32m/[m  
+*   [33mc3dc58b[m Merge pull request #75 from nicelight/codex/simplify-job-and-result-model-architecture
+[34m|[m[35m\[m  
+[34m|[m * [33m852298c[m[33m ([m[1;31morigin/codex/simplify-job-and-result-model-architecture[m[33m)[m Simplify Job result handling for MVP
+[34m|[m[34m/[m  
+*   [33m01dce0c[m Merge pull request #74 from nicelight/codex/refactor-project-brief-and-specs
+[36m|[m[1;31m\[m  
+[36m|[m * [33m8230cc2[m[33m ([m[1;31morigin/codex/refactor-project-brief-and-specs[m[33m)[m docs: закрепить очередь PostgreSQL как основу mvp
+[36m|[m[36m/[m  
+*   [33m05fc303[m Merge pull request #73 from nicelight/codex/add-upper-limit-86400-for-max_manual_ttl_sec
+[1;32m|[m[1;33m\[m  
+[1;32m|[m * [33m4fbfb11[m[33m ([m[1;31morigin/codex/add-upper-limit-86400-for-max_manual_ttl_sec[m[33m)[m Add 86400 seconds cap for manual media cache TTL
+[1;32m|[m[1;32m/[m  
+*   [33m5a40248[m Merge pull request #72 from nicelight/codex/refactor-ttl-extension-architecture
+[1;34m|[m[1;35m\[m  
+[1;34m|[m * [33m5cffaa1[m[33m ([m[1;31morigin/codex/refactor-ttl-extension-architecture[m[33m)[m refactor: зафиксировать минутный TTL временных ссылок
+[1;34m|[m * [33md435987[m Fix processed media TTL configurability
+[1;34m|[m[1;34m/[m  
+*   [33mf2c2978[m Merge pull request #71 from nicelight/codex/analyze-brief-and-specs-for-consistency-jep0mp
+[1;36m|[m[31m\[m  
+[1;36m|[m * [33m8e4c8d3[m[33m ([m[1;31morigin/codex/analyze-brief-and-specs-for-consistency-jep0mp[m[33m)[m Удалить временный отчёт консистентности
+[1;36m|[m[1;36m/[m  
+*   [33mda6450a[m Merge pull request #70 from nicelight/codex/add-provider-specifications-for-contracts
+[32m|[m[33m\[m  
+[32m|[m * [33m5d0e4e9[m[33m ([m[1;31morigin/codex/add-provider-specifications-for-contracts[m[33m)[m Add Gemini and Turbotext provider contracts
+[32m|[m[32m/[m  
+*   [33m1956d11[m Merge pull request #69 from nicelight/codex/analyze-brief-and-specs-for-consistency
+[34m|[m[35m\[m  
+[34m|[m * [33m99baeec[m[33m ([m[1;31morigin/codex/analyze-brief-and-specs-for-consistency[m[33m)[m Fix slot stats and media register schemas
+[34m|[m[34m/[m  
+*   [33m621ee05[m Merge pull request #68 from nicelight/codex/fix-slotstatsresponse-to-include-last_reset_at
+[36m|[m[1;31m\[m  
+[36m|[m * [33mb78ebb6[m[33m ([m[1;31morigin/codex/fix-slotstatsresponse-to-include-last_reset_at[m[33m)[m Добавить last_reset_at в SlotStatsResponse
+[36m|[m[36m/[m  
+*   [33m6bfa607[m Merge pull request #67 from nicelight/codex/document-api-contracts-for-settings-and-cache-purge
+[1;32m|[m[1;33m\[m  
+[1;32m|[m * [33m746282f[m[33m ([m[1;31morigin/codex/document-api-contracts-for-settings-and-cache-purge[m[33m)[m docs: document settings and media cache purge APIs
+[1;32m|[m[1;32m/[m  
+*   [33mbe3c89b[m Merge pull request #66 from nicelight/codex/add-post-and-delete-endpoints-in-openapi.yaml
+[1;34m|[m[1;35m\[m  
+[1;34m|[m * [33m5d64703[m[33m ([m[1;31morigin/codex/add-post-and-delete-endpoints-in-openapi.yaml[m[33m)[m Add template media endpoints to OpenAPI contract
+[1;34m|[m[1;34m/[m  
+*   [33m1d74926[m Merge pull request #65 from nicelight/codex/fix-slot-model-to-include-user_id
+[1;36m|[m[31m\[m  
+[1;36m|[m * [33m1835a6e[m[33m ([m[1;31morigin/codex/fix-slot-model-to-include-user_id[m[33m)[m feat(contracts): add slot owner field
+[1;36m|[m[1;36m/[m  
+*   [33m52a64cf[m Merge pull request #64 from nicelight/codex/continue-sdd-package-generation
+[32m|[m[33m\[m  
+[32m|[m * [33m6bc6d31[m[33m ([m[1;31morigin/codex/continue-sdd-package-generation[m[33m)[m Добавить пакет SDD документов
+[32m|[m[32m/[m  
+*   [33mdf52ffa[m Merge pull request #63 from nicelight/codex/find-missing-elements-in-sdd-package
+[34m|[m[35m\[m  
+[34m|[m * [33m715abac[m[33m ([m[1;31morigin/codex/find-missing-elements-in-sdd-package[m[33m)[m Добавлен roadmap для недостающих артефактов SDD
+[34m|[m[34m/[m  
+*   [33m956e19a[m Merge pull request #62 from nicelight/codex/generate-project-skeleton-and-specifications
+[36m|[m[1;31m\[m  
+[36m|[m * [33m5fe5034[m[33m ([m[1;31morigin/codex/generate-project-skeleton-and-specifications[m[33m)[m Перенос спецификаций в spec и каркас приложения
+[36m|[m[36m/[m  
+*   [33m9605c48[m Merge pull request #61 from nicelight/codex/start-developing-key-specs
+[1;32m|[m[1;33m\[m  
+[1;32m|[m * [33m235f5dc[m[33m ([m[1;31morigin/codex/start-developing-key-specs[m[33m)[m Добавить первичные спецификации API
+[1;32m|[m[1;32m/[m  
+*   [33m661154b[m Merge pull request #60 from nicelight/codex/analyze-brief-for-consistency-and-issues-afdpok
+[1;34m|[m[1;35m\[m  
+[1;34m|[m * [33m2479a59[m[33m ([m[1;31morigin/codex/analyze-brief-for-consistency-and-issues-afdpok[m[33m)[m Align media TTLs with sync window
+[1;34m|[m[1;34m/[m  
+*   [33m4cbb447[m Merge pull request #59 from nicelight/codex/analyze-issues-and-suggest-fixes
+[1;36m|[m[31m\[m  
+[1;36m|[m * [33m5ffe8aa[m[33m ([m[1;31morigin/codex/analyze-issues-and-suggest-fixes[m[33m)[m Scope brief updates to job retry policy
+* [31m|[m [33m6005356[m Merge branch 'main' of https://github.com/nicelight/PhotoChanger_25
+[32m|[m[31m\[m[31m|[m 
+[32m|[m *   [33mb5b9e48[m Merge pull request #58 from nicelight/codex/update-brief.md-for-deadline-clarity
+[32m|[m [34m|[m[35m\[m  
+[32m|[m [34m|[m * [33mc2f1809[m[33m ([m[1;31morigin/codex/update-brief.md-for-deadline-clarity[m[33m)[m Уточнить правила продления media ссылок
+[32m|[m [34m|[m[34m/[m  
+[32m|[m *   [33m1425648[m Merge pull request #57 from nicelight/codex/fix-default-ingest-file-size-limit
+[32m|[m [36m|[m[1;31m\[m  
+[32m|[m [36m|[m * [33m6d6516e[m[33m ([m[1;31morigin/codex/fix-default-ingest-file-size-limit[m[33m)[m Align ingest default file size limit with providers
+[32m|[m [36m|[m[36m/[m  
+* [36m/[m [33mb44c4eb[m 1
+[36m|[m[36m/[m  
+* [33m3d5338f[m 1
+*   [33mf05567b[m Merge pull request #56 from nicelight/codex/clarify-binary-body-return-section-in-ingest
+[1;32m|[m[1;33m\[m  
+[1;32m|[m * [33mf0b5764[m[33m ([m[1;31morigin/codex/clarify-binary-body-return-section-in-ingest[m[33m)[m Clarify ingest binary response requirements
+[1;32m|[m[1;32m/[m  
+*   [33m7c0211b[m Merge pull request #54 from nicelight/codex/revise-media-ttl-extension-requirements
+[1;34m|[m[1;35m\[m  
+[1;34m|[m * [33m3368f7a[m[33m ([m[1;31morigin/codex/revise-media-ttl-extension-requirements[m[33m)[m Обновить политику TTL временных медиа
+* [1;35m|[m   [33m9686966[m Merge pull request #53 from nicelight/codex/clarify-retry-management-wording
+[1;35m|[m[31m\[m [1;35m\[m  
+[1;35m|[m [31m|[m[1;35m/[m  
+[1;35m|[m[1;35m/[m[31m|[m   
+[1;35m|[m * [33m1fcde31[m[33m ([m[1;31morigin/codex/clarify-retry-management-wording[m[33m)[m Clarify timeout retry wording
+[1;35m|[m[1;35m/[m  
+*   [33m4531850[m Merge pull request #52 from nicelight/codex/clarify-purge-behavior-in-documentation
+[32m|[m[33m\[m  
+[32m|[m * [33ma762d4d[m[33m ([m[1;31morigin/codex/clarify-purge-behavior-in-documentation[m[33m)[m Уточнена политика хранения результатов
+[32m|[m[32m/[m  
+*   [33mf401f33[m Merge pull request #51 from nicelight/codex/update-documentation-on-cleanup-processes
+[34m|[m[35m\[m  
+[34m|[m * [33m43e4526[m[33m ([m[1;31morigin/codex/update-documentation-on-cleanup-processes[m[33m)[m Обновить описание очистки Result и media cache
+[34m|[m[34m/[m  
+*   [33mbfc42ae[m Merge pull request #50 from nicelight/codex/update-docs/brief.md-for-settings-page
+[36m|[m[1;31m\[m  
+[36m|[m * [33mffc6463[m[33m ([m[1;31morigin/codex/update-docs/brief.md-for-settings-page[m[33m)[m Уточнена логика очистки медиа кеша
+[36m|[m[36m/[m  
+[36m|[m * [33m2e986c9[m[33m ([m[1;31morigin/codex/analyze-brief-for-consistency-and-issues[m[33m)[m Добавить обзор консистентности брифа
+[36m|[m[36m/[m  
+*   [33ma33a3c4[m Merge pull request #49 from nicelight/codex/review-mime-limitations-in-media-storage
+[1;33m|[m[1;34m\[m  
+[1;33m|[m * [33m83ee4cc[m[33m ([m[1;31morigin/codex/review-mime-limitations-in-media-storage[m[33m)[m Синхронизация ограничений MIME для Turbotext
+[1;33m|[m[1;33m/[m  
+*   [33mda67b49[m Merge pull request #48 from nicelight/codex/create-homepage-template-in-docs/frontend-examples
+[1;35m|[m[1;36m\[m  
+[1;35m|[m * [33m233bde9[m[33m ([m[1;31morigin/codex/create-homepage-template-in-docs/frontend-examples[m[33m)[m Уточнить визуал шаблона главной страницы
+[1;35m|[m * [33m7ee2284[m Переработать шаблон главной страницы
+[1;35m|[m * [33m72bf54b[m Добавить шаблон главной страницы и обновить бриф
+[1;35m|[m[1;35m/[m  
+*   [33m4f9a480[m Merge pull request #47 from nicelight/codex/remove-style_media_preview-from-brief.md
+[31m|[m[32m\[m  
+[31m|[m * [33m45fe2bf[m[33m ([m[1;31morigin/codex/remove-style_media_preview-from-brief.md[m[33m)[m Remove style media preview from stats summary
+* [32m|[m   [33m66ad232[m Merge pull request #45 from nicelight/codex/update-documentation-for-result-and-media_object
+[32m|[m[34m\[m [32m\[m  
+[32m|[m [34m|[m[32m/[m  
+[32m|[m[32m/[m[34m|[m   
+[32m|[m * [33m98d8673[m[33m ([m[1;31morigin/codex/update-documentation-for-result-and-media_object[m[33m)[m Clarify media result storage TTLs in brief
+[32m|[m[32m/[m  
+[32m|[m * [33m50e9751[m[33m ([m[1;31morigin/codex/unify-button-names-in-docs[m[33m)[m Унификация названий кнопок теста и сохранения
+[32m|[m[32m/[m  
+*   [33m4a12fd5[m Merge pull request #44 from nicelight/codex/update-app_settings-table-description
+[36m|[m[1;31m\[m  
+[36m|[m * [33m1939056[m[33m ([m[1;31morigin/codex/update-app_settings-table-description[m[33m)[m Уточнено описание хранения настроек
+[36m|[m[36m/[m  
+*   [33maac036c[m Merge pull request #43 from nicelight/codex/add-media-type-restrictions-for-provider-slots
+[1;32m|[m[1;33m\[m  
+[1;32m|[m * [33m6122f07[m[33m ([m[1;31morigin/codex/add-media-type-restrictions-for-provider-slots[m[33m)[m docs: clarify template media mime rules
+[1;32m|[m[1;32m/[m  
+*   [33m3c00a77[m Merge pull request #42 from nicelight/codex/update-slot-page.html-template
+[1;34m|[m[1;35m\[m  
+[1;34m|[m * [33m9f378f0[m[33m ([m[1;31morigin/codex/update-slot-page.html-template[m[33m)[m Обновить шаблон страницы слота
+* [1;35m|[m   [33m1ffd104[m Merge pull request #41 from nicelight/codex/update-configs/providers.json-section
+[1;35m|[m[31m\[m [1;35m\[m  
+[1;35m|[m [31m|[m[1;35m/[m  
+[1;35m|[m[1;35m/[m[31m|[m   
+[1;35m|[m * [33m07b4fad[m[33m ([m[1;31morigin/codex/update-configs/providers.json-section[m[33m)[m Уточнить MIME для ingest провайдеров
+[1;35m|[m[1;35m/[m  
+* [33m726fdb4[m Update agents.md
+*   [33m1be725b[m Merge pull request #40 from nicelight/codex/update-docs/brief.md-for-media-api-endpoints
+[32m|[m[33m\[m  
+[32m|[m * [33mc5f84e2[m[33m ([m[1;31morigin/codex/update-docs/brief.md-for-media-api-endpoints[m[33m)[m Clarify temporary media storage API contract
+[32m|[m[32m/[m  
+*   [33mddc9e75[m Merge pull request #39 from nicelight/codex/update-platform-mechanism-section-in-brief.md
+[34m|[m[35m\[m  
+[34m|[m *   [33mc92a8c0[m[33m ([m[1;31morigin/codex/update-platform-mechanism-section-in-brief.md[m[33m)[m Merge branch 'main' into codex/update-platform-mechanism-section-in-brief.md
+[34m|[m [36m|[m[34m\[m  
+[34m|[m [36m|[m[34m/[m  
+[34m|[m[34m/[m[36m|[m   
+* [36m|[m   [33med0ae98[m Merge pull request #38 from nicelight/codex/analyze-brief-for-consistency-issues
+[1;32m|[m[1;33m\[m [36m\[m  
+[1;32m|[m * [36m|[m [33m0b8f9f6[m[33m ([m[1;31morigin/codex/analyze-brief-for-consistency-issues[m[33m)[m Remove template preview requirement from stats
+[1;32m|[m[1;32m/[m [36m/[m  
+[1;32m|[m * [33md8fdf39[m Clarify timeout handling and update stats
+[1;32m|[m[1;32m/[m  
+*   [33m5ff7f68[m Merge pull request #37 from nicelight/codex/clarify-ui-metrics-in-docs/brief.md
+[1;34m|[m[1;35m\[m  
+[1;34m|[m * [33m0d004f7[m[33m ([m[1;31morigin/codex/clarify-ui-metrics-in-docs/brief.md[m[33m)[m Clarify stats UI metrics and API outputs
+[1;34m|[m[1;34m/[m  
+*   [33ma682080[m Merge pull request #36 from nicelight/codex/update-turbotext-docs-for-image_edit-operation
+[1;36m|[m[31m\[m  
+[1;36m|[m * [33mef2238b[m[33m ([m[1;31morigin/codex/update-turbotext-docs-for-image_edit-operation[m[33m)[m Clarify media object TTL handling for Turbotext
+* [31m|[m   [33m7fbfc61[m Merge pull request #35 from nicelight/codex/update-documentation-for-template-media-storage-jv5f40
+[31m|[m[33m\[m [31m\[m  
+[31m|[m [33m|[m[31m/[m  
+[31m|[m[31m/[m[33m|[m   
+[31m|[m * [33medb8591[m[33m ([m[1;31morigin/codex/update-documentation-for-template-media-storage-jv5f40[m[33m)[m Update brief with template media storage details
+* [33m|[m   [33m58d5639[m Merge pull request #34 from nicelight/codex/update-documentation-for-template-media-storage
+[33m|[m[35m\[m [33m\[m  
+[33m|[m [35m|[m[33m/[m  
+[33m|[m[33m/[m[35m|[m   
+[33m|[m * [33mafea6aa[m[33m ([m[1;31morigin/codex/update-documentation-for-template-media-storage[m[33m)[m Update brief with template media storage details
+[33m|[m[33m/[m  
+*   [33mc0f0fd0[m Merge pull request #33 from nicelight/codex/update-api-documentation-for-versioning
+[36m|[m[1;31m\[m  
+[36m|[m * [33m50683e1[m[33m ([m[1;31morigin/codex/update-api-documentation-for-versioning[m[33m)[m Update slot update version requirement
+[36m|[m[36m/[m  
+*   [33meda79e3[m Merge pull request #32 from nicelight/codex/update-documentation-for-providers.json
+[1;32m|[m[1;33m\[m  
+[1;32m|[m * [33m469caff[m[33m ([m[1;31morigin/codex/update-documentation-for-providers.json[m[33m)[m Update provider documentation
+[1;32m|[m[1;32m/[m  
+*   [33m63fc57b[m Merge pull request #31 from nicelight/codex/document-user-roles-and-permissions
+[1;34m|[m[1;35m\[m  
+[1;34m|[m * [33m4469d0e[m[33m ([m[1;31morigin/codex/document-user-roles-and-permissions[m[33m)[m Document user permissions model
+* [1;35m|[m   [33m31c76eb[m Merge pull request #30 from nicelight/codex/update-description-for-slot-columns
+[1;35m|[m[31m\[m [1;35m\[m  
+[1;35m|[m [31m|[m[1;35m/[m  
+[1;35m|[m[1;35m/[m[31m|[m   
+[1;35m|[m * [33m3971d34[m[33m ([m[1;31morigin/codex/update-description-for-slot-columns[m[33m)[m docs: sync slot schema with api examples
+[1;35m|[m[1;35m/[m  
+*   [33m75ef6d1[m Merge pull request #29 from nicelight/codex/update-documentation-on-retries-mechanism
+[32m|[m[33m\[m  
+[32m|[m * [33me4a35b8[m[33m ([m[1;31morigin/codex/update-documentation-on-retries-mechanism[m[33m)[m Clarify retry window and finalization rules
+[32m|[m[32m/[m  
+*   [33m12df305[m Merge pull request #28 from nicelight/codex/document-global-slot-count-of-15
+[34m|[m[35m\[m  
+[34m|[m * [33m760869d[m[33m ([m[1;31morigin/codex/document-global-slot-count-of-15[m[33m)[m Clarify global slot pool in documentation
+* [35m|[m   [33m9abbb1d[m Merge pull request #27 from nicelight/codex/update-settings-naming-and-documentation
+[35m|[m[1;31m\[m [35m\[m  
+[35m|[m [1;31m|[m[35m/[m  
+[35m|[m[35m/[m[1;31m|[m   
+[35m|[m * [33mbf6892b[m[33m ([m[1;31morigin/codex/update-settings-naming-and-documentation[m[33m)[m Align media TTL setting naming
+[35m|[m[35m/[m  
+*   [33m1948204[m Merge pull request #26 from nicelight/codex-1w0ccc
+[1;32m|[m[1;33m\[m  
+[1;32m|[m * [33m20fa762[m[33m ([m[1;31morigin/codex-1w0ccc[m[33m)[m Align ingest password storage flow
+[1;32m|[m[1;32m/[m  
+*   [33mcb1beac[m Merge pull request #25 from nicelight/codex/edit-docs-to-remove-/results/job_id-references
+[1;34m|[m[1;35m\[m  
+[1;34m|[m * [33m7c2121a[m[33m ([m[1;31morigin/codex/edit-docs-to-remove-/results/job_id-references[m[33m)[m Remove references to deprecated results endpoint
+[1;34m|[m[1;34m/[m  
+*   [33md7b1aa8[m Merge pull request #23 from nicelight/codex/update-job-statuses-in-documentation
+[1;36m|[m[31m\[m  
+[1;36m|[m * [33m4416ec7[m[33m ([m[1;31morigin/codex/update-job-statuses-in-documentation[m[33m)[m Align job status documentation
+* [31m|[m   [33m1cbd11f[m Merge pull request #24 from nicelight/codex/update-get-/api/settings-documentation
+[31m|[m[33m\[m [31m\[m  
+[31m|[m [33m|[m[31m/[m  
+[31m|[m[31m/[m[33m|[m   
+[31m|[m * [33m57c74da[m[33m ([m[1;31morigin/codex/update-get-/api/settings-documentation[m[33m)[m docs: update settings secrecy requirements
+[31m|[m[31m/[m  
+*   [33m1c2f98d[m Merge pull request #22 from nicelight/codex/update-docs-with-job-and-result-schema
+[34m|[m[35m\[m  
+[34m|[m * [33m7702aa3[m[33m ([m[1;31morigin/codex/update-docs-with-job-and-result-schema[m[33m)[m Document job and result data models
+* [35m|[m   [33m4be656c[m Merge pull request #21 from nicelight/codex/revise-platform-mechanism-section-and-diagram
+[36m|[m[1;31m\[m [35m\[m  
+[36m|[m * [35m|[m [33m9946cc4[m[33m ([m[1;31morigin/codex/revise-platform-mechanism-section-and-diagram[m[33m)[m Clarify timeout handling in platform flow
+[36m|[m [35m|[m[35m/[m  
+* [35m|[m   [33mf6372eb[m Merge pull request #20 from nicelight/codex/fix-ingest-slot-count-to-15
+[35m|[m[1;33m\[m [35m\[m  
+[35m|[m [1;33m|[m[35m/[m  
+[35m|[m[35m/[m[1;33m|[m   
+[35m|[m * [33m98145d8[m[33m ([m[1;31morigin/codex/fix-ingest-slot-count-to-15[m[33m)[m Align ingest slot ranges to 15
+[35m|[m[35m/[m  
+* [33m5ec262e[m 1
+*   [33md0ec536[m Merge pull request #19 from nicelight/codex/update-docs/brief.md-for-ingest-contract
+[1;34m|[m[1;35m\[m  
+[1;34m|[m * [33m4c39116[m[33m ([m[1;31morigin/codex/update-docs/brief.md-for-ingest-contract[m[33m)[m Document POST /ingest slot contract
+* [1;35m|[m   [33m29d8d40[m Merge pull request #18 from nicelight/codex/update-api-settings-documentation
+[1;35m|[m[31m\[m [1;35m\[m  
+[1;35m|[m [31m|[m[1;35m/[m  
+[1;35m|[m[1;35m/[m[31m|[m   
+[1;35m|[m * [33mddca217[m[33m ([m[1;31morigin/codex/update-api-settings-documentation[m[33m)[m Document settings API and storage requirements
+[1;35m|[m[1;35m/[m  
+*   [33m0caa5ee[m Merge pull request #17 from nicelight/codex/update-docs/brief.md-for-client-server-interaction
+[32m|[m[33m\[m  
+[32m|[m * [33m6130b7e[m[33m ([m[1;31morigin/codex/update-docs/brief.md-for-client-server-interaction[m[33m)[m Clarify timeout failure handling
+[32m|[m[32m/[m  
+*   [33m09c3d87[m Merge pull request #16 from nicelight/codex/-slot-mvp
+[34m|[m[35m\[m  
+[34m|[m * [33m5f034f9[m[33m ([m[1;31morigin/codex/-slot-mvp[m[33m)[m docs: align slot description and tab counts
+[34m|[m[34m/[m  
+*   [33m6337ad1[m Merge pull request #15 from nicelight/codex/refactor-turbotext-operations-and-identifiers
+[36m|[m[1;31m\[m  
+[36m|[m * [33m5d53ad0[m[33m ([m[1;31morigin/codex/refactor-turbotext-operations-and-identifiers[m[33m)[m Align Turbotext operations with unified slot schema
+[36m|[m[36m/[m  
+*   [33m937944a[m Merge pull request #14 from nicelight/codex/create-documentation-for-turbotext-api
+[1;32m|[m[1;33m\[m  
+[1;32m|[m * [33mb7ee3f7[m[33m ([m[1;31morigin/codex/create-documentation-for-turbotext-api[m[33m)[m Document Turbotext photo API integration
+[1;32m|[m[1;32m/[m  
+*   [33ma5d2806[m Merge pull request #13 from nicelight/codex/analyze-project-brief-for-specs-generation
+[1;34m|[m[1;35m\[m  
+[1;34m|[m * [33mee4c385[m[33m ([m[1;31morigin/codex/analyze-project-brief-for-specs-generation[m[33m)[m Clarify DSLR ingest requirements
+* [1;35m|[m   [33m9af5192[m Merge pull request #12 from nicelight/codex/extract-frontend-examples-to-separate-files
+[1;35m|[m[31m\[m [1;35m\[m  
+[1;35m|[m [31m|[m[1;35m/[m  
+[1;35m|[m[1;35m/[m[31m|[m   
+[1;35m|[m * [33m5eff9d5[m[33m ([m[1;31morigin/codex/extract-frontend-examples-to-separate-files[m[33m)[m Extract frontend examples from brief
+[1;35m|[m[1;35m/[m  
+* [33mead9600[m 1
+* [33mb2ad027[m 1
+*   [33m2559f80[m Merge pull request #11 from nicelight/codex/extract-and-summarize-gemini-limits
+[32m|[m[33m\[m  
+[32m|[m * [33mc03dc37[m[33m ([m[1;31morigin/codex/extract-and-summarize-gemini-limits[m[33m)[m Document Gemini quotas in brief
+[32m|[m[32m/[m  
+*   [33m19edad8[m Merge pull request #10 from nicelight/codex/update-api-description-in-brief.md
+[34m|[m[35m\[m  
+[34m|[m * [33mb350551[m[33m ([m[1;31morigin/codex/update-api-description-in-brief.md[m[33m)[m Clarify static slot model in brief
+* [35m|[m   [33m1c062fb[m Merge pull request #9 from nicelight/codex/replace-vexpires_at-with-expires_at
+[35m|[m[1;31m\[m [35m\[m  
+[35m|[m [1;31m|[m[35m/[m  
+[35m|[m[35m/[m[1;31m|[m   
+[35m|[m * [33m8ed34cc[m[33m ([m[1;31morigin/codex/replace-vexpires_at-with-expires_at[m[33m)[m Fix media_object expires_at field description
+[35m|[m[35m/[m  
+*   [33ma462fa0[m Merge pull request #8 from nicelight/codex/remove-mask-editing-details-from-brief.md
+[1;32m|[m[1;33m\[m  
+[1;32m|[m * [33mbea9c5b[m[33m ([m[1;31morigin/codex/remove-mask-editing-details-from-brief.md[m[33m)[m Remove mask editing references from brief
+* [1;33m|[m   [33m92b96e7[m Merge pull request #7 from nicelight/codex/update-api-slot-examples-and-schema
+[1;33m|[m[1;35m\[m [1;33m\[m  
+[1;33m|[m [1;35m|[m[1;33m/[m  
+[1;33m|[m[1;33m/[m[1;35m|[m   
+[1;33m|[m * [33m1893743[m[33m ([m[1;31morigin/codex/update-api-slot-examples-and-schema[m[33m)[m Clarify slot configuration schemas
+[1;33m|[m[1;33m/[m  
+* [33m3b4298c[m 1
+*   [33me0aa0c1[m Merge pull request #6 from nicelight/codex/verify-gemini-api-documentation-for-images
+[1;36m|[m[31m\[m  
+[1;36m|[m * [33m9e0e997[m[33m ([m[1;31morigin/codex/verify-gemini-api-documentation-for-images[m[33m)[m Update Gemini provider documentation
+[1;36m|[m[1;36m/[m  
+*   [33m5435545[m Merge pull request #5 from nicelight/codex/update-brief.md-for-static-user-management
+[32m|[m[33m\[m  
+[32m|[m * [33m6f72fbf[m[33m ([m[1;31morigin/codex/update-brief.md-for-static-user-management[m[33m)[m Document static credentials model
+* [33m|[m   [33ma514d06[m Merge pull request #4 from nicelight/codex/update-provider_overrides.media_parts-and-settings_json
+[34m|[m[35m\[m [33m\[m  
+[34m|[m * [33m|[m [33m2715085[m[33m ([m[1;31morigin/codex/update-provider_overrides.media_parts-and-settings_json[m[33m)[m Revise change_image ingest flow documentation
+[34m|[m[34m/[m [33m/[m  
+* [33m|[m   [33m8bee8df[m Merge pull request #3 from nicelight/codex/create-configuration-schema-for-providers-and-slots-gys49h
+[36m|[m[1;31m\[m [33m\[m  
+[36m|[m * [33m\[m   [33m1c107ff[m[33m ([m[1;31morigin/codex/create-configuration-schema-for-providers-and-slots-gys49h[m[33m)[m Merge branch 'main' into codex/create-configuration-schema-for-providers-and-slots-gys49h
+[36m|[m [1;32m|[m[36m\[m [33m\[m  
+[36m|[m [1;32m|[m[36m/[m [33m/[m  
+[36m|[m[36m/[m[1;32m|[m [33m|[m   
+* [1;32m|[m [33m|[m   [33m9f2f6a7[m Merge pull request #2 from nicelight/codex/create-configuration-schema-for-providers-and-slots
+[33m|[m[1;35m\[m [1;32m\[m [33m\[m  
+[33m|[m [1;35m|[m[33m_[m[1;32m|[m[33m/[m  
+[33m|[m[33m/[m[1;35m|[m [1;32m|[m   
+[33m|[m * [1;32m|[m [33mfea8d8c[m[33m ([m[1;31morigin/codex/create-configuration-schema-for-providers-and-slots[m[33m)[m Document provider and slot configuration schema
+[33m|[m[33m/[m [1;32m/[m  
+[33m|[m * [33md4fa364[m Refine Gemini configuration details
+[33m|[m[33m/[m  
+*   [33mfe9c4a9[m Merge branch 'main' of https://github.com/nicelight/PhotoChanger_25
+[1;36m|[m[31m\[m  
+[1;36m|[m *   [33m305bb78[m Merge pull request #1 from nicelight/codex/update-api-documentation-and-requirements
+[1;36m|[m [32m|[m[33m\[m  
+[1;36m|[m [32m|[m * [33m46a8493[m[33m ([m[1;31morigin/codex/update-api-documentation-and-requirements[m[33m)[m Document internal API contracts
+[1;36m|[m [32m|[m[32m/[m  
+* [32m/[m [33m2ae493f[m 1
+[32m|[m[32m/[m  
+* [33m3f7ffa1[m 1
+* [33mde85825[m 1
+* [33m09ee1cc[m 1
+* [33mb3a0c2a[m 1
+* [33m93c68c8[m 1
+* [33m1a0f21a[m 123
+* [33m530ca58[m j
+* [33m90227b0[m 1
+* [33m1ceb9dd[m 1
+* [33mb22e8df[m 1
+* [33m46ed0af[m 1
+* [33m46961f8[m Initial commit
