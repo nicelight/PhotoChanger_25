@@ -1,10 +1,10 @@
 # Машиночитаемый индекс актуальности артефактов
-updated: 2025-11-07
+updated: 2025-11-09
 
 spec/contracts:
-  version: "0.3.0"
-  released_at: "2025-11-07"
-  notes: "Добавлен `/api/slots/{slot_id}/test-run` и колонка `job_history.source`."
+  version: "0.5.0"
+  released_at: "2025-11-09"
+  notes: "Добавлен `/api/stats/slots` + KPI и документация под UI статистики."
 
 spec/adr:
   count: 1
@@ -23,9 +23,9 @@ runbooks:
 memory:
   mission: 2025-10-31
   context: 2025-10-31
-  tasks: 2025-11-07
+  tasks: 2025-11-09
   asks: 2025-11-06
   usecases: 2025-11-06
   progress: 2025-11-06
-  worklog: 2025-11-07
+  worklog: 2025-11-09
   reports: "deprecated 2025-10-31 (REPORT.json/REPORT_SCHEMA.json removed)"

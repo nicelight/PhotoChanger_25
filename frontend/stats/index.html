@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PhotoChanger — Статистика слотов</title>
+    <link rel="stylesheet" href="../slots/assets/slot.css" />
+    <link rel="stylesheet" href="assets/stats.css" />
+  </head>
+  <body data-overview-endpoint="/api/stats/overview" data-slots-endpoint="/api/stats/slots">
+    <div class="bg">
+      <main>
+        <div class="shell stats-shell">
+          <header class="stats-header">
+            <div>
+              <p class="muted-hint">Мониторинг SLA</p>
+              <h1>Статистика AI-слотов</h1>
+              <p class="muted-hint">
+                Обновление данных занимает считаные секунды. Смотрите глобальные агрегаты,
+                состояние слотов и простые KPI без привлечения внешних библиотек.
+              </p>
+              <p class="muted-hint" id="last-refresh" aria-live="polite"></p>
+            </div>
+            <div class="card stats-controls">
+              <label class="title" for="window-minutes">Временное окно</label>
+              <div class="inline">
+                <input
+                  id="window-minutes"
+                  type="number"
+                  min="5"
+                  max="240"
+                  step="5"
+                  value="60"
+                  aria-label="Окно статистики в минутах"
+                />
+                <button id="refresh-button" type="button" class="btn">Обновить</button>
+              </div>
+              <p class="muted-hint">Допустимый диапазон: 5–240 минут.</p>
+            </div>
+          </header>
+
+          <div id="stats-loading" class="notice">
+            <span class="pulse"></span>
+            Загружаем показатели за <strong id="loading-window-label">60</strong> минут…
+          </div>
+          <div id="stats-error" class="notice -error" hidden role="alert"></div>
+
+          <section class="card stats-summary" aria-labelledby="summary-title">
+            <div class="stats-summary__header">
+              <div>
+                <p class="muted-hint">Глобальные агрегаты</p>
+                <h2 id="summary-title">Состояние платформы</h2>
+              </div>
+              <span class="chip" id="summary-window">Окно 60 мин</span>
+            </div>
+            <div class="summary-grid">
+              <article class="summary-item">
+                <p class="summary-label">Всего задач</p>
+                <p class="summary-value" id="summary-jobs-total">—</p>
+                <p class="muted-hint">История job_history, включая архив</p>
+              </article>
+              <article class="summary-item">
+                <p class="summary-label">Задач за окно</p>
+                <p class="summary-value" id="summary-jobs-window">—</p>
+                <p class="muted-hint">Выполнено за выбранное окно</p>
+              </article>
+              <article class="summary-item">
+                <p class="summary-label">Таймауты</p>
+                <p class="summary-value" id="summary-timeouts">—</p>
+                <p class="muted-hint">504 Gateway Timeout</p>
+              </article>
+              <article class="summary-item">
+                <p class="summary-label">Ошибки провайдера</p>
+                <p class="summary-value" id="summary-provider-errors">—</p>
+                <p class="muted-hint">Gemini / Turbotext</p>
+              </article>
+              <article class="summary-item">
+                <p class="summary-label">Занято диском</p>
+                <p class="summary-value" id="summary-storage">—</p>
+                <p class="muted-hint">Каталог media/results</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="card stats-table" aria-labelledby="slots-table-title">
+            <header class="stats-table__header">
+              <div>
+                <p class="muted-hint">Текущие слоты</p>
+                <h2 id="slots-table-title">Таблица SLA</h2>
+              </div>
+              <button type="button" class="btn -ghost" id="table-refresh">Обновить</button>
+            </header>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Слот</th>
+                    <th scope="col">Задач</th>
+                    <th scope="col">Успехов</th>
+                    <th scope="col">Таймаутов</th>
+                    <th scope="col">Успех, %</th>
+                    <th scope="col">Таймаут, %</th>
+                    <th scope="col">Последний успех</th>
+                    <th scope="col">Последняя ошибка</th>
+                  </tr>
+                </thead>
+                <tbody id="slots-table-body">
+                  <tr>
+                    <td colspan="8" class="muted-hint">Нет данных — обновите страницу.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="card stats-chart" aria-labelledby="chart-title">
+            <header class="stats-chart__header">
+              <div>
+                <p class="muted-hint">Быстрые графики</p>
+                <h2 id="chart-title">Успех vs таймаут</h2>
+              </div>
+            </header>
+            <p class="muted-hint">
+              Для каждого активного слота показываем относительную долю успешных задач и таймаутов за выбранное окно.
+            </p>
+            <ul id="slots-chart" class="chart-list">
+              <li class="muted-hint">Недостаточно данных для построения графика.</li>
+            </ul>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script src="assets/stats.js" defer></script>
+  </body>
+</html>

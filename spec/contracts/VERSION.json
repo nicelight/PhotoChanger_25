@@ -1,8 +1,8 @@
 {
-  "version": "0.4.0",
+  "version": "0.5.0",
   "released_at": "2025-11-09",
   "stage": "draft",
-  "summary": "Refines admin test-run contract (slot_payload overrides, duration metric) and wires it through IngestService.",
+  "summary": "Exposes slot-level SLA metrics via /api/stats/slots and documents the dashboard expectations.",
   "changes": [
     {
       "type": "init",
@@ -82,9 +82,18 @@
         "spec/contracts/openapi.yaml",
         "docs/PRD.md"
       ]
+    },
+    {
+      "type": "feature",
+      "description": "Added `/api/stats/slots`, success/timeout KPI fields and frontend guidance for SLA dashboards.",
+      "artifacts": [
+        "spec/contracts/openapi.yaml",
+        "docs/PRD.md",
+        "frontend/stats/index.html"
+      ]
     }
   ],
   "deprecated": [],
-  "breaking": true,
-  "notes": "Next update will extend admin/API docs for slots and monitoring."
+  "breaking": false,
+  "notes": "Stats dashboards now rely on lightweight REST APIs; next step — hook JWT once auth lands."
 }

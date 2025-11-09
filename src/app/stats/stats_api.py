@@ -25,3 +25,12 @@ def stats_overview(
 ) -> dict[str, Any]:
     """Return statistics snapshot for admin UI."""
     return service.overview(window_minutes=window_minutes)
+
+
+@router.get("/slots")
+def stats_slots(
+    window_minutes: int = 60,
+    service: StatsService = Depends(get_stats_service),
+) -> dict[str, Any]:
+    """Return per-slot metrics tailored for graphs."""
+    return service.slot_stats(window_minutes=window_minutes)
