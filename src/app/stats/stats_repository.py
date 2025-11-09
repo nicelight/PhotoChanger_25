@@ -66,6 +66,7 @@ class StatsRepository:
                 timeouts_last_window = self._count_timeouts(session, slot_id, window_start)
                 provider_errors_last_window = self._count_provider_errors(session, slot_id, window_start)
                 success_last_window = self._count_success(session, slot_id, window_start)
+                completed_last_window = self._count_completed(session, slot_id, window_start)
 
                 last_success = (
                     session.query(JobHistoryModel)
@@ -95,6 +96,7 @@ class StatsRepository:
                         "timeouts_last_window": timeouts_last_window,
                         "provider_errors_last_window": provider_errors_last_window,
                         "success_last_window": success_last_window,
+                        "completed_last_window": completed_last_window,
                         "last_success_at": (last_success.completed_at if last_success else None),
                         "last_error_reason": last_error.failure_reason if last_error else None,
                     }
@@ -143,6 +145,18 @@ class StatsRepository:
             .filter(
                 JobHistoryModel.slot_id == slot_id,
                 JobHistoryModel.status == JobStatus.DONE.value,
+                JobHistoryModel.completed_at >= window_start,
+            )
+            .scalar()
+            or 0
+        )
+
+    @staticmethod
+    def _count_completed(session: Session, slot_id: str, window_start: datetime) -> int:
+        return (
+            session.query(func.count(JobHistoryModel.job_id))
+            .filter(
+                JobHistoryModel.slot_id == slot_id,
                 JobHistoryModel.completed_at >= window_start,
             )
             .scalar()

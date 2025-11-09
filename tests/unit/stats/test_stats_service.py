@@ -24,6 +24,7 @@ class DummyRepo:
                 "timeouts_last_window": 0,
                 "provider_errors_last_window": 0,
                 "success_last_window": 2,
+                "completed_last_window": 2,
                 "last_success_at": datetime.utcnow(),
                 "last_error_reason": None,
             }
@@ -69,6 +70,7 @@ def test_slot_stats_filters_inactive_and_adds_rates() -> None:
                 "timeouts_last_window": 1,
                 "provider_errors_last_window": 0,
                 "success_last_window": 3,
+                "completed_last_window": 4,
                 "last_success_at": now,
                 "last_error_reason": None,
             },
@@ -80,6 +82,7 @@ def test_slot_stats_filters_inactive_and_adds_rates() -> None:
                 "timeouts_last_window": 2,
                 "provider_errors_last_window": 1,
                 "success_last_window": 7,
+                "completed_last_window": 10,
                 "last_success_at": now,
                 "last_error_reason": "provider_error",
             },
