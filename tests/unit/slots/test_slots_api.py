@@ -15,6 +15,7 @@ if str(ROOT) not in sys.path:  # pragma: no cover - test helper
 
 from src.app.ingest.ingest_errors import ProviderTimeoutError
 from src.app.ingest.ingest_models import JobContext
+from src.app.ingest.ingest_service import UploadValidationResult
 from src.app.repositories.job_history_repository import JobHistoryRecord
 from src.app.slots.slots_api import router
 from src.app.slots.slots_models import Slot, SlotTemplateMedia
@@ -37,8 +38,11 @@ class DummyIngestService:
         if slot_id == "missing":
             raise KeyError(slot_id)
         job = JobContext(slot_id=slot_id, job_id="job-123", slot_settings={"prompt": "default"})
-        job.metadata["source"] = source
-        return job
+        job.metadata["source"] = "test"
+        # Store overrides for test verification
+        job._overrides = overrides or {}
+        job._filename = getattr(upload, 'filename', 'test.jpg')
+        return job, 1.23
 
     async def validate_upload(self, job: JobContext, upload, expected_hash: str | None) -> UploadValidationResult:
         job.slot_settings = {"prompt": "default"}
@@ -47,9 +51,13 @@ class DummyIngestService:
     async def process(self, job: JobContext) -> bytes:
         if job.slot_settings.get("prompt") == "timeout":
             raise ProviderTimeoutError("timeout")
-        job = JobContext(slot_id=slot_id, job_id="job-123")
-        self.calls.append({"slot_id": slot_id, "overrides": overrides, "filename": upload.filename})
-        return job, 1.23
+        # Store the call for test verification
+        self.calls.append({
+            "slot_id": job.slot_id, 
+            "overrides": getattr(job, '_overrides', {}),
+            "filename": getattr(job, '_filename', 'test.jpg')
+        })
+        return b"mock_result"
 
 
 class DummySlotRepository:

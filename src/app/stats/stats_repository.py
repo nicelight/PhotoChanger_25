@@ -18,7 +18,7 @@ class StatsRepository:
     def __init__(self, session_factory: Callable[[], Session]) -> None:
         self._session_factory = session_factory
 
-    def system_metrics(self, window_start: datetime) -> dict[str, int]:
+    def system_metrics(self, window_start: datetime) -> dict[str, Any]:
         with self._session_factory() as session:
             total_jobs = session.query(func.count(JobHistoryModel.job_id)).scalar() or 0
 
@@ -56,10 +56,10 @@ class StatsRepository:
             "provider_errors_last_window": provider_errors_last_window,
         }
 
-    def slot_metrics(self, window_start: datetime) -> Sequence[dict]:
+    def slot_metrics(self, window_start: datetime) -> Sequence[dict[str, Any]]:
         with self._session_factory() as session:
             slots = session.query(SlotModel).order_by(SlotModel.id).all()
-            metrics: list[dict] = []
+            metrics: list[dict[str, Any]] = []
             for slot in slots:
                 slot_id = slot.id
                 jobs_last_window = self._count_jobs(session, slot_id, window_start)

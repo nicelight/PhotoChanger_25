@@ -76,7 +76,10 @@ class SettingsService:
     def _hydrate(self, store: dict[str, str]) -> dict[str, Any]:
         def int_or_default(key: str, default: int) -> int:
             try:
-                return int(store.get(key, default))
+                value = store.get(key)
+                if value is None:
+                    return default
+                return int(value)
             except (TypeError, ValueError):
                 return default
 

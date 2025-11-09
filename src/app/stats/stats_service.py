@@ -19,7 +19,7 @@ class StatsService:
     repo: StatsRepository
     media_paths: MediaPaths
 
-    def overview(self, window_minutes: int = 60) -> dict:
+    def overview(self, window_minutes: int = 60) -> dict[str, Any]:
         """Return system + slot metrics for the requested time window."""
         window_minutes = max(1, window_minutes)
         window_start = datetime.utcnow() - timedelta(minutes=window_minutes)

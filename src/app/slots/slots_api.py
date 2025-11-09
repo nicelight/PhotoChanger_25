@@ -125,6 +125,21 @@ def update_slot(
     return _slot_details(updated, job_repo, settings_service)
 
 
+def _apply_overrides(base_settings: dict[str, Any], overrides: dict[str, Any]) -> dict[str, Any]:
+    """Apply override values to base settings and return merged result."""
+    merged = dict(base_settings)
+    
+    if "settings" in overrides and isinstance(overrides["settings"], dict):
+        merged.update(overrides["settings"])
+    
+    # Apply top-level overrides (provider, operation, template_media)
+    for key in ["provider", "operation", "template_media"]:
+        if key in overrides:
+            merged[key] = overrides[key]
+    
+    return merged
+
+
 def _bad_request(details: str) -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
