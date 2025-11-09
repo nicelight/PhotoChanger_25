@@ -1,6 +1,6 @@
 ---
 id: asks
-updated: 2025-11-06
+updated: 2025-11-09
 ---
 
 # Asks (запросы пользователей)
@@ -11,3 +11,4 @@ updated: 2025-11-06
 | 2025-10-31 | ASK-2025-10-31-002    | тимлид   | Удалить REPORT-артефакты и скорректировать инструкции   | done          | Выполнено 2025-10-31, P0, обновлены agents.md |
 | 2025-10-31 | ASK-2025-10-31-003    | тимлид   | Подготовить базовые SDD документы (`spec/docs/*.md`)     | done          | Выполнено 2025-10-31, охватывает US PHC-1.0.0 |
 | 2025-11-06 | ASK-2025-11-06-001    | тимлид   | Завершить FEAT PHC-1.3, обновить .memory и подготовить cron runbook/README | done | Выполнено 2025-11-06; см. docs/runbooks/cron_cleanup.md и scripts/README.md |
+| 2025-11-09 | ASK-2025-11-09-001    | тимлид   | Реализовать FEAT PHC-2.2: `/api/stats/slots` и UI статистики | done | Выполнено 2025-11-09; см. spec/contracts/openapi.yaml и frontend/stats/index.html |

@@ -1,6 +1,6 @@
 ﻿---
 id: progress
-updated: 2025-11-06
+updated: 2025-11-09
 ---
 
 # Progress (changelog — одна строка на событие)
@@ -16,3 +16,4 @@ updated: 2025-11-06
 - 2025-11-04: Восстановлено состояние PHC-1.1/PHC-1.2 из stash GitHub Desktop, py -m pytest tests/unit — 13 passed.
 - 2025-11-06: FEAT PHC-2.0 завершена — спецификации админ API (`/api/slots`, `/api/settings`, `/api/stats/overview`) обновлены в PRD/OpenAPI; pytest (48 passed).
 - 2025-11-06: Завершена FEAT PHC-1.3 — публичные результаты и cron cleanup; контракты обновлены до 0.2.0, добавлены runbook/README для скрипта.
+- 2025-11-09: FEAT PHC-2.2 завершена — добавлен `/api/stats/slots`, KPI для активных слотов и статическая страница статистики; контракты bump до 0.5.0.

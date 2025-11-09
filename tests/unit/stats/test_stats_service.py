@@ -13,15 +13,9 @@ from src.app.stats.stats_service import StatsService
 
 
 class DummyRepo:
-    def __init__(self) -> None:
+    def __init__(self, slot_metrics: list[dict] | None = None) -> None:
         self.window = None
-
-    def system_metrics(self, window_start: datetime) -> dict:
-        self.window = window_start
-        return {"jobs_total": 5, "jobs_last_window": 2, "timeouts_last_window": 1, "provider_errors_last_window": 0}
-
-    def slot_metrics(self, window_start: datetime):
-        return [
+        self._slot_metrics = slot_metrics or [
             {
                 "slot_id": "slot-001",
                 "display_name": "Slot 1",
@@ -29,10 +23,19 @@ class DummyRepo:
                 "jobs_last_window": 2,
                 "timeouts_last_window": 0,
                 "provider_errors_last_window": 0,
+                "success_last_window": 2,
                 "last_success_at": datetime.utcnow(),
                 "last_error_reason": None,
             }
         ]
+
+    def system_metrics(self, window_start: datetime) -> dict:
+        self.window = window_start
+        return {"jobs_total": 5, "jobs_last_window": 2, "timeouts_last_window": 1, "provider_errors_last_window": 0}
+
+    def slot_metrics(self, window_start: datetime):
+        self.window = window_start
+        return self._slot_metrics
 
 
 def test_overview_uses_repository_and_calculates_storage(tmp_path: Path) -> None:
@@ -49,5 +52,46 @@ def test_overview_uses_repository_and_calculates_storage(tmp_path: Path) -> None
     assert snapshot["system"]["jobs_total"] == 5
     assert snapshot["system"]["storage_usage_mb"] == 1.0
     assert snapshot["slots"][0]["slot_id"] == "slot-001"
+    assert snapshot["slots"][0]["success_last_window"] == 2
     assert repo.window is not None
     assert repo.window > datetime.utcnow() - timedelta(minutes=31)
+
+
+def test_slot_stats_filters_inactive_and_adds_rates() -> None:
+    now = datetime.utcnow()
+    repo = DummyRepo(
+        slot_metrics=[
+            {
+                "slot_id": "slot-001",
+                "display_name": "Slot 1",
+                "is_active": True,
+                "jobs_last_window": 4,
+                "timeouts_last_window": 1,
+                "provider_errors_last_window": 0,
+                "success_last_window": 3,
+                "last_success_at": now,
+                "last_error_reason": None,
+            },
+            {
+                "slot_id": "slot-002",
+                "display_name": "Slot 2",
+                "is_active": False,
+                "jobs_last_window": 10,
+                "timeouts_last_window": 2,
+                "provider_errors_last_window": 1,
+                "success_last_window": 7,
+                "last_success_at": now,
+                "last_error_reason": "provider_error",
+            },
+        ]
+    )
+
+    service = StatsService(repo=repo, media_paths=SimpleNamespace(results=Path("/tmp/none")))
+    stats = service.slot_stats(window_minutes=15)
+
+    assert stats["window_minutes"] == 15
+    assert len(stats["slots"]) == 1
+    slot = stats["slots"][0]
+    assert slot["slot_id"] == "slot-001"
+    assert slot["success_rate"] == pytest.approx(0.75)
+    assert slot["timeout_rate"] == pytest.approx(0.25)

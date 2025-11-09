@@ -6,6 +6,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 from ..config import MediaPaths
 from .stats_repository import StatsRepository
@@ -31,6 +32,21 @@ class StatsService:
             "slots": slots,
         }
 
+    def slot_stats(self, window_minutes: int = 60) -> dict[str, Any]:
+        """Return per-slot metrics for active slots only."""
+        window_minutes = max(1, window_minutes)
+        window_start = datetime.utcnow() - timedelta(minutes=window_minutes)
+        raw_slots = self.repo.slot_metrics(window_start)
+        active_slots = []
+        for slot in raw_slots:
+            if not slot.get("is_active"):
+                continue
+            active_slots.append(self._augment_slot_metrics(slot))
+        return {
+            "window_minutes": window_minutes,
+            "slots": active_slots,
+        }
+
     @staticmethod
     def _calc_storage_usage_mb(root: Path) -> float:
         total_bytes = 0
@@ -42,3 +58,17 @@ class StatsService:
                     except OSError:
                         continue
         return round(total_bytes / (1024 * 1024), 2)
+
+    @staticmethod
+    def _augment_slot_metrics(slot: dict[str, Any]) -> dict[str, Any]:
+        enriched = dict(slot)
+        total_jobs = enriched.get("jobs_last_window", 0) or 0
+        success = enriched.get("success_last_window", 0) or 0
+        timeouts = enriched.get("timeouts_last_window", 0) or 0
+        if total_jobs > 0:
+            enriched["success_rate"] = round(success / total_jobs, 4)
+            enriched["timeout_rate"] = round(timeouts / total_jobs, 4)
+        else:
+            enriched["success_rate"] = 0.0
+            enriched["timeout_rate"] = 0.0
+        return enriched

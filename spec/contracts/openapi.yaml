@@ -371,6 +371,36 @@ paths:
           description: Admin authentication failed.
         '403':
           description: Not enough privileges for admin statistics.
+  /api/stats/slots:
+    get:
+      summary: Return per-slot SLA metrics (active slots only).
+      description: >
+        Provides per-slot counters tailored for graphing: successful jobs, timeout share and other
+        lightweight KPIs. Only active slots appear in the response to keep dashboards focused on
+        operational workloads.
+      tags:
+        - stats
+      parameters:
+        - name: window_minutes
+          in: query
+          required: false
+          description: Size of the rolling window for per-slot counters (default 60 minutes).
+          schema:
+            type: integer
+            minimum: 5
+            maximum: 240
+            default: 60
+      responses:
+        '200':
+          description: Per-slot metrics with derived KPIs.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsSlotListResponse'
+        '401':
+          description: Admin authentication failed.
+        '403':
+          description: Not enough privileges for admin statistics.
 components:
   schemas:
     IngestError:
@@ -441,6 +471,7 @@ components:
         - jobs_last_window
         - timeouts_last_window
         - provider_errors_last_window
+        - success_last_window
         - last_success_at
       properties:
         slot_id:
@@ -461,12 +492,47 @@ components:
         provider_errors_last_window:
           type: integer
           example: 0
+        success_last_window:
+          type: integer
+          example: 20
         last_success_at:
           type: string
           format: date-time
         last_error_reason:
           type: string
           nullable: true
+    StatsSlotBreakdown:
+      allOf:
+        - $ref: '#/components/schemas/StatsSlotSummary'
+        - type: object
+          required:
+            - success_rate
+            - timeout_rate
+          properties:
+            success_rate:
+              type: number
+              format: float
+              description: Share of successful jobs within the selected window (0-1).
+              example: 0.93
+            timeout_rate:
+              type: number
+              format: float
+              description: Share of timeout jobs within the selected window (0-1).
+              example: 0.05
+    StatsSlotListResponse:
+      type: object
+      required:
+        - window_minutes
+        - slots
+      properties:
+        window_minutes:
+          type: integer
+          example: 60
+        slots:
+          type: array
+          description: Active slots only.
+          items:
+            $ref: '#/components/schemas/StatsSlotBreakdown'
     SlotSummary:
       type: object
       required:
