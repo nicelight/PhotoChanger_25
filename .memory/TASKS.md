@@ -155,15 +155,15 @@ updated: 2025-11-09
       [x] T PHC-2.1.3.3 — Реализовать `GET /api/settings` (агрегация TTL/T_sync/password metadata)  
       [x] T PHC-2.1.3.4 — Реализовать `PUT /api/settings` (sync_response_seconds, result_ttl_hours, ingest_password, provider_keys)  
       [x] T PHC-2.1.3.5 — Unit/contract тесты и обновление OpenAPI/PRD для админских API  
-  [~] FEAT PHC-2.2 — Просмотр статистики и графики  
+  [x] FEAT PHC-2.2 — Просмотр статистики и графики  
     [x] US PHC-2.2.GOV — Governance & Discovery  
       [x] T PHC-2.2.GOV.1 — REFLECT — сформулировать требования к метрикам SLA и визуализациям страницы статистики  
       [x] T PHC-2.2.GOV.2 — CONSULT — утвердить формат `/api/stats/slots` и набор графиков/таблиц у тимлида  
     [x] US PHC-2.2.1 — API и UI статистики слотов  
       [x] T PHC-2.2.1.1 — REST `/api/stats/slots`
       [x] T PHC-2.2.1.2 — UI-графики и таблицы SLA  
-    [ ] US PHC-2.2.2 — Тесты UI статистики  
-      [ ] T PHC-2.2.2.1 — Добавить e2e сценарий `/ui/stats` (Playwright/Cypress, happy-path обновление данных)  
+    [x] US PHC-2.2.2 — Тесты UI статистики  
+      [x] T PHC-2.2.2.1 — Добавить e2e сценарий `/ui/stats` (Playwright/Cypress, happy-path обновление данных)  
   [ ] FEAT PHC-2.3 — Авторизация админов (JWT)  
     [ ] T PHC-2.3.1 — REFLECT — описать требования к JWT-слою (аккаунты, срок жизни токена, области доступа)  
     [ ] T PHC-2.3.2 — CONSULT — утвердить подход к аутентификации и перечень защищаемых эндпоинтов  
@@ -178,9 +178,9 @@ updated: 2025-11-09
   [ ] FEAT PHC-3.2 — UX Слотов  
        [x] T PHC-3.2.1 — Разметка и валидация формы слота (адаптировать текущий шаблон под рабочий UI)  
        [x] T PHC-3.2.2 — Вынести CSS/JS страницы слота в общие файлы (palette/эффекты остаются без изменений)  
-       [x] T PHC-3.2.3 — Подготовить 15 статических страниц `slot-001`…`slot-015` (отдельные HTML с общими ресурсами)  
-       [ ] T PHC-3.2.4 — Подсветить поля форм слота и настроек при ответах 422 (JSON ошибки)  
-       [x] T PHC-3.2.5 — Рефакторинг и доработка страницы слота по шаблону из `spec/docs/ui/frontend-examples/slot-page.html`  
+       [x] T PHC-3.2.3 — Подготовить 15 статических страниц `slot-001`…`slot-015` (отдельные HTML с общими ресурсами)
+       [ ] T PHC-3.2.4 — Валидация и подключение форм слотов.
+       [ ] T PHC-3.2.5 — Подсветить поля форм слотов и настроек при ответах 422 (JSON ошибки)  
        [ ] T PHC-3.2.6 — Реализовать боевые страницы логина/дашборда/настроек на основе шаблонов `login-page.html` и `main-page.html`  
 
 
@@ -196,7 +196,7 @@ updated: 2025-11-09
       [ ] T PHC-4.0.2.1 — Обновить `spec/contracts/VERSION.json` (SemVer bump, summary)  
       [ ] T PHC-4.0.2.2 — Синхронизировать `.memory/INDEX.yaml` и подготовить checklist для spec handoff  
   [ ] FEAT PHC-4.1 — Мониторинг и алерты  
-    [ ] T PHC-4.1.1.1 — `/metrics` + экспортер p95/504  
+    [ ] T PHC-4.1.1.1 — `/metrics` + экспортер 504  
     [ ] T PHC-4.1.1.2 — Алерты на заполнение `media/` и рост 504  
   [ ] FEAT PHC-4.2 — Процедуры выпуска  
     [ ] T PHC-4.2.1.1 — Документация deploy checklist  

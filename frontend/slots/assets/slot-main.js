@@ -234,8 +234,8 @@
       const label = elements.promptInput.closest(".card")?.querySelector("label.title");
       if (label) {
         label.textContent = normalized.prompt
-          ? "Параметры операции"
-          : "Параметры операции (промпт опционален)";
+          ? "Промпт"
+          : "Промпт (промпт опционален)";
       }
     }
     if (elements.toggleFirst) {
