@@ -7,6 +7,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 
+from ..auth.auth_dependencies import require_admin_user
 from ..config import AppConfig
 from ..ingest.ingest_errors import (
     PayloadTooLargeError,
@@ -30,7 +31,11 @@ from .slots_schemas import (
     SlotUpdateRequest,
 )
 
-router = APIRouter(prefix="/api/slots", tags=["slots"])
+router = APIRouter(
+    prefix="/api/slots",
+    tags=["slots"],
+    dependencies=[Depends(require_admin_user)],
+)
 
 
 def get_ingest_service(request: Request) -> IngestService:

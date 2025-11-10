@@ -5,6 +5,8 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from .auth.auth_api import router as auth_router
+from .auth.auth_service import AuthService
 from .config import AppConfig
 from .ingest.ingest_api import router as ingest_router
 from .ingest.ingest_service import IngestService
@@ -62,6 +64,11 @@ def include_routers(app: FastAPI, config: AppConfig) -> None:
     settings_service.load()
     stats_repo = StatsRepository(config.session_factory)
     stats_service = StatsService(repo=stats_repo, media_paths=config.media_paths)
+    auth_service = AuthService.from_file(
+        path=config.admin_credentials_path,
+        signing_key=config.jwt_signing_key,
+        token_ttl_hours=config.admin_jwt_ttl_hours,
+    )
 
     app.state.config = config
     app.state.ingest_service = ingest_service
@@ -72,10 +79,12 @@ def include_routers(app: FastAPI, config: AppConfig) -> None:
     app.state.media_repo = media_repo
     app.state.settings_service = settings_service
     app.state.stats_service = stats_service
+    app.state.auth_service = auth_service
 
     public_media_service = PublicMediaService(media_repo=media_repo)
     public_result_service = PublicResultService(job_repo=job_repo)
 
+    app.include_router(auth_router)
     app.include_router(ingest_router)
     app.include_router(slots_router)
     app.include_router(settings_router)

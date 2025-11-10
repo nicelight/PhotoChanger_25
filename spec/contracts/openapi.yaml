@@ -1,12 +1,11 @@
 ﻿openapi: 3.1.0
 info:
   title: PhotoChanger API
-  version: 0.4.0-draft
+  version: 0.6.0-draft
   description: >
-    Draft specification for the PhotoChanger ingest endpoint. Covers synchronous
-    processing via POST /api/ingest/{slot_id}. Successful responses return binary
-    image payloads; error responses follow the JSON structure described in the
-    referenced schemas.
+    Draft specification for the PhotoChanger platform. Описывает синхронный ingest (`POST /api/ingest/{slot_id}`),
+    публичную выдачу результатов, админские API (слоты, настройки, статистика) и авторизацию админов через JWT
+    (`POST /api/login`). Админские маршруты защищены Bearer-токеном, выданным `POST /api/login`; токены действуют 168 ч.
 servers:
   - url: https://api.photochanger.local
     description: Draft base URL (update per environment)
@@ -148,8 +147,47 @@ paths:
                   value:
                     status: error
                     failure_reason: result_expired
+  /api/login:
+    post:
+      summary: Authenticate admin and issue JWT.
+      description: >
+        Validates static admin credentials stored in `secrets/runtime_credentials.json` and issues a bearer token.
+        Tokens are signed with HS256 (`JWT_SIGNING_KEY`) и действуют 168 часов. После 10 неудачных попыток логин
+        блокируется на 15 минут, чтобы защититься от перебора паролей.
+      tags:
+        - auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              adminLogin:
+                value:
+                  username: serg
+                  password: ********
+      responses:
+        '200':
+          description: JWT issued successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              examples:
+                success:
+                  value:
+                    access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                    token_type: bearer
+                    expires_in: 604800
+        '401':
+          $ref: '#/components/responses/AuthUnauthorized'
+        '429':
+          $ref: '#/components/responses/AuthThrottled'
   /api/slots:
     get:
+      security:
+        - AdminBearer: []
       summary: List configured slots.
       description: >
         Returns all 15 static slots with minimal metadata for the admin UI.
@@ -165,7 +203,9 @@ paths:
                 items:
                   $ref: '#/components/schemas/SlotSummary'
         '401':
-          description: Admin authentication failed.
+          $ref: '#/components/responses/AuthUnauthorized'
+        '403':
+          $ref: '#/components/responses/AuthForbidden'
     post:
       summary: Placeholder (slots are static).
       description: >
@@ -177,6 +217,8 @@ paths:
           description: Not implemented.
   /api/slots/{slot_id}:
     get:
+      security:
+        - AdminBearer: []
       summary: Retrieve slot configuration.
       tags:
         - slots
@@ -195,7 +237,13 @@ paths:
                 $ref: '#/components/schemas/SlotDetails'
         '404':
           description: Slot not found.
+        '401':
+          $ref: '#/components/responses/AuthUnauthorized'
+        '403':
+          $ref: '#/components/responses/AuthForbidden'
     put:
+      security:
+        - AdminBearer: []
       summary: Update slot configuration.
       description: >
         Allows admins to change provider, operation, settings, limits and template media bindings.
@@ -224,8 +272,14 @@ paths:
           description: Validation error (invalid template media, provider settings, or limits).
         '404':
           description: Slot not found.
+        '401':
+          $ref: '#/components/responses/AuthUnauthorized'
+        '403':
+          $ref: '#/components/responses/AuthForbidden'
   /api/slots/{slot_id}/cleanup:
     post:
+      security:
+        - AdminBearer: []
       summary: Trigger cleanup of expired results for a specific slot.
       description: >
         Schedules background cleanup of expired `media/results/{slot_id}/` artifacts. Does not delete fresh results.
@@ -250,8 +304,14 @@ paths:
                     example: accepted
         '404':
           description: Slot not found.
+        '401':
+          $ref: '#/components/responses/AuthUnauthorized'
+        '403':
+          $ref: '#/components/responses/AuthForbidden'
   /api/slots/{slot_id}/test-run:
     post:
+      security:
+        - AdminBearer: []
       summary: Execute a synchronous test run for the slot configuration.
       description: >
         Allows administrators to upload a test image and run the slot configuration directly from the UI.
@@ -305,8 +365,14 @@ paths:
           $ref: '#/components/responses/IngestProviderError'
         '504':
           $ref: '#/components/responses/IngestProviderTimeout'
+        '401':
+          $ref: '#/components/responses/AuthUnauthorized'
+        '403':
+          $ref: '#/components/responses/AuthForbidden'
   /api/settings:
     get:
+      security:
+        - AdminBearer: []
       summary: Fetch global ingest/settings configuration.
       tags:
         - settings
@@ -318,8 +384,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/SettingsResponse'
         '401':
-          description: Admin authentication failed.
+          $ref: '#/components/responses/AuthUnauthorized'
+        '403':
+          $ref: '#/components/responses/AuthForbidden'
     put:
+      security:
+        - AdminBearer: []
       summary: Update global ingest/settings configuration.
       tags:
         - settings
@@ -339,11 +409,15 @@ paths:
         '400':
           description: Validation error (e.g., invalid timeout or password length).
         '401':
-          description: Admin authentication failed.
+          $ref: '#/components/responses/AuthUnauthorized'
+        '403':
+          $ref: '#/components/responses/AuthForbidden'
         '422':
           description: Payload missing required fields or violates constraints.
   /api/stats/overview:
     get:
+      security:
+        - AdminBearer: []
       summary: Return admin statistics snapshot.
       description: >
         Provides lightweight aggregates for the whole system and each slot. Designed for admin
@@ -368,11 +442,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/StatsOverview'
         '401':
-          description: Admin authentication failed.
+          $ref: '#/components/responses/AuthUnauthorized'
         '403':
-          description: Not enough privileges for admin statistics.
+          $ref: '#/components/responses/AuthForbidden'
   /api/stats/slots:
     get:
+      security:
+        - AdminBearer: []
       summary: Return per-slot SLA metrics (active slots only).
       description: >
         Provides per-slot counters tailored for graphing: successful jobs, timeout share and other
@@ -398,9 +474,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/StatsSlotListResponse'
         '401':
-          description: Admin authentication failed.
+          $ref: '#/components/responses/AuthUnauthorized'
         '403':
-          description: Not enough privileges for admin statistics.
+          $ref: '#/components/responses/AuthForbidden'
 components:
   schemas:
     IngestError:
@@ -753,6 +829,67 @@ components:
           type: string
           format: date-time
           nullable: true
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: Static admin login (`serg`, `igor`).
+        password:
+          type: string
+          format: password
+          description: Plain password that will be hashed server-side.
+    LoginResponse:
+      type: object
+      required:
+        - access_token
+        - token_type
+        - expires_in
+      properties:
+        access_token:
+          type: string
+          description: Bearer token signed with HS256 (`JWT_SIGNING_KEY`).
+        token_type:
+          type: string
+          enum:
+            - bearer
+        expires_in:
+          type: integer
+          example: 604800
+          description: Token lifetime in seconds (168 h).
+    AuthError:
+      type: object
+      required:
+        - status
+        - failure_reason
+      properties:
+        status:
+          type: string
+          enum:
+            - error
+        failure_reason:
+          type: string
+          enum:
+            - invalid_credentials
+            - throttled
+            - missing_token
+            - invalid_token
+            - token_expired
+            - insufficient_scope
+          description: Machine-readable error that pinpoints the auth failure.
+        details:
+          type: string
+          nullable: true
+          description: Optional short explanation.
+  securitySchemes:
+    AdminBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT issued by POST /api/login. Tokens remain valid for 168 hours.
   responses:
     IngestErrorResponse:
       description: Canonical JSON error body.
@@ -818,3 +955,37 @@ components:
       allOf:
         - $ref: '#/components/responses/IngestErrorResponse'
       description: Provider timeout (`failure_reason=provider_timeout`, `status=timeout`).
+    AuthErrorResponse:
+      description: Authentication or authorization failure.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AuthError'
+          examples:
+            missingToken:
+              summary: Missing Authorization header
+              value:
+                status: error
+                failure_reason: missing_token
+            invalidCredentials:
+              summary: Wrong username or password
+              value:
+                status: error
+                failure_reason: invalid_credentials
+            throttled:
+              summary: Too many attempts
+              value:
+                status: error
+                failure_reason: throttled
+    AuthUnauthorized:
+      allOf:
+        - $ref: '#/components/responses/AuthErrorResponse'
+      description: Authentication failed (missing/invalid token or credentials).
+    AuthForbidden:
+      allOf:
+        - $ref: '#/components/responses/AuthErrorResponse'
+      description: Token does not include the required scope.
+    AuthThrottled:
+      allOf:
+        - $ref: '#/components/responses/AuthErrorResponse'
+      description: Login attempts are temporarily blocked (failure_reason=`throttled`).

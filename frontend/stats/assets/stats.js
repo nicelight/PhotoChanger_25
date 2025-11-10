@@ -32,6 +32,19 @@
     timeStyle: "short",
   });
 
+  const TOKEN_KEY = "photochanger.jwt";
+
+  const readToken = () => {
+    try {
+      if (!window.localStorage) {
+        return null;
+      }
+      return window.localStorage.getItem(TOKEN_KEY);
+    } catch {
+      return null;
+    }
+  };
+
   const clampWindow = (value) => {
     const min = Number(windowInput.min) || 5;
     const max = Number(windowInput.max) || 240;
@@ -145,10 +158,21 @@
     setButtonsDisabled(true);
 
     const query = `?window_minutes=${windowValue}`;
+    const token = readToken();
+    if (!token) {
+      errorBox.textContent = "Требуется авторизация: войдите в систему, чтобы увидеть статистику.";
+      errorBox.hidden = false;
+      loadingNotice.hidden = true;
+      setButtonsDisabled(false);
+      return;
+    }
+    const authHeaders = {
+      Authorization: `Bearer ${token}`,
+    };
     try {
       const [overviewResp, slotsResp] = await Promise.all([
-        fetch(`${overviewEndpoint}${query}`),
-        fetch(`${slotsEndpoint}${query}`),
+        fetch(`${overviewEndpoint}${query}`, { headers: authHeaders }),
+        fetch(`${slotsEndpoint}${query}`, { headers: authHeaders }),
       ]);
 
       if (!overviewResp.ok) {

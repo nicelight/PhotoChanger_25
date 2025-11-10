@@ -6,9 +6,15 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Request
 
+from ..auth.auth_dependencies import require_admin_user
+
 from .stats_service import StatsService
 
-router = APIRouter(prefix="/api/stats", tags=["stats"])
+router = APIRouter(
+    prefix="/api/stats",
+    tags=["stats"],
+    dependencies=[Depends(require_admin_user)],
+)
 
 
 def get_stats_service(request: Request) -> StatsService:

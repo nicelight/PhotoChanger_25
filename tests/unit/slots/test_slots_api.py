@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:  # pragma: no cover - test helper
     sys.path.append(str(ROOT))
 
+from src.app.auth.auth_dependencies import require_admin_user
 from src.app.ingest.ingest_errors import ProviderTimeoutError
 from src.app.ingest.ingest_models import JobContext
 from src.app.ingest.ingest_service import UploadValidationResult
@@ -148,11 +149,18 @@ class DummySettingsService:
         return self._snapshot
 
 
+class DummyAuthService:
+    def validate_token(self, token: str, required_scope: str | None = None) -> dict[str, str]:
+        return {"sub": "serg", "scope": "admin"}
+
+
 def build_client(
     service: DummyIngestService,
     slot_repo: DummySlotRepository | None = None,
     job_repo: DummyJobRepo | None = None,
     settings_service: DummySettingsService | None = None,
+    *,
+    with_auth: bool = True,
 ) -> TestClient:
     app = FastAPI()
     app.include_router(router)
@@ -160,6 +168,9 @@ def build_client(
     app.state.slot_repo = slot_repo or DummySlotRepository()
     app.state.job_repo = job_repo or DummyJobRepo()
     app.state.settings_service = settings_service or DummySettingsService()
+    app.state.auth_service = DummyAuthService()
+    if with_auth:
+        app.dependency_overrides[require_admin_user] = lambda: {"sub": "serg", "scope": "admin"}
     return TestClient(app)
 
 
@@ -274,3 +285,12 @@ def test_update_slot_persists_changes() -> None:
     assert payload["display_name"] == "Renamed"
     assert payload["is_active"] is False
     assert payload["template_media"][0]["media_object_id"] == "media-2"
+
+
+def test_slots_endpoints_require_authentication() -> None:
+    client = build_client(DummyIngestService(), with_auth=False)
+
+    response = client.get("/api/slots")
+
+    assert response.status_code == 401
+    assert response.json()["detail"]["failure_reason"] == "missing_token"
