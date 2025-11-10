@@ -4,6 +4,7 @@ import os
 import threading
 import time
 
+import httpx
 import pytest
 
 playwright_mod = pytest.importorskip("playwright.sync_api")
@@ -11,6 +12,16 @@ from playwright.sync_api import sync_playwright  # type: ignore  # noqa: E402
 from uvicorn import Config, Server
 
 from src.app.main import app
+
+
+def _obtain_token(base_url: str) -> str:
+    response = httpx.post(
+        f"{base_url}/api/login",
+        json={"username": "serg", "password": "admin123"},
+        timeout=5.0,
+    )
+    response.raise_for_status()
+    return response.json()["access_token"]
 
 
 def _start_uvicorn_server(port: int) -> tuple[Server, threading.Thread]:
@@ -39,7 +50,18 @@ def e2e_server() -> str:
 def test_stats_page_happy_path(e2e_server: str) -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
+        token = _obtain_token(e2e_server)
         page = browser.new_page()
+        page.add_init_script(
+            """(token) => {
+                try {
+                    window.localStorage.setItem('photochanger.jwt', token);
+                } catch (error) {
+                    console.error('Failed to store token', error);
+                }
+            }""",
+            token,
+        )
 
         page.goto(f"{e2e_server}/ui/stats", wait_until="networkidle")
         heading = page.locator("h1")

@@ -1,8 +1,8 @@
 {
-  "version": "0.5.0",
-  "released_at": "2025-11-09",
+  "version": "0.6.0",
+  "released_at": "2025-11-10",
   "stage": "draft",
-  "summary": "Exposes slot-level SLA metrics via /api/stats/slots and documents the dashboard expectations.",
+  "summary": "Adds JWT-based admin authentication (`POST /api/login`) and secures all admin APIs + UI with bearer tokens.",
   "changes": [
     {
       "type": "init",
@@ -91,9 +91,20 @@
         "docs/PRD.md",
         "frontend/stats/index.html"
       ]
+    },
+    {
+      "type": "feature",
+      "description": "Introduced JWT login (`POST /api/login`), bearer security for admin APIs, and documented token handling (scope `admin`, TTL 168 ч, throttling).",
+      "artifacts": [
+        "spec/contracts/openapi.yaml",
+        "docs/PRD.md",
+        "spec/docs/use-cases.md",
+        ".memory/USECASES.md",
+        "frontend/stats/assets/stats.js"
+      ]
     }
   ],
   "deprecated": [],
   "breaking": false,
-  "notes": "Stats dashboards now rely on lightweight REST APIs; next step — hook JWT once auth lands."
+  "notes": "Admin endpoints now require bearer JWT tokens issued by /api/login; stats UI, slots и settings используют общий scope `admin`."
 }

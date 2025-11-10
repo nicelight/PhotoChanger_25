@@ -1,6 +1,6 @@
 ﻿---
 id: worklog
-updated: 2025-11-09
+updated: 2025-11-10
 ---
 
 - 2025-11-06 01:45 — Обновил PRD (админ API, примеры payload/settings) и OpenAPI (`/api/slots*`, `/api/settings`, `/api/slots/{slot_id}/cleanup`) с новыми схемами (SlotSummary/Details, SettingsResponse).
@@ -587,3 +587,9 @@ etry_policy, output, safety, а все параметры операции по�
 - 2025-11-10 09:35 — Проинспектировал `frontend/slots/*.html` и `frontend/slots/assets/slot-main.js`: лейбл блока параметров по-прежнему подписан «Параметры операции», из-за чего copy расходится с новой терминологией «Промпт».
 - 2025-11-10 09:42 — Скриптом `py -X utf8 -c ...` заменил «Параметры операции» на «Промпт» во всех страницах слотов и в JS, проверил через `rg` отсутствие старой фразы.
 
+
+## FEAT PHC-2.3 — Авторизация админов (JWT)
+- 2025-11-10 00:42 — REFLECT (T PHC-2.3.1): закрепили требования к auth: остаёмся на статическом списке админов (serg/igor) из secrets/runtime_credentials.json, достаточно одного скоупа admin, JWT валиден 168 часов, подпись HS256 через JWT_SIGNING_KEY (KISS без refresh). JWT обязателен для всех админских REST/UI страниц (slots/settings/stats/test-run). Учесть throttling логина (10 неудачных попыток → блок на 15 минут), хранение паролей как хэшей, минимальные клеймы (sub, scope, exp), и синхронизацию с PRD/OpenAPI.
+- 2025-11-10 01:05 — Реализовал POST /api/login: добавлен AuthService (sha256+HS256 JWT 168ч), JSON credentials loader, throttle 10 попыток/15 мин, логирование success/failure, FastAPI роутер с 401/429. Config читает JWT_SIGNING_KEY/ADMIN_CREDENTIALS_PATH/ADMIN_JWT_TTL_HOURS, зависимости подключают AuthService. Добавлен secrets/runtime_credentials.example.json и тестовые креды. Unit тесты для AuthService/Auth API (py -m pytest tests/unit/auth — 6 passed).
+- 2025-11-10 02:05 — Добавил JWT-проверку на /api/slots*, /api/settings*, /api/stats* через require_admin_user (HTTP Bearer), расширил AuthService с validate_token/ошибками scope/expiry. UI стата теперь читает токен из localStorage и добавляет Authorization к запросам, e2e тест логина через /api/login и сохраняет токен. Обновлены unit-тесты (slots/settings/stats) с dependency overrides + negative кейсы, прогон py -m pytest tests/unit/auth tests/unit/slots tests/unit/settings tests/unit/stats — 22 passed.
+- 2025-11-10 02:45 — Документация (T PHC-2.3.5): обновил OpenAPI (securitySchemes, /api/login, bearer требования), PRD/use-cases/.memory/USECASES, frontend stats auth-поток, а также VERSION.json/INDEX.yaml (SemVer → 0.6.0).

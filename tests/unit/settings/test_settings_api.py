@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:  # pragma: no cover
     sys.path.append(str(ROOT))
 
+from src.app.auth.auth_dependencies import require_admin_user
 from src.app.settings.settings_api import router
 
 
@@ -34,10 +35,18 @@ class DummySettingsService:
         return self.snapshot
 
 
-def build_client(service: DummySettingsService) -> TestClient:
+class DummyAuthService:
+    def validate_token(self, token: str, required_scope: str | None = None) -> dict[str, str]:
+        return {"sub": "serg", "scope": "admin"}
+
+
+def build_client(service: DummySettingsService, *, with_auth: bool = True) -> TestClient:
     app = FastAPI()
     app.include_router(router)
     app.state.settings_service = service
+    app.state.auth_service = DummyAuthService()
+    if with_auth:
+        app.dependency_overrides[require_admin_user] = lambda: {"sub": "serg", "scope": "admin"}
     return TestClient(app)
 
 
@@ -61,3 +70,13 @@ def test_update_settings_passes_payload_to_service() -> None:
 
     assert response.status_code == 200
     assert service.last_payload == {"sync_response_seconds": 42}
+
+
+def test_settings_endpoints_require_authentication() -> None:
+    service = DummySettingsService()
+    client = build_client(service, with_auth=False)
+
+    response = client.get("/api/settings")
+
+    assert response.status_code == 401
+    assert response.json()["detail"]["failure_reason"] == "missing_token"

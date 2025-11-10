@@ -2,10 +2,16 @@
 
 from fastapi import APIRouter, Depends, Request
 
+from ..auth.auth_dependencies import require_admin_user
+
 from .settings_schemas import SettingsResponseModel, SettingsUpdateRequest
 from .settings_service import SettingsService
 
-router = APIRouter(prefix="/api/settings", tags=["settings"])
+router = APIRouter(
+    prefix="/api/settings",
+    tags=["settings"],
+    dependencies=[Depends(require_admin_user)],
+)
 
 
 def get_settings_service(request: Request) -> SettingsService:

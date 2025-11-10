@@ -40,6 +40,9 @@ class AppConfig:
     result_ttl_hours: int
     sync_response_seconds: int
     temp_ttl_seconds: int
+    jwt_signing_key: str
+    admin_credentials_path: Path
+    admin_jwt_ttl_hours: int
 
 
 def _ensure_media_paths(paths: MediaPaths) -> None:
@@ -74,6 +77,11 @@ def load_config() -> AppConfig:
     result_ttl_hours = int(os.getenv("RESULT_TTL_HOURS", 72))
     sync_response_seconds = int(os.getenv("T_SYNC_RESPONSE_SECONDS", 48))
     temp_ttl_seconds = int(os.getenv("TEMP_TTL_SECONDS", sync_response_seconds))
+    jwt_signing_key = os.getenv("JWT_SIGNING_KEY", "")
+    if not jwt_signing_key:
+        raise RuntimeError("JWT_SIGNING_KEY is not set")
+    admin_credentials_path = Path(os.getenv("ADMIN_CREDENTIALS_PATH", "secrets/runtime_credentials.json"))
+    admin_jwt_ttl_hours = int(os.getenv("ADMIN_JWT_TTL_HOURS", 168))
 
     init_db(engine, session_factory)
 
@@ -86,4 +94,7 @@ def load_config() -> AppConfig:
         result_ttl_hours=result_ttl_hours,
         sync_response_seconds=sync_response_seconds,
         temp_ttl_seconds=temp_ttl_seconds,
+        jwt_signing_key=jwt_signing_key,
+        admin_credentials_path=admin_credentials_path,
+        admin_jwt_ttl_hours=admin_jwt_ttl_hours,
     )
