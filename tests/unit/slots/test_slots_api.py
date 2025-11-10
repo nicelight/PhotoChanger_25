@@ -26,6 +26,8 @@ class DummyIngestService:
         self.calls: list[dict[str, Any]] = []
         self.sync_response_seconds = 48
         self.result_ttl_hours = 72
+        self._pending_overrides: dict[str, dict[str, Any]] = {}
+        self._pending_filenames: dict[str, str] = {}
 
     async def run_test_job(
         self,
@@ -40,8 +42,9 @@ class DummyIngestService:
         job = JobContext(slot_id=slot_id, job_id="job-123", slot_settings={"prompt": "default"})
         job.metadata["source"] = "test"
         # Store overrides for test verification
-        job._overrides = overrides or {}
-        job._filename = getattr(upload, 'filename', 'test.jpg')
+        if job.job_id:
+            self._pending_overrides[job.job_id] = overrides or {}
+            self._pending_filenames[job.job_id] = getattr(upload, "filename", "test.jpg")
         return job, 1.23
 
     async def validate_upload(self, job: JobContext, upload, expected_hash: str | None) -> UploadValidationResult:
@@ -52,10 +55,12 @@ class DummyIngestService:
         if job.slot_settings.get("prompt") == "timeout":
             raise ProviderTimeoutError("timeout")
         # Store the call for test verification
+        overrides = self._pending_overrides.pop(job.job_id or "", {})
+        filename = self._pending_filenames.pop(job.job_id or "", getattr(job.upload, "filename", "test.jpg"))
         self.calls.append({
-            "slot_id": job.slot_id, 
-            "overrides": getattr(job, '_overrides', {}),
-            "filename": getattr(job, '_filename', 'test.jpg')
+            "slot_id": job.slot_id,
+            "overrides": overrides,
+            "filename": filename,
         })
         return b"mock_result"
 
