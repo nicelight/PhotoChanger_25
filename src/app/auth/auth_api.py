@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 
 from .auth_service import (
+    AuthService,
     InvalidCredentialsError,
     LoginThrottledError,
 )
