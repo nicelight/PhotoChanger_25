@@ -1,8 +1,23 @@
 "use strict";
 (function (ns) {
-  const { state, elements, providers, constants } = ns;
+  const { state, elements, providers, constants, auth } = ns;
   const dom = ns.dom;
   const api = ns.api;
+
+  function ensureAuth() {
+    if (!auth || typeof auth.requireToken !== "function") {
+      console.error("[SlotPage] AdminAuth is required for slot management UI.");
+      dom.toast?.("Требуется авторизация администратора", "error");
+      return false;
+    }
+    try {
+      auth.requireToken();
+      return true;
+    } catch (err) {
+      console.warn("[SlotPage] AdminAuth.requireToken failed", err);
+      return false;
+    }
+  }
 
   function bindCopyButton() {
     if (!elements.copyButton || !elements.ingestInput) return;
@@ -389,10 +404,12 @@
     if (elements.resultsRefresh) {
       elements.resultsRefresh.addEventListener("click", () => api.loadRecentResults({ silent: false }));
     }
-    api.loadRecentResults({ silent: true });
   }
 
   function init() {
+    if (!ensureAuth()) {
+      return;
+    }
     bindCopyButton();
     bindToggle(elements.toggleSecond, elements.secondWrap);
     bindToggle(elements.toggleFirst, elements.firstWrap);
@@ -404,6 +421,12 @@
     bindTestButton();
     bindRecentResults();
     hydrateFromDataset();
+    if (typeof api.bootstrapSlotFromServer === "function") {
+      api.bootstrapSlotFromServer().catch((err) => {
+        console.warn("[SlotPage] Unable to bootstrap slot", err);
+        dom.toast("Не удалось загрузить данные слота", "error");
+      });
+    }
   }
 
   document.addEventListener("DOMContentLoaded", init);

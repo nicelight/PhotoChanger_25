@@ -1,6 +1,6 @@
 "use strict";
 (function (ns) {
-  const { elements, state, endpoints, providers, constants } = ns;
+  const { elements, state, endpoints, providers, constants, auth } = ns;
   const dom = ns.dom;
 
   const FIELD_MAP = {
@@ -9,15 +9,36 @@
     operation: "#operation",
     "settings.prompt": "#long",
     template_media: "#drop-second",
+    "slot_payload.provider": "#provider",
+    "slot_payload.operation": "#operation",
+    "slot_payload.settings.prompt": "#long",
+    "slot_payload.template_media": "#drop-second",
+    "slot_payload.template_media.0.media_object_id": "#drop-second",
   };
 
-  async function requestRecentResults() {
+  function authorizedFetch(input, init) {
+    if (!auth || typeof auth.authFetch !== "function") {
+      throw new Error("AdminAuth недоступен: обновите страницу после входа.");
+    }
+    return auth.authFetch(input, init);
+  }
+
+  async function requestSlotDetails() {
     if (!endpoints.slotApi) return { recent_results: [] };
-    const response = await fetch(endpoints.slotApi, { headers: { Accept: "application/json" } });
+    const response = await authorizedFetch(endpoints.slotApi, { headers: { Accept: "application/json" } });
     if (!response.ok) {
       throw new Error(`API ответил статусом ${response.status}`);
     }
     return response.json();
+  }
+
+  function extractRecentResults(payload) {
+    if (!payload) return [];
+    if (Array.isArray(payload.recent_results)) return payload.recent_results;
+    if (payload.slot && Array.isArray(payload.slot.recent_results)) {
+      return payload.slot.recent_results;
+    }
+    return [];
   }
 
   async function loadRecentResults(options) {
@@ -28,9 +49,8 @@
     if (!silent) grid.classList.add("-loading");
     dom.setResultsError("");
     try {
-      const payload = await requestRecentResults();
-      const list = payload?.recent_results || payload?.slot?.recent_results || [];
-      dom.renderRecentResults(list);
+      const payload = await requestSlotDetails();
+      dom.renderRecentResults(extractRecentResults(payload));
     } catch (err) {
       console.warn("[Recent results]", err);
       dom.setResultsError("Не удалось загрузить результаты.");
@@ -54,7 +74,7 @@
         templateState.pendingFile,
         templateState.pendingFile.name || "template-image.png"
       );
-      const response = await fetch(endpoints.templateUpload, { method: "POST", body: formData });
+      const response = await authorizedFetch(endpoints.templateUpload, { method: "POST", body: formData });
       if (!response.ok) {
         throw new Error(`Не удалось загрузить шаблонное изображение (HTTP ${response.status})`);
       }
@@ -107,7 +127,7 @@
     if (!endpoints.slotSave) {
       throw new Error("Endpoint сохранения слота не настроен.");
     }
-    const response = await fetch(endpoints.slotSave, {
+    const response = await authorizedFetch(endpoints.slotSave, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -142,6 +162,14 @@
     }
   }
 
+  async function bootstrapSlotFromServer() {
+    if (!endpoints.slotApi) return null;
+    const payload = await requestSlotDetails();
+    hydrateSlotFromServer(payload);
+    dom.renderRecentResults(extractRecentResults(payload));
+    return payload;
+  }
+
   function hydrateSlotFromServer(payload) {
     if (!payload) return;
     const slot = payload.slot || payload;
@@ -149,6 +177,9 @@
     state.slotMeta.provider = slot.provider || state.slotMeta.provider;
     state.slotMeta.operation = slot.operation || state.slotMeta.operation;
     state.slotMeta.modelName = slot.display_name || state.slotMeta.modelName;
+    if (elements.titleInput) {
+      elements.titleInput.value = slot.display_name || "";
+    }
     if (elements.promptInput && slot.settings && typeof slot.settings.prompt === "string") {
       elements.promptInput.value = slot.settings.prompt;
     }
@@ -164,6 +195,14 @@
       }
     }
     updateSlotHeader(slot.provider || state.slotMeta.provider);
+    if (elements.providerSelect && slot.provider) {
+      elements.providerSelect.value = slot.provider;
+      elements.providerSelect.dispatchEvent(new Event("change"));
+    }
+    if (elements.operationSelect && slot.operation) {
+      elements.operationSelect.value = slot.operation;
+      elements.operationSelect.dispatchEvent(new Event("change"));
+    }
   }
 
   async function persistAndToast(payload, provider) {
@@ -194,19 +233,28 @@
     if (!endpoints.testRun) {
       throw new Error("Endpoint test-run не настроен.");
     }
+    const prov = state.slotMeta.provider || elements.providerSelect.value;
+    const op = state.slotMeta.operation || elements.operationSelect.value;
+    const slotPayload = {
+      provider: prov,
+      operation: op,
+      settings: collectProviderSettings(prov),
+    };
+    if (templateBindings?.length) {
+      slotPayload.template_media = templateBindings;
+    }
+    const title = (elements.titleInput?.value || "").trim();
+    if (title) {
+      slotPayload.display_name = title;
+    }
     const formData = new FormData();
-    formData.append("prompt", getPromptValue());
-    formData.append("provider", elements.providerSelect.value);
-    formData.append("operation", state.slotMeta.operation || elements.operationSelect.value);
+    formData.append("slot_payload", JSON.stringify(slotPayload));
     formData.append(
       "test_image",
       state.testImageState.file,
       state.testImageState.file.name || "test-image.jpg"
     );
-    if (templateBindings?.length) {
-      formData.append("template_media", JSON.stringify(templateBindings));
-    }
-    const response = await fetch(endpoints.testRun, { method: "POST", body: formData });
+    const response = await authorizedFetch(endpoints.testRun, { method: "POST", body: formData });
     if (response.status === 422) {
       const body = await response.json().catch(() => ({}));
       dom.applyFieldErrors(body, FIELD_MAP);
@@ -227,6 +275,7 @@
 
   ns.api = {
     loadRecentResults,
+    bootstrapSlotFromServer,
     collectTemplateMediaBindings,
     getPromptValue,
     collectProviderSettings,

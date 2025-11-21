@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PhotoChanger — Вход администратора</title>
+    <link rel="stylesheet" href="/ui/static/slots/assets/slot.css" />
+    <link rel="stylesheet" href="/ui/static/admin/assets/admin.css" />
+  </head>
+  <body class="login-body" data-dashboard-path="/ui/static/admin/dashboard.html">
+    <div class="admin-waves" aria-hidden="true">
+      <div class="layer">
+        <svg viewBox="0 0 1600 300" preserveAspectRatio="none">
+          <path d="M0,230 C320,210 640,260 960,230 C1160,210 1360,220 1600,230 L1600,300 L0,300 Z" fill="#c6effb" />
+        </svg>
+      </div>
+      <div class="layer" style="opacity:0.8">
+        <svg viewBox="0 0 1600 300" preserveAspectRatio="none">
+          <path d="M0,250 C260,240 520,270 780,250 C1080,230 1340,240 1600,250 L1600,300 L0,300 Z" fill="#b6e9f7" />
+        </svg>
+      </div>
+      <div class="layer" style="opacity:0.7">
+        <svg viewBox="0 0 1600 300" preserveAspectRatio="none">
+          <path d="M0,270 C300,260 600,290 900,270 C1200,250 1400,260 1600,270 L1600,300 L0,300 Z" fill="#a6e3f3" />
+        </svg>
+      </div>
+    </div>
+
+    <main class="login-card" role="main">
+      <h1>Вход в PhotoChanger</h1>
+      <p class="muted-hint" style="text-align:center">Используйте предсозданный аккаунт администратора.</p>
+      <form id="login-form" novalidate autocomplete="on">
+        <div class="login-field">
+          <label for="username">Имя пользователя</label>
+          <input id="username" name="username" type="text" autocomplete="username" placeholder="Например, serg" required />
+        </div>
+        <div class="login-field">
+          <label for="password">Пароль</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Пароль" required />
+        </div>
+        <div class="login-actions">
+          <button id="toggle-password" type="button" class="toggle-password" aria-pressed="false">Показать пароль</button>
+          <button id="login-submit" class="btn-primary" type="submit">Войти</button>
+        </div>
+        <p id="login-error" class="form-error" role="alert"></p>
+      </form>
+    </main>
+
+    <script src="/ui/static/admin/assets/auth.js" defer></script>
+    <script src="/ui/static/admin/assets/login.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PhotoChanger — Дашборд слотов</title>
+    <link rel="stylesheet" href="/ui/static/slots/assets/slot.css" />
+    <link rel="stylesheet" href="/ui/static/admin/assets/admin.css" />
+  </head>
+  <body
+    class="admin-body"
+    data-login-path="/ui/static/admin/login.html"
+    data-slots-endpoint="/api/slots"
+    data-slot-page="/ui/static/slots"
+    data-ingest-template="/api/ingest/{slot_id}"
+    data-stats-href="/ui/stats"
+    data-settings-href="/ui/static/admin/settings.html"
+  >
+    <div class="bg">
+      <div class="admin-main">
+        <header class="admin-header">
+          <div class="bar">
+            <a class="admin-brand" href="#" aria-label="PhotoChanger">
+              <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect x="2" y="6" width="28" height="20" rx="6" fill="#0f866c" />
+                <rect x="6" y="10" width="20" height="12" rx="4" fill="#ffffff" />
+                <path d="M10 20c2.5-3.5 6.5-3.5 9 0" stroke="#0f866c" stroke-width="2" stroke-linecap="round" fill="none" />
+              </svg>
+              PhotoChanger
+            </a>
+            <nav class="admin-toolbar" aria-label="Навигация">
+              <button class="icon-btn" type="button" data-action="go-stats" aria-label="Перейти к статистике">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 20V4" /><path d="M4 20h16" /><path d="M8 20v-8" /><path d="M12 20v-4" /><path d="M16 20v-12" /><path d="M20 20v-6" />
+                </svg>
+              </button>
+              <button class="icon-btn" type="button" data-action="go-settings" aria-label="Настройки">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.82l.02.07a2 2 0 1 1-3.76 1.35l-.02-.07a1.65 1.65 0 0 0-1-.6 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.82-.33l-.07.02a2 2 0 1 1-1.35-3.76l.07-.02a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1.82l-.02-.07a2 2 0 1 1 3.76-1.35l.02.07a1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.6 1 1.65 1.65 0 0 0 .6 1l.06.06a2 2 0 1 1-1.4 3.4z" />
+                </svg>
+              </button>
+              <button class="icon-btn" type="button" data-action="logout" aria-label="Выйти">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                  <polyline points="10 17 15 12 10 7" />
+                  <line x1="15" y1="12" x2="3" y2="12" />
+                </svg>
+              </button>
+            </nav>
+          </div>
+        </header>
+
+        <div class="admin-content">
+          <div class="admin-shell">
+            <section class="admin-card">
+              <div class="admin-section-header">
+                <div>
+                  <p class="muted-hint">Управление слотами</p>
+                  <h1>Слоты AI-обработки</h1>
+                </div>
+                <div class="actions">
+                  <button id="reload-slots" class="btn-primary" type="button">Обновить</button>
+                </div>
+              </div>
+              <p class="muted-hint">Здесь отображаются 15 статических слотов PhotoChanger. Нажмите на слот, чтобы перейти к детальной странице и изменить параметры.</p>
+            </section>
+
+            <div id="slots-error" class="notice -error" hidden role="alert"></div>
+
+            <section class="slots-list" id="slots-list" aria-live="polite"></section>
+            <div id="slots-empty" class="admin-card empty-state" hidden>
+              <p>Слоты ещё не настроены. Используйте страницы типа slot-XXX для первой конфигурации.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/ui/static/admin/assets/auth.js" defer></script>
+    <script src="/ui/static/admin/assets/dashboard.js" defer></script>
+  </body>
+</html>

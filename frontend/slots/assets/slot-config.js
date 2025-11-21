@@ -101,4 +101,5 @@
   ns.elements = elements;
   ns.endpoints = endpoints;
   ns.utils = { $, byId: $ };
+  ns.auth = window.AdminAuth || null;
 })(window.SlotPage || (window.SlotPage = {}), document);
