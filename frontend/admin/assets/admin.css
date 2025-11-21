@@ -324,6 +324,13 @@ body.admin-body {
   font-size: 16px;
 }
 
+input.has-error,
+select.has-error,
+textarea.has-error {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.18);
+}
+
 .provider-keys {
   display: grid;
   gap: 12px;

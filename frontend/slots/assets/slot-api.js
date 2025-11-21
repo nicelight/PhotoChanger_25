@@ -9,6 +9,11 @@
     operation: "#operation",
     "settings.prompt": "#long",
     template_media: "#drop-second",
+    "slot_payload.provider": "#provider",
+    "slot_payload.operation": "#operation",
+    "slot_payload.settings.prompt": "#long",
+    "slot_payload.template_media": "#drop-second",
+    "slot_payload.template_media.0.media_object_id": "#drop-second",
   };
 
   function authorizedFetch(input, init) {

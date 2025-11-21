@@ -102,6 +102,9 @@
     document.querySelectorAll(".has-error").forEach((node) => {
       node.classList.remove("has-error");
       node.removeAttribute("aria-invalid");
+      if (node.dataset && node.dataset.errorMessage) {
+        delete node.dataset.errorMessage;
+      }
     });
   }
 
@@ -112,18 +115,26 @@
     return [];
   }
 
+  function deriveFieldPath(issue) {
+    if (issue.field) return issue.field;
+    if (!Array.isArray(issue.loc)) return "";
+    const filtered = issue.loc.filter(Boolean).filter((part) => part !== "body");
+    return filtered.join(".");
+  }
+
   function applyFieldErrors(payload, fieldMap) {
     const issues = normalizeIssues(payload);
     if (!issues.length) return false;
     issues.forEach((issue) => {
-      const fieldPath = issue.field || (Array.isArray(issue.loc) ? issue.loc.filter(Boolean).join(".") : "");
+      const fieldPath = deriveFieldPath(issue);
       const selector = fieldMap[fieldPath];
       if (!selector) return;
       const el = document.querySelector(selector);
       if (!el) return;
       el.classList.add("has-error");
       el.setAttribute("aria-invalid", "true");
-      if (issue.message) el.dataset.errorMessage = issue.message;
+      const message = issue.message || issue.msg;
+      if (message) el.dataset.errorMessage = message;
     });
     return true;
   }
