@@ -100,11 +100,9 @@ updated: 2025-11-09
         [x] T PHC-1.2.1g — Тесты/контракты для GeminiDriver (успех, timeout, ошибки)  
 
       [x] T PHC-1.2.2 — Реализовать `TurbotextDriver`  
-
         [x] T PHC-1.2.2a — REFLECT — определить поток Turbotext (временные URL, polling, TTL, cleanup)  
         [x] T PHC-1.2.2b — CONSULT — утвердить публичный доступ `/public/provider-media/{media_id}` и параметры polling  
         [x] T PHC-1.2.2c — Реализовать генерацию ссылок и эндпоинт `/public/provider-media/{media_id}`  
-
         [x] T PHC-1.2.2d — Имплементация клиента Turbotext (create_queue, polling, скачивание результата)  
         [x] T PHC-1.2.2e — Тесты для TurbotextDriver и публичного эндпоинта (успех, timeout, ошибки)  
         [x] T PHC-1.2.2f — Обновить PRD и связанные артефакты (описание временных ссылок Turbotext)  
@@ -121,7 +119,7 @@ updated: 2025-11-09
         [x] T PHC-1.3.3.2 — Реализовать контрактные тесты истечения (result TTL, 410)  
         [x] T PHC-1.3.3.3 — Обновить OpenAPI/PRD/репортинг результатов тестов  
 
-- [ ] EP PHC-2 — Админ-панель и статистика  
+- [x] EP PHC-2 — Админ-панель и статистика  
   [x] US PHC-2.GOV — Governance & Discovery  
     [x] T PHC-2.GOV.1 — REFLECT — определить границы админ-панели (API, UI, статистика, доступы)  
     [x] T PHC-2.GOV.2 — CONSULT — согласовать ключевые контракты `/api/slots`, `/api/settings`, `/api/stats`, test-run  
@@ -171,13 +169,13 @@ updated: 2025-11-09
     [x] T PHC-2.3.4 — Добавить проверку JWT ко всем `/api/slots*`, `/api/settings*`, `/api/slots/{slot_id}/test-run`  
     [x] T PHC-2.3.5 — Unit/интеграционные тесты + обновление PRD/OpenAPI/документации по авторизации  
 
-- [ ] EP PHC-3 — Фронтенд
-  [ ] FEAT PHC-3.2 — UX Слотов  
+- [x] EP PHC-3 — Фронтенд
+  [x] FEAT PHC-3.2 — UX Слотов  
        [x] T PHC-3.2.1 — Разметка и валидация формы слота (адаптировать текущий шаблон под рабочий UI)  
        [x] T PHC-3.2.2 — Вынести CSS/JS страницы слота в общие файлы (palette/эффекты остаются без изменений)  
        [x] T PHC-3.2.3 — Подготовить 15 статических страниц `slot-001`…`slot-015` (отдельные HTML с общими ресурсами)
        [x] T PHC-3.2.4 — Реализовать боевые страницы логина/дашборда/настроек на основе шаблонов `login-page.html` и `main-page.html` из spec\docs\ui\frontend-examples.  Для `main-page.html` использовать цветовые стили из `frontend/stats/index.html`
-       [ ] US PHC-3.2.5.GOV — Governance & Discovery (настройка форм слотов)
+       [x] US PHC-3.2.5.GOV — Governance & Discovery (настройка форм слотов)
          [x] T PHC-3.2.5.GOV.1 — REFLECT — определить требования к валидации и подключению форм слотов к API (auth, загрузка медиа, обработка ошибок)
          [x] T PHC-3.2.5.GOV.2 — CONSULT — согласовать пошаговый план интеграции с тимлидом
        [x] T PHC-3.2.5 — Валидация и подключение форм слотов к бэкенду.
@@ -209,9 +207,6 @@ updated: 2025-11-09
     [ ] T PHC-4.2.1.1 — Документация deploy checklist  
     [ ] T PHC-4.2.1.2 — Авто-проверка cron очистки (smoke)  
 
-
-## IN PROGRESS
-- _(пусто; добавь новые задачи после консультации с тимлидом)_
 
 ## DONE
 - [x] REFLECT — проверить таймауты `T_sync_response` в тестах (2025-10-08)
