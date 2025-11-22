@@ -33,7 +33,11 @@ def _client_ip(request: Request) -> str | None:
 
 
 @router.post("/login", response_model=LoginResponse)
-def login(payload: LoginRequest, request: Request, service: AuthService = Depends(get_auth_service)) -> LoginResponse:
+def login(
+    payload: LoginRequest,
+    request: Request,
+    service: AuthService = Depends(get_auth_service),
+) -> LoginResponse:
     try:
         token, expires_in = service.authenticate(
             username=payload.username,
@@ -43,7 +47,11 @@ def login(payload: LoginRequest, request: Request, service: AuthService = Depend
     except LoginThrottledError as exc:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail={"status": "error", "failure_reason": "throttled", "details": str(exc)},
+            detail={
+                "status": "error",
+                "failure_reason": "throttled",
+                "details": str(exc),
+            },
         ) from exc
     except InvalidCredentialsError as exc:
         raise HTTPException(

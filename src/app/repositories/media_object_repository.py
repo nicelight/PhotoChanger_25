@@ -57,7 +57,9 @@ class MediaObjectRepository:
     def list_expired_results(self, reference_time: datetime) -> list[MediaObject]:
         return self.list_expired_by_scope("result", reference_time)
 
-    def list_expired_by_scope(self, scope: str, reference_time: datetime) -> list[MediaObject]:
+    def list_expired_by_scope(
+        self, scope: str, reference_time: datetime
+    ) -> list[MediaObject]:
         with self._session_factory() as session:
             rows = (
                 session.query(MediaObjectModel)

@@ -81,7 +81,9 @@ class TempMediaStore:
         )
         return TempMediaHandle(media_id=media_id, path=target)
 
-    def cleanup(self, slot_id: str, job_id: str, handles: list[TempMediaHandle]) -> None:
+    def cleanup(
+        self, slot_id: str, job_id: str, handles: list[TempMediaHandle]
+    ) -> None:
         """Remove temp directory and mark records cleaned."""
         if not handles:
             self._remove_directory(slot_id, job_id)
@@ -94,7 +96,11 @@ class TempMediaStore:
             except KeyError:
                 self.log.warning(
                     "media.temp.missing_record",
-                    extra={"slot_id": slot_id, "job_id": job_id, "media_id": handle.media_id},
+                    extra={
+                        "slot_id": slot_id,
+                        "job_id": job_id,
+                        "media_id": handle.media_id,
+                    },
                 )
         self._remove_directory(slot_id, job_id)
 
@@ -109,7 +115,11 @@ class TempMediaStore:
             removed += 1
             self.log.info(
                 "media.temp.cleanup.removed",
-                extra={"media_id": media.id, "slot_id": media.slot_id, "job_id": media.job_id},
+                extra={
+                    "media_id": media.id,
+                    "slot_id": media.slot_id,
+                    "job_id": media.job_id,
+                },
             )
         return removed
 

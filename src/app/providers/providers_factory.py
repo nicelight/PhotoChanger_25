@@ -6,7 +6,9 @@ from .providers_gemini import GeminiDriver
 from .providers_turbotext import TurbotextDriver
 
 
-def create_driver(name: str, *, media_repo: MediaObjectRepository | None = None) -> ProviderDriver:
+def create_driver(
+    name: str, *, media_repo: MediaObjectRepository | None = None
+) -> ProviderDriver:
     """Instantiate provider driver by name."""
     lower = name.lower()
     if lower == "gemini":

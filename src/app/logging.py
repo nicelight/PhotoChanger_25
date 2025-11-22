@@ -6,7 +6,9 @@ import logging
 
 try:
     import structlog
-except ModuleNotFoundError:  # pragma: no cover - fallback only triggered when structlog absent
+except (
+    ModuleNotFoundError
+):  # pragma: no cover - fallback only triggered when structlog absent
     structlog = None  # type: ignore[assignment]
 
 

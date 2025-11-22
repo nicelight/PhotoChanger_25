@@ -1,7 +1,5 @@
-﻿
-from __future__ import annotations
+﻿from __future__ import annotations
 
-import asyncio
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -40,17 +38,23 @@ class DummyHTTPResponse:
 
 
 class DummyAsyncClient:
-    def __init__(self, post_queue: list[DummyHTTPResponse], get_queue: list[DummyHTTPResponse]) -> None:
+    def __init__(
+        self, post_queue: list[DummyHTTPResponse], get_queue: list[DummyHTTPResponse]
+    ) -> None:
         self._post_queue = post_queue
         self._get_queue = get_queue
 
     async def __aenter__(self) -> "DummyAsyncClient":  # pragma: no cover - helper
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback) -> None:  # pragma: no cover - helper
+    async def __aexit__(
+        self, exc_type, exc_value, traceback
+    ) -> None:  # pragma: no cover - helper
         return None
 
-    async def post(self, url: str, headers: dict[str, str], data: dict[str, Any]) -> DummyHTTPResponse:
+    async def post(
+        self, url: str, headers: dict[str, str], data: dict[str, Any]
+    ) -> DummyHTTPResponse:
         if not self._post_queue:
             raise RuntimeError("No post responses queued")
         return self._post_queue.pop(0)
@@ -130,7 +134,11 @@ def job_context(tmp_path: Path) -> JobContext:
     job.slot_settings = {
         "prompt": "Improve lighting",
         "template_media": [
-            {"role": "reference", "media_kind": "style", "form_field": "url_image_target"}
+            {
+                "role": "reference",
+                "media_kind": "style",
+                "form_field": "url_image_target",
+            }
         ],
         "strength": 35,
     }
@@ -138,7 +146,11 @@ def job_context(tmp_path: Path) -> JobContext:
     return job
 
 
-def configure_httpx(monkeypatch, post_responses: list[DummyHTTPResponse], get_responses: list[DummyHTTPResponse]):
+def configure_httpx(
+    monkeypatch,
+    post_responses: list[DummyHTTPResponse],
+    get_responses: list[DummyHTTPResponse],
+):
     def factory(*args, **kwargs):
         return DummyAsyncClient(post_responses, get_responses)
 
@@ -146,7 +158,12 @@ def configure_httpx(monkeypatch, post_responses: list[DummyHTTPResponse], get_re
 
 
 @pytest.mark.asyncio
-async def test_turbotext_success(monkeypatch, job_context: JobContext, media_repo: MediaObjectRepository, tmp_path: Path):
+async def test_turbotext_success(
+    monkeypatch,
+    job_context: JobContext,
+    media_repo: MediaObjectRepository,
+    tmp_path: Path,
+):
     store_template_media(
         media_repo,
         slot_id=job_context.slot_id,
@@ -157,10 +174,18 @@ async def test_turbotext_success(monkeypatch, job_context: JobContext, media_rep
 
     post_responses = [
         DummyHTTPResponse(200, {"success": True, "queueid": "123"}),
-        DummyHTTPResponse(200, {"success": True, "data": {"uploaded_image": "https://www.turbotext.ru/image/output.png"}}),
+        DummyHTTPResponse(
+            200,
+            {
+                "success": True,
+                "data": {"uploaded_image": "https://www.turbotext.ru/image/output.png"},
+            },
+        ),
     ]
     get_responses = [
-        DummyHTTPResponse(200, content=b"result-bytes", headers={"Content-Type": "image/png"})
+        DummyHTTPResponse(
+            200, content=b"result-bytes", headers={"Content-Type": "image/png"}
+        )
     ]
     configure_httpx(monkeypatch, post_responses, get_responses)
 
@@ -173,7 +198,9 @@ async def test_turbotext_success(monkeypatch, job_context: JobContext, media_rep
 
 
 @pytest.mark.asyncio
-async def test_turbotext_polling_reconnect(monkeypatch, job_context, media_repo, tmp_path):
+async def test_turbotext_polling_reconnect(
+    monkeypatch, job_context, media_repo, tmp_path
+):
     store_template_media(
         media_repo,
         slot_id=job_context.slot_id,
@@ -185,7 +212,13 @@ async def test_turbotext_polling_reconnect(monkeypatch, job_context, media_repo,
     post_responses = [
         DummyHTTPResponse(200, {"success": True, "queueid": "123"}),
         DummyHTTPResponse(200, {"success": False, "action": "reconnect"}),
-        DummyHTTPResponse(200, {"success": True, "data": {"uploaded_image": "https://www.turbotext.ru/image/output.png"}}),
+        DummyHTTPResponse(
+            200,
+            {
+                "success": True,
+                "data": {"uploaded_image": "https://www.turbotext.ru/image/output.png"},
+            },
+        ),
     ]
     get_responses = [
         DummyHTTPResponse(200, content=b"result", headers={"Content-Type": "image/png"})
@@ -209,7 +242,8 @@ async def test_turbotext_timeout(monkeypatch, job_context, media_repo, tmp_path)
     )
 
     post_responses = [DummyHTTPResponse(200, {"success": True, "queueid": "123"})] + [
-        DummyHTTPResponse(200, {"success": False, "action": "reconnect"}) for _ in range(20)
+        DummyHTTPResponse(200, {"success": False, "action": "reconnect"})
+        for _ in range(20)
     ]
     get_responses: list[DummyHTTPResponse] = []
     configure_httpx(monkeypatch, post_responses, get_responses)
@@ -230,7 +264,9 @@ async def test_turbotext_missing_base_url(monkeypatch, job_context, media_repo):
 
 
 @pytest.mark.asyncio
-async def test_turbotext_create_queue_failure(monkeypatch, job_context, media_repo, tmp_path):
+async def test_turbotext_create_queue_failure(
+    monkeypatch, job_context, media_repo, tmp_path
+):
     store_template_media(
         media_repo,
         slot_id=job_context.slot_id,
@@ -250,7 +286,9 @@ async def test_turbotext_create_queue_failure(monkeypatch, job_context, media_re
 
 
 @pytest.mark.asyncio
-async def test_turbotext_missing_template(monkeypatch, job_context, media_repo, tmp_path):
+async def test_turbotext_missing_template(
+    monkeypatch, job_context, media_repo, tmp_path
+):
     # No template stored, and entry is required (no optional flag)
     post_responses = [DummyHTTPResponse(200, {"success": True, "queueid": "123"})]
     get_responses: list[DummyHTTPResponse] = []

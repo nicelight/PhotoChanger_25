@@ -53,4 +53,3 @@ def require_admin_user(
 
 
 __all__ = ["get_auth_service", "require_admin_user"]
-

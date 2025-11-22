@@ -7,11 +7,16 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from .db.db_init import init_db
+
+# Load environment variables from local files (non-fatal if missing)
+load_dotenv(".env.local")
+load_dotenv(".env", override=False)
 
 
 @dataclass(slots=True)
@@ -66,13 +71,17 @@ def load_config() -> AppConfig:
     ingest_limits = IngestLimits(
         allowed_content_types=("image/jpeg", "image/png", "image/webp"),
         slot_default_limit_mb=int(os.getenv("INGEST_SLOT_DEFAULT_LIMIT_MB", 15)),
-        absolute_cap_bytes=int(os.getenv("INGEST_ABSOLUTE_CAP_BYTES", 20 * 1024 * 1024)),
+        absolute_cap_bytes=int(
+            os.getenv("INGEST_ABSOLUTE_CAP_BYTES", 20 * 1024 * 1024)
+        ),
         chunk_size_bytes=int(os.getenv("INGEST_CHUNK_SIZE_BYTES", 1 * 1024 * 1024)),
     )
 
     database_url = os.getenv("DATABASE_URL", "sqlite:///photochanger.db")
     engine = create_engine(database_url, future=True)
-    session_factory: sessionmaker[Session] = sessionmaker(bind=engine, expire_on_commit=False)
+    session_factory: sessionmaker[Session] = sessionmaker(
+        bind=engine, expire_on_commit=False
+    )
 
     result_ttl_hours = int(os.getenv("RESULT_TTL_HOURS", 72))
     sync_response_seconds = int(os.getenv("T_SYNC_RESPONSE_SECONDS", 48))
@@ -80,7 +89,9 @@ def load_config() -> AppConfig:
     jwt_signing_key = os.getenv("JWT_SIGNING_KEY", "")
     if not jwt_signing_key:
         raise RuntimeError("JWT_SIGNING_KEY is not set")
-    admin_credentials_path = Path(os.getenv("ADMIN_CREDENTIALS_PATH", "secrets/runtime_credentials.json"))
+    admin_credentials_path = Path(
+        os.getenv("ADMIN_CREDENTIALS_PATH", "secrets/runtime_credentials.json")
+    )
     admin_jwt_ttl_hours = int(os.getenv("ADMIN_JWT_TTL_HOURS", 168))
 
     init_db(engine, session_factory)

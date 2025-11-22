@@ -3,6 +3,8 @@ secrets/runtime_credentials.json
 
 # Local environments and caches
 .venv/
+.env.local
+
 **/__pycache__/
 .pytest_cache/
 

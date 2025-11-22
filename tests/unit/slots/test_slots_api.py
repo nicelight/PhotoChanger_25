@@ -1,17 +1,9 @@
-
-
 import json
-import sys
 from datetime import datetime, timedelta
-from pathlib import Path
 from typing import Any, Sequence
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
-ROOT = Path(__file__).resolve().parents[3]
-if str(ROOT) not in sys.path:  # pragma: no cover - test helper
-    sys.path.append(str(ROOT))
 
 from src.app.auth.auth_dependencies import require_admin_user
 from src.app.ingest.ingest_errors import ProviderTimeoutError
@@ -40,29 +32,41 @@ class DummyIngestService:
     ) -> tuple[JobContext, float]:
         if slot_id == "missing":
             raise KeyError(slot_id)
-        job = JobContext(slot_id=slot_id, job_id="job-123", slot_settings={"prompt": "default"})
+        job = JobContext(
+            slot_id=slot_id, job_id="job-123", slot_settings={"prompt": "default"}
+        )
         job.metadata["source"] = "test"
         # Store overrides for test verification
         if job.job_id:
             self._pending_overrides[job.job_id] = overrides or {}
-            self._pending_filenames[job.job_id] = getattr(upload, "filename", "test.jpg")
+            self._pending_filenames[job.job_id] = getattr(
+                upload, "filename", "test.jpg"
+            )
         return job, 1.23
 
-    async def validate_upload(self, job: JobContext, upload, expected_hash: str | None) -> UploadValidationResult:
+    async def validate_upload(
+        self, job: JobContext, upload, expected_hash: str | None
+    ) -> UploadValidationResult:
         job.slot_settings = {"prompt": "default"}
-        return UploadValidationResult(content_type="image/jpeg", size_bytes=3, sha256="abc", filename="file.jpg")
+        return UploadValidationResult(
+            content_type="image/jpeg", size_bytes=3, sha256="abc", filename="file.jpg"
+        )
 
     async def process(self, job: JobContext) -> bytes:
         if job.slot_settings.get("prompt") == "timeout":
             raise ProviderTimeoutError("timeout")
         # Store the call for test verification
         overrides = self._pending_overrides.pop(job.job_id or "", {})
-        filename = self._pending_filenames.pop(job.job_id or "", getattr(job.upload, "filename", "test.jpg"))
-        self.calls.append({
-            "slot_id": job.slot_id,
-            "overrides": overrides,
-            "filename": filename,
-        })
+        filename = self._pending_filenames.pop(
+            job.job_id or "", getattr(job.upload, "filename", "test.jpg")
+        )
+        self.calls.append(
+            {
+                "slot_id": job.slot_id,
+                "overrides": overrides,
+                "filename": filename,
+            }
+        )
         return b"mock_result"
 
 
@@ -79,7 +83,12 @@ class DummySlotRepository:
             version=1,
             updated_by="serg",
             template_media=[
-                SlotTemplateMedia(id="tmpl-1", slot_id="slot-001", media_kind="style", media_object_id="media-1")
+                SlotTemplateMedia(
+                    id="tmpl-1",
+                    slot_id="slot-001",
+                    media_kind="style",
+                    media_object_id="media-1",
+                )
             ],
             updated_at=datetime(2025, 11, 8, 10, 0, 0),
         )
@@ -118,7 +127,9 @@ class DummySlotRepository:
 
 
 class DummyJobRepo:
-    def list_recent_by_slot(self, slot_id: str, limit: int = 10) -> Sequence[JobHistoryRecord]:
+    def list_recent_by_slot(
+        self, slot_id: str, limit: int = 10
+    ) -> Sequence[JobHistoryRecord]:
         base = datetime(2025, 11, 8, 12, 0, 0)
         return [
             JobHistoryRecord(
@@ -150,7 +161,9 @@ class DummySettingsService:
 
 
 class DummyAuthService:
-    def validate_token(self, token: str, required_scope: str | None = None) -> dict[str, str]:
+    def validate_token(
+        self, token: str, required_scope: str | None = None
+    ) -> dict[str, str]:
         return {"sub": "serg", "scope": "admin"}
 
 
@@ -170,7 +183,10 @@ def build_client(
     app.state.settings_service = settings_service or DummySettingsService()
     app.state.auth_service = DummyAuthService()
     if with_auth:
-        app.dependency_overrides[require_admin_user] = lambda: {"sub": "serg", "scope": "admin"}
+        app.dependency_overrides[require_admin_user] = lambda: {
+            "sub": "serg",
+            "scope": "admin",
+        }
     return TestClient(app)
 
 
@@ -198,7 +214,10 @@ def test_test_run_success_with_slot_payload_overrides() -> None:
     assert payload["public_result_url"].endswith("/job-123")
     assert payload["completed_in_seconds"] == 1.23
     assert service.calls[0]["overrides"]["settings"]["prompt"] == "Custom prompt"
-    assert service.calls[0]["overrides"]["template_media"][0]["media_object_id"] == "media-1"
+    assert (
+        service.calls[0]["overrides"]["template_media"][0]["media_object_id"]
+        == "media-1"
+    )
 
 
 def test_test_run_invalid_slot_payload_returns_400() -> None:

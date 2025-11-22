@@ -1,9 +1,9 @@
 # Test Playbook — PhotoChanger (KISS)
 
-> Контекст и стратегия тестирования см. в `spec/docs/test-plan.md`.
+>  см. в `spec/docs/test-plan.md`.
 
 ## Цель
-Быстрый, воспроизводимый прогон тестов перед релизом/демо. Основан на `spec/docs/test-plan.md`, покрывает API, UI и cron.
+Быстрый, воспроизводимый прогон тестов перед релизом/демо. Основан на  `spec/docs/test-plan.md`(контекст и стратегия тестирования), покрывает API, UI и cron.
 
 ## Подготовка (Local/Staging)
 - Переменные: `DATABASE_URL`, `MEDIA_ROOT`, `JWT_SIGNING_KEY`, `GEMINI_API_KEY`, `TURBOTEXT_API_KEY`, `RESULT_TTL_HOURS` (72), `TEMP_TTL_SECONDS` (10–60).
@@ -40,3 +40,5 @@
 ## Выходные артефакты
 - Логи команд (ruff/black/mypy/pytest), скрин или краткая запись ручных smoke шагов.
 - При дефектах: завести запись в `.memory/WORKLOG.md` и добавить задачу в `.memory/TASKS.md`/ASKS по согласованию.
+
+helloWorld

@@ -21,7 +21,9 @@ class CleanupSummary:
     dry_run: bool
 
 
-def perform_cleanup(*, dry_run: bool, reference_time: datetime | None = None) -> CleanupSummary:
+def perform_cleanup(
+    *, dry_run: bool, reference_time: datetime | None = None
+) -> CleanupSummary:
     """Execute cleanup logic and return summary counters."""
     config = load_config()
     media_repo = MediaObjectRepository(config.session_factory)
@@ -37,16 +39,26 @@ def perform_cleanup(*, dry_run: bool, reference_time: datetime | None = None) ->
     if dry_run:
         expired_results = media_repo.list_expired_results(now)
         expired_temp = media_repo.list_expired_by_scope("provider", now)
-        return CleanupSummary(results_removed=len(expired_results), temp_removed=len(expired_temp), dry_run=True)
+        return CleanupSummary(
+            results_removed=len(expired_results),
+            temp_removed=len(expired_temp),
+            dry_run=True,
+        )
 
     removed_results = cleanup_expired_results(media_repo, result_store, now)
     removed_temp = temp_store.cleanup_expired(now)
-    return CleanupSummary(results_removed=removed_results, temp_removed=removed_temp, dry_run=False)
+    return CleanupSummary(
+        results_removed=removed_results, temp_removed=removed_temp, dry_run=False
+    )
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Cleanup expired media artifacts.")
-    parser.add_argument("--dry-run", action="store_true", help="Only report counts without deleting files.")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Only report counts without deleting files.",
+    )
     return parser.parse_args(argv)
 
 

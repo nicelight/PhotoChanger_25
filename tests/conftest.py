@@ -9,4 +9,3 @@ TEST_CREDENTIALS = Path(__file__).resolve().parent / "data" / "runtime_credentia
 os.environ.setdefault("JWT_SIGNING_KEY", "test-signing-key")
 os.environ.setdefault("ADMIN_CREDENTIALS_PATH", str(TEST_CREDENTIALS))
 os.environ.setdefault("ADMIN_JWT_TTL_HOURS", "168")
-

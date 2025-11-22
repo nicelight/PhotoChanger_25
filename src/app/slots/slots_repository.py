@@ -86,7 +86,11 @@ class SlotRepository:
             row.version += 1
             row.updated_at = datetime.utcnow()
 
-            session.execute(delete(SlotTemplateMediaModel).where(SlotTemplateMediaModel.slot_id == slot_id))
+            session.execute(
+                delete(SlotTemplateMediaModel).where(
+                    SlotTemplateMediaModel.slot_id == slot_id
+                )
+            )
             for binding in template_media:
                 session.add(
                     SlotTemplateMediaModel(
@@ -117,7 +121,10 @@ class SlotRepository:
             is_active=model.is_active,
             version=model.version,
             updated_by=model.updated_by,
-            template_media=[SlotRepository._to_template_domain(media) for media in model.template_media],
+            template_media=[
+                SlotRepository._to_template_domain(media)
+                for media in model.template_media
+            ],
             updated_at=model.updated_at,
         )
 

@@ -16,36 +16,82 @@ def upgrade() -> None:
     op.create_table(
         "slot",
         sa.Column("id", sa.String(length=32), primary_key=True),
-        sa.Column("display_name", sa.String(length=128), nullable=False, server_default=""),
+        sa.Column(
+            "display_name", sa.String(length=128), nullable=False, server_default=""
+        ),
         sa.Column("provider", sa.String(length=64), nullable=False),
-        sa.Column("operation", sa.String(length=64), nullable=False, server_default="image_edit"),
+        sa.Column(
+            "operation",
+            sa.String(length=64),
+            nullable=False,
+            server_default="image_edit",
+        ),
         sa.Column("settings_json", sa.Text(), nullable=False, server_default="{}"),
         sa.Column("size_limit_mb", sa.Integer(), nullable=False, server_default="15"),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("TRUE")),
+        sa.Column(
+            "is_active", sa.Boolean(), nullable=False, server_default=sa.text("TRUE")
+        ),
         sa.Column("version", sa.Integer(), nullable=False, server_default="1"),
         sa.Column("updated_by", sa.String(length=64)),
-        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
-        sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
+        sa.Column(
+            "created_at",
+            sa.DateTime(),
+            nullable=False,
+            server_default=sa.text("CURRENT_TIMESTAMP"),
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(),
+            nullable=False,
+            server_default=sa.text("CURRENT_TIMESTAMP"),
+        ),
     )
 
     op.create_table(
         "slot_template_media",
         sa.Column("id", sa.String(length=64), primary_key=True),
-        sa.Column("slot_id", sa.String(length=32), sa.ForeignKey("slot.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "slot_id",
+            sa.String(length=32),
+            sa.ForeignKey("slot.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("media_kind", sa.String(length=32), nullable=False),
         sa.Column("media_object_id", sa.String(length=64), nullable=False),
-        sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
-        sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
+        sa.Column(
+            "created_at",
+            sa.DateTime(),
+            nullable=False,
+            server_default=sa.text("CURRENT_TIMESTAMP"),
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(),
+            nullable=False,
+            server_default=sa.text("CURRENT_TIMESTAMP"),
+        ),
     )
-    op.create_index("ix_slot_template_media_slot_id", "slot_template_media", ["slot_id"])
+    op.create_index(
+        "ix_slot_template_media_slot_id", "slot_template_media", ["slot_id"]
+    )
 
     op.create_table(
         "job_history",
         sa.Column("job_id", sa.String(length=64), primary_key=True),
-        sa.Column("slot_id", sa.String(length=32), sa.ForeignKey("slot.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "slot_id",
+            sa.String(length=32),
+            sa.ForeignKey("slot.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("status", sa.String(length=32), nullable=False),
         sa.Column("failure_reason", sa.String(length=64)),
-        sa.Column("started_at", sa.DateTime(), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
+        sa.Column(
+            "started_at",
+            sa.DateTime(),
+            nullable=False,
+            server_default=sa.text("CURRENT_TIMESTAMP"),
+        ),
         sa.Column("sync_deadline", sa.DateTime()),
         sa.Column("completed_at", sa.DateTime()),
         sa.Column("result_path", sa.String(length=512)),
@@ -56,8 +102,18 @@ def upgrade() -> None:
     op.create_table(
         "media_object",
         sa.Column("id", sa.String(length=64), primary_key=True),
-        sa.Column("job_id", sa.String(length=64), sa.ForeignKey("job_history.job_id", ondelete="CASCADE"), nullable=False),
-        sa.Column("slot_id", sa.String(length=32), sa.ForeignKey("slot.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "job_id",
+            sa.String(length=64),
+            sa.ForeignKey("job_history.job_id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "slot_id",
+            sa.String(length=32),
+            sa.ForeignKey("slot.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("scope", sa.String(length=16), nullable=False),
         sa.Column("path", sa.String(length=512), nullable=False),
         sa.Column("preview_path", sa.String(length=512)),
@@ -70,7 +126,12 @@ def upgrade() -> None:
         "settings",
         sa.Column("key", sa.String(length=64), primary_key=True),
         sa.Column("value", sa.Text(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.text("CURRENT_TIMESTAMP")),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(),
+            nullable=False,
+            server_default=sa.text("CURRENT_TIMESTAMP"),
+        ),
         sa.Column("updated_by", sa.String(length=64)),
     )
 

@@ -47,7 +47,9 @@ def test_cleanup_expired_results(tmp_path):
 
     assert removed == 1
     assert not directory.exists()
-    assert all(obj.id != media_id for obj in media_repo.list_expired_results(datetime.utcnow()))
+    assert all(
+        obj.id != media_id for obj in media_repo.list_expired_results(datetime.utcnow())
+    )
 
 
 def test_cleanup_expired_temp_media(tmp_path):
@@ -74,4 +76,7 @@ def test_cleanup_expired_temp_media(tmp_path):
 
     assert removed == 1
     assert not payload.exists()
-    assert all(obj.id != media_id for obj in media_repo.list_expired_by_scope("provider", datetime.utcnow()))
+    assert all(
+        obj.id != media_id
+        for obj in media_repo.list_expired_by_scope("provider", datetime.utcnow())
+    )

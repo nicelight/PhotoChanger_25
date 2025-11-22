@@ -36,7 +36,9 @@ class TurbotextDriver(ProviderDriver):
         settings = job.slot_settings or {}
         prompt = settings.get("prompt")
         if not prompt:
-            raise ProviderExecutionError("Turbotext prompt is required in slot settings")
+            raise ProviderExecutionError(
+                "Turbotext prompt is required in slot settings"
+            )
 
         base_url = os.getenv("PUBLIC_MEDIA_BASE_URL")
         if not base_url:
@@ -79,23 +81,31 @@ class TurbotextDriver(ProviderDriver):
                 action = result.get("action")
                 if action == "reconnect":
                     continue
-                message = (result.get("error") or result.get("message") or "Unknown error")
+                message = (
+                    result.get("error") or result.get("message") or "Unknown error"
+                )
                 raise ProviderExecutionError(f"Turbotext reported failure: {message}")
 
             data = result.get("data") or {}
             uploaded_image = data.get("uploaded_image")
             if not uploaded_image:
                 raise ProviderExecutionError("Turbotext result missing uploaded_image")
-            payload_bytes, content_type = await self._download_file(uploaded_image, api_key=api_key)
+            payload_bytes, content_type = await self._download_file(
+                uploaded_image, api_key=api_key
+            )
             return ProviderResult(payload=payload_bytes, content_type=content_type)
 
         raise ProviderExecutionError("Turbotext polling exceeded maximum attempts")
 
-    async def _create_queue(self, *, headers: dict[str, str], data: dict[str, Any]) -> str:
+    async def _create_queue(
+        self, *, headers: dict[str, str], data: dict[str, Any]
+    ) -> str:
         async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
             response = await client.post(self.api_endpoint, headers=headers, data=data)
         if response.status_code != 200:
-            raise ProviderExecutionError(f"Turbotext create_queue failed with status {response.status_code}")
+            raise ProviderExecutionError(
+                f"Turbotext create_queue failed with status {response.status_code}"
+            )
         body = response.json()
         if not body.get("success"):
             message = body.get("error") or body.get("message") or "Unknown error"
@@ -105,21 +115,31 @@ class TurbotextDriver(ProviderDriver):
             raise ProviderExecutionError("Turbotext did not return queueid")
         return str(queue_id)
 
-    async def _poll_result(self, *, headers: dict[str, str], queue_id: str) -> dict[str, Any]:
+    async def _poll_result(
+        self, *, headers: dict[str, str], queue_id: str
+    ) -> dict[str, Any]:
         form = {"do": "get_result", "queueid": queue_id}
         async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
             response = await client.post(self.api_endpoint, headers=headers, data=form)
         if response.status_code != 200:
-            raise ProviderExecutionError(f"Turbotext get_result failed with status {response.status_code}")
+            raise ProviderExecutionError(
+                f"Turbotext get_result failed with status {response.status_code}"
+            )
         return response.json()
 
     async def _download_file(self, url: str, *, api_key: str) -> tuple[bytes, str]:
-        full_url = url if url.startswith("http") else urljoin("https://www.turbotext.ru/", url.lstrip("/"))
+        full_url = (
+            url
+            if url.startswith("http")
+            else urljoin("https://www.turbotext.ru/", url.lstrip("/"))
+        )
         headers = {"Authorization": f"Bearer {api_key}"}
         async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
             response = await client.get(full_url, headers=headers)
         if response.status_code != 200:
-            raise ProviderExecutionError(f"Turbotext file download failed with status {response.status_code}")
+            raise ProviderExecutionError(
+                f"Turbotext file download failed with status {response.status_code}"
+            )
         content_type = response.headers.get("Content-Type", "image/png")
         return response.content, content_type
 
@@ -137,9 +157,16 @@ class TurbotextDriver(ProviderDriver):
             "url": ingest_url,
             "content": prompt,
         }
-        for field in ("strength", "scale", "negative_prompt", "user_id", "seed", "original_language"):
-            if field in settings:
-                payload[field] = settings[field]
+        for setting_name in (
+            "strength",
+            "scale",
+            "negative_prompt",
+            "user_id",
+            "seed",
+            "original_language",
+        ):
+            if setting_name in settings:
+                payload[setting_name] = settings[setting_name]
 
         for entry in settings.get("template_media") or []:
             form_field = entry.get("form_field")
@@ -149,7 +176,9 @@ class TurbotextDriver(ProviderDriver):
             media_id = entry.get("media_object_id")
             if not media_id and entry.get("media_kind"):
                 try:
-                    media = self.media_repo.get_media_by_kind(job.slot_id, entry["media_kind"])
+                    media = self.media_repo.get_media_by_kind(
+                        job.slot_id, entry["media_kind"]
+                    )
                     media_id = media.id
                 except (KeyError, ValueError):
                     if entry.get("optional"):

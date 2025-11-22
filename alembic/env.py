@@ -7,6 +7,7 @@ import sys
 from logging.config import fileConfig
 from pathlib import Path
 
+from dotenv import load_dotenv
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
@@ -16,6 +17,10 @@ if str(BASE_DIR) not in sys.path:
     sys.path.append(str(BASE_DIR))
 
 from src.app.db.db_models import Base  # noqa: E402
+
+# Load environment variables from local files for migrations
+load_dotenv(".env.local")
+load_dotenv(".env", override=False)
 
 config = context.config
 

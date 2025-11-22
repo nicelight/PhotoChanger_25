@@ -5,10 +5,18 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Request,
+    UploadFile,
+    status,
+)
 
 from ..auth.auth_dependencies import require_admin_user
-from ..config import AppConfig
 from ..ingest.ingest_errors import (
     PayloadTooLargeError,
     ProviderExecutionError,
@@ -94,7 +102,10 @@ def fetch_slot(
     except KeyError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={"status": "error", "failure_reason": FailureReason.SLOT_NOT_FOUND.value},
+            detail={
+                "status": "error",
+                "failure_reason": FailureReason.SLOT_NOT_FOUND.value,
+            },
         ) from None
     return _slot_details(slot, job_repo, settings_service)
 
@@ -117,7 +128,10 @@ def update_slot(
             size_limit_mb=payload.size_limit_mb,
             settings=payload.settings,
             template_media=[
-                {"media_kind": binding.media_kind, "media_object_id": binding.media_object_id}
+                {
+                    "media_kind": binding.media_kind,
+                    "media_object_id": binding.media_object_id,
+                }
                 for binding in payload.template_media
             ],
             updated_by="admin-ui",
@@ -125,23 +139,28 @@ def update_slot(
     except KeyError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={"status": "error", "failure_reason": FailureReason.SLOT_NOT_FOUND.value},
+            detail={
+                "status": "error",
+                "failure_reason": FailureReason.SLOT_NOT_FOUND.value,
+            },
         ) from None
     return _slot_details(updated, job_repo, settings_service)
 
 
-def _apply_overrides(base_settings: dict[str, Any], overrides: dict[str, Any]) -> dict[str, Any]:
+def _apply_overrides(
+    base_settings: dict[str, Any], overrides: dict[str, Any]
+) -> dict[str, Any]:
     """Apply override values to base settings and return merged result."""
     merged = dict(base_settings)
-    
+
     if "settings" in overrides and isinstance(overrides["settings"], dict):
         merged.update(overrides["settings"])
-    
+
     # Apply top-level overrides (provider, operation, template_media)
     for key in ["provider", "operation", "template_media"]:
         if key in overrides:
             merged[key] = overrides[key]
-    
+
     return merged
 
 
@@ -169,13 +188,17 @@ def _sanitize_template_media(value: Any) -> list[dict[str, str]]:
         media_kind = item.get("media_kind")
         media_object_id = item.get("media_object_id")
         if not media_kind or not media_object_id:
-            raise _bad_request("media_kind and media_object_id are required for template_media items")
-        prepared.append({"media_kind": str(media_kind), "media_object_id": str(media_object_id)})
+            raise _bad_request(
+                "media_kind and media_object_id are required for template_media items"
+            )
+        prepared.append(
+            {"media_kind": str(media_kind), "media_object_id": str(media_object_id)}
+        )
     return prepared
 
 
 def _parse_slot_payload(raw_value: str | None) -> dict[str, Any]:
-    if raw_value in (None, ""):
+    if raw_value is None or raw_value == "":
         return {}
     try:
         payload = json.loads(raw_value)
@@ -239,22 +262,34 @@ async def run_test_slot(
     except KeyError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={"status": "error", "failure_reason": FailureReason.SLOT_NOT_FOUND.value},
+            detail={
+                "status": "error",
+                "failure_reason": FailureReason.SLOT_NOT_FOUND.value,
+            },
         ) from None
     except UnsupportedMediaError as exc:
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail={"status": "error", "failure_reason": FailureReason.UNSUPPORTED_MEDIA_TYPE.value},
+            detail={
+                "status": "error",
+                "failure_reason": FailureReason.UNSUPPORTED_MEDIA_TYPE.value,
+            },
         ) from exc
     except PayloadTooLargeError as exc:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail={"status": "error", "failure_reason": FailureReason.PAYLOAD_TOO_LARGE.value},
+            detail={
+                "status": "error",
+                "failure_reason": FailureReason.PAYLOAD_TOO_LARGE.value,
+            },
         ) from exc
     except UploadReadError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"status": "error", "failure_reason": FailureReason.INVALID_REQUEST.value},
+            detail={
+                "status": "error",
+                "failure_reason": FailureReason.INVALID_REQUEST.value,
+            },
         ) from exc
 
     if overrides:
@@ -265,18 +300,27 @@ async def run_test_slot(
     except ProviderTimeoutError as exc:
         raise HTTPException(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-            detail={"status": "timeout", "failure_reason": FailureReason.PROVIDER_TIMEOUT.value},
+            detail={
+                "status": "timeout",
+                "failure_reason": FailureReason.PROVIDER_TIMEOUT.value,
+            },
         ) from exc
     except ProviderExecutionError as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail={"status": "error", "failure_reason": FailureReason.PROVIDER_ERROR.value},
+            detail={
+                "status": "error",
+                "failure_reason": FailureReason.PROVIDER_ERROR.value,
+            },
         ) from exc
 
     if not job.job_id:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"status": "error", "failure_reason": FailureReason.INTERNAL_ERROR.value},
+            detail={
+                "status": "error",
+                "failure_reason": FailureReason.INTERNAL_ERROR.value,
+            },
         )
 
     return {
@@ -299,7 +343,9 @@ def _slot_summary(slot: Slot) -> SlotSummaryResponse:
     )
 
 
-def _slot_details(slot: Slot, job_repo: JobHistoryRepository, settings_service: SettingsService) -> SlotDetailsResponse:
+def _slot_details(
+    slot: Slot, job_repo: JobHistoryRepository, settings_service: SettingsService
+) -> SlotDetailsResponse:
     template_media = [
         SlotTemplateMediaPayload(
             media_kind=binding.media_kind,

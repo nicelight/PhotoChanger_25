@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
 
-from pydantic import BaseModel, Field, conint
+from pydantic import BaseModel, Field
 
 
 class ProviderKeyStatus(BaseModel):
@@ -22,7 +21,7 @@ class SettingsResponseModel(BaseModel):
 
 
 class SettingsUpdateRequest(BaseModel):
-    sync_response_seconds: conint(ge=10, le=60) | None = None
-    result_ttl_hours: conint(ge=24, le=168) | None = None
+    sync_response_seconds: int | None = Field(default=None, ge=10, le=60)
+    result_ttl_hours: int | None = Field(default=None, ge=24, le=168)
     ingest_password: str | None = Field(default=None, min_length=8, max_length=64)
     provider_keys: dict[str, str] | None = None

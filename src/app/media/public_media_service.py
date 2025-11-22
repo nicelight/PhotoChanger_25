@@ -23,14 +23,20 @@ class PublicMediaService:
         try:
             media = self.media_repo.get_media(media_id)
         except KeyError as exc:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Media not found") from exc
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Media not found"
+            ) from exc
 
         if media.expires_at and media.expires_at < datetime.utcnow():
-            raise HTTPException(status_code=status.HTTP_410_GONE, detail="Media expired")
+            raise HTTPException(
+                status_code=status.HTTP_410_GONE, detail="Media expired"
+            )
 
         path: Path = media.path
         if not path.exists():
-            raise HTTPException(status_code=status.HTTP_410_GONE, detail="Media file missing")
+            raise HTTPException(
+                status_code=status.HTTP_410_GONE, detail="Media file missing"
+            )
 
         return FileResponse(
             path=path,

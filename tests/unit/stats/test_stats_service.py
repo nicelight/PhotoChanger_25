@@ -1,13 +1,8 @@
-import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-
-ROOT = Path(__file__).resolve().parents[3]
-if str(ROOT) not in sys.path:  # pragma: no cover
-    sys.path.append(str(ROOT))
 
 from src.app.stats.stats_service import StatsService
 
@@ -31,7 +26,12 @@ class DummyRepo:
 
     def system_metrics(self, window_start: datetime) -> dict:
         self.window = window_start
-        return {"jobs_total": 5, "jobs_last_window": 2, "timeouts_last_window": 1, "provider_errors_last_window": 0}
+        return {
+            "jobs_total": 5,
+            "jobs_last_window": 2,
+            "timeouts_last_window": 1,
+            "provider_errors_last_window": 0,
+        }
 
     def slot_metrics(self, window_start: datetime):
         self.window = window_start
@@ -86,7 +86,9 @@ def test_slot_stats_filters_inactive_and_adds_rates() -> None:
         ]
     )
 
-    service = StatsService(repo=repo, media_paths=SimpleNamespace(results=Path("/tmp/none")))
+    service = StatsService(
+        repo=repo, media_paths=SimpleNamespace(results=Path("/tmp/none"))
+    )
     stats = service.slot_stats(window_minutes=15)
 
     assert stats["window_minutes"] == 15

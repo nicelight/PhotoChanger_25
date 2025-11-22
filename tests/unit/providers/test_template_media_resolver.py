@@ -81,7 +81,9 @@ def test_resolve_by_media_object_id(tmp_path: Path) -> None:
         {"role": "overlay", "media_object_id": "mo-1"},
     ]
 
-    result = resolve_template_media(slot_id="slot-001", bindings=bindings, media_repo=repo)
+    result = resolve_template_media(
+        slot_id="slot-001", bindings=bindings, media_repo=repo
+    )
     assert len(result) == 1
     media = result[0]
     assert media.role == "overlay"
@@ -99,13 +101,17 @@ def test_resolve_by_media_kind(tmp_path: Path) -> None:
         scope="template",
         path=tmp_path / "templates" / "background.jpg",
     )
-    add_template_binding(repo, slot_id="slot-002", media_kind="background", media_object_id="mo-2")
+    add_template_binding(
+        repo, slot_id="slot-002", media_kind="background", media_object_id="mo-2"
+    )
 
     bindings = [
         {"role": "background", "media_kind": "background"},
     ]
 
-    result = resolve_template_media(slot_id="slot-002", bindings=bindings, media_repo=repo)
+    result = resolve_template_media(
+        slot_id="slot-002", bindings=bindings, media_repo=repo
+    )
     assert len(result) == 1
     media = result[0]
     assert media.media_kind == "background"
@@ -118,7 +124,9 @@ def test_optional_binding_missing(tmp_path: Path) -> None:
         {"role": "overlay", "media_kind": "style", "optional": True},
     ]
 
-    result = resolve_template_media(slot_id="slot-003", bindings=bindings, media_repo=repo)
+    result = resolve_template_media(
+        slot_id="slot-003", bindings=bindings, media_repo=repo
+    )
     assert result == []
 
 
@@ -138,8 +146,12 @@ def test_duplicate_media_kind_raises(tmp_path: Path) -> None:
         scope="template",
         path=tmp_path / "templates" / "style2.png",
     )
-    add_template_binding(repo, slot_id="slot-004", media_kind="style", media_object_id="mo-3")
-    add_template_binding(repo, slot_id="slot-004", media_kind="style", media_object_id="mo-4")
+    add_template_binding(
+        repo, slot_id="slot-004", media_kind="style", media_object_id="mo-3"
+    )
+    add_template_binding(
+        repo, slot_id="slot-004", media_kind="style", media_object_id="mo-4"
+    )
 
     bindings = [
         {"role": "style", "media_kind": "style"},

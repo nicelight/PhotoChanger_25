@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from pathlib import Path
 
-import pytest
 from src.app.media.public_result_service import PublicResultService
 from src.app.repositories.job_history_repository import JobHistoryRecord
 

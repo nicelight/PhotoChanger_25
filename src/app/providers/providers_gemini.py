@@ -58,7 +58,9 @@ class GeminiDriver(ProviderDriver):
             raise ProviderExecutionError("Ingest payload file is missing")
 
         ingest_bytes = payload_path.read_bytes()
-        ingest_mime = (job.upload.content_type if job.upload else None) or _guess_mime(payload_path)
+        ingest_mime = (job.upload.content_type if job.upload else None) or _guess_mime(
+            payload_path
+        )
         ingest_inline = {
             "mime_type": ingest_mime,
             "data": base64.b64encode(ingest_bytes).decode("ascii"),
@@ -75,7 +77,9 @@ class GeminiDriver(ProviderDriver):
 
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
-            raise ProviderExecutionError("Environment variable GEMINI_API_KEY is not set")
+            raise ProviderExecutionError(
+                "Environment variable GEMINI_API_KEY is not set"
+            )
 
         url = f"{self.api_url_base}/models/{model}:generateContent"
         headers = {
@@ -119,7 +123,9 @@ class GeminiDriver(ProviderDriver):
                 continue
 
             if response.status_code == 200:
-                result = self._parse_response(response.json(), fallback_mime=(output or ingest_mime))
+                result = self._parse_response(
+                    response.json(), fallback_mime=(output or ingest_mime)
+                )
                 self.log.info(
                     "gemini.request.success",
                     extra={"slot_id": job.slot_id, "job_id": job.job_id},
@@ -136,7 +142,9 @@ class GeminiDriver(ProviderDriver):
 
         raise ProviderExecutionError("Gemini request failed after retries")
 
-    async def _post(self, url: str, *, headers: dict[str, str], json: dict[str, Any]) -> httpx.Response:
+    async def _post(
+        self, url: str, *, headers: dict[str, str], json: dict[str, Any]
+    ) -> httpx.Response:
         async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
             return await client.post(url, headers=headers, json=json)
 
@@ -151,7 +159,9 @@ class GeminiDriver(ProviderDriver):
         status = error.get("status", "").upper()
         return status in {"RESOURCE_EXHAUSTED", "DEADLINE_EXCEEDED"}
 
-    def _parse_response(self, data: dict[str, Any], *, fallback_mime: str) -> ProviderResult:
+    def _parse_response(
+        self, data: dict[str, Any], *, fallback_mime: str
+    ) -> ProviderResult:
         candidates = data.get("candidates") or []
         for candidate in candidates:
             content = candidate.get("content") or {}
@@ -162,7 +172,9 @@ class GeminiDriver(ProviderDriver):
                     try:
                         payload = base64.b64decode(inline["data"])
                     except (KeyError, ValueError) as exc:
-                        raise ProviderExecutionError("Gemini response payload is invalid") from exc
+                        raise ProviderExecutionError(
+                            "Gemini response payload is invalid"
+                        ) from exc
                     return ProviderResult(payload=payload, content_type=mime)
         raise ProviderExecutionError("Gemini response does not contain inline data")
 
@@ -183,4 +195,3 @@ def _extract_error(response: httpx.Response) -> str:
 def _guess_mime(path: Path) -> str:
     mime, _ = mimetypes.guess_type(path.name)
     return mime or "image/png"
-

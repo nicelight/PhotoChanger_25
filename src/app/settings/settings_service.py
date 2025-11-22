@@ -38,7 +38,9 @@ class SettingsService:
             return self.load()
         return self._snapshot
 
-    def update(self, payload: dict[str, Any], actor: str | None = None) -> dict[str, Any]:
+    def update(
+        self, payload: dict[str, Any], actor: str | None = None
+    ) -> dict[str, Any]:
         """Persist changes (sync_response_seconds, result_ttl_hours, passwords, provider keys)."""
         store = self.repo.read_all()
 
@@ -50,13 +52,13 @@ class SettingsService:
         if (value := payload.get("result_ttl_hours")) is not None:
             updates["result_ttl_hours"] = str(value)
 
-        if (password := payload.get("ingest_password")):
+        if password := payload.get("ingest_password"):
             hashed = hashlib.sha256(password.encode("utf-8")).hexdigest()
             updates["ingest_password_hash"] = hashed
             updates["ingest_password_rotated_at"] = datetime.utcnow().isoformat()
             updates["ingest_password_rotated_by"] = actor or "admin-ui"
 
-        if (provider_keys := payload.get("provider_keys")):
+        if provider_keys := payload.get("provider_keys"):
             existing = json.loads(store.get("provider_keys", "{}") or "{}")
             now = datetime.utcnow().isoformat()
             for provider, key in provider_keys.items():
@@ -83,8 +85,12 @@ class SettingsService:
             except (TypeError, ValueError):
                 return default
 
-        sync_response_seconds = int_or_default("sync_response_seconds", self.config.sync_response_seconds)
-        result_ttl_hours = int_or_default("result_ttl_hours", self.config.result_ttl_hours)
+        sync_response_seconds = int_or_default(
+            "sync_response_seconds", self.config.sync_response_seconds
+        )
+        result_ttl_hours = int_or_default(
+            "result_ttl_hours", self.config.result_ttl_hours
+        )
         ingest_password_rotated_at = store.get("ingest_password_rotated_at")
         ingest_password_rotated_by = store.get("ingest_password_rotated_by")
 

@@ -6,12 +6,12 @@ import time
 
 import httpx
 import pytest
-
-playwright_mod = pytest.importorskip("playwright.sync_api")
-from playwright.sync_api import sync_playwright  # type: ignore  # noqa: E402
 from uvicorn import Config, Server
 
 from src.app.main import app
+
+playwright_mod = pytest.importorskip("playwright.sync_api")
+from playwright.sync_api import sync_playwright  # type: ignore  # noqa: E402
 
 
 def _obtain_token(base_url: str) -> str:

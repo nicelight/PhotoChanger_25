@@ -55,7 +55,9 @@ def test_perform_cleanup_dry_run(monkeypatch):
     monkeypatch.setattr(cleanup_media, "load_config", lambda: DummyConfig())
     monkeypatch.setattr(cleanup_media, "MediaObjectRepository", DummyRepo)
 
-    summary = cleanup_media.perform_cleanup(dry_run=True, reference_time=datetime.utcnow())
+    summary = cleanup_media.perform_cleanup(
+        dry_run=True, reference_time=datetime.utcnow()
+    )
 
     assert summary.dry_run is True
     assert summary.results_removed == 2
@@ -80,7 +82,9 @@ def test_perform_cleanup_executes_cleanup(monkeypatch):
 
     monkeypatch.setattr(cleanup_media, "cleanup_expired_results", fake_cleanup_expired)
 
-    summary = cleanup_media.perform_cleanup(dry_run=False, reference_time=reference_time)
+    summary = cleanup_media.perform_cleanup(
+        dry_run=False, reference_time=reference_time
+    )
 
     assert summary.dry_run is False
     assert summary.results_removed == 5
@@ -89,7 +93,11 @@ def test_perform_cleanup_executes_cleanup(monkeypatch):
 
 
 def test_main_handles_errors(monkeypatch, capsys):
-    monkeypatch.setattr(cleanup_media, "perform_cleanup", lambda **kwargs: (_ for _ in ()).throw(RuntimeError("boom")))
+    monkeypatch.setattr(
+        cleanup_media,
+        "perform_cleanup",
+        lambda **kwargs: (_ for _ in ()).throw(RuntimeError("boom")),
+    )
 
     exit_code = cleanup_media.main([])
 

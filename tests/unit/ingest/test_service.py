@@ -29,9 +29,10 @@ def load_asset(name: str) -> bytes:
     return (ASSETS / name).read_bytes()
 
 
-# для реальных не моковых данных. 
+# для реальных не моковых данных.
 # def make_upload(data: bytes, *, content_type: str = "image/png", filename: str = "file.png") -> UploadFile:
 #     return UploadFile(filename=filename, file=BytesIO(data), content_type=content_type)
+
 
 def make_upload(
     data: bytes,

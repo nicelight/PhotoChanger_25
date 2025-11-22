@@ -25,7 +25,9 @@ class StatsService:
         window_start = datetime.utcnow() - timedelta(minutes=window_minutes)
         system = self.repo.system_metrics(window_start)
         slots = self.repo.slot_metrics(window_start)
-        system["storage_usage_mb"] = self._calc_storage_usage_mb(self.media_paths.results)
+        system["storage_usage_mb"] = self._calc_storage_usage_mb(
+            self.media_paths.results
+        )
         return {
             "window_minutes": window_minutes,
             "system": system,

@@ -22,7 +22,9 @@ def get_settings_service(request: Request) -> SettingsService:
 
 
 @router.get("/", response_model=SettingsResponseModel)
-def read_settings(service: SettingsService = Depends(get_settings_service)) -> SettingsResponseModel:
+def read_settings(
+    service: SettingsService = Depends(get_settings_service),
+) -> SettingsResponseModel:
     snapshot = service.load()
     return SettingsResponseModel(**snapshot)
 

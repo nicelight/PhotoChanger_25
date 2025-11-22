@@ -17,7 +17,9 @@ from src.app.repositories.media_object_repository import MediaObjectRepository
 
 
 class DummyResponse:
-    def __init__(self, status_code: int, json_data: dict[str, Any] | None = None, text: str = "") -> None:
+    def __init__(
+        self, status_code: int, json_data: dict[str, Any] | None = None, text: str = ""
+    ) -> None:
         self.status_code = status_code
         self._json_data = json_data or {}
         self.text = text
@@ -34,10 +36,14 @@ class DummyAsyncClient:
     async def __aenter__(self) -> "DummyAsyncClient":  # pragma: no cover - helper
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback) -> None:  # pragma: no cover - helper
+    async def __aexit__(
+        self, exc_type, exc_value, traceback
+    ) -> None:  # pragma: no cover - helper
         return None
 
-    async def post(self, url: str, headers: dict[str, str], json: dict[str, Any]) -> DummyResponse:
+    async def post(
+        self, url: str, headers: dict[str, str], json: dict[str, Any]
+    ) -> DummyResponse:
         self.requests.append({"url": url, "headers": headers, "json": json})
         if not self._responses:
             raise RuntimeError("No more responses queued")
@@ -113,9 +119,7 @@ def job_context(tmp_path: Path) -> JobContext:
         "model": "gemini-2.5-flash-image",
         "prompt": "Keep faces, replace background",
         "output": {"mime_type": "image/png"},
-        "template_media": [
-            {"role": "style", "media_kind": "style"}
-        ],
+        "template_media": [{"role": "style", "media_kind": "style"}],
         "retry_policy": {"max_attempts": 2, "backoff_seconds": 0},
     }
     job.slot_template_media = {"style": "mo-style"}
@@ -123,7 +127,12 @@ def job_context(tmp_path: Path) -> JobContext:
 
 
 @pytest.mark.asyncio
-async def test_process_success(monkeypatch, job_context: JobContext, media_repo: MediaObjectRepository, tmp_path: Path) -> None:
+async def test_process_success(
+    monkeypatch,
+    job_context: JobContext,
+    media_repo: MediaObjectRepository,
+    tmp_path: Path,
+) -> None:
     store_template_media(
         media_repo,
         slot_id=job_context.slot_id,
@@ -140,7 +149,9 @@ async def test_process_success(monkeypatch, job_context: JobContext, media_repo:
                         {
                             "inline_data": {
                                 "mime_type": "image/png",
-                                "data": base64.b64encode(b"result-bytes").decode("ascii"),
+                                "data": base64.b64encode(b"result-bytes").decode(
+                                    "ascii"
+                                ),
                             }
                         }
                     ]
@@ -157,7 +168,12 @@ async def test_process_success(monkeypatch, job_context: JobContext, media_repo:
     assert result.content_type == "image/png"
     assert result.payload == b"result-bytes"
     assert client.requests[0]["headers"]["x-goog-api-key"] == "test-key"
-    assert client.requests[0]["json"]["contents"][0]["parts"][0]["inline_data"]["mime_type"] == "image/png"
+    assert (
+        client.requests[0]["json"]["contents"][0]["parts"][0]["inline_data"][
+            "mime_type"
+        ]
+        == "image/png"
+    )
 
 
 @pytest.mark.asyncio
@@ -170,7 +186,9 @@ async def test_process_retry_and_fail(monkeypatch, job_context, media_repo, tmp_
         path=tmp_path / "templates" / "style.png",
     )
 
-    error_response = DummyResponse(500, {"error": {"status": "INTERNAL", "message": "boom"}})
+    error_response = DummyResponse(
+        500, {"error": {"status": "INTERNAL", "message": "boom"}}
+    )
     client = DummyAsyncClient([error_response, error_response])
     monkeypatch.setattr("httpx.AsyncClient", lambda timeout: client)
 
@@ -219,6 +237,8 @@ async def test_response_without_inline(monkeypatch, job_context, media_repo, tmp
     driver = GeminiDriver(media_repo=media_repo)
     with pytest.raises(ProviderExecutionError):
         await driver.process(job_context)
+
+
 @pytest.mark.asyncio
 async def test_duplicate_template_media(monkeypatch, job_context, media_repo, tmp_path):
     store_template_media(
@@ -239,4 +259,3 @@ async def test_duplicate_template_media(monkeypatch, job_context, media_repo, tm
     driver = GeminiDriver(media_repo=media_repo)
     with pytest.raises(ProviderExecutionError):
         await driver.process(job_context)
-

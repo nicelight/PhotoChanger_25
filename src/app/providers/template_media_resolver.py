@@ -6,7 +6,7 @@ import base64
 import mimetypes
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import Sequence
 
 from ..repositories.media_object_repository import MediaObjectRepository
 
@@ -41,7 +41,9 @@ def _binding_from_dict(entry: dict) -> TemplateBinding:
     try:
         role = entry["role"]
     except KeyError as exc:  # pragma: no cover - defensive
-        raise TemplateMediaResolutionError("Template media entry requires 'role' field") from exc
+        raise TemplateMediaResolutionError(
+            "Template media entry requires 'role' field"
+        ) from exc
 
     return TemplateBinding(
         role=role,
@@ -64,7 +66,9 @@ def resolve_template_media(
     resolved: list[ResolvedTemplateMedia] = []
     for raw in bindings:
         binding = _binding_from_dict(raw)
-        media = _resolve_single_binding(slot_id=slot_id, binding=binding, media_repo=media_repo)
+        media = _resolve_single_binding(
+            slot_id=slot_id, binding=binding, media_repo=media_repo
+        )
         if media is None:
             continue  # optional binding skipped
         resolved.append(media)

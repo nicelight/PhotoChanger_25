@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import func, nullslast
 from sqlalchemy.orm import Session
@@ -42,7 +43,8 @@ class StatsRepository:
             provider_errors_last_window = (
                 session.query(func.count(JobHistoryModel.job_id))
                 .filter(
-                    JobHistoryModel.failure_reason == FailureReason.PROVIDER_ERROR.value,
+                    JobHistoryModel.failure_reason
+                    == FailureReason.PROVIDER_ERROR.value,
                     JobHistoryModel.completed_at >= window_start,
                 )
                 .scalar()
@@ -63,13 +65,22 @@ class StatsRepository:
             for slot in slots:
                 slot_id = slot.id
                 jobs_last_window = self._count_jobs(session, slot_id, window_start)
-                timeouts_last_window = self._count_timeouts(session, slot_id, window_start)
-                provider_errors_last_window = self._count_provider_errors(session, slot_id, window_start)
-                success_last_window = self._count_success(session, slot_id, window_start)
+                timeouts_last_window = self._count_timeouts(
+                    session, slot_id, window_start
+                )
+                provider_errors_last_window = self._count_provider_errors(
+                    session, slot_id, window_start
+                )
+                success_last_window = self._count_success(
+                    session, slot_id, window_start
+                )
 
                 last_success = (
                     session.query(JobHistoryModel)
-                    .filter(JobHistoryModel.slot_id == slot_id, JobHistoryModel.status == JobStatus.DONE.value)
+                    .filter(
+                        JobHistoryModel.slot_id == slot_id,
+                        JobHistoryModel.status == JobStatus.DONE.value,
+                    )
                     .order_by(nullslast(JobHistoryModel.completed_at.desc()))
                     .first()
                 )
@@ -95,8 +106,12 @@ class StatsRepository:
                         "timeouts_last_window": timeouts_last_window,
                         "provider_errors_last_window": provider_errors_last_window,
                         "success_last_window": success_last_window,
-                        "last_success_at": (last_success.completed_at if last_success else None),
-                        "last_error_reason": last_error.failure_reason if last_error else None,
+                        "last_success_at": (
+                            last_success.completed_at if last_success else None
+                        ),
+                        "last_error_reason": (
+                            last_error.failure_reason if last_error else None
+                        ),
                     }
                 )
         return metrics
@@ -105,7 +120,10 @@ class StatsRepository:
     def _count_jobs(session: Session, slot_id: str, window_start: datetime) -> int:
         return (
             session.query(func.count(JobHistoryModel.job_id))
-            .filter(JobHistoryModel.slot_id == slot_id, JobHistoryModel.started_at >= window_start)
+            .filter(
+                JobHistoryModel.slot_id == slot_id,
+                JobHistoryModel.started_at >= window_start,
+            )
             .scalar()
             or 0
         )
@@ -124,7 +142,9 @@ class StatsRepository:
         )
 
     @staticmethod
-    def _count_provider_errors(session: Session, slot_id: str, window_start: datetime) -> int:
+    def _count_provider_errors(
+        session: Session, slot_id: str, window_start: datetime
+    ) -> int:
         return (
             session.query(func.count(JobHistoryModel.job_id))
             .filter(

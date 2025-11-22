@@ -36,7 +36,9 @@ def client(tmp_path: Path, session_factory) -> TestClient:
     return TestClient(app)
 
 
-def add_media(session_factory, media_id: str, path: Path, *, expires_in_seconds: int = 60) -> None:
+def add_media(
+    session_factory, media_id: str, path: Path, *, expires_in_seconds: int = 60
+) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(b"data")
     with session_factory() as session:
@@ -74,7 +76,9 @@ def add_media(session_factory, media_id: str, path: Path, *, expires_in_seconds:
         session.commit()
 
 
-def test_public_media_serves_file(client: TestClient, tmp_path: Path, session_factory) -> None:
+def test_public_media_serves_file(
+    client: TestClient, tmp_path: Path, session_factory
+) -> None:
     add_media(session_factory, "media-1", tmp_path / "provider" / "file.png")
     response = client.get("/public/provider-media/media-1")
     assert response.status_code == 200
@@ -87,7 +91,14 @@ def test_public_media_404(client: TestClient) -> None:
     assert response.status_code == 404
 
 
-def test_public_media_expired(client: TestClient, tmp_path: Path, session_factory) -> None:
-    add_media(session_factory, "media-expired", tmp_path / "provider" / "old.png", expires_in_seconds=-1)
+def test_public_media_expired(
+    client: TestClient, tmp_path: Path, session_factory
+) -> None:
+    add_media(
+        session_factory,
+        "media-expired",
+        tmp_path / "provider" / "old.png",
+        expires_in_seconds=-1,
+    )
     response = client.get("/public/provider-media/media-expired")
     assert response.status_code == 410

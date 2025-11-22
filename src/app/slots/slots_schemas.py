@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field, conint
+from pydantic import BaseModel, Field
 
 
 class SlotTemplateMediaPayload(BaseModel):
@@ -45,7 +45,7 @@ class SlotUpdateRequest(BaseModel):
     provider: str
     operation: str
     is_active: bool
-    size_limit_mb: conint(ge=1, le=20)
-    sync_response_seconds: conint(ge=10, le=60) | None = None
+    size_limit_mb: int = Field(..., ge=1, le=20)
+    sync_response_seconds: int | None = Field(default=None, ge=10, le=60)
     settings: dict[str, Any] = Field(default_factory=dict)
     template_media: list[SlotTemplateMediaPayload] = Field(default_factory=list)

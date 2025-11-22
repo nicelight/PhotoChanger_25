@@ -26,6 +26,10 @@ def cleanup_expired_results(
         removed += 1
         logger.info(
             "media.cleanup.removed",
-            extra={"media_id": media.id, "slot_id": media.slot_id, "job_id": media.job_id},
+            extra={
+                "media_id": media.id,
+                "slot_id": media.slot_id,
+                "job_id": media.job_id,
+            },
         )
     return removed

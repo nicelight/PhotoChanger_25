@@ -98,7 +98,9 @@ class JobHistoryRepository:
                 raise KeyError(f"Job '{job_id}' not found")
             return self._to_record(model)
 
-    def list_recent_by_slot(self, slot_id: str, limit: int = 10) -> Sequence[JobHistoryRecord]:
+    def list_recent_by_slot(
+        self, slot_id: str, limit: int = 10
+    ) -> Sequence[JobHistoryRecord]:
         with self._session_factory() as session:
             rows = (
                 session.query(JobHistoryModel)

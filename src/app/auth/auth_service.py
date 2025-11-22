@@ -97,7 +97,9 @@ class AuthService:
         ttl = timedelta(hours=token_ttl_hours)
         if not signing_key:
             raise RuntimeError("JWT_SIGNING_KEY is not configured")
-        return cls(credentials=credentials, signing_key=signing_key, token_ttl=ttl, scope=scope)
+        return cls(
+            credentials=credentials, signing_key=signing_key, token_ttl=ttl, scope=scope
+        )
 
     @staticmethod
     def _load_credentials(path: Path) -> dict[str, AdminCredential]:
@@ -106,13 +108,17 @@ class AuthService:
         raw = json.loads(path.read_text(encoding="utf-8"))
         admins = raw.get("admins", [])
         if not isinstance(admins, Iterable):
-            raise ValueError("Invalid admin credentials structure: 'admins' must be an array")
+            raise ValueError(
+                "Invalid admin credentials structure: 'admins' must be an array"
+            )
         records: dict[str, AdminCredential] = {}
         for entry in admins:
             username = entry.get("username")
             password_hash = entry.get("password_hash")
             if not username or not password_hash:
-                raise ValueError("Each admin entry must contain username and password_hash")
+                raise ValueError(
+                    "Each admin entry must contain username and password_hash"
+                )
             records[username] = AdminCredential(
                 username=username,
                 password_hash=password_hash,
@@ -123,7 +129,9 @@ class AuthService:
             raise ValueError("No admin credentials configured")
         return records
 
-    def authenticate(self, username: str, password: str, client_ip: str | None = None) -> tuple[str, int]:
+    def authenticate(
+        self, username: str, password: str, client_ip: str | None = None
+    ) -> tuple[str, int]:
         """Validate credentials and return JWT token + ttl seconds."""
         now = _utcnow()
         state = self._failed_logins.get(username)
@@ -151,7 +159,12 @@ class AuthService:
         self._reset_failures(username)
         token = self._issue_token(username, now, credential.scope)
         expires_in = int(self.token_ttl.total_seconds())
-        logger.info("auth.login.success", username=username, client_ip=client_ip, expires_in=expires_in)
+        logger.info(
+            "auth.login.success",
+            username=username,
+            client_ip=client_ip,
+            expires_in=expires_in,
+        )
         return token, expires_in
 
     def _register_failure(self, username: str, now: datetime) -> None:
@@ -178,7 +191,9 @@ class AuthService:
         }
         return jwt.encode(payload, self.signing_key, algorithm="HS256")
 
-    def validate_token(self, token: str, required_scope: str | None = None) -> dict[str, Any]:
+    def validate_token(
+        self, token: str, required_scope: str | None = None
+    ) -> dict[str, Any]:
         """Decode JWT and ensure scope matches requirement."""
         try:
             payload: dict[str, Any] = jwt.decode(

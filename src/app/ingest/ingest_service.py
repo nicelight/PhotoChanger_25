@@ -46,7 +46,9 @@ class IngestService:
     temp_store: "TempMediaStore"
     result_ttl_hours: int
     sync_response_seconds: int
-    provider_factory: Callable[[str], ProviderDriver] = field(default_factory=lambda: create_driver)
+    provider_factory: Callable[[str], ProviderDriver] = field(
+        default_factory=lambda: create_driver
+    )
     log: logging.Logger = field(default_factory=lambda: logger)
 
     def prepare_job(self, slot_id: str, *, source: str = "ingest") -> JobContext:
@@ -71,7 +73,9 @@ class IngestService:
             slot_id=slot.id,
             job_id=job_id,
             slot_settings=slot.settings,
-            slot_template_media={media.media_kind: media.media_object_id for media in slot.template_media},
+            slot_template_media={
+                media.media_kind: media.media_object_id for media in slot.template_media
+            },
             slot_version=slot.version,
             sync_deadline=sync_deadline,
             result_dir=result_dir,
@@ -94,7 +98,9 @@ class IngestService:
     ) -> UploadValidationResult:
         slot = self.slot_repo.get_slot(job.slot_id)
         job.slot_settings = slot.settings
-        job.slot_template_media = {media.media_kind: media.media_object_id for media in slot.template_media}
+        job.slot_template_media = {
+            media.media_kind: media.media_object_id for media in slot.template_media
+        }
         job.slot_version = slot.version
         result = await self.validator.validate(slot.size_limit_mb, upload)
 
@@ -147,9 +153,13 @@ class IngestService:
             raise RuntimeError("JobContext is not fully initialized")
 
         extension = self._extension_from_content_type(content_type)
-        payload_path = self.result_store.save_payload(job.slot_id, job.job_id, payload, extension)
+        payload_path = self.result_store.save_payload(
+            job.slot_id, job.job_id, payload, extension
+        )
 
-        expires_at = job.result_expires_at or (datetime.utcnow() + timedelta(hours=self.result_ttl_hours))
+        expires_at = job.result_expires_at or (
+            datetime.utcnow() + timedelta(hours=self.result_ttl_hours)
+        )
         self.job_repo.set_result(
             job_id=job.job_id,
             status=JobStatus.DONE.value,
@@ -166,7 +176,11 @@ class IngestService:
         self.temp_store.cleanup(job.slot_id, job.job_id, job.temp_media)
         self.log.info(
             "ingest.job.completed",
-            extra={"slot_id": job.slot_id, "job_id": job.job_id, "result_path": str(payload_path)},
+            extra={
+                "slot_id": job.slot_id,
+                "job_id": job.job_id,
+                "result_path": str(payload_path),
+            },
         )
         return payload_path
 
@@ -179,7 +193,11 @@ class IngestService:
         """Update job status and cleanup result dir on failure/timeout."""
         if job.job_id is None:
             raise RuntimeError("JobContext is not fully initialized")
-        reason = failure_reason.value if isinstance(failure_reason, FailureReason) else failure_reason
+        reason = (
+            failure_reason.value
+            if isinstance(failure_reason, FailureReason)
+            else failure_reason
+        )
         self.job_repo.set_failure(
             job_id=job.job_id,
             status=status.value,
@@ -252,7 +270,9 @@ class IngestService:
                     "duration_seconds": duration,
                 },
             )
-            self.record_failure(job, FailureReason.PROVIDER_TIMEOUT, status=JobStatus.TIMEOUT)
+            self.record_failure(
+                job, FailureReason.PROVIDER_TIMEOUT, status=JobStatus.TIMEOUT
+            )
             raise ProviderTimeoutError("Provider did not finish in time") from exc
         except ProviderExecutionError as exc:
             duration = (datetime.utcnow() - started_at).total_seconds()
@@ -272,7 +292,9 @@ class IngestService:
         self.record_success(job, payload, content_type)
         return payload
 
-    async def _invoke_provider(self, job: JobContext) -> tuple[bytes, str]:  # pragma: no cover - to be implemented
+    async def _invoke_provider(
+        self, job: JobContext
+    ) -> tuple[bytes, str]:  # pragma: no cover - to be implemented
         provider_name = job.metadata.get("provider")
         if not provider_name:
             raise ProviderExecutionError("Provider is not specified for the job")
@@ -280,18 +302,26 @@ class IngestService:
         try:
             driver = self.provider_factory(provider_name)
         except Exception as exc:
-            raise ProviderExecutionError(f"Unsupported provider '{provider_name}'") from exc
+            raise ProviderExecutionError(
+                f"Unsupported provider '{provider_name}'"
+            ) from exc
 
         try:
             result = await driver.process(job)
         except Exception as exc:
-            raise ProviderExecutionError(f"Provider '{provider_name}' failed to process job") from exc
+            raise ProviderExecutionError(
+                f"Provider '{provider_name}' failed to process job"
+            ) from exc
 
         if not isinstance(result, ProviderResult):
-            raise ProviderExecutionError(f"Provider '{provider_name}' returned invalid result")
+            raise ProviderExecutionError(
+                f"Provider '{provider_name}' returned invalid result"
+            )
 
         content_type = result.content_type or (
-            job.upload.content_type if job.upload and job.upload.content_type else "image/png"
+            job.upload.content_type
+            if job.upload and job.upload.content_type
+            else "image/png"
         )
         return result.payload, content_type
 

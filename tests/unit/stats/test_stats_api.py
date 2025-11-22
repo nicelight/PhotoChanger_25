@@ -1,14 +1,7 @@
-import sys
-from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
-ROOT = Path(__file__).resolve().parents[3]
-if str(ROOT) not in sys.path:  # pragma: no cover
-    sys.path.append(str(ROOT))
 
 from src.app.auth.auth_dependencies import require_admin_user
 from src.app.stats.stats_api import router
@@ -23,7 +16,13 @@ class DummyStatsService:
         self.overview_requests.append(window_minutes)
         return {
             "window_minutes": window_minutes,
-            "system": {"jobs_total": 1, "jobs_last_window": 1, "timeouts_last_window": 0, "provider_errors_last_window": 0, "storage_usage_mb": 0.0},
+            "system": {
+                "jobs_total": 1,
+                "jobs_last_window": 1,
+                "timeouts_last_window": 0,
+                "provider_errors_last_window": 0,
+                "storage_usage_mb": 0.0,
+            },
             "slots": [],
         }
 
@@ -48,7 +47,9 @@ class DummyStatsService:
 
 
 class DummyAuthService:
-    def validate_token(self, token: str, required_scope: str | None = None) -> dict[str, str]:
+    def validate_token(
+        self, token: str, required_scope: str | None = None
+    ) -> dict[str, str]:
         return {"sub": "serg", "scope": "admin"}
 
 
@@ -58,7 +59,10 @@ def build_client(service: DummyStatsService, *, with_auth: bool = True) -> TestC
     app.state.stats_service = service
     app.state.auth_service = DummyAuthService()
     if with_auth:
-        app.dependency_overrides[require_admin_user] = lambda: {"sub": "serg", "scope": "admin"}
+        app.dependency_overrides[require_admin_user] = lambda: {
+            "sub": "serg",
+            "scope": "admin",
+        }
     return TestClient(app)
 
 

@@ -1,7 +1,13 @@
 ﻿---
 id: worklog
-updated: 2025-11-10
+updated: 2025-11-22
 ---
+
+## Test Playbook прогон (2025-11-22)
+- 2025-11-22 17:00 — Прогнал ruff check через .venv, устранил F401/F402/F821 (imports, type hints, _parse_slot_payload), убрал sys.path хаки в тестах.
+- 2025-11-22 17:12 — Запустил black по проекту (43 файла реформатированы) для прохождения чеков.
+- 2025-11-22 17:15 — Выполнил mypy src/ — зелёный после корректировки схем слотов/настроек.
+- 2025-11-22 17:17 — Pytest tests/unit — 69 passed; e2e/UI-smoke пока не запускались (требует playwright/живое приложение).
 
 - 2025-11-06 01:45 — Обновил PRD (админ API, примеры payload/settings) и OpenAPI (`/api/slots*`, `/api/settings`, `/api/slots/{slot_id}/cleanup`) с новыми схемами (SlotSummary/Details, SettingsResponse).
 

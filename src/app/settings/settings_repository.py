@@ -32,7 +32,9 @@ class SettingsRepository:
             session.add(model)
             session.commit()
 
-    def bulk_upsert(self, payload: dict[str, str], *, updated_by: str | None = None) -> None:
+    def bulk_upsert(
+        self, payload: dict[str, str], *, updated_by: str | None = None
+    ) -> None:
         with self._session_factory() as session:
             now = datetime.utcnow()
             for key, value in payload.items():

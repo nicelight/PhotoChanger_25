@@ -1,14 +1,8 @@
-import sys
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
-ROOT = Path(__file__).resolve().parents[3]
-if str(ROOT) not in sys.path:  # pragma: no cover
-    sys.path.append(str(ROOT))
 
 from src.app.auth.auth_dependencies import require_admin_user
 from src.app.settings.settings_api import router
@@ -29,24 +23,35 @@ class DummySettingsService:
     def load(self) -> dict[str, Any]:
         return self.snapshot
 
-    def update(self, payload: dict[str, Any], actor: str | None = None) -> dict[str, Any]:
+    def update(
+        self, payload: dict[str, Any], actor: str | None = None
+    ) -> dict[str, Any]:
         self.last_payload = payload
-        self.snapshot["sync_response_seconds"] = payload.get("sync_response_seconds", self.snapshot["sync_response_seconds"])
+        self.snapshot["sync_response_seconds"] = payload.get(
+            "sync_response_seconds", self.snapshot["sync_response_seconds"]
+        )
         return self.snapshot
 
 
 class DummyAuthService:
-    def validate_token(self, token: str, required_scope: str | None = None) -> dict[str, str]:
+    def validate_token(
+        self, token: str, required_scope: str | None = None
+    ) -> dict[str, str]:
         return {"sub": "serg", "scope": "admin"}
 
 
-def build_client(service: DummySettingsService, *, with_auth: bool = True) -> TestClient:
+def build_client(
+    service: DummySettingsService, *, with_auth: bool = True
+) -> TestClient:
     app = FastAPI()
     app.include_router(router)
     app.state.settings_service = service
     app.state.auth_service = DummyAuthService()
     if with_auth:
-        app.dependency_overrides[require_admin_user] = lambda: {"sub": "serg", "scope": "admin"}
+        app.dependency_overrides[require_admin_user] = lambda: {
+            "sub": "serg",
+            "scope": "admin",
+        }
     return TestClient(app)
 
 

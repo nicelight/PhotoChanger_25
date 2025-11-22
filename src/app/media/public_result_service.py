@@ -35,14 +35,18 @@ class PublicResultService:
         """Return the processed result file or error payload."""
         try:
             job = self.job_repo.get_job(job_id)
-        except KeyError as exc:
+        except KeyError:
             self.log.debug("public.result.not_found", extra={"job_id": job_id})
             return self._error(status.HTTP_404_NOT_FOUND, "result_not_found")
 
         if job.status != "done" or not job.result_path:
             self.log.debug(
                 "public.result.not_completed",
-                extra={"job_id": job.job_id, "slot_id": job.slot_id, "status": job.status},
+                extra={
+                    "job_id": job.job_id,
+                    "slot_id": job.slot_id,
+                    "status": job.status,
+                },
             )
             return self._error(status.HTTP_404_NOT_FOUND, "result_not_found")
 
@@ -62,7 +66,11 @@ class PublicResultService:
             # файл отсутствует (вероятно, cron уже очистил) — считаем ссылку истёкшей
             self.log.warning(
                 "public.result.missing_file",
-                extra={"job_id": job.job_id, "slot_id": job.slot_id, "path": job.result_path},
+                extra={
+                    "job_id": job.job_id,
+                    "slot_id": job.slot_id,
+                    "path": job.result_path,
+                },
             )
             return self._error(status.HTTP_410_GONE, "result_expired")
 

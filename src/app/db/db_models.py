@@ -19,13 +19,17 @@ class SlotModel(Base):
     id: Mapped[str] = mapped_column(String(32), primary_key=True)
     display_name: Mapped[str] = mapped_column(String(128), nullable=False, default="")
     provider: Mapped[str] = mapped_column(String(64), nullable=False)
-    operation: Mapped[str] = mapped_column(String(64), nullable=False, default="image_edit")
+    operation: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="image_edit"
+    )
     settings_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
     size_limit_mb: Mapped[int] = mapped_column(Integer, nullable=False, default=15)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     updated_by: Mapped[str | None] = mapped_column(String(64))
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,
@@ -46,11 +50,17 @@ class SlotModel(Base):
 class SlotTemplateMediaModel(Base):
     __tablename__ = "slot_template_media"
 
-    id: Mapped[str] = mapped_column(String(64), primary_key=True, default=lambda: uuid.uuid4().hex)
-    slot_id: Mapped[str] = mapped_column(String(32), ForeignKey("slot.id"), nullable=False, index=True)
+    id: Mapped[str] = mapped_column(
+        String(64), primary_key=True, default=lambda: uuid.uuid4().hex
+    )
+    slot_id: Mapped[str] = mapped_column(
+        String(32), ForeignKey("slot.id"), nullable=False, index=True
+    )
     media_kind: Mapped[str] = mapped_column(String(32), nullable=False)
     media_object_id: Mapped[str] = mapped_column(String(64), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,
@@ -65,11 +75,15 @@ class JobHistoryModel(Base):
     __tablename__ = "job_history"
 
     job_id: Mapped[str] = mapped_column(String(64), primary_key=True)
-    slot_id: Mapped[str] = mapped_column(String(32), ForeignKey("slot.id"), nullable=False, index=True)
+    slot_id: Mapped[str] = mapped_column(
+        String(32), ForeignKey("slot.id"), nullable=False, index=True
+    )
     source: Mapped[str] = mapped_column(String(32), nullable=False, default="ingest")
     status: Mapped[str] = mapped_column(String(32), nullable=False)
     failure_reason: Mapped[str | None] = mapped_column(String(64))
-    started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
     sync_deadline: Mapped[datetime | None] = mapped_column(DateTime)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime)
     result_path: Mapped[str | None] = mapped_column(String(512))
@@ -86,8 +100,12 @@ class MediaObjectModel(Base):
     __tablename__ = "media_object"
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
-    job_id: Mapped[str] = mapped_column(String(64), ForeignKey("job_history.job_id"), nullable=False, index=True)
-    slot_id: Mapped[str] = mapped_column(String(32), ForeignKey("slot.id"), nullable=False)
+    job_id: Mapped[str] = mapped_column(
+        String(64), ForeignKey("job_history.job_id"), nullable=False, index=True
+    )
+    slot_id: Mapped[str] = mapped_column(
+        String(32), ForeignKey("slot.id"), nullable=False
+    )
     scope: Mapped[str] = mapped_column(String(16), nullable=False)  # provider|result
     path: Mapped[str] = mapped_column(String(512), nullable=False)
     preview_path: Mapped[str | None] = mapped_column(String(512))
@@ -102,5 +120,7 @@ class SettingModel(Base):
 
     key: Mapped[str] = mapped_column(String(64), primary_key=True)
     value: Mapped[str] = mapped_column(Text, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
     updated_by: Mapped[str | None] = mapped_column(String(64))
