@@ -6,6 +6,8 @@
   const settingsEndpoint = dataset.settingsEndpoint || "/api/settings";
   const statsHref = dataset.statsHref || "/ui/stats";
   const dashboardHref = dataset.dashboardHref || "/ui/static/admin/dashboard.html";
+  const defaultProviders =
+    dataset.providers?.split(",").map((item) => item.trim()).filter(Boolean) || ["gemini", "turbotext"];
 
   const form = document.getElementById("settings-form");
   const statusEl = document.getElementById("settings-status");
@@ -70,12 +72,9 @@
   function renderProviderKeys(map) {
     if (!providerList) return;
     providerList.innerHTML = "";
-    const providers = Object.keys(map);
+    const providers = Array.from(new Set([...Object.keys(map), ...defaultProviders].filter(Boolean)));
     if (!providers.length) {
-      const li = document.createElement("li");
-      li.textContent = "Провайдеры пока не настроены";
-      providerList.appendChild(li);
-      return;
+      providers.push("provider");
     }
     providers.forEach((name) => {
       const li = document.createElement("li");
