@@ -248,9 +248,19 @@ async def run_test_slot(
     test_image: UploadFile = File(...),
     slot_payload: str | None = Form(None),
     service: IngestService = Depends(get_ingest_service),
+    slot_repo: SlotRepository = Depends(get_slot_repo),
 ) -> dict[str, Any]:
     """Trigger synchronous processing for admin UI test button."""
     overrides = _parse_slot_payload(slot_payload)
+
+    # быстрый pre-check существования слота, чтобы отлавливать неверные id раньше
+    try:
+        slot_repo.get_slot(slot_id)
+    except KeyError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"status": "error", "failure_reason": FailureReason.SLOT_NOT_FOUND.value},
+        ) from None
 
     try:
         job, duration = await service.run_test_job(

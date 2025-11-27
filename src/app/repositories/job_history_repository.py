@@ -55,6 +55,30 @@ class JobHistoryRepository:
             )
             session.commit()
 
+    def create_template_upload(
+        self,
+        *,
+        job_id: str,
+        slot_id: str,
+        path: str,
+        completed_at: datetime,
+    ) -> None:
+        """Create a synthetic job for template media uploads."""
+        with self._session_factory() as session:
+            session.add(
+                JobHistoryModel(
+                    job_id=job_id,
+                    slot_id=slot_id,
+                    source="template_upload",
+                    status="done",
+                    started_at=completed_at,
+                    completed_at=completed_at,
+                    result_path=path,
+                    result_expires_at=completed_at,
+                )
+            )
+            session.commit()
+
     def set_result(
         self,
         *,

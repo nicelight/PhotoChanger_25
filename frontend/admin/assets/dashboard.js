@@ -77,7 +77,7 @@
     title.className = "slot-row__title";
     title.textContent = slot.display_name || slot.slot_id;
     const pageBase = slotPageBase.endsWith("/") ? slotPageBase.slice(0, -1) : slotPageBase;
-    title.href = pageBase + "/slot-" + slot.slot_id + ".html";
+    title.href = pageBase + "/" + slot.slot_id + ".html";
     title.setAttribute("aria-label", "Открыть настройки слота " + slot.slot_id);
 
     const meta = document.createElement("div");
@@ -118,7 +118,7 @@
     editBtn.setAttribute("aria-label", "Открыть слот " + slot.slot_id);
     editBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15.232 5.232 18.768 8.768"/><path d="M16 13v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2h6"/><path d="m8 16 9-9"/></svg>';
     editBtn.addEventListener("click", () => {
-      window.location.href = pageBase + "/slot-" + slot.slot_id + ".html";
+      window.location.href = pageBase + "/" + slot.slot_id + ".html";
     });
 
     actions.appendChild(status);

@@ -193,6 +193,16 @@
         elements.toggleSecond.checked = true;
         elements.toggleSecond.dispatchEvent(new Event("change"));
       }
+      const previewUrl = binding.preview_url || `/public/provider-media/${binding.media_object_id}`;
+      const preview = document.getElementById("preview-second");
+      if (previewUrl && preview) {
+        preview.src = previewUrl;
+        preview.style.display = "block";
+        preview.style.opacity = "1";
+      }
+      if (elements.secondDrop) {
+        elements.secondDrop.classList.add("has-image");
+      }
     }
     updateSlotHeader(slot.provider || state.slotMeta.provider);
     if (elements.providerSelect && slot.provider) {

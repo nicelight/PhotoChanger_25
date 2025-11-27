@@ -54,6 +54,23 @@ class MediaObjectRepository:
             expires_at=expires_at,
         )
 
+    def register_template(
+        self,
+        *,
+        job_id: str,
+        slot_id: str,
+        path: Path,
+        expires_at: datetime,
+    ) -> str:
+        return self._register_media(
+            scope="template",
+            job_id=job_id,
+            slot_id=slot_id,
+            path=path,
+            preview_path=None,
+            expires_at=expires_at,
+        )
+
     def list_expired_results(self, reference_time: datetime) -> list[MediaObject]:
         return self.list_expired_by_scope("result", reference_time)
 

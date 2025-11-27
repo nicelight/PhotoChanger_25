@@ -14,6 +14,7 @@ from .ingest.validation import UploadValidator
 from .media.media_service import ResultStore
 from .media.public_media_service import PublicMediaService
 from .media.public_result_service import PublicResultService
+from .media.template_media_api import router as template_media_router
 from .media.temp_media_store import TempMediaStore
 from .providers.providers_factory import create_driver
 from .public.public_media_router import build_public_media_router
@@ -90,6 +91,7 @@ def include_routers(app: FastAPI, config: AppConfig) -> None:
 
     app.include_router(auth_router)
     app.include_router(ingest_router)
+    app.include_router(template_media_router)
     app.include_router(slots_router)
     app.include_router(settings_router)
     app.include_router(stats_router)

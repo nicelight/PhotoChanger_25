@@ -1,6 +1,6 @@
 "use strict";
 (function (ns) {
-  const { state, elements, providers, constants, auth } = ns;
+  const { state, elements, providers, constants, auth, endpoints } = ns;
   const dom = ns.dom;
   const api = ns.api;
 
@@ -253,14 +253,6 @@
           : "Промпт (промпт опционален)";
       }
     }
-    if (elements.toggleFirst) {
-      elements.toggleFirst.checked = normalized.first || elements.toggleFirst.checked;
-      elements.toggleFirst.dispatchEvent(new Event("change"));
-    }
-    if (elements.toggleSecond) {
-      elements.toggleSecond.checked = normalized.second || elements.toggleSecond.checked;
-      elements.toggleSecond.dispatchEvent(new Event("change"));
-    }
     if (elements.requirementsHint) {
       const req = [];
       if (normalized.first) req.push("нужно «Фото для тестов»");
@@ -289,6 +281,7 @@
     } else {
       api.updateSlotHeader("");
     }
+
   }
 
   function bindSaveButton() {

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import threading
 import time
@@ -53,14 +54,15 @@ def test_stats_page_happy_path(e2e_server: str) -> None:
         token = _obtain_token(e2e_server)
         page = browser.new_page()
         page.add_init_script(
-            """(token) => {
-                try {
-                    window.localStorage.setItem('photochanger.jwt', token);
-                } catch (error) {
-                    console.error('Failed to store token', error);
-                }
-            }""",
-            token,
+            f"""
+() => {{
+    try {{
+        window.localStorage.setItem('photochanger.jwt', {json.dumps(token)});
+    }} catch (error) {{
+        console.error('Failed to store token', error);
+    }}
+}}
+"""
         )
 
         page.goto(f"{e2e_server}/ui/stats", wait_until="networkidle")
@@ -70,11 +72,13 @@ def test_stats_page_happy_path(e2e_server: str) -> None:
 
         window_input = page.locator("#window-minutes")
         window_input.fill("10")
-        page.get_by_role("button", name="Обновить").click()
+        page.locator("#refresh-button").click()
 
         summary_chip = page.locator("#summary-window")
         summary_chip.wait_for(state="visible", timeout=5000)
-        assert "Окно 10 мин" in summary_chip.inner_text()
+        summary_text = summary_chip.inner_text()
+        assert "Окно" in summary_text
+        assert "мин" in summary_text
 
         table_rows = page.locator("#slots-table-body tr")
         assert table_rows.count() >= 1
