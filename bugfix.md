@@ -1,96 +1,83 @@
-# Промпт для фикса бага "Частичное обновление template_media при тестовом запуске"
+# Промпт для фикса багов "Test Run" и "Save Slot"
 
-Ты выступаешь в роли Senior Backend Engineer. Твоя задача — исправить ошибку логики в сервисе обработки изображений (`IngestService`), из-за которой тестовый запуск слота из админки приводит к удалению конфигурации ролей (`role`) у шаблонных изображений.
+Ты выступаешь в роли Senior Fullstack Engineer. Твоя задача — комплексно исправить проблему потери конфигурации слота (в частности поля `role`) при сохранении и тестировании слота из админ-панели.
 
 ## 1. Суть проблемы
 
-В проекте есть функционал "Test Run" для слотов, где администратор может временно переопределить используемые изображения-шаблоны (например, заменить "фон" для текущего прогона).
-Веб-интерфейс отправляет список переопределений (`overrides`), содержащий только пары `media_kind` и `media_object_id`.
+1.  **Frontend:** Админ-панель при отправке данных (для теста или сохранения) отправляет только `media_kind` и `media_object_id`, но не отправляет `role`.
+2.  **Backend (API):** Валидатор `_sanitize_template_media` принудительно удаляет все поля кроме kind и id.
+3.  **Backend (Logic):** Сервисы перезаписывают существующую конфигурацию слота (`settings_json`) неполными данными от фронтенда, удаляя существующие роли и настройки.
 
-**Текущее поведение:**
-Метод `src/app/ingest/ingest_service.py: _apply_test_overrides` берет этот неполный список и **полностью заменяет** им настройки слота (`job.slot_settings["template_media"]`).
-Из-за этого теряются поля `role`, `optional`, которые обязательны для работы `TemplateMediaResolver`. В результате возникает ошибка `TemplateMediaResolutionError: Template media entry requires 'role' field`.
+Это приводит к тому, что провайдеры (Gemini) перестают видеть шаблонные изображения, так как резолвер требует наличия поля `role`.
 
-**Требуемое поведение (Fix):**
-Вместо полной замены списка настроек, необходимо реализовать логику **частичного обновления (Patch/Merge)**.
-Нужно обновить `media_object_id` только для тех элементов списка `template_media`, у которых совпадает `media_kind`. Остальные поля (особенно `role`) должны остаться нетронутыми.
+## 2. Задача
+
+Реализовать надежный механизм сохранения и тестирования, который:
+1.  Обеспечивает наличие роли `template` для новых слотов.
+2.  Сохраняет существующие сложные роли (например, `background`, `style`) для старых слотов.
 
 ---
 
-## 2. Шаги по реализации фикса
+## 3. Шаги по реализации
 
-Пожалуйста, выполни следующие изменения в коде:
+### Шаг 1: Frontend (`src/app/frontend/slots/assets/slot-api.js`)
+В функции `ensureTemplateMediaBinding` добавь отправку поля `role`.
+Так как в текущем UI поддерживается только один слот шаблона, используй фиксированное значение `"template"`.
 
-### Файл: `src/app/ingest/ingest_service.py`
+```javascript
+// Было:
+return [{ media_kind: templateState.kind, media_object_id: templateState.mediaId }];
 
-Найди метод `_apply_test_overrides`.
-Измени блок обработки `overrides.get("template_media")`.
-
-**Алгоритм:**
-1.  Получи список переопределений из `overrides["template_media"]`.
-2.  Создай словарь (map) для быстрого поиска: `updates = { item["media_kind"]: item["media_object_id"] for item in overrides }`.
-3.  Получи текущий список настроек из `job.slot_settings`. Если ключа `template_media` нет, создай пустой список.
-4.  Пройдись по текущему списку настроек. Если `media_kind` элемента есть в словаре `updates`, обнови его `media_object_id` значением из словаря.
-5.  **Важно:** НЕ заменяй `job.slot_settings["template_media"]` целиком на список из `overrides`. Обновляй существующий список in-place или создавай новый на основе старого с применением патчей.
-6.  Убедись, что словарь `job.slot_template_media` (используемый для быстрого доступа по kind) также корректно обновляется.
-
-**Пример ожидаемой логики (псевдокод):**
-
-```python
-template_overrides = overrides.get("template_media")
-if isinstance(template_overrides, list):
-    # 1. Map new IDs by Kind
-    updates_map = {
-        item.get("media_kind"): item.get("media_object_id")
-        for item in template_overrides
-        if item.get("media_kind") and item.get("media_object_id")
-    }
-
-    # 2. Update existing settings preserving 'role'
-    current_media = job.slot_settings.get("template_media", [])
-    for entry in current_media:
-        kind = entry.get("media_kind")
-        if kind in updates_map:
-            entry["media_object_id"] = updates_map[kind]
-    
-    # 3. Update the quick-lookup map (existing logic needs to reflect updates)
-    # Re-build slot_template_media based on the UPDATED current_media
-    job.slot_template_media = {
-        item["media_kind"]: item["media_object_id"]
-        for item in current_media
-        if item.get("media_kind") and item.get("media_object_id")
-    }
+// Стало:
+return [{ 
+    media_kind: templateState.kind, 
+    media_object_id: templateState.mediaId, 
+    role: "template" // Добавляем дефолтную роль
+}];
 ```
 
-### Правки спецификаций
-В данном случае спецификации API менять не нужно, так как мы исправляем внутреннюю логику обработки данных, приводя её в соответствие с фактическим форматом данных (Partial Update).
+### Шаг 2: Backend API (`src/app/slots/slots_api.py`)
+В функции `_sanitize_template_media` разреши прохождение поля `role`.
+
+```python
+# Добавь обработку role:
+role = item.get("role")
+# ...
+prepared.append({
+    "media_kind": str(media_kind),
+    "media_object_id": str(media_object_id),
+    "role": str(role) if role else None # Разрешаем role
+})
+```
+
+### Шаг 3: Backend Logic — Save (`src/app/slots/slots_repository.py`)
+Измени метод `update_slot`. Реализуй логику **Merge (Слияния)** настроек.
+
+**Алгоритм:**
+1.  Загрузи текущий `settings_json`.
+2.  Обнови верхнеуровневые поля (`prompt`, `output`) из пришедшего `payload.settings`.
+3.  Обработай `template_media`:
+    *   Создай карту обновлений из payload: `updates = { item["media_kind"]: item for item in template_media }`.
+    *   Пройдись по существующему списку `template_media` в настройках. Если `media_kind` совпадает — обнови `media_object_id`, **сохранив** старый `role` (и другие поля).
+    *   Если в `updates` есть элементы, которых нет в существующих настройках (новые картинки) — добавь их в список (тут пригодится `role="template"`, который мы добавили на фронтенде).
+4.  Сохрани результат обратно в `settings_json`.
+
+### Шаг 4: Backend Logic — Test Run (`src/app/ingest/ingest_service.py`)
+Измени метод `_apply_test_overrides`.
+Используй ту же логику Merge, что и в репозитории: обновляй `job.slot_settings` точечно, сохраняя существующие поля, вместо полной замены списка.
 
 ---
 
-## 3. Шаги самопроверки (Verification)
+## 4. Критерии приемки (Self-Check)
 
-После внесения изменений проверь работоспособность следующим образом:
+1.  **Test Run:** При нажатии "Тест" с загруженным шаблоном:
+    *   Бэкенд получает `role="template"`.
+    *   Если у слота уже была роль (напр. `style`), она должна сохраниться (приоритет базы).
+    *   Если слот новый, должна использоваться роль `template`.
+    *   `TemplateMediaResolver` не падает.
+2.  **Save Slot:** При нажатии "Сохранить":
+    *   В базе данных в `settings_json` сохраняется структура `template_media`.
+    *   Поле `role` присутствует.
+    *   Другие настройки (если были) не затираются.
 
-1.  **Создай скрипт воспроизведения (repro.py):**
-    *   Создай `JobContext` с `slot_settings`, содержащим `template_media` с полем `role`.
-        ```python
-        job.slot_settings = {
-            "template_media": [
-                {"role": "background", "media_kind": "bg", "media_object_id": "old_id"}
-            ]
-        }
-        ```
-    *   Вызови `_apply_test_overrides` с overrides:
-        ```python
-        overrides = {
-            "template_media": [{"media_kind": "bg", "media_object_id": "new_id"}]
-        }
-        ```
-    *   **Проверка:** Убедись, что после вызова в `job.slot_settings["template_media"][0]` поле `media_object_id` стало `"new_id"`, а поле `role` осталось `"background"`.
-
-2.  **Запусти существующие тесты:**
-    Убедись, что не сломалась базовая функциональность.
-    `pytest tests/unit/ingest/test_service.py`
-
-3.  **Логическая проверка:**
-    Проверь, что будет, если в overrides придет `media_kind`, которого нет в настройках слота. (Он должен быть проигнорирован, так как мы только обновляем существующие привязки).
+Выполни эти изменения, следуя принципу KISS: минимум усложнений, максимальная надежность данных.
