@@ -17,6 +17,7 @@ from ..providers.providers_base import ProviderDriver, ProviderResult
 from ..providers.providers_factory import create_driver
 from ..repositories.job_history_repository import JobHistoryRepository
 from ..repositories.media_object_repository import MediaObjectRepository
+from ..slots.template_media import merge_template_media, template_media_map
 from ..slots.slots_repository import SlotRepository
 from ..media.media_service import ResultStore
 from ..media.temp_media_store import TempMediaStore
@@ -352,14 +353,9 @@ class IngestService:
 
         template_overrides = overrides.get("template_media")
         if isinstance(template_overrides, list):
-            job.slot_settings["template_media"] = template_overrides
-            template_map = {}
-            for item in template_overrides:
-                if not isinstance(item, dict):
-                    continue
-                media_kind = item.get("media_kind")
-                media_object_id = item.get("media_object_id")
-                if media_kind and media_object_id:
-                    template_map[str(media_kind)] = str(media_object_id)
-            if template_map:
-                job.slot_template_media = template_map
+            base_template = job.slot_settings.get("template_media") or []
+            merged_template_media = merge_template_media(
+                base_template, template_overrides, default_role="template"
+            )
+            job.slot_settings["template_media"] = merged_template_media
+            job.slot_template_media = template_media_map(merged_template_media)

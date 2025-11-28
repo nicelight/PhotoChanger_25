@@ -168,6 +168,15 @@ updated: 2025-11-09
     [x] T PHC-2.3.3 — Реализовать `POST /api/login` и выдачу JWT для статических админов  
     [x] T PHC-2.3.4 — Добавить проверку JWT ко всем `/api/slots*`, `/api/settings*`, `/api/slots/{slot_id}/test-run`  
     [x] T PHC-2.3.5 — Unit/интеграционные тесты + обновление PRD/OpenAPI/документации по авторизации  
+  [x] US PHC-2.1.4 — Merge сохранения template_media и test-run overrides  
+    [x] T PHC-2.1.4.GOV — Governance & Discovery  
+      [x] T PHC-2.1.4.GOV.1 — CONSULT — подтвердить обязательность поля `role` и стратегию merge (без удаления) для template_media  
+      [x] T PHC-2.1.4.GOV.2 — REFLECT — учесть миграцию существующих слотов (добавить роли по умолчанию) и синхронизацию settings_json с таблицей  
+    [x] T PHC-2.1.4.1 — Обновить схемы/контракты (OpenAPI, Pydantic) для `template_media` с обязательным `role`; SemVer bump  
+    [x] T PHC-2.1.4.2 — Вынести общий helper merge для template_media и применить в `slots_repository.update_slot` и `IngestService._apply_test_overrides`  
+    [x] T PHC-2.1.4.3 — Синхронизировать `slot_template_media` таблицу с итоговым `template_media` из settings_json (перезапись по media_kind без удаления ролей) и доработать чтение (_to_domain) для подтягивания `role` из settings_json (с дефолтом/логом на время миграции)  
+    [x] T PHC-2.1.4.4 — Обновить фронтенд (`slot-api.js`) чтобы всегда слать `role` (`template`/`photo`) для сохранения и test-run  
+    [x] T PHC-2.1.4.5 — Добавить тесты: unit на merge helper, контракт/интеграцию test-run и сохранения слота, smoke миграции ролей  
 
 - [x] EP PHC-3 — Фронтенд
   [x] FEAT PHC-3.2 — UX Слотов  

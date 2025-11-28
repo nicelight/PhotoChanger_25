@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 class SlotTemplateMediaPayload(BaseModel):
     media_kind: str = Field(..., min_length=1)
     media_object_id: str = Field(..., min_length=1)
+    role: str = Field(..., min_length=1)
     preview_url: str | None = None
 
 

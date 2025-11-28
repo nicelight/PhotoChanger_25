@@ -28,3 +28,4 @@ class SlotTemplateMedia:
     slot_id: str
     media_kind: str
     media_object_id: str
+    role: str | None = None

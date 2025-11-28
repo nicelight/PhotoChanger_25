@@ -1,6 +1,6 @@
 ﻿---
 id: progress
-updated: 2025-11-10
+updated: 2025-11-22
 ---
 
 # Progress (changelog — одна строка на событие)
@@ -19,3 +19,4 @@ updated: 2025-11-10
 - 2025-11-09: FEAT PHC-2.2 завершена — добавлен `/api/stats/slots`, KPI для активных слотов, статическая страница статистики и e2e-тест `/ui/stats`; контракты bump до 0.5.0.
 - 2025-11-10: FEAT PHC-2.3 завершена — реализованы /api/login, JWT-проверка админских API/UI, обновлены контракты до 0.6.0.
 - 2025-11-11: T PHC-3.2.5 закрыта — slot UI переведён на AdminAuth, добавлена серверная гидратация и поддержка `slot_payload` для test-run.
+- 2025-11-22: US PHC-2.1.4 завершена — merge template_media без удаления, обязательный role в admin API/test-run, OpenAPI bump до 0.7.0.

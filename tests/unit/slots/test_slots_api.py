@@ -88,6 +88,7 @@ class DummySlotRepository:
                     slot_id="slot-001",
                     media_kind="style",
                     media_object_id="media-1",
+                    role="template",
                 )
             ],
             updated_at=datetime(2025, 11, 8, 10, 0, 0),
@@ -118,6 +119,7 @@ class DummySlotRepository:
                     slot_id="slot-001",
                     media_kind=item["media_kind"],
                     media_object_id=item["media_object_id"],
+                    role=item.get("role"),
                 )
                 for item in kwargs["template_media"]
             ],
@@ -197,7 +199,9 @@ def test_test_run_success_with_slot_payload_overrides() -> None:
     slot_payload = {
         "provider": "gemini",
         "settings": {"prompt": "Custom prompt"},
-        "template_media": [{"media_kind": "style", "media_object_id": "media-1"}],
+        "template_media": [
+            {"media_kind": "style", "media_object_id": "media-1", "role": "template"}
+        ],
     }
 
     response = client.post(
@@ -218,6 +222,7 @@ def test_test_run_success_with_slot_payload_overrides() -> None:
         service.calls[0]["overrides"]["template_media"][0]["media_object_id"]
         == "media-1"
     )
+    assert service.calls[0]["overrides"]["template_media"][0]["role"] == "template"
 
 
 def test_test_run_invalid_slot_payload_returns_400() -> None:
@@ -279,6 +284,7 @@ def test_get_slot_details_includes_recent_results() -> None:
     payload = response.json()
     assert payload["display_name"] == "Slot 1"
     assert payload["template_media"][0]["preview_url"].endswith("media-1")
+    assert payload["template_media"][0]["role"] == "template"
     assert payload["recent_results"][0]["job_id"] == "job-1"
 
 
@@ -295,7 +301,9 @@ def test_update_slot_persists_changes() -> None:
             "is_active": False,
             "size_limit_mb": 18,
             "settings": {"prompt": "New"},
-            "template_media": [{"media_kind": "style", "media_object_id": "media-2"}],
+            "template_media": [
+                {"media_kind": "style", "media_object_id": "media-2", "role": "template"}
+            ],
         },
     )
 
@@ -304,6 +312,7 @@ def test_update_slot_persists_changes() -> None:
     assert payload["display_name"] == "Renamed"
     assert payload["is_active"] is False
     assert payload["template_media"][0]["media_object_id"] == "media-2"
+    assert payload["template_media"][0]["role"] == "template"
 
 
 def test_slots_endpoints_require_authentication() -> None:

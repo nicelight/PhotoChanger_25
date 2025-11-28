@@ -1,7 +1,7 @@
 ﻿openapi: 3.1.0
 info:
   title: PhotoChanger API
-  version: 0.6.0-draft
+  version: 0.7.0-draft
   description: >
     Draft specification for the PhotoChanger platform. Описывает синхронный ingest (`POST /api/ingest/{slot_id}`),
     публичную выдачу результатов, админские API (слоты, настройки, статистика) и авторизацию админов через JWT
@@ -338,7 +338,7 @@ paths:
                   description: >
                     JSON object with optional overrides for the slot being tested. Supported keys:
                     `provider` (string), `operation` (string), `settings` (object, e.g. prompt overrides),
-                    `template_media` (array of `{ media_kind, media_object_id }`). When omitted, the saved slot
+                    `template_media` (array of `{ media_kind, media_object_id, role }`). When omitted, the saved slot
                     configuration is used as-is.
                 test_image:
                   type: string
@@ -677,6 +677,7 @@ components:
       required:
         - media_kind
         - media_object_id
+        - role
       properties:
         media_kind:
           type: string
@@ -684,6 +685,9 @@ components:
         media_object_id:
           type: string
           example: 8b6f0fa6b5b0459fb887c249f2eb5b21
+        role:
+          type: string
+          example: template
         preview_url:
           type: string
           format: uri

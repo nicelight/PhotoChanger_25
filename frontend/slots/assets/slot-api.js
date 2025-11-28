@@ -90,6 +90,7 @@
         {
           media_kind: templateState.kind,
           media_object_id: templateState.mediaId,
+          role: "template",
         },
       ];
     }

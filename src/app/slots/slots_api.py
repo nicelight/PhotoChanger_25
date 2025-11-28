@@ -31,6 +31,7 @@ from ..repositories.media_object_repository import MediaObjectRepository
 from ..settings.settings_service import SettingsService
 from .slots_models import Slot
 from .slots_repository import SlotRepository
+from .template_media import merge_template_media, template_media_map
 from .slots_schemas import (
     SlotDetailsResponse,
     SlotRecentResultPayload,
@@ -131,6 +132,7 @@ def update_slot(
                 {
                     "media_kind": binding.media_kind,
                     "media_object_id": binding.media_object_id,
+                    "role": binding.role,
                 }
                 for binding in payload.template_media
             ],
@@ -157,9 +159,17 @@ def _apply_overrides(
         merged.update(overrides["settings"])
 
     # Apply top-level overrides (provider, operation, template_media)
-    for key in ["provider", "operation", "template_media"]:
+    for key in ["provider", "operation"]:
         if key in overrides:
             merged[key] = overrides[key]
+
+    if "template_media" in overrides:
+        merged_template = merge_template_media(
+            merged.get("template_media") or [],
+            overrides.get("template_media") or [],
+            default_role="template",
+        )
+        merged["template_media"] = merged_template
 
     return merged
 
@@ -187,12 +197,17 @@ def _sanitize_template_media(value: Any) -> list[dict[str, str]]:
             raise _bad_request(f"template_media[{index}] must be an object")
         media_kind = item.get("media_kind")
         media_object_id = item.get("media_object_id")
-        if not media_kind or not media_object_id:
+        role = item.get("role")
+        if not media_kind or not media_object_id or not role:
             raise _bad_request(
-                "media_kind and media_object_id are required for template_media items"
+                "media_kind, media_object_id and role are required for template_media items"
             )
         prepared.append(
-            {"media_kind": str(media_kind), "media_object_id": str(media_object_id)}
+            {
+                "media_kind": str(media_kind),
+                "media_object_id": str(media_object_id),
+                "role": str(role),
+            }
         )
     return prepared
 
@@ -304,6 +319,9 @@ async def run_test_slot(
 
     if overrides:
         job.slot_settings = _apply_overrides(job.slot_settings, overrides)
+        job.slot_template_media = template_media_map(
+            job.slot_settings.get("template_media") or []
+        )
 
     try:
         await service.process(job)
@@ -360,6 +378,7 @@ def _slot_details(
         SlotTemplateMediaPayload(
             media_kind=binding.media_kind,
             media_object_id=binding.media_object_id,
+            role=binding.role or "template",
             preview_url=f"/public/provider-media/{binding.media_object_id}",
         )
         for binding in slot.template_media

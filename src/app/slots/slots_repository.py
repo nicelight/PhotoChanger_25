@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from ..db.db_models import SlotModel, SlotTemplateMediaModel
 from .slots_models import Slot, SlotTemplateMedia
+from .template_media import merge_template_media
 
 
 class SlotRepository:
@@ -76,12 +77,27 @@ class SlotRepository:
             if row is None:
                 raise KeyError(f"Slot '{slot_id}' not found")
 
+            current_settings: dict = {}
+            try:
+                if row.settings_json:
+                    current_settings = json.loads(row.settings_json)
+            except json.JSONDecodeError:
+                current_settings = {}
+
+            merged_settings = dict(current_settings)
+            merged_settings.update(settings or {})
+            base_template = current_settings.get("template_media") or []
+            merged_template_media = merge_template_media(
+                base_template, template_media, default_role="template"
+            )
+            merged_settings["template_media"] = merged_template_media
+
             row.display_name = display_name
             row.provider = provider
             row.operation = operation
             row.is_active = is_active
             row.size_limit_mb = size_limit_mb
-            row.settings_json = json.dumps(settings or {})
+            row.settings_json = json.dumps(merged_settings)
             row.updated_by = updated_by
             row.version += 1
             row.updated_at = datetime.utcnow()
@@ -91,7 +107,7 @@ class SlotRepository:
                     SlotTemplateMediaModel.slot_id == slot_id
                 )
             )
-            for binding in template_media:
+            for binding in merged_template_media:
                 session.add(
                     SlotTemplateMediaModel(
                         slot_id=slot_id,
@@ -111,6 +127,14 @@ class SlotRepository:
                 settings = json.loads(model.settings_json)
         except json.JSONDecodeError:
             settings = {}
+        role_by_kind: dict[str, str | None] = {}
+        for entry in settings.get("template_media") or []:
+            if not isinstance(entry, dict):
+                continue
+            media_kind = entry.get("media_kind")
+            role = entry.get("role")
+            if media_kind:
+                role_by_kind[str(media_kind)] = role or "template"
         return Slot(
             id=model.id,
             provider=model.provider,
@@ -122,17 +146,22 @@ class SlotRepository:
             version=model.version,
             updated_by=model.updated_by,
             template_media=[
-                SlotRepository._to_template_domain(media)
+                SlotRepository._to_template_domain(
+                    media, role=role_by_kind.get(media.media_kind)
+                )
                 for media in model.template_media
             ],
             updated_at=model.updated_at,
         )
 
     @staticmethod
-    def _to_template_domain(model: SlotTemplateMediaModel) -> SlotTemplateMedia:
+    def _to_template_domain(
+        model: SlotTemplateMediaModel, *, role: str | None = None
+    ) -> SlotTemplateMedia:
         return SlotTemplateMedia(
             id=model.id,
             slot_id=model.slot_id,
             media_kind=model.media_kind,
             media_object_id=model.media_object_id,
+            role=role or "template",
         )

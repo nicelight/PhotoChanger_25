@@ -3,6 +3,13 @@ id: worklog
 updated: 2025-11-22
 ---
 
+## US PHC-2.1.4 — Merge template_media и обязательный role (2025-11-22)
+- 2025-11-22 18:10 — Перечитал `.memory/MISSION.md`, `.memory/CONTEXT.md`, `.memory/TASKS.md`, `.memory/ASKS.md`, `.memory/DECISIONS.md`, `.memory/USECASES.md`, `.memory/INDEX.yaml`; зафиксировал план в `.memory/TASKS.md` (T PHC-2.1.4.*).
+- 2025-11-22 18:25 — Обновил Pydantic схему SlotTemplateMediaPayload (обязательный role), добавил role в SlotTemplateMedia модель; sanitizer test-run теперь требует role.
+- 2025-11-22 18:35 — Создал общий helper merge_template_media/template_media_map, внедрил в IngestService._apply_test_overrides и slots_api overrides; фронт slot-api.js теперь отправляет role="template".
+- 2025-11-22 18:50 — SlotRepository.update_slot мёржит template_media из settings_json + overrides (без удаления), сохраняет в settings_json, синхронизирует таблицу; _to_domain подтягивает role из settings_json (дефолт template).
+- 2025-11-22 19:00 — Обновил OpenAPI (role обязателен), VERSION.json → 0.7.0 (breaking); добавил unit-тесты merge helper и расширил слотовые тесты под role. Pytest недоступен в окружении (`pytest` не найден).
+
 ## Test Playbook прогон (2025-11-22)
 - 2025-11-22 17:00 — Прогнал ruff check через .venv, устранил F401/F402/F821 (imports, type hints, _parse_slot_payload), убрал sys.path хаки в тестах.
 - 2025-11-22 17:12 — Запустил black по проекту (43 файла реформатированы) для прохождения чеков.
