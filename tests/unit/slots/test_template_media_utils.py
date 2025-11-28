@@ -6,7 +6,7 @@ def test_merge_preserves_role_and_optional_and_updates_ids():
         {"media_kind": "style", "media_object_id": "old-style", "role": "template", "optional": True}
     ]
     overrides = [
-        {"media_kind": "style", "media_object_id": "new-style", "role": "template", "optional": False},
+        {"media_kind": "style", "media_object_id": "new-style", "optional": False},
         {"media_kind": "photo", "media_object_id": "photo-1", "role": "photo"},
     ]
 

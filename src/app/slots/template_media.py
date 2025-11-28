@@ -50,7 +50,7 @@ def merge_template_media(
         index[normalized["media_kind"]] = len(result) - 1
 
     for entry in overrides:
-        normalized = _normalize_entry(entry, default_role=default_role)
+        normalized = _normalize_entry(entry, default_role=None)
         kind = normalized["media_kind"]
         if kind in index:
             idx = index[kind]
@@ -64,6 +64,8 @@ def merge_template_media(
                 merged["optional"] = normalized["optional"]
             result[idx] = merged
         else:
+            if normalized.get("role") is None and default_role is not None:
+                normalized["role"] = default_role
             index[kind] = len(result)
             result.append(normalized)
 
