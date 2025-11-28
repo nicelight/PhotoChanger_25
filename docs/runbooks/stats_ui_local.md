@@ -24,7 +24,7 @@ updated: 2025-11-09
    ```bash
    uvicorn src.app.main:app --reload --log-level info
    ```
-   По умолчанию сервис доступен на `http://127.0.0.1:8000`.
+   По умолчанию сервис доступен на [`http://127.0.0.1:8000](http://127.0.0.1:8000/ui/static/admin/dashboard.html)`.
 3. **Проверка API** (опционально):  
    ```bash
    curl "http://127.0.0.1:8000/api/stats/overview?window_minutes=60"
