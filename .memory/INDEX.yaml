@@ -2,9 +2,9 @@
 updated: 2025-11-10
 
 spec/contracts:
-  version: "0.6.0"
+  version: "0.7.0"
   released_at: "2025-11-10"
-  notes: "JWT-авторизация админов: /api/login, bearer security в OpenAPI, обновлены PRD/use-cases/UI."
+  notes: "template_media требует обязательный role; merge overrides без удаления, обновлены OpenAPI/админ-UI."
 
 spec/adr:
   count: 1

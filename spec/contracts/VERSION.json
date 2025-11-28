@@ -1,5 +1,5 @@
 {
-  "version": "0.6.0",
+  "version": "0.7.0",
   "released_at": "2025-11-10",
   "stage": "draft",
   "summary": "Adds JWT-based admin authentication (`POST /api/login`) and secures all admin APIs + UI with bearer tokens.",
@@ -102,9 +102,16 @@
         ".memory/USECASES.md",
         "frontend/stats/assets/stats.js"
       ]
+    },
+    {
+      "type": "breaking",
+      "description": "Admin slot APIs now require template_media items to include `role`; merge behaviour preserves existing bindings for test-run and slot updates. OpenAPI updated accordingly.",
+      "artifacts": [
+        "spec/contracts/openapi.yaml"
+      ]
     }
   ],
   "deprecated": [],
-  "breaking": false,
-  "notes": "Admin endpoints now require bearer JWT tokens issued by /api/login; stats UI, slots и settings используют общий scope `admin`."
+  "breaking": true,
+  "notes": "Template media bindings now carry required role field; admin slot save/test-run expect role and merge overrides without wiping existing bindings."
 }
