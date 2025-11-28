@@ -69,7 +69,7 @@ class UploadValidator:
         logger.info(
             "ingest.upload.validated",
             extra={
-                "filename": result.filename,
+                "upload_filename": result.filename,
                 "size_bytes": result.size_bytes,
                 "content_type": result.content_type,
             },

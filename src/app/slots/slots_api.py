@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 
 from fastapi import (
@@ -45,6 +46,8 @@ router = APIRouter(
     tags=["slots"],
     dependencies=[Depends(require_admin_user)],
 )
+
+log = logging.getLogger(__name__)
 
 
 def get_ingest_service(request: Request) -> IngestService:
@@ -266,15 +269,29 @@ async def run_test_slot(
     slot_repo: SlotRepository = Depends(get_slot_repo),
 ) -> dict[str, Any]:
     """Trigger synchronous processing for admin UI test button."""
+    log.info("slots.test_run.start", extra={"slot_id": slot_id})
     overrides = _parse_slot_payload(slot_payload)
 
     # быстрый pre-check существования слота, чтобы отлавливать неверные id раньше
     try:
-        slot_repo.get_slot(slot_id)
+        slot = slot_repo.get_slot(slot_id)
+        log.info(
+            "slots.test_run.slot_loaded",
+            extra={
+                "slot_id": slot_id,
+                "provider": slot.provider,
+                "operation": slot.operation,
+                "version": slot.version,
+            },
+        )
     except KeyError:
+        log.warning("slots.test_run.slot_not_found", extra={"slot_id": slot_id})
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={"status": "error", "failure_reason": FailureReason.SLOT_NOT_FOUND.value},
+            detail={
+                "status": "error",
+                "failure_reason": FailureReason.SLOT_NOT_FOUND.value,
+            },
         ) from None
 
     try:
@@ -285,6 +302,7 @@ async def run_test_slot(
             expected_hash=None,
         )
     except KeyError:
+        log.exception("slots.test_run.key_error", extra={"slot_id": slot_id})
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={
@@ -334,11 +352,13 @@ async def run_test_slot(
             },
         ) from exc
     except ProviderExecutionError as exc:
+        # пробрасываем текст ошибки провайдера, чтобы UI видел причину (например, неверный API key)
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail={
                 "status": "error",
                 "failure_reason": FailureReason.PROVIDER_ERROR.value,
+                "message": str(exc),
             },
         ) from exc
 

@@ -97,7 +97,28 @@ class IngestService:
         upload: UploadFile,
         expected_hash: str | None,
     ) -> UploadValidationResult:
-        slot = self.slot_repo.get_slot(job.slot_id)
+        self.log.info(
+            "ingest.test_run.validate.lookup_slot.start",
+            extra={"slot_id": job.slot_id, "job_id": job.job_id},
+        )
+        try:
+            slot = self.slot_repo.get_slot(job.slot_id)
+        except KeyError:
+            self.log.exception(
+                "ingest.test_run.validate.lookup_slot.not_found",
+                extra={"slot_id": job.slot_id, "job_id": job.job_id},
+            )
+            raise
+        self.log.info(
+            "ingest.test_run.validate.lookup_slot.done",
+            extra={
+                "slot_id": job.slot_id,
+                "job_id": job.job_id,
+                "provider": slot.provider,
+                "operation": slot.operation,
+                "version": slot.version,
+            },
+        )
         job.slot_settings = slot.settings
         job.slot_template_media = {
             media.media_kind: media.media_object_id for media in slot.template_media
@@ -225,11 +246,39 @@ class IngestService:
         expected_hash: str | None = None,
     ) -> tuple[JobContext, float]:
         """Execute validate+process flow for admin test runs."""
-        job = self.prepare_job(slot_id, source="ui_test")
+        self.log.info("ingest.test_run.prepare_job.start", extra={"slot_id": slot_id})
+        try:
+            job = self.prepare_job(slot_id, source="ui_test")
+        except KeyError:
+            self.log.warning(
+                "ingest.test_run.prepare_job.slot_not_found", extra={"slot_id": slot_id}
+            )
+            raise
+        self.log.info(
+            "ingest.test_run.prepare_job.done",
+            extra={
+                "slot_id": slot_id,
+                "job_id": job.job_id,
+                "slot_version": job.slot_version,
+            },
+        )
         started_at = datetime.utcnow()
 
         try:
+            self.log.info(
+                "ingest.test_run.validate.start",
+                extra={"slot_id": slot_id, "job_id": job.job_id},
+            )
             await self.validate_upload(job, upload, expected_hash)
+            self.log.info(
+                "ingest.test_run.validate.done",
+                extra={
+                    "slot_id": slot_id,
+                    "job_id": job.job_id,
+                    "content_type": job.upload.content_type if job.upload else None,
+                    "size_bytes": job.upload.size_bytes if job.upload else None,
+                },
+            )
         except UnsupportedMediaError:
             self.record_failure(job, FailureReason.UNSUPPORTED_MEDIA_TYPE)
             raise
