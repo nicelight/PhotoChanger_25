@@ -1,107 +1,145 @@
-# План багфикса: "Сохранение и Тестирование Слотов"
+# План багфикса: "Сохранение и Тестирование Слотов" (v2.0)
 
-Этот документ содержит детальные инструкции для исправления критической ошибки, при которой редактирование слота в Admin UI приводит к удалению конфигурации ролей (`role`) и поломке интеграции с провайдерами (Gemini).
+Этот документ содержит детальные инструкции для исправления критической ошибки потери конфигурации слотов.
+План составлен с учетом требований KISS и Strict API Contract.
 
-## Контекст
-В проекте существует ~15 статичных слотов с предустановленной конфигурацией (JSON `settings`).
-UI при сохранении слота перезаписывает эту конфигурацию неполными данными (без поля `role`), что ломает работу слотов.
-Наша задача — внедрить механизм **Partial Update (Merge)**, чтобы сохранять существующие настройки при редактировании.
+## Контекст проблемы
+1.  При сохранении слота UI перезаписывает настройки, стирая конфигурацию ролей (`role`).
+2.  `settings_json` содержит роли, но реляционная таблица `slot_template_media` их не содержит.
+3.  Драйверы требуют наличия ролей.
+
+**Цель:** Реализовать строгий контракт (API требует роль) и логику слияния (Backend сохраняет существующие роли).
 
 ---
 
 ## Часть 1: Инструкции по реализации
 
-### 1. Модификация Schema (Backend)
-**Файл:** `src/app/slots/slots_schemas.py`
-**Задача:** Разрешить поле `role` в API, чтобы Pydantic не удалял его при валидации входящего JSON.
+### 1. Создание Shared Helper (Backend)
+**Файл:** `src/app/slots/slots_utils.py` (Создать новый файл)
+**Задача:** Реализовать чистую функцию для слияния конфигурации.
 
-1.  Найди класс `SlotTemplateMediaPayload`.
-2.  Добавь поле `role`:
+```python
+from typing import Any
+
+def merge_template_media_config(
+    current_config: list[dict[str, Any]], 
+    updates: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """
+    Merges updates into current configuration.
+    - Matches items by 'media_kind'.
+    - Updates 'media_object_id'.
+    - Preserves existing 'role' from current_config (Database priority).
+    - Adds new items from updates (UI priority for new items).
+    """
+    # 1. Index existing config by media_kind
+    existing_map = {item["media_kind"]: item.copy() for item in current_config}
+    
+    # 2. Process updates
+    for update in updates:
+        kind = update["media_kind"]
+        if kind in existing_map:
+            # Update ID only, preserve Role from DB
+            existing_map[kind]["media_object_id"] = update["media_object_id"]
+        else:
+            # New item - take full object (including role from UI)
+            existing_map[kind] = update
+
+    return list(existing_map.values())
+```
+
+### 2. Модификация Schema (Backend)
+**Файл:** `src/app/slots/slots_schemas.py`
+**Задача:** Сделать `role` обязательным полем.
+
+1.  В классе `SlotTemplateMediaPayload`:
     ```python
     class SlotTemplateMediaPayload(BaseModel):
         media_kind: str = Field(..., min_length=1)
         media_object_id: str = Field(..., min_length=1)
-        role: str | None = None  # <--- Добавить это поле
+        role: str = Field(..., min_length=1)  # Required!
         preview_url: str | None = None
     ```
 
-### 2. Модификация Frontend
+### 3. Модификация Frontend
 **Файл:** `src/app/frontend/slots/assets/slot-api.js`
-**Задача:** Принудительно отправлять роль `"template"` для шаблонных изображений.
+**Задача:** Всегда отправлять роль.
 
-1.  Найди функцию `ensureTemplateMediaBinding`.
-2.  Добавь поле `role: "template"` в возвращаемый объект.
+1.  В функции `ensureTemplateMediaBinding`:
     ```javascript
-    // Было:
-    return [{ media_kind: templateState.kind, media_object_id: templateState.mediaId }];
-    
-    // Стало:
     return [{ 
         media_kind: templateState.kind, 
         media_object_id: templateState.mediaId, 
-        role: "template" 
+        role: "template" // Always send default role
     }];
     ```
 
-### 3. Модификация Backend API (Sanitizer)
+### 4. Модификация Backend API (Sanitizer)
 **Файл:** `src/app/slots/slots_api.py`
-**Задача:** Пропустить поле `role` через ручной валидатор (используется для Test Run).
+**Задача:** Валидация роли.
 
-1.  Найди функцию `_sanitize_template_media`.
-2.  В цикле обработки элементов извлеки и сохрани `role`.
+1.  В функции `_sanitize_template_media`:
     ```python
-    # Измени формирование словаря prepared.append:
     role = item.get("role")
+    if not role:
+        raise _bad_request(f"template_media[{index}] requires 'role'")
+        
     prepared.append({
         "media_kind": str(media_kind),
         "media_object_id": str(media_object_id),
-        "role": str(role) if role else None 
+        "role": str(role)
     })
     ```
 
-### 4. Модификация Backend Logic (Repository - Save)
+### 5. Модификация Repository (Save Logic)
 **Файл:** `src/app/slots/slots_repository.py`
-**Задача:** Реализовать логику слияния (Merge) настроек при сохранении.
+**Задача:** Мёрж JSON и синхронизация таблицы.
 
-1.  В методе `update_slot`:
-    *   Считай текущий `settings_json` из базы данных (`current_settings`).
-    *   Обнови `current_settings` значениями из `settings` (аргумент функции), но НЕ перезаписывай целиком. (Например, `current_settings.update(settings)`).
-    *   **Слияние Template Media:**
-        *   Преобразуй входящий список `template_media` (из аргументов) в словарь: `updates = { item["media_kind"]: item for item in template_media }`.
-        *   Пройдись по списку `current_settings["template_media"]`.
-        *   Если `media_kind` элемента совпадает с `updates`: обнови его `media_object_id`. **Важно:** Поле `role` (и другие) оставь из `current_settings` (приоритет базы данных).
-        *   Если в `updates` есть элементы, которых нет в `current_settings` (новые картинки): добавь их в список целиком. (Здесь сработает наша дефолтная роль `"template"` с фронтенда).
-    *   Сохрани обновленный `current_settings` обратно в `row.settings_json`.
+1.  Импортируй helper: `from .slots_utils import merge_template_media_config`.
+2.  В методе `update_slot`:
+    *   Загрузи `current_settings = json.loads(row.settings_json)`.
+    *   Получи текущий список медиа: `current_media = current_settings.get("template_media", [])`.
+    *   Выполни слияние: `merged_media = merge_template_media_config(current_media, template_media)`.
+    *   Обнови настройки: `current_settings["template_media"] = merged_media`.
+    *   Сохрани JSON: `row.settings_json = json.dumps(current_settings)`.
+    *   **Синхронизация таблицы:**
+        *   Удали старые записи из `SlotTemplateMediaModel`.
+        *   Создай новые записи на основе **`merged_media`** (а не просто входящего списка!), чтобы таблица соответствовала JSON.
 
-### 5. Модификация Backend Logic (Service - Test Run)
+### 6. Модификация Ingest Service (Test Run Logic)
 **Файл:** `src/app/ingest/ingest_service.py`
-**Задача:** Аналогичная логика слияния для тестового запуска.
+**Задача:** Использовать тот же helper.
 
-1.  В методе `_apply_test_overrides`:
-    *   Вместо `job.slot_settings["template_media"] = template_overrides` реализуй алгоритм слияния, аналогичный описанному выше для репозитория.
-    *   Цель: обновить ID картинок в `job.slot_settings`, не потеряв роли.
+1.  Импортируй helper.
+2.  В `_apply_test_overrides`:
+    *   `template_overrides = overrides.get("template_media")`
+    *   `current_media = job.slot_settings.get("template_media", [])`
+    *   `merged = merge_template_media_config(current_media, template_overrides)`
+    *   `job.slot_settings["template_media"] = merged`
+    *   (Не забудь обновить также `job.slot_template_media` map, если он используется).
 
 ---
 
-## Часть 2: Анализ рисков и Self-Critique
+## Часть 2: Проверка (Verification)
 
-### Потенциальные проблемы (Bottlenecks)
+1.  **Создать новый слот (через скрипт или UI):** Убедиться, что он получает роль `template` и сохраняется в БД (и JSON, и Таблица).
+2.  **Редактировать старый слот:** Изменить картинку через UI. Убедиться, что роль (например `background`) не изменилась на `template`.
+3.  **Test Run:** Убедиться, что тест проходит успешно с теми же условиями.
 
-1.  **Конфликт ролей:**
-    *   *Риск:* Фронтенд шлет `role: "template"`. В базе у слота может быть роль `role: "background"`.
-    *   *Решение в плане:* Логика Merge отдает приоритет базе данных. Если запись с таким `media_kind` уже есть, мы берем роль из базы, игнорируя присланную `"template"`. Это корректно.
+---
 
-2.  **Множественные шаблоны:**
-    *   *Риск:* Слот требует 2 шаблона (фон и стиль). UI поддерживает загрузку только одного (Second Image).
-    *   *Анализ:* Это ограничение текущего UI. Наш фикс не чинит UI, но он предотвращает удаление второго шаблона при сохранении первого. Merge-логика обновит только тот шаблон, который прислал UI, оставив второй нетронутым. Это улучшение по сравнению с текущим полным удалением.
+## Часть 3: Риски и Bottlenecks (Self-Correction)
 
-3.  **Turbotext Form Fields:**
-    *   *Риск:* Turbotext требует поле `form_field` в конфиге. UI его не шлет.
-    *   *Решение:* Так как мы мержим настройки с существующим конфигом в БД (где `form_field` прописан), это поле сохранится. Для абсолютно новых слотов Turbotext работать не будет, пока администратор вручную (через БД) не пропишет конфиг, но для 15 статичных слотов это решение надежно.
+1.  **Рассинхрон JSON и Таблицы:**
+    *   *Риск:* Если обновить только JSON, запросы `list_slots` (которые могут читать из таблицы) вернут старые данные.
+    *   *Решение:* План четко требует перезаписи таблицы данными из `merged_media`.
 
-4.  **Синхронизация Relational Table и JSON:**
-    *   *Риск:* `update_slot` обновляет и JSON, и реляционную таблицу `SlotTemplateMediaModel`.
-    *   *Решение:* Реляционная таблица обновляется "начисто" (delete + insert) в текущем коде. Это нормально, так как она содержит только связи (kind, id). Главное — чтобы JSON (содержащий метаданные role) был обновлен через Merge.
+2.  **Pydantic Stripping:**
+    *   *Риск:* `SlotUpdateRequest` может вырезать поле `role` если оно не в схеме.
+    *   *Решение:* Мы добавили `role` в `SlotTemplateMediaPayload` в шаге 2.
 
-### Вывод
-План надежен для поддержки существующих слотов (Primary Goal). Он минимизирует риски потери данных при редактировании через UI.
+3.  **Турботекст:**
+    *   *Риск:* Потеря `form_field` для новых слотов.
+    *   *Решение:* Для новых слотов это ожидаемое поведение (требуется ручная настройка админом). Для старых — слияние сохранит `form_field`.
+
+Этот план обеспечивает целостность данных и соответствие принципам KISS.
