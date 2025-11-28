@@ -19,6 +19,8 @@ def _normalize_entry(
     normalized["media_object_id"] = str(media_object_id)
     if normalized.get("role") is None and default_role is not None:
         normalized["role"] = default_role
+    if "optional" in entry:
+        normalized["optional"] = bool(entry.get("optional"))
     return normalized
 
 
@@ -54,8 +56,12 @@ def merge_template_media(
             idx = index[kind]
             merged = dict(result[idx])
             merged["media_object_id"] = normalized["media_object_id"]
-            if merged.get("role") is None and normalized.get("role") is not None:
+            if normalized.get("role") is not None:
                 merged["role"] = normalized["role"]
+            elif merged.get("role") is None and default_role is not None:
+                merged["role"] = default_role
+            if "optional" in normalized:
+                merged["optional"] = normalized["optional"]
             result[idx] = merged
         else:
             index[kind] = len(result)
@@ -73,4 +79,3 @@ def template_media_map(entries: Iterable[dict[str, Any]]) -> dict[str, str]:
         if media_kind and media_object_id:
             mapping[str(media_kind)] = str(media_object_id)
     return mapping
-
