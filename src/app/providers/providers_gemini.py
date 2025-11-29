@@ -108,7 +108,15 @@ class GeminiDriver(ProviderDriver):
                 }
             ],
         }
-        if output:
+        # responseMimeType в Gemini предназначен только для текстовых форматов (JSON mode и т.п.);
+        # для изображений его отправка приводит к INVALID_ARGUMENT.
+        if output and output in {
+            "text/plain",
+            "application/json",
+            "application/xml",
+            "application/yaml",
+            "text/x.enum",
+        }:
             body["generationConfig"] = {"responseMimeType": output}
         if safety_settings:
             body["safetySettings"] = safety_settings
@@ -123,8 +131,11 @@ class GeminiDriver(ProviderDriver):
                 continue
 
             if response.status_code == 200:
+                data = response.json()
+                summary = _response_summary(data)
+                self.log.info("gemini.response.received %s", summary)
                 result = self._parse_response(
-                    response.json(), fallback_mime=(output or ingest_mime)
+                    data, fallback_mime=(output or ingest_mime)
                 )
                 self.log.info(
                     "gemini.request.success",
@@ -195,3 +206,37 @@ def _extract_error(response: httpx.Response) -> str:
 def _guess_mime(path: Path) -> str:
     mime, _ = mimetypes.guess_type(path.name)
     return mime or "image/png"
+
+
+def _has_inline_data(data: dict[str, Any]) -> bool:
+    """Check whether Gemini response contains inline_data parts (metadata only, no payload)."""
+    candidates = data.get("candidates") or []
+    for candidate in candidates:
+        content = candidate.get("content") or {}
+        for part in content.get("parts", []):
+            inline = part.get("inline_data")
+            if inline and inline.get("data"):
+                return True
+    return False
+
+
+def _response_summary(data: dict[str, Any]) -> str:
+    candidates = data.get("candidates") or []
+    first = candidates[0] if candidates else {}
+    parts = (first.get("content") or {}).get("parts", [])
+    part_types: list[str] = []
+    text_preview = None
+    for part in parts:
+        if "inline_data" in part:
+            part_types.append("inline_data")
+        if "text" in part:
+            part_types.append("text")
+            if text_preview is None:
+                text_preview = part.get("text", "")
+    preview = (text_preview or "")[:160]
+    return (
+        f"candidates={len(candidates)} "
+        f"part_types={part_types} "
+        f"has_inline_data={_has_inline_data(data)} "
+        f"text_preview='{preview}'"
+    )
