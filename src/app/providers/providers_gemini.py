@@ -87,6 +87,7 @@ class GeminiDriver(ProviderDriver):
             "Content-Type": "application/json",
         }
 
+        # По документации Gemini REST для Python используется inline_data/mime_type.
         parts = [{"inline_data": ingest_inline}]
         for template in resolved_templates:
             parts.append(
@@ -120,6 +121,13 @@ class GeminiDriver(ProviderDriver):
             body["generationConfig"] = {"responseMimeType": output}
         if safety_settings:
             body["safetySettings"] = safety_settings
+
+        self.log.info(
+            "gemini.request.payload_meta "
+            f"slot_id={job.slot_id} job_id={job.job_id} "
+            f"payload_bytes={len(ingest_bytes)} payload_mime={ingest_mime} "
+            f"template_count={len(resolved_templates)} prompt_len={len(prompt or '')}"
+        )
 
         for attempt in range(1, max_attempts + 1):
             try:
@@ -177,9 +185,13 @@ class GeminiDriver(ProviderDriver):
         for candidate in candidates:
             content = candidate.get("content") or {}
             for part in content.get("parts", []):
-                inline = part.get("inline_data")
+                inline = part.get("inline_data") or part.get("inlineData")
                 if inline and inline.get("data"):
-                    mime = inline.get("mime_type") or fallback_mime
+                    mime = (
+                        inline.get("mime_type")
+                        or inline.get("mimeType")
+                        or fallback_mime
+                    )
                     try:
                         payload = base64.b64decode(inline["data"])
                     except (KeyError, ValueError) as exc:
@@ -214,7 +226,7 @@ def _has_inline_data(data: dict[str, Any]) -> bool:
     for candidate in candidates:
         content = candidate.get("content") or {}
         for part in content.get("parts", []):
-            inline = part.get("inline_data")
+            inline = part.get("inline_data") or part.get("inlineData")
             if inline and inline.get("data"):
                 return True
     return False
@@ -227,16 +239,18 @@ def _response_summary(data: dict[str, Any]) -> str:
     part_types: list[str] = []
     text_preview = None
     for part in parts:
-        if "inline_data" in part:
+        if "inline_data" in part or "inlineData" in part:
             part_types.append("inline_data")
         if "text" in part:
             part_types.append("text")
             if text_preview is None:
                 text_preview = part.get("text", "")
-    preview = (text_preview or "")[:160]
+    preview_full = text_preview or ""
+    preview = preview_full[:160]
     return (
         f"candidates={len(candidates)} "
         f"part_types={part_types} "
         f"has_inline_data={_has_inline_data(data)} "
-        f"text_preview='{preview}'"
+        f"text_preview='{preview}' "
+        f"text_len={len(preview_full)}"
     )
