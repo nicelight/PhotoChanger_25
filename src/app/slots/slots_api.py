@@ -334,15 +334,6 @@ async def run_test_slot(
                 "failure_reason": FailureReason.INVALID_REQUEST.value,
             },
         ) from exc
-
-    if overrides:
-        job.slot_settings = _apply_overrides(job.slot_settings, overrides)
-        job.slot_template_media = template_media_map(
-            job.slot_settings.get("template_media") or []
-        )
-
-    try:
-        await service.process(job)
     except ProviderTimeoutError as exc:
         raise HTTPException(
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
