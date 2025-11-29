@@ -20,7 +20,11 @@ class SlotRecentResultPayload(BaseModel):
     status: str
     finished_at: datetime
     public_url: str
-    expires_at: datetime | None = None
+    download_url: str | None = None
+    thumbnail_url: str | None = None
+    result_expires_at: datetime | None = None
+    mime: str | None = None
+    expires_at: datetime | None = None  # deprecated alias for result_expires_at
 
 
 class SlotSummaryResponse(BaseModel):
