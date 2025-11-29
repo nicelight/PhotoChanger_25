@@ -382,12 +382,15 @@
         return;
       }
       try {
+        dom.showProcessing("Отправляем тестовый запуск…");
         const templateBindings = await api.collectTemplateMediaBindings();
         await api.runTestSlot(templateBindings);
         dom.pulse(elements.form);
+        dom.hideProcessing();
         dom.toast("Тестовый запуск отправлен. Смотрите обновления в галерее ниже.", "success");
       } catch (err) {
         console.warn("[Test run]", err);
+        dom.hideProcessing();
         dom.toast(err.message || "Не удалось выполнить тест", "error");
       }
     });

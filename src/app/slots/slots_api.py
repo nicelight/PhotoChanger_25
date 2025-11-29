@@ -402,13 +402,26 @@ def _slot_details(
         finished_at = record.completed_at or record.started_at
         if finished_at is None:
             continue
+        public_url = f"/public/results/{record.job_id}"
+        mime = None
+        if record.result_path:
+            if record.result_path.lower().endswith(".png"):
+                mime = "image/png"
+            elif record.result_path.lower().endswith(".jpg") or record.result_path.lower().endswith(".jpeg"):
+                mime = "image/jpeg"
+            elif record.result_path.lower().endswith(".webp"):
+                mime = "image/webp"
         recent_results.append(
             SlotRecentResultPayload(
                 job_id=record.job_id,
                 status=record.status,
                 finished_at=finished_at,
-                public_url=f"/public/results/{record.job_id}",
+                public_url=public_url,
+                download_url=public_url,
+                thumbnail_url=public_url,
+                result_expires_at=record.result_expires_at,
                 expires_at=record.result_expires_at,
+                mime=mime,
             )
         )
     runtime = settings_service.snapshot()

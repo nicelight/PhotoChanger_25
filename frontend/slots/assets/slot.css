@@ -66,7 +66,7 @@ textarea{ resize:vertical }
 .drop{ position:relative; display:grid; place-items:center; gap:8px; padding:18px; text-align:center; border-radius:calc(var(--glass) - 2px);
   outline:2px dashed color-mix(in oklab, hsl(var(--h-a) var(--s) var(--l)) 70%, #0f172a 30% / 40%);
   outline-offset:-8px; cursor:pointer; min-height:160px }
-.drop.large{ aspect-ratio:16/10; padding:0; border-radius:calc(var(--glass) - 6px); border:1px solid color-mix(in oklab, white 75%, #0f172a 25% / 35%); overflow:hidden; max-width: min(100%, 800px); margin-inline:auto; }
+.drop.large{ padding:0; border-radius:calc(var(--glass) - 6px); border:1px solid color-mix(in oklab, white 75%, #0f172a 25% / 35%); overflow:visible; max-width: min(100%, 900px); margin-inline:auto; }
 .drop:focus-visible{ outline:3px solid #fff; outline-offset:-6px; }
 .drop button.remove-btn{ position:absolute; top:10px; right:10px; border:none; background:rgba(15,23,42,.75); color:#fff; padding:6px 10px; border-radius:999px; cursor:pointer; font-size:12px; letter-spacing:.02em; display:none; z-index:2 }
 .drop.has-image button.remove-btn{ display:inline-block }
@@ -75,7 +75,7 @@ textarea{ resize:vertical }
 .drop input[type="file"]{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; z-index:1 }
 .drop.has-image img.drop-preview{ display:block; opacity:1 }
 .drop.dragging{ outline-color:rgba(59,130,246,.7); background:rgba(59,130,246,.08) }
-.drop-preview{ width:100%; height:100%; object-fit:cover; display:none; transition:opacity .2s ease }
+.drop-preview{ width:100%; height:auto; max-height:70vh; object-fit:contain; display:none; transition:opacity .2s ease; background:linear-gradient(135deg, rgba(255,255,255,.65), rgba(255,255,255,.35)); }
 
 .error{ margin-top:8px; font-size:14px; color:#b91c1c }
 
@@ -104,6 +104,11 @@ textarea{ resize:vertical }
 .toast-item.show{ opacity:1; transform:translateY(0) }
 .toast-item.error{ border-color:#fecaca; background:rgba(254,226,226,.96) }
 .toast-item.success{ border-color:#bbf7d0; background:rgba(220,252,231,.96) }
+
+.processing-overlay{ position:fixed; inset:0; background:color-mix(in oklab, rgba(255,255,255,.82), rgba(15,23,42,.08)); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; z-index:2000; backdrop-filter:blur(6px); }
+.processing-spinner{ width:56px; height:56px; border-radius:50%; border:5px solid rgba(15,23,42,.15); border-top-color:#0f172a; animation:spin 1s linear infinite; }
+.processing-text{ font-size:16px; color:#0f172a; font-weight:600; text-align:center; padding:0 16px; max-width:320px; }
+@keyframes spin{ to{ transform:rotate(360deg)}}
 
 .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0 }
 

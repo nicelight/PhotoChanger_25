@@ -1,6 +1,8 @@
 "use strict";
 (function (ns) {
   const { elements, state } = ns;
+  let processingNode = null;
+  let processingText = null;
 
   function formatDateTime(value) {
     if (!value) return "";
@@ -167,6 +169,36 @@
     return /(\.jpe?g|\.png|\.webp)$/.test(name);
   }
 
+  function showProcessing(message) {
+    if (processingNode) return;
+    const overlay = document.createElement("div");
+    overlay.className = "processing-overlay";
+    const spinner = document.createElement("div");
+    spinner.className = "processing-spinner";
+    const text = document.createElement("div");
+    text.className = "processing-text";
+    text.textContent = message || "Выполняем тестовый запуск…";
+    overlay.appendChild(spinner);
+    overlay.appendChild(text);
+    document.body.appendChild(overlay);
+    processingNode = overlay;
+    processingText = text;
+  }
+
+  function updateProcessing(message) {
+    if (processingText && message) {
+      processingText.textContent = message;
+    }
+  }
+
+  function hideProcessing() {
+    if (processingNode) {
+      processingNode.remove();
+      processingNode = null;
+      processingText = null;
+    }
+  }
+
   ns.dom = {
     formatDateTime,
     renderRecentResults,
@@ -179,5 +211,8 @@
     hide,
     pulse,
     isValidFile,
+    showProcessing,
+    hideProcessing,
+    updateProcessing,
   };
 })(window.SlotPage || (window.SlotPage = {}));
