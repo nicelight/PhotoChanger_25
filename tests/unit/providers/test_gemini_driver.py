@@ -168,6 +168,12 @@ async def test_process_success(
     assert result.content_type == "image/png"
     assert result.payload == b"result-bytes"
     assert client.requests[0]["headers"]["x-goog-api-key"] == "test-key"
+    
+    # Verify generationConfig is not sent for image/png
+    request_json = client.requests[0]["json"]
+    if "generationConfig" in request_json:
+        assert "responseMimeType" not in request_json["generationConfig"]
+
     assert (
         client.requests[0]["json"]["contents"][0]["parts"][0]["inline_data"][
             "mime_type"
@@ -259,3 +265,53 @@ async def test_duplicate_template_media(monkeypatch, job_context, media_repo, tm
     driver = GeminiDriver(media_repo=media_repo)
     with pytest.raises(ProviderExecutionError):
         await driver.process(job_context)
+
+@pytest.mark.asyncio
+async def test_process_json_output(
+    monkeypatch,
+    job_context: JobContext,
+    media_repo: MediaObjectRepository,
+    tmp_path: Path,
+) -> None:
+    # Setup job for JSON output
+    job_context.slot_settings["output"]["mime_type"] = "application/json"
+
+    store_template_media(
+        media_repo,
+        slot_id=job_context.slot_id,
+        media_id="mo-style",
+        media_kind="style",
+        path=tmp_path / "templates" / "style.png",
+    )
+
+    response_data = {
+        "candidates": [
+            {
+                "content": {
+                    "parts": [
+                        {
+                            "inline_data": {
+                                "mime_type": "application/json",
+                                "data": base64.b64encode(b'{"foo": "bar"}').decode(
+                                    "ascii"
+                                ),
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+    client = DummyAsyncClient([DummyResponse(200, response_data)])
+    monkeypatch.setattr("httpx.AsyncClient", lambda timeout: client)
+
+    driver = GeminiDriver(media_repo=media_repo)
+    result = await driver.process(job_context)
+
+    assert result.content_type == "application/json"
+    assert result.payload == b'{"foo": "bar"}'
+
+    # Verify responseMimeType IS sent for application/json
+    request_json = client.requests[0]["json"]
+    assert "generationConfig" in request_json
+    assert request_json["generationConfig"]["responseMimeType"] == "application/json"
