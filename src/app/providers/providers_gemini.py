@@ -1,4 +1,4 @@
-﻿"""Gemini provider driver implementation."""
+"""Gemini provider driver implementation."""
 
 from __future__ import annotations
 
@@ -163,7 +163,13 @@ class GeminiDriver(ProviderDriver):
         self, data: dict[str, Any], *, fallback_mime: str
     ) -> ProviderResult:
         candidates = data.get("candidates") or []
+        text_messages: list[str] = []
+        finish_reasons: list[str] = []
+
         for candidate in candidates:
+            if reason := candidate.get("finishReason"):
+                finish_reasons.append(reason)
+
             content = candidate.get("content") or {}
             for part in content.get("parts", []):
                 inline = part.get("inline_data")
@@ -176,7 +182,24 @@ class GeminiDriver(ProviderDriver):
                             "Gemini response payload is invalid"
                         ) from exc
                     return ProviderResult(payload=payload, content_type=mime)
-        raise ProviderExecutionError("Gemini response does not contain inline data")
+
+                if text := part.get("text"):
+                    text_messages.append(text)
+
+        error_msg = "Gemini response does not contain inline data"
+        details = []
+        if finish_reasons:
+            details.append(f"Reasons: {', '.join(finish_reasons)}")
+        if text_messages:
+            joined_text = "; ".join(text_messages)
+            if len(joined_text) > 200:
+                joined_text = joined_text[:197] + "..."
+            details.append(f"Text: {joined_text}")
+
+        if details:
+            error_msg += f" ({', '.join(details)})"
+
+        raise ProviderExecutionError(error_msg)
 
 
 def _extract_error(response: httpx.Response) -> str:
