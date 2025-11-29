@@ -1,4 +1,4 @@
-﻿"""Gemini provider driver implementation."""
+"""Gemini provider driver implementation."""
 
 from __future__ import annotations
 
@@ -108,7 +108,14 @@ class GeminiDriver(ProviderDriver):
                 }
             ],
         }
-        if output:
+        allowed_response_mime_types = {
+            "text/plain",
+            "application/json",
+            "application/xml",
+            "application/yaml",
+            "text/x.enum",
+        }
+        if output and output in allowed_response_mime_types:
             body["generationConfig"] = {"responseMimeType": output}
         if safety_settings:
             body["safetySettings"] = safety_settings
