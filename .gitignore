@@ -5,6 +5,8 @@ secrets/runtime_credentials.json
 .venv/
 .env.local
 media/
+secrets/
+
 
 **/__pycache__/
 .pytest_cache/
