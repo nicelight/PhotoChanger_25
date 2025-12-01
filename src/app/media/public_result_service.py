@@ -78,6 +78,7 @@ class PublicResultService:
             path=result_path,
             media_type=_guess_mime(result_path.suffix),
             filename=result_path.name,
+            headers={"Content-Disposition": f'inline; filename="{result_path.name}"'},
         )
 
     @staticmethod

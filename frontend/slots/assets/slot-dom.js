@@ -32,13 +32,19 @@
 
       const thumbWrap = document.createElement("div");
       thumbWrap.className = "slot-results__thumb-wrap";
+      const link = document.createElement("a");
+      link.className = "slot-results__thumb-link";
+      link.href = item.download_url || item.public_url || "#";
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
       const img = document.createElement("img");
       img.className = "slot-results__thumb";
       img.loading = "lazy";
       img.decoding = "async";
       img.alt = "Превью результата обработки";
-      img.src = item.thumbnail_url || item.download_url || "";
-      thumbWrap.appendChild(img);
+      img.src = item.thumbnail_url || item.download_url || item.public_url || "";
+      link.appendChild(img);
+      thumbWrap.appendChild(link);
 
       const meta = document.createElement("div");
       meta.className = "slot-results__meta";
