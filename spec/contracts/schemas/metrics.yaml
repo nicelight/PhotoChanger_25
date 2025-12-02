@@ -1,0 +1,64 @@
+version: 1
+exporter: prometheus
+endpoints:
+  - path: /metrics
+    format: text/plain; version=0.0.4
+    scrape_interval_seconds: 15
+metrics:
+  - name: ingest_requests_total
+    type: counter
+    help: Общее число запросов ingest по слотам.
+    labels: [slot_id, provider]
+  - name: ingest_success_total
+    type: counter
+    help: Успешные обработки ingest.
+    labels: [slot_id, provider]
+  - name: ingest_timeout_total
+    type: counter
+    help: Количество таймаутов (504) ingest.
+    labels: [slot_id, provider]
+    sla:
+      window_minutes: 5
+      threshold: "timeout_rate <= 0.05"
+      notes: timeout_rate считается как ingest_timeout_total / ingest_requests_total за окно.
+  - name: ingest_provider_error_total
+    type: counter
+    help: Ошибки провайдера (5xx/ошибки драйвера).
+    labels: [slot_id, provider]
+  - name: ingest_duration_seconds
+    type: histogram
+    help: Длительность обработки ingest.
+    labels: [slot_id, provider]
+    buckets_seconds: [1, 5, 10, 20, 30, 40, 48, 60]
+    sla:
+      window_minutes: 5
+      threshold: "p95 <= T_sync_response"
+      notes: T_sync_response берётся из настроек; p95 вычисляется на стороне Prometheus.
+  - name: media_storage_bytes
+    type: gauge
+    help: Текущий объём каталога media/ (results + provider-media).
+    labels: []
+    sla:
+      threshold: "usage_pct <= 0.8"
+      notes: usage_pct = media_storage_bytes / доступный_объём_тома.
+  - name: media_disk_capacity_bytes
+    type: gauge
+    help: Общий размер тома, где лежит media/.
+    labels: []
+    notes: Используется только в вычислении usage_pct.
+alerts:
+  - name: HighTimeoutRate
+    expr: "increase(ingest_timeout_total[5m]) / increase(ingest_requests_total[5m]) > 0.05"
+    for: 10m
+    severity: page
+    action: Уведомить on-call, проверить провайдеры/нагрузку.
+  - name: SlowP95
+    expr: "histogram_quantile(0.95, rate(ingest_duration_seconds_bucket[5m])) > T_sync_response"
+    for: 10m
+    severity: ticket
+    action: Проверить провайдера/нагрузку, увеличить capacity или снизить окно.
+  - name: MediaDiskHigh
+    expr: "media_storage_bytes / media_disk_capacity_bytes > 0.8"
+    for: 5m
+    severity: ticket
+    action: Запустить cleanup, увеличить диск или сократить TTL.

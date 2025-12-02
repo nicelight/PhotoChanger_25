@@ -20,3 +20,5 @@ updated: 2025-11-22
 - 2025-11-10: FEAT PHC-2.3 завершена — реализованы /api/login, JWT-проверка админских API/UI, обновлены контракты до 0.6.0.
 - 2025-11-11: T PHC-3.2.5 закрыта — slot UI переведён на AdminAuth, добавлена серверная гидратация и поддержка `slot_payload` для test-run.
 - 2025-11-22: US PHC-2.1.4 завершена — merge template_media без удаления, обязательный role в admin API/test-run, OpenAPI bump до 0.7.0.
+- 2025-12-02: FEAT PHC-4.0 — оформлены метрики/алерты `/metrics`, ops blueprint и релизный чеклист; contracts bump до 0.8.0.
+- 2025-12-02: FEAT PHC-4.1/4.2 — реализован endpoint `/metrics` (Prometheus текст), добавлены unit-тесты, финализирован ops checklist + smoke cron cleanup.

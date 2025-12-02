@@ -1,6 +1,6 @@
 ﻿---
 id: tasks
-updated: 2025-11-09
+updated: 2025-12-02
 ---
 
 # Tasks (канбан)
@@ -198,22 +198,22 @@ updated: 2025-11-09
        [x] T PHC-3.2.6 — Подсветить поля форм слотов и настроек при ответах 422 (JSON ошибки)  
 
 
-- [ ] EP PHC-4 — Ops и наблюдаемость  
-  [ ] US PHC-4.GOV — Governance & Discovery  
-    [ ] T PHC-4.GOV.1 — CONSULT — стратегия хранения секретов (Vault vs .env)  
-  [ ] FEAT PHC-4.0 — Спецификации наблюдаемости и релизных процедур  
-    [ ] US PHC-4.0.1 — Документировать мониторинг и алерты  
-      [ ] T PHC-4.0.1.1 — Описать `/metrics` и пороги SLA в `spec/contracts/schemas/metrics.yaml`  
-      [ ] T PHC-4.0.1.2 — Зафиксировать алертинг-плейбуки и деградации в `spec/docs/blueprints/ops.md`  
-    [ ] US PHC-4.0.2 — Процедуры выпуска и версии контрактов  
-      [ ] T PHC-4.0.2.1 — Обновить `spec/contracts/VERSION.json` (SemVer bump, summary)  
-      [ ] T PHC-4.0.2.2 — Синхронизировать `.memory/INDEX.yaml` и подготовить checklist для spec handoff  
-  [ ] FEAT PHC-4.1 — Мониторинг и алерты  
-    [ ] T PHC-4.1.1.1 — `/metrics` + экспортер 504  
-    [ ] T PHC-4.1.1.2 — Алерты на заполнение `media/` и рост 504  
-  [ ] FEAT PHC-4.2 — Процедуры выпуска  
-    [ ] T PHC-4.2.1.1 — Документация deploy checklist  
-    [ ] T PHC-4.2.1.2 — Авто-проверка cron очистки (smoke)  
+- [x] EP PHC-4 — Ops и наблюдаемость  
+  [x] US PHC-4.GOV — Governance & Discovery  
+    [x] T PHC-4.GOV.1 — CONSULT — стратегия хранения секретов (Vault vs .env)  
+  [x] FEAT PHC-4.0 — Спецификации наблюдаемости и релизных процедур  
+    [x] US PHC-4.0.1 — Документировать мониторинг и алерты  
+      [x] T PHC-4.0.1.1 — Описать `/metrics` и пороги SLA в `spec/contracts/schemas/metrics.yaml`  
+      [x] T PHC-4.0.1.2 — Зафиксировать алертинг-плейбуки и деградации в `spec/docs/blueprints/ops.md`  
+    [x] US PHC-4.0.2 — Процедуры выпуска и версии контрактов  
+      [x] T PHC-4.0.2.1 — Обновить `spec/contracts/VERSION.json` (SemVer bump, summary)  
+      [x] T PHC-4.0.2.2 — Синхронизировать `.memory/INDEX.yaml` и подготовить checklist для spec handoff  
+  [x] FEAT PHC-4.1 — Мониторинг и алерты  
+    [x] T PHC-4.1.1.1 — `/metrics` + экспортер 504  
+    [x] T PHC-4.1.1.2 — Алерты на заполнение `media/` и рост 504  
+  [x] FEAT PHC-4.2 — Процедуры выпуска  
+    [x] T PHC-4.2.1.1 — Документация deploy checklist  
+    [x] T PHC-4.2.1.2 — Авто-проверка cron очистки (smoke)  
 
 
 

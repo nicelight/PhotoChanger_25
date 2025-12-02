@@ -27,6 +27,8 @@ from .settings.settings_api import router as settings_router
 from .settings.settings_repository import SettingsRepository
 from .settings.settings_service import SettingsService
 from .stats.stats_api import router as stats_router
+from .stats.metrics_api import router as metrics_router
+from .stats.metrics_exporter import MetricsExporter
 from .stats.stats_repository import StatsRepository
 from .stats.stats_service import StatsService
 from .ui.stats_router import router as ui_stats_router
@@ -69,6 +71,11 @@ def include_routers(app: FastAPI, config: AppConfig) -> None:
     settings_service.load()
     stats_repo = StatsRepository(config.session_factory)
     stats_service = StatsService(repo=stats_repo, media_paths=config.media_paths)
+    metrics_exporter = MetricsExporter(
+        stats_repo=stats_repo,
+        media_root=config.media_paths.root,
+        sync_response_seconds=config.sync_response_seconds,
+    )
     auth_service = AuthService.from_file(
         path=config.admin_credentials_path,
         signing_key=config.jwt_signing_key,
@@ -85,6 +92,7 @@ def include_routers(app: FastAPI, config: AppConfig) -> None:
     app.state.settings_service = settings_service
     app.state.stats_service = stats_service
     app.state.auth_service = auth_service
+    app.state.metrics_exporter = metrics_exporter
 
     public_media_service = PublicMediaService(media_repo=media_repo)
     public_result_service = PublicResultService(job_repo=job_repo)
@@ -95,6 +103,7 @@ def include_routers(app: FastAPI, config: AppConfig) -> None:
     app.include_router(slots_router)
     app.include_router(settings_router)
     app.include_router(stats_router)
+    app.include_router(metrics_router)
     app.include_router(ui_stats_router)
     app.include_router(build_public_media_router(public_media_service))
     app.include_router(build_public_results_router(public_result_service))

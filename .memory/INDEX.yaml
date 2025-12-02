@@ -2,9 +2,9 @@
 updated: 2025-11-10
 
 spec/contracts:
-  version: "0.7.0"
-  released_at: "2025-11-10"
-  notes: "template_media требует обязательный role; merge overrides без удаления, обновлены OpenAPI/админ-UI."
+  version: "0.8.0"
+  released_at: "2025-12-02"
+  notes: "Добавлены спецификация метрик/алертов, ops blueprint с релизным чеклистом и реализован Prometheus endpoint /metrics."
 
 spec/adr:
   count: 1
@@ -14,8 +14,8 @@ spec/adr:
     ADR-0001: "Монолит FastAPI + cron, без очередей"
 
 spec/docs:
-  updated: "2025-11-10"
-  baseline: "FEAT PHC-2.3 — JWT авторизация админов и защита UI/REST."
+  updated: "2025-12-02"
+  baseline: "PHC-4 — ops/наблюдаемость: метрики, алерты, ops плейбук, релизный чеклист."
 
 runbooks:
   cron_cleanup: "docs/runbooks/cron_cleanup.md (2025-11-06)"

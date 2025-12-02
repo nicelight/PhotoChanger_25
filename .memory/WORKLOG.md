@@ -1,7 +1,17 @@
 ﻿---
 id: worklog
-updated: 2025-11-22
+updated: 2025-12-02
 ---
+
+## EP PHC-4 — Ops и наблюдаемость (2025-12-02)
+- 2025-12-02 08:57 — Перечитал `.memory/MISSION.md`, `.memory/CONTEXT.md`, `.memory/TASKS.md`, `.memory/ASKS.md`, `.memory/DECISIONS.md`, `.memory/USECASES.md`, `.memory/INDEX.yaml` перед стартом эпика PHC-4 (ops/наблюдаемость).
+- 2025-12-02 09:00 — Подготовка CONSULT (T PHC-4.GOV.1): нужно согласовать стратегию хранения секретов для prod/staging (Vault/1Password vs .env на хосте) с учётом текущих требований (секреты вне репозитория, `.env.example` только для примеров, JWT/провайдеры/DB креды).
+- 2025-12-02 09:01 — Тимлид утвердил подход с `.env`/Docker secrets на сервере: секреты хранятся в файле окружения/secret-томе на проде/стейдже (вне git), права только сервисному пользователю; локально — `.env.local`. Требуется зафиксировать чеклист защиты (права, бэкапы, ротация, запрет коммита).
+- 2025-12-02 09:05 — Оформил спецификацию метрик/алертов `/metrics` в `spec/contracts/schemas/metrics.yaml` (Prometheus, timeout_rate, p95, диск media) и ops blueprint в `spec/docs/blueprints/ops.md` (секреты через .env/Docker secrets, алерты, плейбук реакции, релизный чеклист).
+- 2025-12-02 09:07 — Обновил SemVer до 0.8.0 в `spec/contracts/VERSION.json`, синхронизировал `.memory/INDEX.yaml` и `PROGRESS.md`; GOV завершён, FEAT PHC-4.0 выполнен.
+- 2025-12-02 09:20 — Реализовал `/metrics` без внешних зависимостей: MetricsExporter (счётчики, гистограмма длительности, gauge диска), StatsRepository расширен (totals, durations), добавлен FastAPI роутер `/metrics`.
+- 2025-12-02 09:23 — Добавил unit-тесты `tests/unit/stats/test_metrics_exporter.py` (формат Prometheus + роутер), прогон `py -m pytest tests/unit/stats/test_metrics_exporter.py` — зелёный.
+- 2025-12-02 09:25 — Дополнил ops blueprint релизным чеклистом/смоуком cron cleanup, закрыл FEAT PHC-4.1 и PHC-4.2, обновил статусы в `.memory/TASKS.md`.
 
 ## US PHC-2.1.4 — Merge template_media и обязательный role (2025-11-22)
 - 2025-11-22 18:10 — Перечитал `.memory/MISSION.md`, `.memory/CONTEXT.md`, `.memory/TASKS.md`, `.memory/ASKS.md`, `.memory/DECISIONS.md`, `.memory/USECASES.md`, `.memory/INDEX.yaml`; зафиксировал план в `.memory/TASKS.md` (T PHC-2.1.4.*).
