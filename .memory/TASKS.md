@@ -201,7 +201,6 @@ updated: 2025-11-09
 - [ ] EP PHC-4 — Ops и наблюдаемость  
   [ ] US PHC-4.GOV — Governance & Discovery  
     [ ] T PHC-4.GOV.1 — CONSULT — стратегия хранения секретов (Vault vs .env)  
-    [ ] T PHC-4.GOV.2 — REFLECT — сценарии деградации при недоступности Turbotext/Gemini  
   [ ] FEAT PHC-4.0 — Спецификации наблюдаемости и релизных процедур  
     [ ] US PHC-4.0.1 — Документировать мониторинг и алерты  
       [ ] T PHC-4.0.1.1 — Описать `/metrics` и пороги SLA в `spec/contracts/schemas/metrics.yaml`  
@@ -217,23 +216,6 @@ updated: 2025-11-09
     [ ] T PHC-4.2.1.2 — Авто-проверка cron очистки (smoke)  
 
 
-## DONE
-- [x] REFLECT — проверить таймауты `T_sync_response` в тестах (2025-10-08)
-- [x] EP PHC-0 — Организация знаний и процессов (2025-10-31)
- [x] FEAT PHC-0.1 — Инициализация меморибанка и служебных артефактов
-  [x] T PHC-0.1.1 — Заполнить `.memory/*`, `spec/contracts/VERSION.json`, REPORT шаблоны
-   - owner: codex
-   - priority: P0
-   - estimate: 0.5d
-   - notes: выполнено 2025-10-31, запрос ASK-2025-10-31-001
-- [x] T PHC-0.1.2 — Удалить `.memory/REPORT.json` и `.memory/REPORT_SCHEMA.json`, скорректировать инструкции (2025-10-31)
- - owner: codex
- - priority: P0
- - notes: инициировано тимлидом 2025-10-31
-- [x] T PHC-0.1.3 — Синхронизировать `.memory/CONTEXT.md` с PRD/ARCHITECTURE (2025-10-31)
- - owner: codex
- - priority: P0
- - notes: сверка требований разделов 10–11 PRD и архитектурного гида
 
 ## GOV Template (reference)
 - [ ] EP XXX — Название эпика  
