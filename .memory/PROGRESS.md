@@ -23,3 +23,4 @@ updated: 2025-11-22
 - 2025-12-02: FEAT PHC-4.0 — оформлены метрики/алерты `/metrics`, ops blueprint и релизный чеклист; contracts bump до 0.8.0.
 - 2025-12-02: FEAT PHC-4.1/4.2 — реализован endpoint `/metrics` (Prometheus текст), добавлены unit-тесты, финализирован ops checklist + smoke cron cleanup.
 - 2025-12-02: EP PHC-5 — ingest пароль хранится/возвращается в plaintext, UI настроек показывает пароль, ingest проверяет plaintext; contracts bump до 0.9.0.
+- 2025-12-03: EP PHC-6 — полный ingest с бинарным ответом, per-slot блокировка (429), hash mismatch как предупреждение; контракты 0.9.1, unit-тесты зелёные.

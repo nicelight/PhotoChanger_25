@@ -227,22 +227,22 @@ updated: 2025-12-02
     [x] T PHC-5.0.5 — Обновить чеклисты/ops: политика хранения и логи (исключить вывод пароля), изменить NFR/risks
     [x] T PHC-5.0.6 — Обновить ingest-пайплайн: проверка пароля по plaintext, убрать сравнение с хэшем, покрыть unit/contract-тестами (POST /api/ingest)
 
-- [~] EP PHC-6 — Полный ingest с Gemini  
+- [x] EP PHC-6 — Полный ingest с Gemini  
   [x] US PHC-6.GOV — Governance & Discovery  
     [x] T PHC-6.GOV.1 — REFLECT — подтвердить формат ответа `/api/ingest/{slot_id}` (бинарный vs JSON+URL), модель статусов/ошибок, поведение при hash mismatch (warn-only)  
     [x] T PHC-6.GOV.2 — CONSULT — утвердить SLA/таймауты и маппинг ошибок Gemini, поведение при отсутствии `GEMINI_API_KEY`  
-  [ ] FEAT PHC-6.0 — Интеграция Gemini в ingest-пайплайн  
-    [ ] T PHC-6.0.1 — Включить вызов `GeminiDriver` в `IngestService.process` после валидации, сохранять результат в ResultStore/DB  
-      [ ] T PHC-6.0.1a — Провязать `_invoke_provider` с `GeminiDriver`, учесть prompt/settings/template_media  
-      [ ] T PHC-6.0.1b — Сохранить payload в ResultStore, media_object, обновить job_history статусом done  
-    [ ] T PHC-6.0.2 — Обновить `/api/ingest/{slot_id}`: выполнять полную обработку, возвращать финальный ответ (бинарный или JSON+URL), статусные коды (timeout/provider_error)  
-      [ ] T PHC-6.0.2a — Реализовать ответ формата (выбранного в GOV) и public URL  
-      [ ] T PHC-6.0.2b — Обработка ошибок/провайдера в API: 504 timeout, 502 provider_error, 500 internal  
-    [ ] T PHC-6.0.3 — Логика таймаута: `asyncio.wait_for` с `T_sync_response`, прерывание драйвера, cleanup temp/result, статус `timeout`  
-    [ ] T PHC-6.0.4 — Ошибки провайдера: маппинг exceptions → `provider_error`, логирование, запись в job_history  
-    [ ] T PHC-6.0.5 — Тесты: unit (успех/timeout/error), интеграционный ingest API с мок Gemini, проверка сохранения результата и public URL  
-    [ ] T PHC-6.0.6 — Документация/контракты: обновить OpenAPI/PRD для полного ingest ответа, описать статусы/ошибки, SemVer bump  
-    [ ] T PHC-6.0.7 — Настройки/секреты: проверять `GEMINI_API_KEY`, описать ошибку при отсутствии ключа  
+  [x] FEAT PHC-6.0 — Интеграция Gemini в ingest-пайплайн  
+    [x] T PHC-6.0.1 — Включить вызов `GeminiDriver` в `IngestService.process` после валидации, сохранять результат в ResultStore/DB  
+      [x] T PHC-6.0.1a — Провязать `_invoke_provider` с `GeminiDriver`, учесть prompt/settings/template_media  
+      [x] T PHC-6.0.1b — Сохранить payload в ResultStore, media_object, обновить job_history статусом done  
+    [x] T PHC-6.0.2 — Обновить `/api/ingest/{slot_id}`: выполнять полную обработку, возвращать финальный ответ (бинарный или JSON+URL), статусные коды (timeout/provider_error)  
+      [x] T PHC-6.0.2a — Реализовать ответ формата (выбранного в GOV) и public URL  
+      [x] T PHC-6.0.2b — Обработка ошибок/провайдера в API: 504 timeout, 502 provider_error, 500 internal  
+    [x] T PHC-6.0.3 — Логика таймаута: `asyncio.wait_for` с `T_sync_response`, прерывание драйвера, cleanup temp/result, статус `timeout`  
+    [x] T PHC-6.0.4 — Ошибки провайдера: маппинг exceptions → `provider_error`, логирование, запись в job_history  
+    [x] T PHC-6.0.5 — Тесты: unit (успех/timeout/error), интеграционный ingest API с мок Gemini, проверка сохранения результата и public URL  
+    [x] T PHC-6.0.6 — Документация/контракты: обновить OpenAPI/PRD для полного ingest ответа, описать статусы/ошибки, SemVer bump  
+    [x] T PHC-6.0.7 — Настройки/секреты: проверять `GEMINI_API_KEY`, описать ошибку при отсутствии ключа  
 
 
 
