@@ -1,8 +1,8 @@
 {
-  "version": "0.9.0",
-  "released_at": "2025-12-02",
+  "version": "0.9.1",
+  "released_at": "2025-12-03",
   "stage": "draft",
-  "summary": "Ingest пароль хранится и отдаётся в явном виде; UI настроек показывает пароль без маски; проверка пароля в ingest использует plaintext.",
+  "summary": "Полный ingest-поток: провайдер вызывается с бинарным ответом, слот блокирует параллельные запросы; hash mismatch остаётся предупреждением.",
   "changes": [
     {
       "type": "init",
@@ -140,6 +140,17 @@
         "frontend/admin/assets/settings.js",
         "spec/contracts/openapi.yaml",
         "spec/contracts/schemas/ingest-request.schema.json"
+      ]
+    },
+    {
+      "type": "feature",
+      "description": "Ингест API выполняет полный вызов провайдера с бинарным ответом, сериализует запросы per-slot (429 rate_limited) и оставляет hash mismatch предупреждением; документация уточнена.",
+      "artifacts": [
+        "src/app/ingest/ingest_api.py",
+        "src/app/ingest/ingest_service.py",
+        "src/app/providers/providers_gemini.py",
+        "spec/contracts/openapi.yaml",
+        "spec/contracts/ingest-errors.md"
       ]
     }
   ],

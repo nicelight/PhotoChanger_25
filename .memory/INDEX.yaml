@@ -2,9 +2,9 @@
 updated: 2025-11-10
 
 spec/contracts:
-  version: "0.9.0"
-  released_at: "2025-12-02"
-  notes: "Ingest пароль хранится/возвращается в plaintext, UI настроек показывает пароль; метрики/алерты и ops blueprint актуализированы."
+  version: "0.9.1"
+  released_at: "2025-12-03"
+  notes: "Полный ingest-поток с бинарным ответом и per-slot блокировкой; hash mismatch — предупреждение."
 
 spec/adr:
   count: 1

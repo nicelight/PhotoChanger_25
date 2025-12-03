@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import hashlib
 from fastapi import (
     APIRouter,
     Depends,
@@ -14,10 +13,14 @@ from fastapi import (
     UploadFile,
     status,
 )
+from fastapi.responses import Response
 
 from .ingest_errors import (
     ChecksumMismatchError,
     PayloadTooLargeError,
+    ProviderExecutionError,
+    ProviderTimeoutError,
+    SlotDisabledError,
     UnsupportedMediaError,
     UploadReadError,
 )
@@ -46,10 +49,25 @@ async def submit_ingest(
     file: UploadFile | None = File(None),
     file_legacy: UploadFile | None = File(None, alias="fileToUpload"),
     service: IngestService = Depends(get_ingest_service),
-) -> dict[str, str]:
-    """Validate ingest payload; provider processing будет добавлено позже."""
+) -> Response:
+    """Validate ingest payload, run provider and return binary result."""
     hash_value = hash_hex or hash_legacy
     upload = file or file_legacy
+    slot_lock = service.slot_lock(slot_id)
+
+    if slot_lock.locked():
+        logger.warning(
+            "ingest.rate_limited",
+            extra={"slot_id": slot_id, "reason": "slot_busy"},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "status": "error",
+                "failure_reason": FailureReason.RATE_LIMITED.value,
+                "retry_after": service.sync_response_seconds,
+            },
+        )
 
     # Логируем все поля формы (без содержимого файла) для отладки DSLR
     raw_form = await request.form()
@@ -94,54 +112,102 @@ async def submit_ingest(
                 "failure_reason": FailureReason.INVALID_PASSWORD.value,
             },
         )
-    try:
-        job = service.prepare_job(slot_id)
-    except KeyError:
-        logger.warning("ingest.slot_not_found", extra={"slot_id": slot_id})
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={"status": "error", "failure_reason": "slot_not_found"},
-        ) from None
+    async with slot_lock:
+        try:
+            job = service.prepare_job(slot_id)
+        except SlotDisabledError as exc:
+            logger.warning("ingest.slot_disabled", extra={"slot_id": slot_id})
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "status": "error",
+                    "failure_reason": FailureReason.SLOT_DISABLED.value,
+                },
+            ) from exc
+        except KeyError:
+            logger.warning("ingest.slot_not_found", extra={"slot_id": slot_id})
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "status": "error",
+                    "failure_reason": FailureReason.SLOT_NOT_FOUND.value,
+                },
+            ) from None
 
-    job.metadata["ingest_password"] = password
+        job.metadata["ingest_password"] = password
 
-    try:
-        await service.validate_upload(job, upload, hash_value)
-    except UnsupportedMediaError as exc:
-        service.record_failure(job, failure_reason=FailureReason.UNSUPPORTED_MEDIA_TYPE)
-        raise HTTPException(
-            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail={
-                "status": "error",
-                "failure_reason": FailureReason.UNSUPPORTED_MEDIA_TYPE.value,
-            },
-        ) from exc
-    except PayloadTooLargeError as exc:
-        service.record_failure(job, failure_reason=FailureReason.PAYLOAD_TOO_LARGE)
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail={
-                "status": "error",
-                "failure_reason": FailureReason.PAYLOAD_TOO_LARGE.value,
-            },
-        ) from exc
-    except ChecksumMismatchError as exc:
-        service.record_failure(job, failure_reason=FailureReason.INVALID_REQUEST)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "status": "error",
-                "failure_reason": FailureReason.INVALID_REQUEST.value,
-            },
-        ) from exc
-    except UploadReadError as exc:
-        service.record_failure(job, failure_reason=FailureReason.INVALID_REQUEST)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "status": "error",
-                "failure_reason": FailureReason.INVALID_REQUEST.value,
-            },
-        ) from exc
+        try:
+            await service.validate_upload(job, upload, hash_value)
+        except UnsupportedMediaError as exc:
+            service.record_failure(job, failure_reason=FailureReason.UNSUPPORTED_MEDIA_TYPE)
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail={
+                    "status": "error",
+                    "failure_reason": FailureReason.UNSUPPORTED_MEDIA_TYPE.value,
+                },
+            ) from exc
+        except PayloadTooLargeError as exc:
+            service.record_failure(job, failure_reason=FailureReason.PAYLOAD_TOO_LARGE)
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail={
+                    "status": "error",
+                    "failure_reason": FailureReason.PAYLOAD_TOO_LARGE.value,
+                },
+            ) from exc
+        except ChecksumMismatchError as exc:
+            service.record_failure(job, failure_reason=FailureReason.INVALID_REQUEST)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "status": "error",
+                    "failure_reason": FailureReason.INVALID_REQUEST.value,
+                },
+            ) from exc
+        except UploadReadError as exc:
+            service.record_failure(job, failure_reason=FailureReason.INVALID_REQUEST)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "status": "error",
+                    "failure_reason": FailureReason.INVALID_REQUEST.value,
+                },
+            ) from exc
 
-    return {"status": "validated", "slot_id": job.slot_id}
+        try:
+            payload = await service.process(job)
+        except ProviderTimeoutError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                detail={
+                    "status": "timeout",
+                    "failure_reason": FailureReason.PROVIDER_TIMEOUT.value,
+                },
+            ) from exc
+        except ProviderExecutionError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail={
+                    "status": "error",
+                    "failure_reason": FailureReason.PROVIDER_ERROR.value,
+                    "message": str(exc),
+                },
+            ) from exc
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.exception("ingest.unexpected_error", extra={"slot_id": slot_id})
+            service.record_failure(job, failure_reason=FailureReason.INTERNAL_ERROR)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail={
+                    "status": "error",
+                    "failure_reason": FailureReason.INTERNAL_ERROR.value,
+                },
+            ) from exc
+
+        content_type = (
+            job.metadata.get("result_content_type")
+            or (job.upload.content_type if job.upload else None)
+            or "image/png"
+        )
+        return Response(content=payload, media_type=content_type)

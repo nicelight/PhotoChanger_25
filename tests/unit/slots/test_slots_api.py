@@ -21,6 +21,14 @@ class DummyIngestService:
         self.result_ttl_hours = 72
         self._pending_overrides: dict[str, dict[str, Any]] = {}
         self._pending_filenames: dict[str, str] = {}
+        self._lock = None
+
+    def slot_lock(self, slot_id: str):
+        import asyncio
+
+        if self._lock is None:
+            self._lock = asyncio.Lock()
+        return self._lock
 
     async def run_test_job(
         self,
@@ -42,6 +50,14 @@ class DummyIngestService:
             self._pending_filenames[job.job_id] = getattr(
                 upload, "filename", "test.jpg"
             )
+        if overrides and "settings" in overrides and isinstance(
+            overrides["settings"], dict
+        ):
+            job.slot_settings.update(overrides["settings"])
+        job.upload = UploadValidationResult(
+            content_type="image/jpeg", size_bytes=3, sha256="abc", filename="file.jpg"
+        )
+        await self.process(job)
         return job, 1.23
 
     async def validate_upload(
