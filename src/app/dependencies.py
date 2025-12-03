@@ -59,6 +59,7 @@ def include_routers(app: FastAPI, config: AppConfig) -> None:
         temp_store=temp_store,
         result_ttl_hours=config.result_ttl_hours,
         sync_response_seconds=config.sync_response_seconds,
+        ingest_password=config.ingest_password,
         provider_factory=lambda provider_name: create_driver(
             provider_name, media_repo=media_repo
         ),

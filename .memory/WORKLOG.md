@@ -3,6 +3,12 @@ id: worklog
 updated: 2025-12-02
 ---
 
+## EP PHC-5 — Ingest пароль в открытом виде (2025-12-02)
+- 2025-12-02 10:10 — Старт EP PHC-5: тимлид подтвердил хранение ingest пароля в явном виде; обновлены спецификации. Задача — убрать хэширование, отобразить пароль в UI настроек, использовать plaintext в ingest проверке.
+- 2025-12-02 10:25 — Реализовал хранение plaintext: SettingsService теперь пишет `ingest_password` в settings, runtime применяет его к IngestService/config; убрано SHA-256. Ингест-пайплайн проверяет пароль строкой (401 invalid_password), добавлены unit-тесты на API.
+- 2025-12-02 10:30 — UI настроек показывает текущий пароль без маски (input type text), не очищает поле после сохранения; API `/api/settings` возвращает пароль. OpenAPI/ingest schema обновлены, VERSION → 0.9.0.
+- 2025-12-02 10:35 — Добавил план миграции: если в settings нет plaintext, используется значение из env или пустая строка (ingest открыт) — админы должны задать новый пароль через UI; хэш игнорируется. Тесты: `py -m pytest tests/unit/settings/test_settings_api.py tests/unit/ingest/test_ingest_api_password.py` (passed).
+
 ## EP PHC-4 — Ops и наблюдаемость (2025-12-02)
 - 2025-12-02 08:57 — Перечитал `.memory/MISSION.md`, `.memory/CONTEXT.md`, `.memory/TASKS.md`, `.memory/ASKS.md`, `.memory/DECISIONS.md`, `.memory/USECASES.md`, `.memory/INDEX.yaml` перед стартом эпика PHC-4 (ops/наблюдаемость).
 - 2025-12-02 09:00 — Подготовка CONSULT (T PHC-4.GOV.1): нужно согласовать стратегию хранения секретов для prod/staging (Vault/1Password vs .env на хосте) с учётом текущих требований (секреты вне репозитория, `.env.example` только для примеров, JWT/провайдеры/DB креды).

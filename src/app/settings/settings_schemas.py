@@ -15,6 +15,7 @@ class ProviderKeyStatus(BaseModel):
 class SettingsResponseModel(BaseModel):
     sync_response_seconds: int
     result_ttl_hours: int
+    ingest_password: str
     ingest_password_rotated_at: datetime | None = None
     ingest_password_rotated_by: str | None = None
     provider_keys: dict[str, ProviderKeyStatus] = Field(default_factory=dict)

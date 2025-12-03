@@ -14,6 +14,7 @@ class DummySettingsService:
         self.snapshot: dict[str, Any] = {
             "sync_response_seconds": 48,
             "result_ttl_hours": 72,
+            "ingest_password": "secret123",
             "ingest_password_rotated_at": now,
             "ingest_password_rotated_by": "serg",
             "provider_keys": {"gemini": {"configured": True, "updated_at": now}},
@@ -65,6 +66,7 @@ def test_read_settings_returns_snapshot() -> None:
     data = response.json()
     assert data["sync_response_seconds"] == 48
     assert data["provider_keys"]["gemini"]["configured"] is True
+    assert data["ingest_password"] == "secret123"
 
 
 def test_update_settings_passes_payload_to_service() -> None:

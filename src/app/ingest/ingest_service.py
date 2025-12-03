@@ -47,6 +47,7 @@ class IngestService:
     temp_store: "TempMediaStore"
     result_ttl_hours: int
     sync_response_seconds: int
+    ingest_password: str = ""
     provider_factory: Callable[[str], ProviderDriver] = field(
         default_factory=lambda: create_driver
     )
@@ -90,6 +91,13 @@ class IngestService:
         job.metadata["slot_display_name"] = slot.display_name
         job.metadata["source"] = source
         return job
+
+    def verify_ingest_password(self, provided: str) -> bool:
+        """Compare provided password with configured plaintext value."""
+        expected = (self.ingest_password or "").strip()
+        if expected == "":
+            return True  # пароль не задан — считаем проверку пройденной
+        return provided == expected
 
     async def validate_upload(
         self,

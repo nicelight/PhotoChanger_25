@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -53,8 +52,7 @@ class SettingsService:
             updates["result_ttl_hours"] = str(value)
 
         if password := payload.get("ingest_password"):
-            hashed = hashlib.sha256(password.encode("utf-8")).hexdigest()
-            updates["ingest_password_hash"] = hashed
+            updates["ingest_password"] = password
             updates["ingest_password_rotated_at"] = datetime.utcnow().isoformat()
             updates["ingest_password_rotated_by"] = actor or "admin-ui"
 
@@ -93,6 +91,9 @@ class SettingsService:
         )
         ingest_password_rotated_at = store.get("ingest_password_rotated_at")
         ingest_password_rotated_by = store.get("ingest_password_rotated_by")
+        ingest_password = store.get("ingest_password", self.config.ingest_password)
+        if ingest_password is None:
+            ingest_password = ""
 
         provider_keys_raw = store.get("provider_keys", "{}") or "{}"
         try:
@@ -110,6 +111,7 @@ class SettingsService:
         return {
             "sync_response_seconds": sync_response_seconds,
             "result_ttl_hours": result_ttl_hours,
+            "ingest_password": ingest_password,
             "ingest_password_rotated_at": _parse_datetime(ingest_password_rotated_at),
             "ingest_password_rotated_by": ingest_password_rotated_by,
             "provider_keys": provider_statuses,
@@ -119,8 +121,10 @@ class SettingsService:
         """Propagate stored values to services/config so API reflects real state."""
         self.ingest_service.sync_response_seconds = snapshot["sync_response_seconds"]
         self.ingest_service.result_ttl_hours = snapshot["result_ttl_hours"]
+        self.ingest_service.ingest_password = snapshot["ingest_password"]
         self.config.sync_response_seconds = snapshot["sync_response_seconds"]
         self.config.result_ttl_hours = snapshot["result_ttl_hours"]
+        self.config.ingest_password = snapshot["ingest_password"]
 
 
 def _parse_datetime(value: str | None) -> datetime | None:

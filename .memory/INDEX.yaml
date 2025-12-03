@@ -2,9 +2,9 @@
 updated: 2025-11-10
 
 spec/contracts:
-  version: "0.8.0"
+  version: "0.9.0"
   released_at: "2025-12-02"
-  notes: "Добавлены спецификация метрик/алертов, ops blueprint с релизным чеклистом и реализован Prometheus endpoint /metrics."
+  notes: "Ingest пароль хранится/возвращается в plaintext, UI настроек показывает пароль; метрики/алерты и ops blueprint актуализированы."
 
 spec/adr:
   count: 1

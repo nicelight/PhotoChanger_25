@@ -157,6 +157,12 @@ body.admin-body {
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
+.login-brand {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  z-index: 2;
+}
 
 .admin-toolbar {
   display: flex;

@@ -44,6 +44,17 @@ async def submit_ingest(
     service: IngestService = Depends(get_ingest_service),
 ) -> dict[str, str]:
     """Validate ingest payload; provider processing будет добавлено позже."""
+    if not service.verify_ingest_password(password):
+        logger.warning(
+            "ingest.invalid_password", extra={"slot_id": slot_id, "hash_present": bool(hash_hex)}
+        )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "status": "error",
+                "failure_reason": FailureReason.INVALID_PASSWORD.value,
+            },
+        )
     try:
         job = service.prepare_job(slot_id)
     except KeyError:
@@ -53,7 +64,6 @@ async def submit_ingest(
             detail={"status": "error", "failure_reason": "slot_not_found"},
         ) from None
 
-    # TODO: использовать password, когда реализована проверка слота.
     job.metadata["ingest_password"] = password
 
     try:
