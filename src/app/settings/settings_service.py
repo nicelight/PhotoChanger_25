@@ -21,13 +21,14 @@ class SettingsService:
     config: AppConfig
     _cache: dict[str, str] = field(default_factory=dict)
     _snapshot: dict[str, Any] | None = None
+    _legacy_ingest_password_hash: str | None = None
 
     def load(self) -> dict[str, Any]:
         """Return current snapshot merged with defaults and apply runtime settings."""
         store = self.repo.read_all()
         self._cache = store
-        snapshot = self._hydrate(store)
-        self._apply_runtime(snapshot)
+        snapshot, legacy_hash = self._hydrate(store)
+        self._apply_runtime(snapshot, legacy_hash)
         self._snapshot = snapshot
         return snapshot
 
@@ -68,12 +69,12 @@ class SettingsService:
 
         merged = self.repo.read_all()
         self._cache = merged
-        snapshot = self._hydrate(merged)
-        self._apply_runtime(snapshot)
+        snapshot, legacy_hash = self._hydrate(merged)
+        self._apply_runtime(snapshot, legacy_hash)
         self._snapshot = snapshot
         return snapshot
 
-    def _hydrate(self, store: dict[str, str]) -> dict[str, Any]:
+    def _hydrate(self, store: dict[str, str]) -> tuple[dict[str, Any], str | None]:
         def int_or_default(key: str, default: int) -> int:
             try:
                 value = store.get(key)
@@ -95,6 +96,8 @@ class SettingsService:
         if ingest_password is None:
             ingest_password = ""
 
+        ingest_password_hash = store.get("ingest_password_hash")
+
         provider_keys_raw = store.get("provider_keys", "{}") or "{}"
         try:
             provider_store = json.loads(provider_keys_raw)
@@ -108,20 +111,31 @@ class SettingsService:
                 "updated_at": _parse_datetime(data.get("updated_at")),
             }
 
-        return {
-            "sync_response_seconds": sync_response_seconds,
-            "result_ttl_hours": result_ttl_hours,
-            "ingest_password": ingest_password,
-            "ingest_password_rotated_at": _parse_datetime(ingest_password_rotated_at),
-            "ingest_password_rotated_by": ingest_password_rotated_by,
-            "provider_keys": provider_statuses,
-        }
+        return (
+            {
+                "sync_response_seconds": sync_response_seconds,
+                "result_ttl_hours": result_ttl_hours,
+                "ingest_password": ingest_password,
+                "ingest_password_rotated_at": _parse_datetime(
+                    ingest_password_rotated_at
+                ),
+                "ingest_password_rotated_by": ingest_password_rotated_by,
+                "provider_keys": provider_statuses,
+            },
+            ingest_password_hash,
+        )
 
-    def _apply_runtime(self, snapshot: dict[str, Any]) -> None:
+
+    def _apply_runtime(
+        self, snapshot: dict[str, Any], legacy_ingest_password_hash: str | None
+    ) -> None:
         """Propagate stored values to services/config so API reflects real state."""
         self.ingest_service.sync_response_seconds = snapshot["sync_response_seconds"]
         self.ingest_service.result_ttl_hours = snapshot["result_ttl_hours"]
         self.ingest_service.ingest_password = snapshot["ingest_password"]
+        self.ingest_service.ingest_password_hash = legacy_ingest_password_hash
+        self._legacy_ingest_password_hash = legacy_ingest_password_hash
+
         self.config.sync_response_seconds = snapshot["sync_response_seconds"]
         self.config.result_ttl_hours = snapshot["result_ttl_hours"]
         self.config.ingest_password = snapshot["ingest_password"]
