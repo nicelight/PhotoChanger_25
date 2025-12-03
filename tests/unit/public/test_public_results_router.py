@@ -44,7 +44,7 @@ def test_public_results_router_success(tmp_path: Path) -> None:
     response = client.get("/public/results/job123")
 
     assert response.status_code == 200
-    assert response.headers["content-disposition"].startswith("attachment;")
+    assert response.headers["content-disposition"].startswith("inline;")
     assert response.content == b"jpeg-bytes"
 
 
