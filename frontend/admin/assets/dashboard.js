@@ -142,16 +142,36 @@
 
   function copyLink(value, button) {
     if (!value) return;
+    if (!navigator.clipboard) {
+      fallbackCopy(value, button);
+      return;
+    }
     navigator.clipboard.writeText(value).then(
       () => {
         button.textContent = "Скопировано";
         setTimeout(() => (button.textContent = "Копировать"), 1600);
       },
       () => {
-        button.textContent = "Ошибка";
-        setTimeout(() => (button.textContent = "Копировать"), 1600);
+        fallbackCopy(value, button);
       }
     );
+  }
+
+  function fallbackCopy(value, button) {
+    const textArea = document.createElement("textarea");
+    textArea.value = value;
+    textArea.style.position = "fixed";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand("copy");
+      button.textContent = "Скопировано";
+    } catch (err) {
+      button.textContent = "Ошибка";
+    }
+    setTimeout(() => (button.textContent = "Копировать"), 1600);
+    document.body.removeChild(textArea);
   }
 
   function formatDate(value) {

@@ -38,7 +38,7 @@ def test_public_result_service_success(tmp_path: Path) -> None:
     response = service.open_result("job123")
 
     assert response.status_code == 200
-    assert response.headers["content-disposition"].startswith("attachment;")
+    assert response.headers["content-disposition"].startswith("inline;")
     assert response.media_type == "image/png"
 
 

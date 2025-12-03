@@ -42,7 +42,10 @@ class TurbotextDriver(ProviderDriver):
 
         base_url = os.getenv("PUBLIC_MEDIA_BASE_URL")
         if not base_url:
-            raise ProviderExecutionError("PUBLIC_MEDIA_BASE_URL is not configured")
+            raise ProviderExecutionError(
+                "PUBLIC_MEDIA_BASE_URL is not configured. "
+                "For HTTP deployments, set it to your server URL (e.g. http://your-ip:8000)."
+            )
         api_key = os.getenv("TURBOTEXT_API_KEY")
         if not api_key:
             raise ProviderExecutionError("TURBOTEXT_API_KEY is not set")

@@ -45,7 +45,7 @@ def test_public_results_contract_success(tmp_path: Path) -> None:
 
     assert response.status_code == 200
     assert response.headers["content-type"] == "image/jpeg"
-    assert response.headers["content-disposition"].startswith("attachment;")
+    assert response.headers["content-disposition"].startswith("inline;")
     assert response.content == b"jpeg-bytes"
 
 
