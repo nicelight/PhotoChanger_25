@@ -11,7 +11,7 @@
 | JobContext | Структура, собираемая `IngestService`: содержит `job_id`, сведения о слоте, дедлайн `sync_deadline = now + T_sync_response`, ссылку на каталог результата и параметры провайдера. | `docs/ARCHITECTURE.md` §3 |
 | ProviderResult | Унифицированный ответ драйвера (путь к файлу или байты), на основании которого Ingest формирует итоговый результат. | `docs/ARCHITECTURE.md` §5 |
 | TemplateMedia | Статические шаблонные изображения, привязанные к слотам; хранятся долго, проходят валидацию MIME/размера при загрузке. | `docs/PRD.md` §5 |
-| Ingest password | Глобальный секрет, проверяемый при каждом `POST /api/ingest/{slot_id}`; хранится в `app_settings` (`ingest.dslr_password`) в виде хэша и обновляется через `/api/settings`. | `docs/PRD.md` §4 |
+| Ingest password | Глобальный секрет, проверяемый при каждом `POST /api/ingest/{slot_id}`; хранится в таблице `settings` в открытом виде (`ingest_password`) и обновляется/выдаётся через `/api/settings` (только для админов). | `docs/PRD.md` §4 |
 | AppConfig | Центральная функция сборки FastAPI-приложения: подключает БД, подготавливает драйверы провайдеров, загружает настройки окружения, используется также в тестах. | `docs/ARCHITECTURE.md` §2 |
 | Admin JWT | Статический JWT для администраторов (`serg`, `igor`), выдаётся `/api/login`, используется в Admin UI/API. | `docs/PRD.md` §3 |
 | StatsService | Модуль статистики SLA; агрегирует лёгкие counters (jobs, timeouts, provider_errors, storage) и публикует `/api/stats/overview`. | `docs/ARCHITECTURE.md` §6 |

@@ -57,6 +57,7 @@
     initialValues = payload;
     if (syncInput) syncInput.value = payload.sync_response_seconds;
     if (ttlInput) ttlInput.value = payload.result_ttl_hours;
+    if (passwordInput) passwordInput.value = payload.ingest_password || "";
     if (rotatedMeta) {
       if (payload.ingest_password_rotated_at) {
         const rotatedAt = formatDate(payload.ingest_password_rotated_at);
@@ -144,7 +145,6 @@
         }
         const updated = await response.json();
         applySettings(updated);
-        if (passwordInput) passwordInput.value = "";
         if (providerList) {
           providerList.querySelectorAll('input[data-provider]').forEach((input) => {
             input.value = "";
@@ -173,8 +173,11 @@
         payload.result_ttl_hours = ttlVal;
       }
     }
-    if (passwordInput && passwordInput.value.trim()) {
-      payload.ingest_password = passwordInput.value.trim();
+    if (passwordInput) {
+      const pwdVal = passwordInput.value.trim();
+      if (pwdVal !== initialValues.ingest_password) {
+        payload.ingest_password = pwdVal;
+      }
     }
     if (providerList) {
       const providerPayload = {};

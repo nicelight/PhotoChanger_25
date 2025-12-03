@@ -1,8 +1,8 @@
 {
-  "version": "0.8.0",
+  "version": "0.9.0",
   "released_at": "2025-12-02",
   "stage": "draft",
-  "summary": "Ops/наблюдаемость: спецификация метрик и алертов, обновлённый ops blueprint и релизный чеклист.",
+  "summary": "Ingest пароль хранится и отдаётся в явном виде; UI настроек показывает пароль без маски; проверка пароля в ingest использует plaintext.",
   "changes": [
     {
       "type": "init",
@@ -126,6 +126,20 @@
         "src/app/stats/metrics_exporter.py",
         "src/app/stats/metrics_api.py",
         "src/app/dependencies.py"
+      ]
+    },
+    {
+      "type": "breaking",
+      "description": "Ingest пароль хранится в plaintext (settings.ingest_password), возвращается через `/api/settings` и проверяется как строка в `/api/ingest/{slot_id}`; UI настроек показывает пароль без маски.",
+      "artifacts": [
+        "src/app/settings/settings_service.py",
+        "src/app/settings/settings_schemas.py",
+        "src/app/ingest/ingest_api.py",
+        "src/app/ingest/ingest_service.py",
+        "frontend/admin/settings.html",
+        "frontend/admin/assets/settings.js",
+        "spec/contracts/openapi.yaml",
+        "spec/contracts/schemas/ingest-request.schema.json"
       ]
     }
   ],

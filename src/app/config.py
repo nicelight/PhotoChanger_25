@@ -39,6 +39,7 @@ class MediaPaths:
 class AppConfig:
     media_paths: MediaPaths
     ingest_limits: IngestLimits
+    ingest_password: str
     database_url: str
     engine: Engine
     session_factory: sessionmaker[Session]
@@ -86,6 +87,7 @@ def load_config() -> AppConfig:
     result_ttl_hours = int(os.getenv("RESULT_TTL_HOURS", 72))
     sync_response_seconds = int(os.getenv("T_SYNC_RESPONSE_SECONDS", 48))
     temp_ttl_seconds = int(os.getenv("TEMP_TTL_SECONDS", sync_response_seconds))
+    ingest_password = os.getenv("INGEST_PASSWORD", "")
     jwt_signing_key = os.getenv("JWT_SIGNING_KEY", "")
     if not jwt_signing_key:
         raise RuntimeError("JWT_SIGNING_KEY is not set")
@@ -99,6 +101,7 @@ def load_config() -> AppConfig:
     return AppConfig(
         media_paths=media_paths,
         ingest_limits=ingest_limits,
+        ingest_password=ingest_password,
         database_url=database_url,
         engine=engine,
         session_factory=session_factory,

@@ -8,7 +8,7 @@
     "password": {
       "type": "string",
       "minLength": 1,
-      "description": "Global ingest password. Must match the hash stored in app_settings.ingest.dslr_password."
+      "description": "Global ingest password. Must match the value stored in settings.ingest_password."
     },
     "hash": {
       "type": "string",

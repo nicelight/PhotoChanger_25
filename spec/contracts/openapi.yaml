@@ -1,7 +1,7 @@
 ﻿openapi: 3.1.0
 info:
   title: PhotoChanger API
-  version: 0.7.0-draft
+  version: 0.9.0-draft
   description: >
     Draft specification for the PhotoChanger platform. Описывает синхронный ingest (`POST /api/ingest/{slot_id}`),
     публичную выдачу результатов, админские API (слоты, настройки, статистика) и авторизацию админов через JWT
@@ -378,7 +378,7 @@ paths:
         - settings
       responses:
         '200':
-          description: Current settings snapshot without exposing secrets.
+          description: Current settings snapshot (ingest пароль возвращается в явном виде).
           content:
             application/json:
               schema:
@@ -781,6 +781,7 @@ components:
       required:
         - sync_response_seconds
         - result_ttl_hours
+        - ingest_password
         - ingest_password_rotated_at
         - provider_keys
       properties:
@@ -790,6 +791,9 @@ components:
         result_ttl_hours:
           type: integer
           example: 72
+        ingest_password:
+          type: string
+          example: "dslr-secret"
         ingest_password_rotated_at:
           type: string
           format: date-time
