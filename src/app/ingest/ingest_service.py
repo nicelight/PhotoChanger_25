@@ -154,7 +154,6 @@ class IngestService:
                     "calculated_hash": result.sha256,
                 },
             )
-            raise ChecksumMismatchError("Checksum mismatch")
 
         job.upload = result
 

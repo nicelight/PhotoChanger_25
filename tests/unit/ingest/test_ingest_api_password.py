@@ -63,3 +63,17 @@ def test_ingest_accepts_valid_password(tmp_path) -> None:
     assert response.json()["status"] == "validated"
     assert service.last_job is not None
     assert service.last_job.metadata.get("ingest_password") == "secret"
+
+
+def test_ingest_accepts_legacy_field_names(tmp_path) -> None:
+    service = DummyIngestService(ingest_password="secret")
+    client = build_client(service)
+
+    response = client.post(
+        "/api/ingest/slot-001",
+        data={"password": "secret", "hash": "deadbeef"},
+        files={"fileToUpload": ("file.png", b"data", "image/png")},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "validated"
