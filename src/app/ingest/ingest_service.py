@@ -13,6 +13,7 @@ from typing import Any
 
 from fastapi import UploadFile
 
+from ..auth.auth_service import hash_password
 from ..providers.providers_base import ProviderDriver, ProviderResult
 from ..providers.providers_factory import create_driver
 from ..repositories.job_history_repository import JobHistoryRepository
@@ -48,6 +49,7 @@ class IngestService:
     result_ttl_hours: int
     sync_response_seconds: int
     ingest_password: str = ""
+    ingest_password_hash: str | None = None
     provider_factory: Callable[[str], ProviderDriver] = field(
         default_factory=lambda: create_driver
     )
@@ -95,9 +97,14 @@ class IngestService:
     def verify_ingest_password(self, provided: str) -> bool:
         """Compare provided password with configured plaintext value."""
         expected = (self.ingest_password or "").strip()
-        if expected == "":
-            return True  # пароль не задан — считаем проверку пройденной
-        return provided == expected
+        if expected:
+            return provided == expected
+
+        legacy_hash = (self.ingest_password_hash or "").strip()
+        if legacy_hash:
+            return hash_password(provided) == legacy_hash
+
+        return True  # пароль не задан — считаем проверку пройденной
 
     async def validate_upload(
         self,
