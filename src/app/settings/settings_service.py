@@ -95,6 +95,7 @@ class SettingsService:
         ingest_password = store.get("ingest_password", self.config.ingest_password)
         if ingest_password is None:
             ingest_password = ""
+
         ingest_password_hash = store.get("ingest_password_hash")
 
         provider_keys_raw = store.get("provider_keys", "{}") or "{}"
@@ -124,6 +125,7 @@ class SettingsService:
             ingest_password_hash,
         )
 
+
     def _apply_runtime(
         self, snapshot: dict[str, Any], legacy_ingest_password_hash: str | None
     ) -> None:
@@ -133,6 +135,7 @@ class SettingsService:
         self.ingest_service.ingest_password = snapshot["ingest_password"]
         self.ingest_service.ingest_password_hash = legacy_ingest_password_hash
         self._legacy_ingest_password_hash = legacy_ingest_password_hash
+
         self.config.sync_response_seconds = snapshot["sync_response_seconds"]
         self.config.result_ttl_hours = snapshot["result_ttl_hours"]
         self.config.ingest_password = snapshot["ingest_password"]

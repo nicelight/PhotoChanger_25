@@ -49,7 +49,9 @@ class IngestService:
     result_ttl_hours: int
     sync_response_seconds: int
     ingest_password: str = ""
+
     ingest_password_hash: str | None = None
+
     provider_factory: Callable[[str], ProviderDriver] = field(
         default_factory=lambda: create_driver
     )
@@ -105,6 +107,7 @@ class IngestService:
             return hash_password(provided) == legacy_hash
 
         return True  # пароль не задан — считаем проверку пройденной
+
 
     async def validate_upload(
         self,
