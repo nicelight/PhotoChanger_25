@@ -1,7 +1,13 @@
 ﻿---
 id: worklog
-updated: 2025-12-02
+updated: 2025-12-03
 ---
+
+## EP PHC-6 — Полный ingest с Gemini (2025-12-03)
+- 2025-12-03 20:27 — Перечитал обязательные артефакты (MISSION/CONTEXT/TASKS/ASKS/DECISIONS/USECASES/INDEX) перед стартом эпика PHC-6.
+- 2025-12-03 20:40 — Проанализировал текущий код ingest (ingest_api, ingest_service, drivers), контракты OpenAPI/ingest-errors и PRD: API сейчас только валидирует и возвращает `{status: validated}` без вызова драйвера/сохранения результата; IngestService умеет validate/process/record успех/ошибки и таймаут через wait_for, но _invoke_provider минимален, checksum mismatch логируется без отказа, is_active слота не проверяется. GeminiDriver ждёт env `GEMINI_API_KEY`, формирует inline_data + template_media, отдаёт ProviderExecutionError при ошибках. Открытые вопросы для GOV: формат финального ответа (бинарный vs JSON+URL), что делать при hash mismatch (warn-only или 400), как отвечать при отсутствии GEMINI_API_KEY и какое поведение по SLA/статусам 5xx/504 закрепить.
+- 2025-12-03 20:55 — CONSULT завершён: тимлид подтвердил бинарный ответ 200 для ingest; hash mismatch оставляем как предупреждение (нужно задокументировать); при ошибках провайдера логируем ответ провайдера, ретраи только по настройкам драйвера; при отсутствии GEMINI_API_KEY трактуем как provider_error; слот должен блокировать одновременные ingest (новый запрос получает rate limit/блок до окончания предыдущего).
+- 2025-12-03 21:20 — Реализовал полный поток ingest: per-slot lock (429 rate_limited), обработка slot_disabled, вызов провайдера с бинарным ответом, логирование ошибок Gemini. Обновлены спеки (openapi note, ingest-errors hash warn-only, VERSION 0.9.1, INDEX). Прогнал `py -m pytest tests/unit` — 85 passed.
 
 ## EP PHC-5 — Ingest пароль в открытом виде (2025-12-02)
 - 2025-12-02 10:10 — Старт EP PHC-5: тимлид подтвердил хранение ingest пароля в явном виде; обновлены спецификации. Задача — убрать хэширование, отобразить пароль в UI настроек, использовать plaintext в ingest проверке.

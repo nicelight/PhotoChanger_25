@@ -18,7 +18,8 @@ paths:
         `T_sync_response` (10–60 seconds, default 48 s). Successful jobs return the processed
         binary body immediately; results remain accessible via `/public/results/{job_id}` for
         72 hours (`T_result_retention`). Timeouts (504) indicate that the provider exceeded the
-        synchronous window and the request can be retried.
+        synchronous window and the request can be retried. Одновременно обрабатывается только
+        один запрос на слот; параллельные обращения получат 429 с `retry_after`.
       operationId: ingest_submit
       tags:
         - ingest

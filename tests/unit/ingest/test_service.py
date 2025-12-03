@@ -11,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from src.app.config import IngestLimits, MediaPaths
 from src.app.db.db_init import init_db
 from src.app.db.db_models import JobHistoryModel
-from src.app.ingest.ingest_errors import ChecksumMismatchError, ProviderTimeoutError
+from src.app.ingest.ingest_errors import ProviderTimeoutError
 from src.app.ingest.ingest_service import IngestService
 from src.app.ingest.ingest_models import FailureReason, JobContext, JobStatus
 from src.app.ingest.validation import UploadValidator
@@ -130,8 +130,9 @@ async def test_checksum_mismatch(tmp_path) -> None:
     job = service.prepare_job("slot-001")
     upload = make_upload(b"PNGDATA")
 
-    with pytest.raises(ChecksumMismatchError):
-        await service.validate_upload(job, upload, "deadbeef")
+    await service.validate_upload(job, upload, "deadbeef")
+    assert job.upload is not None
+    assert job.upload.sha256 != "deadbeef"
 
 
 @pytest.mark.asyncio

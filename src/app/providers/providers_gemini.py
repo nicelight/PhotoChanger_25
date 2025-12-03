@@ -153,6 +153,17 @@ class GeminiDriver(ProviderDriver):
 
             if not self._should_retry(response) or attempt >= max_attempts:
                 error_detail = _extract_error(response)
+                body_preview = response.text[:500]
+                self.log.error(
+                    "gemini.response.error",
+                    extra={
+                        "slot_id": job.slot_id,
+                        "job_id": job.job_id,
+                        "status_code": response.status_code,
+                        "error_detail": error_detail,
+                        "body_preview": body_preview,
+                    },
+                )
                 raise ProviderExecutionError(
                     f"Gemini request failed (status={response.status_code}): {error_detail}"
                 )

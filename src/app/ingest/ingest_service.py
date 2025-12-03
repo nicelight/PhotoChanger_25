@@ -27,6 +27,7 @@ from .ingest_errors import (
     PayloadTooLargeError,
     ProviderExecutionError,
     ProviderTimeoutError,
+    SlotDisabledError,
     UnsupportedMediaError,
     UploadReadError,
 )
@@ -56,10 +57,13 @@ class IngestService:
         default_factory=lambda: create_driver
     )
     log: logging.Logger = field(default_factory=lambda: logger)
+    _slot_locks: dict[str, asyncio.Lock] = field(default_factory=dict, init=False)
 
     def prepare_job(self, slot_id: str, *, source: str = "ingest") -> JobContext:
         """Initialize context using slot configuration and persist pending job."""
         slot = self.slot_repo.get_slot(slot_id)
+        if not slot.is_active:
+            raise SlotDisabledError(f"Slot '{slot_id}' is disabled")
         job_id = uuid.uuid4().hex
         started_at = datetime.utcnow()
         sync_deadline = started_at + timedelta(seconds=self.sync_response_seconds)
@@ -95,6 +99,12 @@ class IngestService:
         job.metadata["slot_display_name"] = slot.display_name
         job.metadata["source"] = source
         return job
+
+    def slot_lock(self, slot_id: str) -> asyncio.Lock:
+        """Return a per-slot lock to serialize ingest requests."""
+        if slot_id not in self._slot_locks:
+            self._slot_locks[slot_id] = asyncio.Lock()
+        return self._slot_locks[slot_id]
 
     def verify_ingest_password(self, provided: str) -> bool:
         """Compare provided password with configured plaintext value."""
@@ -356,6 +366,7 @@ class IngestService:
             self.record_failure(job, FailureReason.PROVIDER_ERROR)
             raise
 
+        job.metadata["result_content_type"] = content_type
         self.record_success(job, payload, content_type)
         return payload
 

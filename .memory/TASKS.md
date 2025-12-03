@@ -227,10 +227,10 @@ updated: 2025-12-02
     [x] T PHC-5.0.5 — Обновить чеклисты/ops: политика хранения и логи (исключить вывод пароля), изменить NFR/risks
     [x] T PHC-5.0.6 — Обновить ingest-пайплайн: проверка пароля по plaintext, убрать сравнение с хэшем, покрыть unit/contract-тестами (POST /api/ingest)
 
-- [ ] EP PHC-6 — Полный ingest с Gemini  
-  [ ] US PHC-6.GOV — Governance & Discovery  
-    [ ] T PHC-6.GOV.1 — REFLECT — подтвердить формат ответа `/api/ingest/{slot_id}` (бинарный vs JSON+URL), модель статусов/ошибок, поведение при hash mismatch (warn-only)  
-    [ ] T PHC-6.GOV.2 — CONSULT — утвердить SLA/таймауты и маппинг ошибок Gemini, поведение при отсутствии `GEMINI_API_KEY`  
+- [~] EP PHC-6 — Полный ingest с Gemini  
+  [x] US PHC-6.GOV — Governance & Discovery  
+    [x] T PHC-6.GOV.1 — REFLECT — подтвердить формат ответа `/api/ingest/{slot_id}` (бинарный vs JSON+URL), модель статусов/ошибок, поведение при hash mismatch (warn-only)  
+    [x] T PHC-6.GOV.2 — CONSULT — утвердить SLA/таймауты и маппинг ошибок Gemini, поведение при отсутствии `GEMINI_API_KEY`  
   [ ] FEAT PHC-6.0 — Интеграция Gemini в ingest-пайплайн  
     [ ] T PHC-6.0.1 — Включить вызов `GeminiDriver` в `IngestService.process` после валидации, сохранять результат в ResultStore/DB  
       [ ] T PHC-6.0.1a — Провязать `_invoke_provider` с `GeminiDriver`, учесть prompt/settings/template_media  

@@ -22,6 +22,7 @@ from ..ingest.ingest_errors import (
     PayloadTooLargeError,
     ProviderExecutionError,
     ProviderTimeoutError,
+    SlotDisabledError,
     UnsupportedMediaError,
     UploadReadError,
 )
@@ -301,6 +302,14 @@ async def run_test_slot(
             overrides=overrides or None,
             expected_hash=None,
         )
+    except SlotDisabledError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "status": "error",
+                "failure_reason": FailureReason.SLOT_DISABLED.value,
+            },
+        ) from exc
     except KeyError:
         log.exception("slots.test_run.key_error", extra={"slot_id": slot_id})
         raise HTTPException(

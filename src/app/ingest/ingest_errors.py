@@ -27,3 +27,7 @@ class ProviderTimeoutError(IngestError):
 
 class ProviderExecutionError(IngestError):
     """Raised when provider driver fails before producing a result."""
+
+
+class SlotDisabledError(IngestError):
+    """Raised when ingest is attempted against a disabled slot."""
