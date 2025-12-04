@@ -84,3 +84,6 @@
 - Перед любым выводом текста в PowerShell принудительно выставляй консольную кодировку: `[Console]::InputEncoding = [Console]::OutputEncoding = [System.Text.Encoding]::UTF8; <команда>`. Пример: `powershell.exe -NoLogo -Command "[Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8; Get-Content -Raw -Encoding UTF8 '.memory/CONTEXT.md'"`!
 - Для скриптовых правок предпочитай `py -X utf8 -c "…"`, а для точечных изменений — `apply_patch`; это исключает двойное перекодирование.
 - После правок проверяй, что файл читается как UTF-8 (`py -X utf8 -c "from pathlib import Path; Path(...).read_text(encoding='utf-8')"`) и что `git diff` не содержит «Р…» артефактов.
+
+## 11) Формат вывода команд
+Каждую команду выводи в отдельном фрейме через три обратных апострофа - для удобного копирования команды.

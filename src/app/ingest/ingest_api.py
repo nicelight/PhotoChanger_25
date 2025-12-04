@@ -210,4 +210,8 @@ async def submit_ingest(
             or (job.upload.content_type if job.upload else None)
             or "image/png"
         )
-        return Response(content=payload, media_type=content_type)
+        return Response(
+            content=payload,
+            media_type=content_type,
+            headers={"Content-Disposition": 'attachment; filename="result.png"'},
+        )

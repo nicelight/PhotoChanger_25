@@ -98,7 +98,17 @@ cd /opt/photochanger
 git pull
 docker compose build app
 docker compose up -d
+проверка: 
+docker compose ps
+docker compose exec app curl -f http://localhost:8000/metrics | head
+
 
 10) перезапуск приложения 
 cd /opt/photochanger
 docker compose restart app
+
+11) Тесты 
+посмотреть тайминги джобов 
+```
+docker compose exec postgres psql -U phchadmin -d photochanger -c "select job_id,started_at,completed_at,extract(epoch from (completed_at-started_at)) as seconds from job_history order by started_at desc limit 3;"
+```

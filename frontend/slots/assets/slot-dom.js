@@ -50,11 +50,14 @@
       meta.className = "slot-results__meta";
       const completed = document.createElement("strong");
       completed.textContent = `Завершено: ${formatDateTime(item.completed_at)}`;
+      const jobLine = document.createElement("span");
+      jobLine.textContent = item.job_id ? `Job ID: ${item.job_id}` : "";
       const expires = document.createElement("span");
       expires.textContent = `Ссылка активна до ${formatDateTime(item.result_expires_at)}`;
       const mime = document.createElement("span");
       mime.textContent = item.mime ? `Формат: ${item.mime}` : "";
       meta.appendChild(completed);
+      if (item.job_id) meta.appendChild(jobLine);
       meta.appendChild(expires);
       if (item.mime) meta.appendChild(mime);
 
