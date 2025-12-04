@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="PhotoChanger">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#b3f5ff"/>
+      <stop offset="50%" stop-color="#8fe0d2"/>
+      <stop offset="100%" stop-color="#f6d2c8"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="12" fill="url(#g)"/>
+  <!-- тонкий контур алмаза -->
+  <path d="M18 24h28l-12 24h-4z" fill="none" stroke="#0f6e8c" stroke-width="2.6" stroke-linejoin="round"/>
+  <path d="M18 24l8 8h12l8-8" fill="none" stroke="#0f6e8c" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M26 32l6 16m6-16l-6 16" fill="none" stroke="#0f6e8c" stroke-width="2" stroke-linejoin="round"/>
+</svg>

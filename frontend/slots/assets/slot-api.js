@@ -157,7 +157,7 @@
     }
     if (elements.slotIdValue) elements.slotIdValue.textContent = state.slotMeta.id;
     if (elements.ingestInput) {
-      const url = generateIngestURL(state.slotMeta.id, provider);
+      const url = generateIngestURL(state.slotMeta.id);
       elements.ingestInput.value = url;
       if (elements.copyButton) elements.copyButton.disabled = !provider;
     }
@@ -277,11 +277,10 @@
     return response.json().catch(() => ({}));
   }
 
-  function generateIngestURL(slotId, providerSlug) {
-    if (slotId && providerSlug) {
-      return `${endpoints.ingestBase}${providerSlug}/${slotId}`;
-    }
-    return "";
+  function generateIngestURL(slotId) {
+    if (!slotId || !endpoints.ingestBase) return "";
+    const base = endpoints.ingestBase.endsWith("/") ? endpoints.ingestBase.slice(0, -1) : endpoints.ingestBase;
+    return `${base}/${slotId}`;
   }
 
   ns.api = {
