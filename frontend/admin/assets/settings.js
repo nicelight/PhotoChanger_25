@@ -6,6 +6,7 @@
   const settingsEndpoint = dataset.settingsEndpoint || "/api/settings";
   const statsHref = dataset.statsHref || "/ui/stats";
   const dashboardHref = dataset.dashboardHref || "/ui/static/admin/dashboard.html";
+  const galleryHref = dataset.galleryHref || "/ui/static/admin/gallery.html";
   const defaultProviders =
     dataset.providers?.split(",").map((item) => item.trim()).filter(Boolean) || ["gemini", "turbotext"];
 
@@ -30,10 +31,12 @@
   function setupToolbar() {
     const statsBtn = document.querySelector('[data-action="go-stats"]');
     const slotsBtn = document.querySelector('[data-action="go-slots"]');
+    const galleryBtn = document.querySelector('[data-action="go-gallery"]');
     const logoutBtn = document.querySelector('[data-action="logout"]');
 
     statsBtn && statsBtn.addEventListener("click", () => (window.location.href = statsHref));
     slotsBtn && slotsBtn.addEventListener("click", () => (window.location.href = dashboardHref));
+    galleryBtn && galleryBtn.addEventListener("click", () => (window.location.href = galleryHref));
     logoutBtn && logoutBtn.addEventListener("click", () => {
       AdminAuth.clearToken();
       window.location.replace(AdminAuth.getLoginPath());

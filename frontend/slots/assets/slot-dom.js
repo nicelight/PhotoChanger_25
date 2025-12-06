@@ -52,6 +52,7 @@
       completed.textContent = `Завершено: ${formatDateTime(item.completed_at)}`;
       const jobLine = document.createElement("span");
       jobLine.textContent = item.job_id ? `Job ID: ${item.job_id}` : "";
+      jobLine.className = "job-id";
       const expires = document.createElement("span");
       expires.textContent = `Ссылка активна до ${formatDateTime(item.result_expires_at)}`;
       const mime = document.createElement("span");

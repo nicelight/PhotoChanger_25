@@ -8,6 +8,7 @@
   const slotPageBase = dataset.slotPage || "/ui/static/slots";
   const statsHref = dataset.statsHref || "/ui/stats";
   const settingsHref = dataset.settingsHref || "/ui/static/admin/settings.html";
+  const galleryHref = dataset.galleryHref || "/ui/static/admin/gallery.html";
 
   const listEl = document.getElementById("slots-list");
   const errorEl = document.getElementById("slots-error");
@@ -21,10 +22,12 @@
 
   function setupToolbar() {
     const statsBtn = document.querySelector('[data-action="go-stats"]');
+    const galleryBtn = document.querySelector('[data-action="go-gallery"]');
     const settingsBtn = document.querySelector('[data-action="go-settings"]');
     const logoutBtn = document.querySelector('[data-action="logout"]');
 
     statsBtn && statsBtn.addEventListener("click", () => (window.location.href = statsHref));
+    galleryBtn && galleryBtn.addEventListener("click", () => (window.location.href = galleryHref));
     settingsBtn && settingsBtn.addEventListener("click", () => (window.location.href = settingsHref));
     logoutBtn && logoutBtn.addEventListener("click", () => {
       AdminAuth.clearToken();

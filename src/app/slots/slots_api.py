@@ -33,7 +33,7 @@ from ..repositories.media_object_repository import MediaObjectRepository
 from ..settings.settings_service import SettingsService
 from .slots_models import Slot
 from .slots_repository import SlotRepository
-from .template_media import merge_template_media, template_media_map
+from .template_media import merge_template_media
 from .slots_schemas import (
     SlotDetailsResponse,
     SlotRecentResultPayload,
@@ -434,6 +434,7 @@ def _slot_details(
             )
         )
     runtime = settings_service.snapshot()
+    latest_result = recent_results[0] if recent_results else None
 
     return SlotDetailsResponse(
         **_slot_summary(slot).model_dump(),
@@ -442,4 +443,5 @@ def _slot_details(
         settings=slot.settings or {},
         template_media=template_media,
         recent_results=recent_results,
+        latest_result=latest_result,
     )

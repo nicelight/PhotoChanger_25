@@ -43,6 +43,7 @@ class SlotDetailsResponse(SlotSummaryResponse):
     settings: dict[str, Any]
     template_media: list[SlotTemplateMediaPayload]
     recent_results: list[SlotRecentResultPayload]
+    latest_result: SlotRecentResultPayload | None = None
 
 
 class SlotUpdateRequest(BaseModel):

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PhotoChanger — Публичная галерея</title>
+    <link rel="icon" type="image/svg+xml" href="/ui/static/admin/assets/favicon.svg" />
+    <link rel="stylesheet" href="/ui/static/slots/assets/slot.css" />
+    <link rel="stylesheet" href="/ui/static/admin/assets/admin.css" />
+  </head>
+  <body class="admin-body" data-public-gallery-endpoint="/pub/gallery">
+    <div class="bg">
+      <div class="admin-main">
+        <header class="admin-header">
+          <div class="bar">
+            <a class="admin-brand" href="#" aria-label="PhotoChanger">
+              <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect x="2" y="6" width="28" height="20" rx="6" fill="#0f866c" />
+                <rect x="6" y="10" width="20" height="12" rx="4" fill="#ffffff" />
+                <path d="M10 20c2.5-3.5 6.5-3.5 9 0" stroke="#0f866c" stroke-width="2" stroke-linecap="round" fill="none" />
+              </svg>
+              PhotoChanger
+            </a>
+            <nav class="admin-toolbar" aria-label="Навигация">
+              <span class="gallery-meta">Публичный доступ активен на ограниченное время</span>
+            </nav>
+          </div>
+        </header>
+
+        <div class="admin-content">
+          <div class="admin-shell">
+            <section class="admin-card">
+              <div class="admin-section-header">
+                <div>
+                  <p class="muted-hint">Публичная копия галереи</p>
+                  <h1>Галерея слотов</h1>
+                  <p class="muted-hint">Ссылка работает ограниченное время и может быть отключена администратором.</p>
+                </div>
+                <div class="actions">
+                  <button id="public-reload" class="btn-primary" type="button">Обновить</button>
+                </div>
+              </div>
+              <p id="public-status" class="muted-hint" role="status"></p>
+              <div id="public-list" class="gallery-list" aria-live="polite"></div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/ui/static/public/assets/public-gallery.js" defer></script>
+  </body>
+</html>

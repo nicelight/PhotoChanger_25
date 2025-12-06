@@ -74,6 +74,8 @@ owner: ops
    # healthz пока не реализован; используем /metrics как smoke
    curl -f http://localhost:8000/metrics | head
    ```
+   Главная страница http://dslr.moment-studio.ru:8000/ui/static/admin/dashboard.html
+   
 
 7) Настроить cron cleanup (под root; каждые 15 минут):
    ```bash
