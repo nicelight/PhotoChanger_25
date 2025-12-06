@@ -19,6 +19,9 @@ from .media.temp_media_store import TempMediaStore
 from .providers.providers_factory import create_driver
 from .public.public_media_router import build_public_media_router
 from .public.public_results_router import build_public_results_router
+from .public.public_gallery_router import build_public_gallery_router
+from .public.public_gallery_admin_router import build_public_gallery_admin_router
+from .public.public_gallery_service import GalleryCache, GalleryRateLimiter, GalleryShareState
 from .repositories.job_history_repository import JobHistoryRepository
 from .repositories.media_object_repository import MediaObjectRepository
 from .slots.slots_repository import SlotRepository
@@ -94,6 +97,9 @@ def include_routers(app: FastAPI, config: AppConfig) -> None:
     app.state.stats_service = stats_service
     app.state.auth_service = auth_service
     app.state.metrics_exporter = metrics_exporter
+    app.state.gallery_share_state = GalleryShareState()
+    app.state.gallery_rate_limiter = GalleryRateLimiter(limit_per_minute=30)
+    app.state.gallery_cache = GalleryCache(ttl_seconds=30)
 
     public_media_service = PublicMediaService(media_repo=media_repo)
     public_result_service = PublicResultService(job_repo=job_repo)
@@ -108,6 +114,18 @@ def include_routers(app: FastAPI, config: AppConfig) -> None:
     app.include_router(ui_stats_router)
     app.include_router(build_public_media_router(public_media_service))
     app.include_router(build_public_results_router(public_result_service))
+    app.include_router(
+        build_public_gallery_router(
+            share_state=app.state.gallery_share_state,
+            rate_limiter=app.state.gallery_rate_limiter,
+            cache=app.state.gallery_cache,
+            slot_repo=slot_repo,
+            job_repo=job_repo,
+            settings_service=settings_service,
+            gallery_page_path=str(FRONTEND_ROOT / "public" / "gallery.html"),
+        )
+    )
+    app.include_router(build_public_gallery_admin_router(app.state.gallery_share_state))
 
     if FRONTEND_ROOT.exists():
         app.mount(

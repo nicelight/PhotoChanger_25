@@ -302,6 +302,7 @@ def test_get_slot_details_includes_recent_results() -> None:
     assert payload["template_media"][0]["preview_url"].endswith("media-1")
     assert payload["template_media"][0]["role"] == "template"
     assert payload["recent_results"][0]["job_id"] == "job-1"
+    assert payload["latest_result"]["job_id"] == "job-1"
 
 
 def test_update_slot_persists_changes() -> None:

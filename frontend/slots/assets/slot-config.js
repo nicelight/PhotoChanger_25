@@ -75,6 +75,7 @@
     resultsEmpty: $("slot-results-empty"),
     resultsError: $("slot-results-error"),
     resultsRefresh: $("results-refresh"),
+    galleryLink: $("gallery-link"),
     toast: $("toast"),
     serverResponse: $("server-response"),
   };
@@ -91,6 +92,7 @@
     slotLimitMb: Number(dataset.slotLimitMb || 15),
     slotSyncSeconds: Number(dataset.slotSync || 48),
     ingestBase: dataset.ingestBase || "https://api.example.com/ingest/",
+    galleryHref: dataset.galleryHref || "/ui/static/admin/gallery.html",
   };
 
   ns.state = {

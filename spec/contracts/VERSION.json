@@ -1,8 +1,8 @@
 {
-  "version": "0.9.1",
-  "released_at": "2025-12-03",
+  "version": "0.10.0",
+  "released_at": "2025-12-05",
   "stage": "draft",
-  "summary": "Полный ingest-поток: провайдер вызывается с бинарным ответом, слот блокирует параллельные запросы; hash mismatch остаётся предупреждением.",
+  "summary": "Публичная галерея с временным доступом (15 минут, rate limit) и latest_result в ответе слотов для UI.",
   "changes": [
     {
       "type": "init",
@@ -151,6 +151,29 @@
         "src/app/providers/providers_gemini.py",
         "spec/contracts/openapi.yaml",
         "spec/contracts/ingest-errors.md"
+      ]
+    },
+    {
+      "type": "feature",
+      "description": "Добавлено поле latest_result в ответ /api/slots/{slot_id} и задокументированы дополнительные поля результата для поддержки галереи админ-UI.",
+      "artifacts": [
+        "src/app/slots/slots_api.py",
+        "src/app/slots/slots_schemas.py",
+        "spec/contracts/openapi.yaml"
+      ]
+    },
+    {
+      "type": "feature",
+      "description": "Введена публичная галерея с временным доступом на 15 минут (/pubgallery, /api/gallery/share), rate limit и кэшем ответа.",
+      "artifacts": [
+        "src/app/public/public_gallery_service.py",
+        "src/app/public/public_gallery_router.py",
+        "src/app/public/public_gallery_admin_router.py",
+        "frontend/admin/gallery.html",
+        "frontend/admin/assets/gallery.js",
+        "frontend/public/gallery.html",
+        "frontend/public/assets/public-gallery.js",
+        "spec/contracts/openapi.yaml"
       ]
     }
   ],

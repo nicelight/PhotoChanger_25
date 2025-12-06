@@ -23,6 +23,7 @@
   data-ingest-base="http://dslr.moment-studio.ru:8000/api/ingest"
   data-login-path="/ui/static/admin/login.html"
   data-dashboard-path="/ui/static/admin/dashboard.html"
+  data-gallery-href="/ui/static/admin/gallery.html"
 >
   <div class="bg">
     <main>
@@ -141,14 +142,17 @@
         <section class="card slot-results" id="slot-results" aria-labelledby="slot-results-title">
           <div class="slot-results__header">
             <div>
-              <h2 id="slot-results-title">Последние результаты</h2>
-              <p class="muted-hint">Показываем превью успешно обработанных изображений. Ссылки на скачивание активны 72&nbsp;часа после готовности файла.</p>
+              <h2 id="slot-results-title">Последний результат</h2>
+              <p class="muted-hint">Показываем только последний готовый результат. Все предыдущие изображения доступны в галерее.</p>
             </div>
             <button type="button" class="btn -ghost" id="results-refresh">Обновить</button>
           </div>
           <p id="slot-results-error" class="slot-results__error" role="status" style="display:none"></p>
-          <div id="slot-results-empty" class="slot-results__empty muted-hint">Пока нет готовых изображений для этого слота.</div>
+          <div id="slot-results-empty" class="slot-results__empty muted-hint">Пока нет готового результата для этого слота.</div>
           <div id="slot-results-grid" class="slot-results__grid" role="list"></div>
+          <div class="slot-results__footer">
+            <a id="gallery-link" class="btn -ghost" href="/ui/static/admin/gallery.html">Открыть галерею всех слотов</a>
+          </div>
         </section>
       </div>
     </main>

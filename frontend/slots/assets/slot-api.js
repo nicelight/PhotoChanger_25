@@ -50,7 +50,8 @@
     dom.setResultsError("");
     try {
       const payload = await requestSlotDetails();
-      dom.renderRecentResults(extractRecentResults(payload));
+      const latest = extractLatestResult(payload);
+      dom.renderRecentResults(latest ? [latest] : []);
     } catch (err) {
       console.warn("[Recent results]", err);
       dom.setResultsError("Не удалось загрузить результаты.");
@@ -167,7 +168,8 @@
     if (!endpoints.slotApi) return null;
     const payload = await requestSlotDetails();
     hydrateSlotFromServer(payload);
-    dom.renderRecentResults(extractRecentResults(payload));
+    const latest = extractLatestResult(payload);
+    dom.renderRecentResults(latest ? [latest] : []);
     return payload;
   }
 
@@ -214,6 +216,12 @@
       elements.operationSelect.value = slot.operation;
       elements.operationSelect.dispatchEvent(new Event("change"));
     }
+  }
+
+  function extractLatestResult(payload) {
+    if (payload && payload.latest_result) return payload.latest_result;
+    const list = extractRecentResults(payload);
+    return list.length ? list[0] : null;
   }
 
   async function persistAndToast(payload, provider) {
@@ -295,5 +303,6 @@
     generateIngestURL,
     updateSlotHeader,
     needsPrompt,
+    extractLatestResult,
   };
 })(window.SlotPage || (window.SlotPage = {}));

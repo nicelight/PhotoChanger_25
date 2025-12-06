@@ -406,6 +406,9 @@
     if (!ensureAuth()) {
       return;
     }
+    if (elements.galleryLink && endpoints.galleryHref) {
+      elements.galleryLink.href = endpoints.galleryHref;
+    }
     bindCopyButton();
     bindToggle(elements.toggleSecond, elements.secondWrap);
     bindToggle(elements.toggleFirst, elements.firstWrap);

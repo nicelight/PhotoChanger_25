@@ -1,21 +1,24 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ru">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>PhotoChanger — Настройки платформы</title>
+    <title>PhotoChanger — Галерея результатов</title>
     <link rel="icon" type="image/svg+xml" href="/ui/static/admin/assets/favicon.svg" />
     <link rel="stylesheet" href="/ui/static/slots/assets/slot.css" />
     <link rel="stylesheet" href="/ui/static/admin/assets/admin.css" />
   </head>
   <body
     class="admin-body"
-  data-login-path="/ui/static/admin/login.html"
-  data-dashboard-href="/ui/static/admin/dashboard.html"
-  data-settings-endpoint="/api/settings"
-  data-stats-href="/ui/stats"
-  data-gallery-href="/ui/static/admin/gallery.html"
->
+    data-login-path="/ui/static/admin/login.html"
+    data-dashboard-href="/ui/static/admin/dashboard.html"
+    data-settings-href="/ui/static/admin/settings.html"
+    data-stats-href="/ui/stats"
+    data-slot-endpoint-base="/api/slots/"
+    data-share-endpoint="/api/gallery/share"
+    data-public-gallery-url="/pubgallery"
+    data-rate-limit-hint="Лимит: 30 запросов в минуту на публичную ссылку"
+  >
     <div class="bg">
       <div class="admin-main">
         <header class="admin-header">
@@ -35,19 +38,19 @@
                   <path d="M7 8V5a5 5 0 0 1 10 0v3" />
                 </svg>
               </button>
-              <button class="icon-btn" type="button" data-action="go-gallery" aria-label="Галерея">
+              <button class="icon-btn" type="button" data-action="go-stats" aria-label="Статистика">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 20V4" /><path d="M4 20h16" /><path d="M8 20v-8" /><path d="M12 20v-4" /><path d="M16 20v-12" /><path d="M20 20v-6" />
+                </svg>
+              </button>
+              <button class="icon-btn is-active" type="button" data-action="go-gallery" aria-label="Галерея слотов">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="3" y="7" width="18" height="14" rx="3" />
                   <circle cx="12" cy="14" r="3.2" />
                   <path d="M7 7l1.5-2.2a1 1 0 0 1 .84-.45h5.32a1 1 0 0 1 .84.45L17 7" />
                 </svg>
               </button>
-              <button class="icon-btn" type="button" data-action="go-stats" aria-label="Статистика">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M4 20V4" /><path d="M4 20h16" /><path d="M8 20v-8" /><path d="M12 20v-4" /><path d="M16 20v-12" /><path d="M20 20v-6" />
-                </svg>
-              </button>
-              <button class="icon-btn is-active" type="button" aria-label="Настройки">
+              <button class="icon-btn" type="button" data-action="go-settings" aria-label="Настройки">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="3" />
                   <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.82l.02.07a2 2 0 1 1-3.76 1.35l-.02-.07a1.65 1.65 0 0 0-1-.6 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.82-.33l-.07.02a2 2 0 1 1-1.35-3.76l.07-.02a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1.82l-.02-.07a2 2 0 1 1 3.76-1.35l.02.07a1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.6 1 1.65 1.65 0 0 0 .6 1l.06.06a2 2 0 1 1-1.4 3.4z" />
@@ -69,38 +72,18 @@
             <section class="admin-card">
               <div class="admin-section-header">
                 <div>
-                  <p class="muted-hint">Глобальные параметры</p>
-                  <h1>Настройки платформы</h1>
+                  <p class="muted-hint">Сводка последних результатов</p>
+                  <h1>Галерея слотов</h1>
+                </div>
+                <div class="actions">
+                  <button id="share-gallery" class="btn-ghost" type="button">Расшарить на 15 минут</button>
+                  <button id="gallery-reload" class="btn-primary" type="button">Обновить все</button>
                 </div>
               </div>
-              <form id="settings-form" class="settings-grid" novalidate>
-                <div>
-                  <label for="sync-response">Синхронный таймаут (сек.)</label>
-                  <input id="sync-response" name="sync_response_seconds" type="number" min="10" max="60" required />
-                  <p class="muted-hint">Контролирует T_sync_response для всех слотов.</p>
-                </div>
-                <div>
-                  <label for="ttl-hours">TTL результатов (часы)</label>
-                  <input id="ttl-hours" name="result_ttl_hours" type="number" min="24" max="168" required />
-                  <p class="muted-hint">Через сколько часов результаты будут удалены автоматически.</p>
-                </div>
-                <div>
-                  <label for="ingest-password">Текущий ingest-пароль</label>
-                  <input id="ingest-password" name="ingest_password" type="text" placeholder="Введите или измените пароль" />
-                  <p id="password-meta" class="muted-hint"></p>
-                </div>
-
-                <div>
-                  <h2>API ключи провайдеров</h2>
-                  <p class="muted-hint">Укажите новый ключ, чтобы обновить конфигурацию. Поле можно оставить пустым, если ключ не меняется.</p>
-                  <ul id="provider-keys" class="provider-keys"></ul>
-                </div>
-
-                <div class="actions-bar">
-                  <button class="btn-primary" type="submit">Сохранить</button>
-                </div>
-                <p id="settings-status" class="muted-hint" role="status"></p>
-              </form>
+              <p class="muted-hint">15 спойлеров, по одному на слот. При разворачивании видно до 10 последних результатов, ссылки работают 72 часа.</p>
+              <p id="gallery-status" class="muted-hint" role="status"></p>
+              <p id="gallery-share-hint" class="muted-hint" aria-live="polite"></p>
+              <div id="gallery-list" class="gallery-list" aria-live="polite"></div>
             </section>
           </div>
         </div>
@@ -108,7 +91,6 @@
     </div>
 
     <script src="/ui/static/admin/assets/auth.js" defer></script>
-    <script src="/ui/static/admin/assets/settings.js" defer></script>
+    <script src="/ui/static/admin/assets/gallery.js" defer></script>
   </body>
 </html>
-
