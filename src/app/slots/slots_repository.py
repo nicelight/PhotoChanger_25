@@ -87,9 +87,12 @@ class SlotRepository:
             merged_settings = dict(current_settings)
             merged_settings.update(settings or {})
             base_template = current_settings.get("template_media") or []
-            merged_template_media = merge_template_media(
-                base_template, template_media, default_role="template"
-            )
+            if not template_media:
+                merged_template_media = []
+            else:
+                merged_template_media = merge_template_media(
+                    base_template, template_media, default_role="template"
+                )
             merged_settings["template_media"] = merged_template_media
 
             row.display_name = display_name

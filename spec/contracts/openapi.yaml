@@ -676,6 +676,7 @@ components:
             latest_result:
               $ref: '#/components/schemas/SlotRecentResult'
               nullable: true
+              description: Last successful result (status=done) if present.
     SlotTemplateMediaBinding:
       type: object
       required:
