@@ -406,20 +406,20 @@ def _slot_details(
     recent_records = job_repo.list_recent_by_slot(slot.id, limit=10)
     recent_results: list[SlotRecentResultPayload] = []
     for record in recent_records:
-        if record.status not in {"done", "failed", "timeout"}:
+        if record.status != "done":
             continue
         finished_at = record.completed_at or record.started_at
-        if finished_at is None:
+        if finished_at is None or not record.result_path:
             continue
         public_url = f"/public/results/{record.job_id}"
         mime = None
-        if record.result_path:
-            if record.result_path.lower().endswith(".png"):
-                mime = "image/png"
-            elif record.result_path.lower().endswith(".jpg") or record.result_path.lower().endswith(".jpeg"):
-                mime = "image/jpeg"
-            elif record.result_path.lower().endswith(".webp"):
-                mime = "image/webp"
+        path_lower = record.result_path.lower()
+        if path_lower.endswith(".png"):
+            mime = "image/png"
+        elif path_lower.endswith(".jpg") or path_lower.endswith(".jpeg"):
+            mime = "image/jpeg"
+        elif path_lower.endswith(".webp"):
+            mime = "image/webp"
         recent_results.append(
             SlotRecentResultPayload(
                 job_id=record.job_id,

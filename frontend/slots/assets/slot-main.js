@@ -38,9 +38,16 @@
     });
   }
 
-  function bindToggle(toggle, panel) {
+  function bindToggle(toggle, panel, onChange) {
     if (!toggle || !panel) return;
-    const apply = () => (toggle.checked ? dom.show(panel) : dom.hide(panel));
+    const apply = () => {
+      if (toggle.checked) {
+        dom.show(panel);
+      } else {
+        dom.hide(panel);
+        if (typeof onChange === "function") onChange(false);
+      }
+    };
     toggle.addEventListener("change", apply);
     apply();
   }
@@ -402,6 +409,22 @@
     }
   }
 
+  function handleSecondToggle(enabled) {
+    if (enabled === false) {
+      if (elements.secondStatus) elements.secondStatus.value = "removed";
+      if (elements.secondHiddenId) elements.secondHiddenId.value = "";
+      if (elements.secondInput) elements.secondInput.value = "";
+      if (elements.secondDrop) elements.secondDrop.classList.remove("has-image");
+      const preview = document.getElementById("preview-second");
+      if (preview) {
+        preview.src = "";
+        preview.style.display = "none";
+      }
+      state.templateMediaState.pendingFile = null;
+      state.templateMediaState.mediaId = "";
+    }
+  }
+
   function init() {
     if (!ensureAuth()) {
       return;
@@ -410,7 +433,7 @@
       elements.galleryLink.href = endpoints.galleryHref;
     }
     bindCopyButton();
-    bindToggle(elements.toggleSecond, elements.secondWrap);
+    bindToggle(elements.toggleSecond, elements.secondWrap, handleSecondToggle);
     bindToggle(elements.toggleFirst, elements.firstWrap);
     bindSlot("second");
     bindSlot("first");
