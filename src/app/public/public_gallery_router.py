@@ -80,7 +80,15 @@ def _build_gallery_payload(
 
 def _build_recent(job_repo: JobHistoryRepository, slot_id: str, limit: int = 10) -> list[dict[str, Any]]:
     records = job_repo.list_recent_by_slot(slot_id, limit=limit)
-    return [_record_to_result(rec) for rec in records if rec.completed_at or rec.started_at]
+    results: list[dict[str, Any]] = []
+    for rec in records:
+        if rec.status != "done":
+            continue
+        if not rec.result_path:
+            continue
+        result = _record_to_result(rec)
+        results.append(result)
+    return results
 
 
 def _build_latest(job_repo: JobHistoryRepository, slot_id: str) -> dict[str, Any] | None:
@@ -88,7 +96,7 @@ def _build_latest(job_repo: JobHistoryRepository, slot_id: str) -> dict[str, Any
     if not records:
         return None
     rec = records[0]
-    if not (rec.completed_at or rec.started_at):
+    if rec.status != "done" or not rec.result_path:
         return None
     return _record_to_result(rec)
 

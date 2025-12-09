@@ -155,7 +155,10 @@ class GeminiDriver(ProviderDriver):
                 error_detail = _extract_error(response)
                 body_preview = response.text[:500]
                 self.log.error(
-                    "gemini.response.error",
+                    "gemini.response.error status=%s detail=%s body_preview=%s",
+                    response.status_code,
+                    error_detail,
+                    body_preview,
                     extra={
                         "slot_id": job.slot_id,
                         "job_id": job.job_id,
