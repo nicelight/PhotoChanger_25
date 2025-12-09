@@ -110,7 +110,9 @@
   }
 
   function needsTemplateMedia() {
-    return elements.secondStatus && elements.secondStatus.value === "present";
+    const hasStatus = elements.secondStatus && elements.secondStatus.value === "present";
+    const toggleOn = elements.toggleSecond ? elements.toggleSecond.checked : true;
+    return hasStatus && toggleOn;
   }
 
   function getPromptValue() {
