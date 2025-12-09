@@ -75,7 +75,7 @@ owner: ops
    curl -f http://localhost:8000/metrics | head
    ```
    Главная страница http://dslr.moment-studio.ru:8000/ui/static/admin/dashboard.html
-   
+
 
 7) Настроить cron cleanup (под root; каждые 15 минут):
    ```bash
@@ -90,9 +90,51 @@ owner: ops
 - `/healthz` → 200, `/metrics` отдают текст.
 - Cron пишет логи и возвращает код 0 (`cleanup done ...`).
 
-# Эксплуатационные заметки
+# Эксплуатационные заметки и обновление PROD
 - Не коммитить `.env` и `secrets/` в git; права 600, владелец `photochanger`.
 - При обновлении: `git pull` → `docker compose build` → `docker compose up -d` → `docker compose exec app alembic upgrade head` → смоук `/healthz`/`/metrics`.
+
+
+## Ручное обновление prod (rolling через compose)
+> Выполнять под `photochanger`, в корне `/opt/photochanger`. При ошибках не откатывать БД вручную — сначала сверить миграции.
+
+1) Подготовка:
+   ```bash
+   su - photochanger
+   cd /opt/photochanger
+   git pull
+   ```
+   При необходимости подтянуть secrets/.env (scp/rsync) перед сборкой.
+
+2) Сборка и подъем приложения:
+   ```bash
+   docker compose build app
+   docker compose up -d app
+   ```
+
+3) Миграции БД:
+   ```bash
+   docker compose exec app alembic upgrade head
+   ```
+
+4) Смоук-проверка:
+   ```bash
+   docker compose ps
+   docker compose exec app curl -f http://localhost:8000/metrics | head
+   # опционально: /healthz если включен
+   ```
+   В UI: зайти на `/ui/static/admin/dashboard.html` и убедиться, что загружается.
+
+5) (Опционально) проверить тайминги последних job:
+   ```bash
+   docker compose exec postgres psql -U phchadmin -d photochanger -c \
+     "select job_id,started_at,completed_at,extract(epoch from (completed_at-started_at)) as seconds from job_history order by started_at desc limit 3;"
+   ```
+
+6) Перезапуск при необходимости:
+   ```bash
+   docker compose restart app
+   ```
 
 9) обновления на сервер 
 su - photochanger
