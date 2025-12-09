@@ -338,7 +338,8 @@
         dom.pulse(elements.form);
         return;
       }
-      if (needs.second && (!elements.secondStatus || elements.secondStatus.value !== "present")) {
+      const secondEnabled = elements.toggleSecond ? elements.toggleSecond.checked : true;
+      if (needs.second && secondEnabled && (!elements.secondStatus || elements.secondStatus.value !== "present")) {
         dom.toast("Для этой операции требуется «Изображение — Шаблон стиля»", "error");
         dom.pulse(elements.form);
         return;
@@ -384,7 +385,8 @@
         dom.toast("Добавьте промпт перед тестовым запуском.", "error");
         return;
       }
-      if (needs.second && (!elements.secondStatus || elements.secondStatus.value !== "present")) {
+      const secondEnabled = elements.toggleSecond ? elements.toggleSecond.checked : true;
+      if (needs.second && secondEnabled && (!elements.secondStatus || elements.secondStatus.value !== "present")) {
         dom.toast("Для выбранной операции нужен шаблон «Изображение — Шаблон стиля».", "error");
         return;
       }
