@@ -282,7 +282,17 @@
       throw new Error("Исправьте ошибки тестового запуска.");
     }
     if (!response.ok) {
-      throw new Error(`Test-run завершился статусом ${response.status}`);
+      let message = `Test-run завершился статусом ${response.status}`;
+      try {
+        const body = await response.json();
+        message =
+          body?.detail?.message ||
+          body?.message ||
+          (typeof body?.detail === "string" ? body.detail : message);
+      } catch (_) {
+        // ignore parse errors, fallback to default message
+      }
+      throw new Error(message);
     }
     return response.json().catch(() => ({}));
   }

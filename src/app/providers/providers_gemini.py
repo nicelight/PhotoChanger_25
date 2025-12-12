@@ -7,6 +7,7 @@ import base64
 import logging
 import mimetypes
 import os
+import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -142,6 +143,35 @@ class GeminiDriver(ProviderDriver):
                 data = response.json()
                 summary = _response_summary(data)
                 self.log.info("gemini.response.received %s", summary)
+                masked_body = _mask_inline_data(data)
+                body_preview = json.dumps(masked_body, ensure_ascii=False)
+                if len(body_preview) > 4000:
+                    body_preview = body_preview[:4000] + "...(truncated)"
+                self.log.info(
+                    "gemini.response.body %s", body_preview, extra={"slot_id": job.slot_id, "job_id": job.job_id}
+                )
+                has_inline = _has_inline_data(data)
+                if not has_inline:
+                    # Попробуем вернуть читабельное сообщение провайдера вместо "502 Bad Gateway".
+                    finish_reason = None
+                    finish_message = None
+                    try:
+                        first_candidate = (data.get("candidates") or [None])[0] or {}
+                        finish_reason = first_candidate.get("finishReason") or first_candidate.get("finish_reason")
+                        finish_message = first_candidate.get("finishMessage") or first_candidate.get("finish_message")
+                    except Exception:  # pragma: no cover - defensive
+                        finish_reason = None
+                        finish_message = None
+
+                    self.log.warning(
+                        "gemini.response.no_inline_data %s",
+                        body_preview,
+                        extra={"slot_id": job.slot_id, "job_id": job.job_id},
+                    )
+                    if finish_message:
+                        raise ProviderExecutionError(finish_message)
+                    if finish_reason:
+                        raise ProviderExecutionError(f"Gemini response has no image (finish_reason={finish_reason})")
                 result = self._parse_response(
                     data, fallback_mime=(output or ingest_mime)
                 )
@@ -244,6 +274,23 @@ def _has_inline_data(data: dict[str, Any]) -> bool:
             if inline and inline.get("data"):
                 return True
     return False
+
+
+def _mask_inline_data(obj: Any) -> Any:
+    """Remove inline_data payloads to avoid logging base64 blobs."""
+    if isinstance(obj, dict):
+        result = {}
+        for key, value in obj.items():
+            if key in {"inline_data", "inlineData"} and isinstance(value, dict):
+                # keep mime_type, drop data
+                masked = {k: v for k, v in value.items() if k not in {"data", "data_base64"}}
+                result[key] = masked
+            else:
+                result[key] = _mask_inline_data(value)
+        return result
+    if isinstance(obj, list):
+        return [_mask_inline_data(item) for item in obj]
+    return obj
 
 
 def _response_summary(data: dict[str, Any]) -> str:

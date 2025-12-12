@@ -386,6 +386,9 @@ class IngestService:
 
         try:
             result = await driver.process(job)
+        except ProviderExecutionError:
+            # Провайдер уже вернул осмысленное сообщение — пробрасываем как есть.
+            raise
         except Exception as exc:
             raise ProviderExecutionError(
                 f"Provider '{provider_name}' failed to process job"
