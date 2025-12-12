@@ -13,6 +13,17 @@ owner: ops
 - Готовы боевые значения для `.env` и `secrets/runtime_credentials.json` (не хранить в git).
 
 # Шаги
+0)  Обновы
+   ```bash
+   sudo dnf update -y
+   sudo dnf upgrade -y
+   sudo dnf install -y dnf-utils
+
+   needs-restarting -r
+   если надо то
+   sudo reboot
+
+   ```
 1) Создать сервисного пользователя и базовую директорию (под root):
    ```bash
    sudo useradd -r -m -d /opt/photochanger -s /bin/bash photochanger
