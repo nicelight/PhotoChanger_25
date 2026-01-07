@@ -230,9 +230,14 @@ cd /opt/photochanger/app
 git pull
 echo pgdata >> .dockerignore
 docker compose build app
-docker compose run --rm app alembic upgrade head
 docker compose up -d app
 docker compose exec app curl -f http://localhost:8000/metrics | head
+```
+
+Если в обновлении появились новые миграции (`alembic/versions`), выполнить отдельно:
+
+```bash
+docker compose run --rm app alembic upgrade head
 ```
 
 ### Проверка таймингов job
