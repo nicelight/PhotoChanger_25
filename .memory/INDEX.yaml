@@ -20,13 +20,14 @@ spec/docs:
 runbooks:
   cron_cleanup: "docs/runbooks/cron_cleanup.md (2025-11-06)"
   stats_ui: "docs/runbooks/stats_ui_local.md (2025-11-09)"
+  test_playbook: "docs/runbooks/test_playbook.md (2026-01-08)"
 
 memory:
   mission: 2025-10-31
   context: 2025-10-31
-  tasks: 2025-11-10
-  asks: 2025-11-10
+  tasks: 2026-01-08
+  asks: 2026-01-08
   usecases: 2025-11-10
-  progress: 2025-11-10
-  worklog: 2025-11-10
+  progress: 2026-01-08
+  worklog: 2026-01-08
   reports: "deprecated 2025-10-31 (REPORT.json/REPORT_SCHEMA.json removed)"

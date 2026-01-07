@@ -23,3 +23,5 @@ updated: 2025-11-22
 - 2025-12-02: FEAT PHC-4.0 — оформлены метрики/алерты `/metrics`, ops blueprint и релизный чеклист; contracts bump до 0.8.0.
 - 2025-12-02: FEAT PHC-4.1/4.2 — реализован endpoint `/metrics` (Prometheus текст), добавлены unit-тесты, финализирован ops checklist + smoke cron cleanup.
 - 2025-12-02: EP PHC-5 — ingest пароль хранится/возвращается в plaintext, UI настроек показывает пароль, ingest проверяет plaintext; contracts bump до 0.9.0.
+- 2026-01-06: EP PHC-8 — исправлен GeminiDriver (responseMimeType для image, улучшена диагностика no_inline_data), unit-тесты провайдера зелёные.
+- 2026-01-08: PHC-9 — GeminiDriver теперь запрашивает responseModalities=IMAGE для image-модели; добавлены команды диагностики в test_playbook.

@@ -3,6 +3,15 @@ id: worklog
 updated: 2025-12-03
 ---
 
+## BUGFIX — Gemini без inline_data (2026-01-06)
+- 2026-01-06 18:30 — Изучил логи ingest 502: Gemini отвечает 200 с part_types=['text'], has_inline_data=False → driver выбрасывает provider_error. Подготовил гайд `docs/runbooks/gemini_no_inline_data.md` (симптомы, причина — отсутствие responseMimeType для image, шаги фикса драйвера и проверки).
+- 2026-01-06 19:20 — По запросу тимлида разобрал ingest-пайплайн и GeminiDriver, подтвердил точку сбоя (нет inline_data при отсутствии responseMimeType), сформировал план фикса и добавил CONSULT/REFLECT задачи в `.memory/TASKS.md`.
+- 2026-01-06 19:40 — Тимлид подтвердил переход к фиксу: всегда выставлять responseMimeType для image, улучшить ошибку при отсутствии inline_data; начал реализацию и синхронизацию тестов.
+- 2026-01-06 20:00 — Обновил GeminiDriver: responseMimeType выставляется для image, ошибка no_inline_data возвращает finish_reason=none; обновил unit-тесты GeminiDriver, прогнал `py -m pytest tests/unit/providers/test_gemini_driver.py`.
+- 2026-01-08 00:10 — Получил лог 400 INVALID_ARGUMENT от Gemini при responseMimeType=image/*; остановился для CONSULT, добавил GOV-узел PHC-9 в `.memory/TASKS.md`.
+- 2026-01-08 00:25 — Провёл ресёрч по Nano Banana: docs `image-generation` указывают response_modalities=['Image'] для image-only ответа; generate-content docs отмечают, что responseMimeType предназначен для текстовых/JSON ответов и не поддерживает image MIME.
+- 2026-01-08 01:05 — Реализовал responseModalities=['IMAGE'] для image-модели в GeminiDriver, убрал responseMimeType для image; обновил unit-тесты GeminiDriver и runbook test_playbook.
+
 ## EP PHC-6 — Полный ingest с Gemini (2025-12-03)
 - 2025-12-03 20:27 — Перечитал обязательные артефакты (MISSION/CONTEXT/TASKS/ASKS/DECISIONS/USECASES/INDEX) перед стартом эпика PHC-6.
 - 2025-12-03 20:40 — Проанализировал текущий код ingest (ingest_api, ingest_service, drivers), контракты OpenAPI/ingest-errors и PRD: API сейчас только валидирует и возвращает `{status: validated}` без вызова драйвера/сохранения результата; IngestService умеет validate/process/record успех/ошибки и таймаут через wait_for, но _invoke_provider минимален, checksum mismatch логируется без отказа, is_active слота не проверяется. GeminiDriver ждёт env `GEMINI_API_KEY`, формирует inline_data + template_media, отдаёт ProviderExecutionError при ошибках. Открытые вопросы для GOV: формат финального ответа (бинарный vs JSON+URL), что делать при hash mismatch (warn-only или 400), как отвечать при отсутствии GEMINI_API_KEY и какое поведение по SLA/статусам 5xx/504 закрепить.

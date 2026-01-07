@@ -174,6 +174,9 @@ async def test_process_success(
         ]
         == "image/png"
     )
+    assert client.requests[0]["json"]["generationConfig"]["responseModalities"] == [
+        "IMAGE"
+    ]
 
 
 @pytest.mark.asyncio

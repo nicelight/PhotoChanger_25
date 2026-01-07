@@ -253,7 +253,22 @@ updated: 2025-12-03
     [x] T PHC-7.0.1 — Реализовать серверный флаг в памяти с TTL (share_until) и логированием активаций/доступов  
     [x] T PHC-7.0.2 — Добавить rate limit для /pubgallery (читается в UI как подсказка) и защиту от спама; кэшировать ответ на 30–60 секунд  
     [x] T PHC-7.0.3 — Добавить кнопку «Расшарить на 15 минут» в JWT-галерее с текстом про rate limit и обработкой статуса (активна/истекла)  
-    [x] T PHC-7.0.4 — Обновить OpenAPI/PRD/README: публичная ссылка, TTL, ограничения; при необходимости тесты/смоук  
+  [x] T PHC-7.0.4 — Обновить OpenAPI/PRD/README: публичная ссылка, TTL, ограничения; при необходимости тесты/смоук  
+
+- [x] EP PHC-8 — Gemini: ответ без inline_data (no inline_data)  
+  [x] US PHC-8.GOV — Governance & Discovery  
+    [x] T PHC-8.GOV.1 — CONSULT — подтвердить необходимость всегда проставлять `generationConfig.responseMimeType` для image-моделей Gemini и риски `INVALID_ARGUMENT`  
+    [x] T PHC-8.GOV.2 — REFLECT — варианты поведения при ответе без inline_data (ретрай/фолбэк/улучшение диагностики)  
+  [x] FEAT PHC-8.0 — Исправление GeminiDriver  
+    [x] US PHC-8.0.1 — Установка responseMimeType для image + улучшение ошибок/логов, тесты
+
+- [~] EP PHC-9 — Gemini: INVALID_ARGUMENT на responseMimeType для image  
+  [ ] US PHC-9.GOV — Governance & Discovery  
+    [ ] T PHC-9.GOV.1 — CONSULT — согласовать поведение при 400 INVALID_ARGUMENT на image responseMimeType (fallback/ретрай/отключить)  
+    [ ] T PHC-9.GOV.2 — REFLECT — оценить варианты стабилизации inline_data без responseMimeType (responseModalities/alternate model/dual-request)  
+  [~] FEAT PHC-9.0 — Корректировка GeminiDriver  
+    [~] US PHC-9.0.1 — Условное задание responseMimeType + fallback и тесты
+    [x] T PHC-9.0.2 — Добавить generationConfig.responseModalities для image-моделей (без fallback ретрая)
 
 
 

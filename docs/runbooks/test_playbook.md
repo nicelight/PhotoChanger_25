@@ -36,6 +36,11 @@
    - Health: `GET /healthz` 200, проверки БД/FS/провайдеров зелёные.
    - Метрики: `GET /metrics` доступен, есть p95/504/share, размер `media/`.
    - Быстрый UI-раунд (логин → слоты → настройки → статистика) с реальными мок-ключами.
+7) **Диагностика Gemini на сервере (логи)**
+   - Найти ответы без inline_data и причины:
+     - `docker compose logs app --since=168h | grep -E "gemini.response.no_inline_data|finishMessage|finishReason|SAFETY"`
+   - Посмотреть текстовые ответы модели (если есть):
+     - `docker compose logs app --since=168h | grep -E "gemini.response.body|gemini.response.received"`
 
 ## Выходные артефакты
 - Логи команд (ruff/black/mypy/pytest), скрин или краткая запись ручных smoke шагов.

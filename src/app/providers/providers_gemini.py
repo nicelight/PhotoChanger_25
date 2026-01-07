@@ -110,16 +110,19 @@ class GeminiDriver(ProviderDriver):
                 }
             ],
         }
-        # responseMimeType в Gemini предназначен только для текстовых форматов (JSON mode и т.п.);
-        # для изображений его отправка приводит к INVALID_ARGUMENT.
-        if output and output in {
+        generation_config: dict[str, Any] = {}
+        if output in {
             "text/plain",
             "application/json",
             "application/xml",
             "application/yaml",
             "text/x.enum",
         }:
-            body["generationConfig"] = {"responseMimeType": output}
+            generation_config["responseMimeType"] = output
+        else:
+            generation_config["responseModalities"] = ["IMAGE"]
+        if generation_config:
+            body["generationConfig"] = generation_config
         if safety_settings:
             body["safetySettings"] = safety_settings
 
@@ -170,8 +173,10 @@ class GeminiDriver(ProviderDriver):
                     )
                     if finish_message:
                         raise ProviderExecutionError(finish_message)
-                    if finish_reason:
-                        raise ProviderExecutionError(f"Gemini response has no image (finish_reason={finish_reason})")
+                    reason = finish_reason or "none"
+                    raise ProviderExecutionError(
+                        f"Gemini response has no image (finish_reason={reason})"
+                    )
                 result = self._parse_response(
                     data, fallback_mime=(output or ingest_mime)
                 )
