@@ -1,7 +1,12 @@
 ﻿---
 id: worklog
-updated: 2025-12-03
+updated: 2026-01-09
 ---
+
+## BUGFIX — Gemini NO_IMAGE ретраи (2026-01-09)
+- 2026-01-09 01:35 — Перепроверил контекст (MISSION/CONTEXT/TASKS/ASKS/DECISIONS/USECASES/INDEX), изучил текущий GeminiDriver/ingest пайплайн и требования по NO_IMAGE.
+- 2026-01-09 01:35 — Добавил ретраи по finishReason=NO_IMAGE (5 попыток, пауза 3с), логирование попыток и finishReason; NO_IMAGE после исчерпания переводится в ProviderTimeoutError (504).
+- 2026-01-09 01:35 — Обновил ingest_service для проброса ProviderTimeoutError, добавил unit-тесты GeminiDriver (NO_IMAGE retry/success, exhaust → timeout), обновил ingest-errors и test_playbook, bump contracts до 0.10.1.
 
 ## BUGFIX — Gemini без inline_data (2026-01-06)
 - 2026-01-06 18:30 — Изучил логи ingest 502: Gemini отвечает 200 с part_types=['text'], has_inline_data=False → driver выбрасывает provider_error. Подготовил гайд `docs/runbooks/gemini_no_inline_data.md` (симптомы, причина — отсутствие responseMimeType для image, шаги фикса драйвера и проверки).

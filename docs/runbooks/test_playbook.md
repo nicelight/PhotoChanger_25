@@ -38,9 +38,11 @@
    - Быстрый UI-раунд (логин → слоты → настройки → статистика) с реальными мок-ключами.
 7) **Диагностика Gemini на сервере (логи)**
    - Найти ответы без inline_data и причины:
-     - `docker compose logs app --since=168h | grep -E "gemini.response.no_inline_data|finishMessage|finishReason|SAFETY"`
+     - `docker compose logs app --since=168h | grep -E "gemini.response.no_inline_data|gemini.response.no_image|finishMessage|finishReason|SAFETY"`
    - Посмотреть текстовые ответы модели (если есть):
      - `docker compose logs app --since=168h | grep -E "gemini.response.body|gemini.response.received"`
+   - Проверить ретраи при `NO_IMAGE` (количество попыток и причины):
+     - `docker compose logs app --since=168h | grep -E "gemini.response.no_image|finishReason|finish_reason"`
 
 ## Выходные артефакты
 - Логи команд (ruff/black/mypy/pytest), скрин или краткая запись ручных smoke шагов.

@@ -1,10 +1,10 @@
 # Машиночитаемый индекс актуальности артефактов
-updated: 2025-12-04
+updated: 2026-01-09
 
 spec/contracts:
-  version: "0.10.0"
-  released_at: "2025-12-05"
-  notes: "Публичная галерея с временным доступом 15м, rate limit; Slot details отдаёт latest_result."
+  version: "0.10.1"
+  released_at: "2026-01-09"
+  notes: "Gemini NO_IMAGE ретраи с 504 provider_timeout после 5 попыток."
 
 spec/adr:
   count: 1
@@ -26,8 +26,8 @@ memory:
   mission: 2025-10-31
   context: 2025-10-31
   tasks: 2026-01-08
-  asks: 2026-01-08
+  asks: 2026-01-09
   usecases: 2025-11-10
-  progress: 2026-01-08
-  worklog: 2026-01-08
+  progress: 2026-01-09
+  worklog: 2026-01-09
   reports: "deprecated 2025-10-31 (REPORT.json/REPORT_SCHEMA.json removed)"

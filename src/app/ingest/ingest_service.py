@@ -351,6 +351,22 @@ class IngestService:
                 job, FailureReason.PROVIDER_TIMEOUT, status=JobStatus.TIMEOUT
             )
             raise ProviderTimeoutError("Provider did not finish in time") from exc
+        except ProviderTimeoutError as exc:
+            duration = (datetime.utcnow() - started_at).total_seconds()
+            self.log.warning(
+                "ingest.job.provider_timeout",
+                extra={
+                    "slot_id": job.slot_id,
+                    "job_id": job.job_id,
+                    "provider": provider_name,
+                    "duration_seconds": duration,
+                    "error": str(exc),
+                },
+            )
+            self.record_failure(
+                job, FailureReason.PROVIDER_TIMEOUT, status=JobStatus.TIMEOUT
+            )
+            raise
         except ProviderExecutionError as exc:
             duration = (datetime.utcnow() - started_at).total_seconds()
             self.log.error(
@@ -386,6 +402,8 @@ class IngestService:
 
         try:
             result = await driver.process(job)
+        except ProviderTimeoutError:
+            raise
         except ProviderExecutionError:
             # Провайдер уже вернул осмысленное сообщение — пробрасываем как есть.
             raise

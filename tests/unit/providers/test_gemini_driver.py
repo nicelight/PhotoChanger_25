@@ -10,7 +10,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from src.app.db.db_models import Base, MediaObjectModel, SlotTemplateMediaModel
-from src.app.ingest.ingest_errors import ProviderExecutionError
+from src.app.ingest.ingest_errors import ProviderExecutionError, ProviderTimeoutError
 from src.app.ingest.ingest_models import JobContext, UploadValidationResult
 from src.app.providers.providers_gemini import GeminiDriver
 from src.app.repositories.media_object_repository import MediaObjectRepository
@@ -240,6 +240,86 @@ async def test_response_without_inline(monkeypatch, job_context, media_repo, tmp
     driver = GeminiDriver(media_repo=media_repo)
     with pytest.raises(ProviderExecutionError):
         await driver.process(job_context)
+
+
+@pytest.mark.asyncio
+async def test_no_image_retries_until_success(
+    monkeypatch, job_context, media_repo, tmp_path
+):
+    store_template_media(
+        media_repo,
+        slot_id=job_context.slot_id,
+        media_id="mo-style",
+        media_kind="style",
+        path=tmp_path / "templates" / "style.png",
+    )
+
+    response_no_image = DummyResponse(
+        200, {"candidates": [{"finish_reason": "NO_IMAGE"}]}
+    )
+    response_data = {
+        "candidates": [
+            {
+                "content": {
+                    "parts": [
+                        {
+                            "inline_data": {
+                                "mime_type": "image/png",
+                                "data": base64.b64encode(b"result-bytes").decode(
+                                    "ascii"
+                                ),
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+    client = DummyAsyncClient([response_no_image, DummyResponse(200, response_data)])
+    monkeypatch.setattr("httpx.AsyncClient", lambda timeout: client)
+
+    sleep_calls: list[float] = []
+
+    async def fake_sleep(seconds: float) -> None:
+        sleep_calls.append(seconds)
+
+    monkeypatch.setattr("src.app.providers.providers_gemini.asyncio.sleep", fake_sleep)
+
+    driver = GeminiDriver(media_repo=media_repo)
+    result = await driver.process(job_context)
+
+    assert result.payload == b"result-bytes"
+    assert client.requests
+    assert sleep_calls == [3.0]
+
+
+@pytest.mark.asyncio
+async def test_no_image_exhausts_attempts(
+    monkeypatch, job_context, media_repo, tmp_path
+):
+    store_template_media(
+        media_repo,
+        slot_id=job_context.slot_id,
+        media_id="mo-style",
+        media_kind="style",
+        path=tmp_path / "templates" / "style.png",
+    )
+
+    response_no_image = DummyResponse(
+        200, {"candidates": [{"finishReason": "NO_IMAGE"}]}
+    )
+    client = DummyAsyncClient([response_no_image] * 5)
+    monkeypatch.setattr("httpx.AsyncClient", lambda timeout: client)
+
+    async def fake_sleep(seconds: float) -> None:
+        return None
+
+    monkeypatch.setattr("src.app.providers.providers_gemini.asyncio.sleep", fake_sleep)
+
+    driver = GeminiDriver(media_repo=media_repo)
+    with pytest.raises(ProviderTimeoutError):
+        await driver.process(job_context)
+    assert len(client.requests) == 5
 
 
 @pytest.mark.asyncio

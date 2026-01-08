@@ -1,6 +1,6 @@
 ﻿---
 id: progress
-updated: 2025-11-22
+updated: 2026-01-09
 ---
 
 # Progress (changelog — одна строка на событие)
@@ -25,3 +25,4 @@ updated: 2025-11-22
 - 2025-12-02: EP PHC-5 — ingest пароль хранится/возвращается в plaintext, UI настроек показывает пароль, ingest проверяет plaintext; contracts bump до 0.9.0.
 - 2026-01-06: EP PHC-8 — исправлен GeminiDriver (responseMimeType для image, улучшена диагностика no_inline_data), unit-тесты провайдера зелёные.
 - 2026-01-08: PHC-9 — GeminiDriver теперь запрашивает responseModalities=IMAGE для image-модели; добавлены команды диагностики в test_playbook.
+- 2026-01-09: Gemini NO_IMAGE — добавлены ретраи (5 попыток, 3с) и маппинг в 504 provider_timeout, обновлены тесты и runbook; contracts bump до 0.10.1.

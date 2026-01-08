@@ -8,13 +8,14 @@ import logging
 import mimetypes
 import os
 import json
+from datetime import datetime
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 import httpx
 
-from ..ingest.ingest_errors import ProviderExecutionError
+from ..ingest.ingest_errors import ProviderExecutionError, ProviderTimeoutError
 from ..ingest.ingest_models import JobContext
 from ..repositories.media_object_repository import MediaObjectRepository
 from .providers_base import ProviderDriver, ProviderResult
@@ -24,6 +25,8 @@ from .template_media_resolver import (
 )
 
 logger = logging.getLogger(__name__)
+NO_IMAGE_MAX_ATTEMPTS = 5
+NO_IMAGE_BACKOFF_SECONDS = 3.0
 
 
 @dataclass(slots=True)
@@ -133,9 +136,102 @@ class GeminiDriver(ProviderDriver):
             f"template_count={len(resolved_templates)} prompt_len={len(prompt or '')}"
         )
 
+        no_image_attempts = 0
+        while True:
+            response = await self._send_request(
+                url,
+                headers=headers,
+                json=body,
+                max_attempts=max_attempts,
+                backoff_seconds=backoff_seconds,
+                slot_id=job.slot_id,
+                job_id=job.job_id,
+            )
+
+            data = response.json()
+            summary = _response_summary(data)
+            self.log.info("gemini.response.received %s", summary)
+            masked_body = _mask_inline_data(data)
+            body_preview = json.dumps(masked_body, ensure_ascii=False)
+            if len(body_preview) > 4000:
+                body_preview = body_preview[:4000] + "...(truncated)"
+            self.log.info(
+                "gemini.response.body %s",
+                body_preview,
+                extra={"slot_id": job.slot_id, "job_id": job.job_id},
+            )
+            has_inline = _has_inline_data(data)
+            if not has_inline:
+                finish_reasons = _extract_finish_reasons(data)
+                finish_message = _extract_finish_message(data)
+                self.log.warning(
+                    "gemini.response.no_inline_data %s",
+                    body_preview,
+                    extra={
+                        "slot_id": job.slot_id,
+                        "job_id": job.job_id,
+                        "finish_reasons": finish_reasons or ["none"],
+                        "finish_message": finish_message,
+                    },
+                )
+                if "NO_IMAGE" in finish_reasons:
+                    no_image_attempts += 1
+                    self.log.warning(
+                        "gemini.response.no_image attempt=%s/%s finish_reasons=%s",
+                        no_image_attempts,
+                        NO_IMAGE_MAX_ATTEMPTS,
+                        finish_reasons or ["none"],
+                        extra={"slot_id": job.slot_id, "job_id": job.job_id},
+                    )
+                    if no_image_attempts >= NO_IMAGE_MAX_ATTEMPTS:
+                        raise ProviderTimeoutError(
+                            "Gemini returned NO_IMAGE after retries"
+                        )
+                    remaining = _remaining_seconds(job)
+                    if (
+                        remaining is not None
+                        and remaining <= NO_IMAGE_BACKOFF_SECONDS
+                    ):
+                        raise ProviderTimeoutError(
+                            "Gemini NO_IMAGE retry would exceed sync deadline"
+                        )
+                    await asyncio.sleep(NO_IMAGE_BACKOFF_SECONDS)
+                    continue
+                if finish_message:
+                    raise ProviderExecutionError(finish_message)
+                reason = finish_reasons[0] if finish_reasons else "none"
+                raise ProviderExecutionError(
+                    f"Gemini response has no image (finish_reason={reason})"
+                )
+            result = self._parse_response(data, fallback_mime=(output or ingest_mime))
+            self.log.info(
+                "gemini.request.success",
+                extra={"slot_id": job.slot_id, "job_id": job.job_id},
+            )
+            return result
+
+        raise ProviderExecutionError("Gemini request failed after retries")
+
+    async def _post(
+        self, url: str, *, headers: dict[str, str], json: dict[str, Any]
+    ) -> httpx.Response:
+        async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
+            return await client.post(url, headers=headers, json=json)
+
+    async def _send_request(
+        self,
+        url: str,
+        *,
+        headers: dict[str, str],
+        json: dict[str, Any],
+        max_attempts: int,
+        backoff_seconds: float,
+        slot_id: str,
+        job_id: str | None,
+    ) -> httpx.Response:
         for attempt in range(1, max_attempts + 1):
             try:
-                response = await self._post(url, headers=headers, json=body)
+                response = await self._post(url, headers=headers, json=json)
             except httpx.HTTPError as exc:
                 if attempt >= max_attempts:
                     raise ProviderExecutionError(f"Gemini HTTP error: {exc}") from exc
@@ -143,48 +239,7 @@ class GeminiDriver(ProviderDriver):
                 continue
 
             if response.status_code == 200:
-                data = response.json()
-                summary = _response_summary(data)
-                self.log.info("gemini.response.received %s", summary)
-                masked_body = _mask_inline_data(data)
-                body_preview = json.dumps(masked_body, ensure_ascii=False)
-                if len(body_preview) > 4000:
-                    body_preview = body_preview[:4000] + "...(truncated)"
-                self.log.info(
-                    "gemini.response.body %s", body_preview, extra={"slot_id": job.slot_id, "job_id": job.job_id}
-                )
-                has_inline = _has_inline_data(data)
-                if not has_inline:
-                    # Попробуем вернуть читабельное сообщение провайдера вместо "502 Bad Gateway".
-                    finish_reason = None
-                    finish_message = None
-                    try:
-                        first_candidate = (data.get("candidates") or [None])[0] or {}
-                        finish_reason = first_candidate.get("finishReason") or first_candidate.get("finish_reason")
-                        finish_message = first_candidate.get("finishMessage") or first_candidate.get("finish_message")
-                    except Exception:  # pragma: no cover - defensive
-                        finish_reason = None
-                        finish_message = None
-
-                    self.log.warning(
-                        "gemini.response.no_inline_data %s",
-                        body_preview,
-                        extra={"slot_id": job.slot_id, "job_id": job.job_id},
-                    )
-                    if finish_message:
-                        raise ProviderExecutionError(finish_message)
-                    reason = finish_reason or "none"
-                    raise ProviderExecutionError(
-                        f"Gemini response has no image (finish_reason={reason})"
-                    )
-                result = self._parse_response(
-                    data, fallback_mime=(output or ingest_mime)
-                )
-                self.log.info(
-                    "gemini.request.success",
-                    extra={"slot_id": job.slot_id, "job_id": job.job_id},
-                )
-                return result
+                return response
 
             if not self._should_retry(response) or attempt >= max_attempts:
                 error_detail = _extract_error(response)
@@ -195,8 +250,8 @@ class GeminiDriver(ProviderDriver):
                     error_detail,
                     body_preview,
                     extra={
-                        "slot_id": job.slot_id,
-                        "job_id": job.job_id,
+                        "slot_id": slot_id,
+                        "job_id": job_id,
                         "status_code": response.status_code,
                         "error_detail": error_detail,
                         "body_preview": body_preview,
@@ -209,12 +264,6 @@ class GeminiDriver(ProviderDriver):
             await asyncio.sleep(backoff_seconds)
 
         raise ProviderExecutionError("Gemini request failed after retries")
-
-    async def _post(
-        self, url: str, *, headers: dict[str, str], json: dict[str, Any]
-    ) -> httpx.Response:
-        async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
-            return await client.post(url, headers=headers, json=json)
 
     def _should_retry(self, response: httpx.Response) -> bool:
         try:
@@ -281,6 +330,27 @@ def _has_inline_data(data: dict[str, Any]) -> bool:
     return False
 
 
+def _extract_finish_reasons(data: dict[str, Any]) -> list[str]:
+    reasons: list[str] = []
+    candidates = data.get("candidates") or []
+    for candidate in candidates:
+        if not isinstance(candidate, dict):
+            continue
+        reason = candidate.get("finishReason") or candidate.get("finish_reason")
+        if isinstance(reason, str) and reason:
+            reasons.append(reason)
+    return reasons
+
+
+def _extract_finish_message(data: dict[str, Any]) -> str | None:
+    candidates = data.get("candidates") or []
+    first = candidates[0] if candidates else {}
+    if not isinstance(first, dict):
+        return None
+    message = first.get("finishMessage") or first.get("finish_message")
+    return message if isinstance(message, str) and message else None
+
+
 def _mask_inline_data(obj: Any) -> Any:
     """Remove inline_data payloads to avoid logging base64 blobs."""
     if isinstance(obj, dict):
@@ -320,3 +390,9 @@ def _response_summary(data: dict[str, Any]) -> str:
         f"text_preview='{preview}' "
         f"text_len={len(preview_full)}"
     )
+
+
+def _remaining_seconds(job: JobContext) -> float | None:
+    if job.sync_deadline is None:
+        return None
+    return (job.sync_deadline - datetime.utcnow()).total_seconds()
