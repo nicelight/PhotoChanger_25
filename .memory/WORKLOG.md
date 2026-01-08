@@ -3,6 +3,15 @@ id: worklog
 updated: 2026-01-09
 ---
 
+## PHC-10 — GOV: статистика неудач (2026-01-09)
+- 2026-01-09 02:10 — Зафиксировал решение тимлида: вариант A1 (recent_failures в /api/stats/slots), без кэша и без job_id; приоритет — ошибки провайдера (provider_error/timeout), окно 1–72 часа (max 4320 минут). Готов к реализации в порядке spec → code → UI → tests.
+
+## PHC-10 — Реализация (2026-01-09)
+- 2026-01-09 02:35 — Обновил OpenAPI и ingest-errors: окно до 4320 минут, recent_failures и маппинг failure_reason → HTTP.
+- 2026-01-09 02:45 — Расширил StatsRepository/StatsService: failures_last_window, recent_failures (provider-only), http_status маппинг, clamp окна до 4320.
+- 2026-01-09 02:55 — Обновил UI статистики: новое окно 5–4320, таблица последних 20 ошибок, рендер recent_failures.
+- 2026-01-09 03:00 — Обновил unit-тесты stats и e2e smoke `/ui/stats`, прогон `py -m pytest tests/unit/stats`.
+
 ## BUGFIX — Gemini NO_IMAGE ретраи (2026-01-09)
 - 2026-01-09 01:35 — Перепроверил контекст (MISSION/CONTEXT/TASKS/ASKS/DECISIONS/USECASES/INDEX), изучил текущий GeminiDriver/ingest пайплайн и требования по NO_IMAGE.
 - 2026-01-09 01:35 — Добавил ретраи по finishReason=NO_IMAGE (5 попыток, пауза 3с), логирование попыток и finishReason; NO_IMAGE после исчерпания переводится в ProviderTimeoutError (504).

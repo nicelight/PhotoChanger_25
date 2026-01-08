@@ -23,6 +23,7 @@
     storage: document.getElementById("summary-storage"),
   };
   const tableBody = document.getElementById("slots-table-body");
+  const failuresBody = document.getElementById("failures-table-body");
   const chartList = document.getElementById("slots-chart");
 
   const numberFormatter = new Intl.NumberFormat("ru-RU");
@@ -143,6 +144,30 @@
     chartList.innerHTML = items;
   };
 
+  const renderFailures = (failures) => {
+    if (!failuresBody) {
+      return;
+    }
+    if (!failures.length) {
+      failuresBody.innerHTML = `<tr><td colspan="4" class="muted-hint">Нет ошибок за выбранное окно.</td></tr>`;
+      return;
+    }
+    const rows = failures
+      .map((item) => {
+        const httpStatus = item.http_status ?? "—";
+        return `
+          <tr>
+            <td>${formatDate(item.finished_at)}</td>
+            <td>${item.slot_id ?? "—"}</td>
+            <td>${httpStatus}</td>
+            <td>${item.failure_reason ?? "—"}</td>
+          </tr>
+        `;
+      })
+      .join("");
+    failuresBody.innerHTML = rows;
+  };
+
   const updateTimestamp = () => {
     const now = new Date();
     lastRefreshEl.textContent = `Обновлено ${dateFormatter.format(now)}`;
@@ -188,6 +213,7 @@
       renderSummary(overviewData);
       renderTable(slotsData.slots || []);
       renderChart(slotsData.slots || []);
+      renderFailures(slotsData.recent_failures || []);
       updateTimestamp();
     } catch (error) {
       console.error(error);

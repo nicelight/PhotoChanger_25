@@ -26,3 +26,4 @@ updated: 2026-01-09
 - 2026-01-06: EP PHC-8 — исправлен GeminiDriver (responseMimeType для image, улучшена диагностика no_inline_data), unit-тесты провайдера зелёные.
 - 2026-01-08: PHC-9 — GeminiDriver теперь запрашивает responseModalities=IMAGE для image-модели; добавлены команды диагностики в test_playbook.
 - 2026-01-09: Gemini NO_IMAGE — добавлены ретраи (5 попыток, 3с) и маппинг в 504 provider_timeout, обновлены тесты и runbook; contracts bump до 0.10.1.
+- 2026-01-09: PHC-10 — статистика неудач: окно до 72 часов, recent_failures в /api/stats/slots, UI таблица последних 20 ошибок; contracts bump до 0.11.0.
