@@ -290,6 +290,7 @@ updated: 2025-12-03
       [ ] T PHC-10.1.2.1 — Обновить e2e/smoke для /ui/stats (наличие таблицы и данных)
 
 
+
 ## GOV Template (reference)
 - [ ] EP XXX — Название эпика  
   [ ] US XXX.GOV — Governance & Discovery  
