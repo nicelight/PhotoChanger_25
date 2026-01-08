@@ -86,4 +86,7 @@ def test_stats_page_happy_path(e2e_server: str) -> None:
         chart_items = page.locator("#slots-chart li")
         assert chart_items.count() >= 1
 
+        failure_rows = page.locator("#failures-table-body tr")
+        assert failure_rows.count() >= 1
+
         browser.close()

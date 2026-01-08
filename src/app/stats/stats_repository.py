@@ -105,6 +105,9 @@ class StatsRepository:
                         "jobs_last_window": jobs_last_window,
                         "timeouts_last_window": timeouts_last_window,
                         "provider_errors_last_window": provider_errors_last_window,
+                        "failures_last_window": (
+                            timeouts_last_window + provider_errors_last_window
+                        ),
                         "success_last_window": success_last_window,
                         "last_success_at": (
                             last_success.completed_at if last_success else None
@@ -115,6 +118,44 @@ class StatsRepository:
                     }
                 )
         return metrics
+
+    def recent_failures(
+        self,
+        window_start: datetime,
+        *,
+        limit: int = 20,
+        provider_only: bool = True,
+    ) -> Sequence[dict[str, Any]]:
+        with self._session_factory() as session:
+            query = session.query(JobHistoryModel).filter(
+                JobHistoryModel.failure_reason.isnot(None),
+                JobHistoryModel.completed_at >= window_start,
+            )
+            if provider_only:
+                query = query.filter(
+                    JobHistoryModel.failure_reason.in_(
+                        [
+                            FailureReason.PROVIDER_ERROR.value,
+                            FailureReason.PROVIDER_TIMEOUT.value,
+                        ]
+                    )
+                )
+            rows = (
+                query.order_by(
+                    nullslast(JobHistoryModel.completed_at.desc()),
+                    JobHistoryModel.started_at.desc(),
+                )
+                .limit(limit)
+                .all()
+            )
+        return [
+            {
+                "slot_id": row.slot_id,
+                "failure_reason": row.failure_reason,
+                "finished_at": row.completed_at,
+            }
+            for row in rows
+        ]
 
     def slot_totals(self) -> Sequence[dict[str, Any]]:
         """Total counters per slot/provider (all time)."""

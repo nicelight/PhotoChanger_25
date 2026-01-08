@@ -433,7 +433,7 @@ paths:
           schema:
             type: integer
             minimum: 5
-            maximum: 240
+            maximum: 4320
             default: 60
       responses:
         '200':
@@ -465,7 +465,7 @@ paths:
           schema:
             type: integer
             minimum: 5
-            maximum: 240
+            maximum: 4320
             default: 60
       responses:
         '200':
@@ -548,6 +548,7 @@ components:
         - jobs_last_window
         - timeouts_last_window
         - provider_errors_last_window
+        - failures_last_window
         - success_last_window
         - last_success_at
       properties:
@@ -569,6 +570,9 @@ components:
         provider_errors_last_window:
           type: integer
           example: 0
+        failures_last_window:
+          type: integer
+          example: 1
         success_last_window:
           type: integer
           example: 20
@@ -610,6 +614,12 @@ components:
           description: Active slots only.
           items:
             $ref: '#/components/schemas/StatsSlotBreakdown'
+        recent_failures:
+          type: array
+          description: Last 20 failed ingest requests (provider-related).
+          items:
+            $ref: '#/components/schemas/RecentFailure'
+          nullable: true
     SlotSummary:
       type: object
       required:
@@ -1101,3 +1111,20 @@ components:
           description: Public gallery is not shared
         '429':
           description: Rate limited
+    RecentFailure:
+      type: object
+      required:
+        - finished_at
+        - slot_id
+        - failure_reason
+        - http_status
+      properties:
+        finished_at:
+          type: string
+          format: date-time
+        slot_id:
+          type: string
+        failure_reason:
+          type: string
+        http_status:
+          type: integer

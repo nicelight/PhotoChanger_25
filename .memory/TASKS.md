@@ -1,6 +1,6 @@
 ﻿---
 id: tasks
-updated: 2025-12-03
+updated: 2026-01-09
 ---
 
 # Tasks (канбан)
@@ -263,31 +263,32 @@ updated: 2025-12-03
     [x] US PHC-8.0.1 — Установка responseMimeType для image + улучшение ошибок/логов, тесты
 
 
-- [ ] EP PHC-10 — Статистика неудачных ingest-запросов (1–72 часа)
-  [ ] US PHC-10.GOV — Governance & Discovery
-    [ ] T PHC-10.GOV.1 — REFLECT — уточнить правило выборки ошибок (failure_reason/provider_timeout) и влияние окна 1–72ч на SLA
-    [ ] T PHC-10.GOV.2 — CONSULT — согласовать поля для таблицы последних 20 ошибок и маппинг failure_reason → HTTP-код
-  [ ] FEAT PHC-10.0 — Статистика неудач: спецификации и API
-    [ ] US PHC-10.0.1 — Спецификации: окно 1–72 часа и recent_failures
-      [ ] T PHC-10.0.1.1 — Обновить OpenAPI: схема ответа /api/stats/slots (recent_failures) и лимит window_minutes до 4320
-      [ ] T PHC-10.0.1.2 — Обновить ingest-errors.md: маппинг failure_reason → HTTP-код для таблицы
-      [ ] T PHC-10.0.1.3 — Обновить spec/contracts/VERSION.json и .memory/INDEX.yaml (SemVer bump + summary)
-    [ ] US PHC-10.0.2 — API: расширить /api/stats/slots агрегатами неудач + recent_failures
-      [ ] T PHC-10.0.2.1 — StatsRepository: запрос 20 последних ошибок (фильтр provider-only или все, сортировка по completed_at/started_at)
-      [ ] T PHC-10.0.2.2 — StatsService: добавить recent_failures и агрегаты неудач в ответ slots
-      [ ] T PHC-10.0.2.3 — Stats API: расширить ответ /api/stats/slots, увеличить max window_minutes до 4320
-      [ ] T PHC-10.0.2.4 — Тесты API/сервисов: unit на recent_failures и агрегаты по окну
-  [ ] FEAT PHC-10.1 — UI статистики
-    [ ] US PHC-10.1.1 — UI: таблица «Последние 20 ошибок» на /ui/stats
-      [ ] T PHC-10.1.1.1 — Проинспектировать текущую разметку /ui/stats и точки вставки таблицы (без изменения структуры)
-      [ ] T PHC-10.1.1.2 — Определить контракт данных для таблицы (поля, формат времени, пустое состояние) и зафиксировать в JS
-      [ ] T PHC-10.1.1.3 — Разметка таблицы (заголовки/колонки/контейнер) с минимальными правками CSS
-      [ ] T PHC-10.1.1.4 — Рендер recent_failures: безопасная обработка отсутствующих полей и сортировка в UI не требуется
-      [ ] T PHC-10.1.1.5 — Добавить отображение failure_reason и вычисленного HTTP-кода, без локализации/перевода
-      [ ] T PHC-10.1.1.6 — Пустое состояние: текст «нет ошибок за окно» и скрытие таблицы при отсутствии данных
-      [ ] T PHC-10.1.1.7 — Ручная проверка: загрузка страницы, обновление окна, отсутствие regressions по существующим блокам
-    [ ] US PHC-10.1.2 — Тесты UI
-      [ ] T PHC-10.1.2.1 — Обновить e2e/smoke для /ui/stats (наличие таблицы и данных)
+- [x] EP PHC-10 — Статистика неудачных ingest-запросов (1–72 часа)
+  [x] US PHC-10.GOV — Governance & Discovery
+    [x] T PHC-10.GOV.1 — REFLECT — уточнить правило выборки ошибок (failure_reason/provider_timeout) и влияние окна 1–72ч на SLA
+    [x] T PHC-10.GOV.2 — CONSULT — согласовать поля для таблицы последних 20 ошибок и маппинг failure_reason → HTTP-код
+  [x] FEAT PHC-10.0 — Статистика неудач: спецификации и API
+    [x] US PHC-10.0.1 — Спецификации: окно 1–72 часа и recent_failures
+      [x] T PHC-10.0.1.1 — Обновить OpenAPI: схема ответа /api/stats/slots (recent_failures) и лимит window_minutes до 4320
+      [x] T PHC-10.0.1.2 — Обновить ingest-errors.md: маппинг failure_reason → HTTP-код для таблицы
+      [x] T PHC-10.0.1.3 — Обновить spec/contracts/VERSION.json и .memory/INDEX.yaml (SemVer bump + summary)
+    [x] US PHC-10.0.2 — API: расширить /api/stats/slots агрегатами неудач + recent_failures
+      [x] T PHC-10.0.2.1 — StatsRepository: запрос 20 последних ошибок (фильтр provider-only или все, сортировка по completed_at/started_at)
+      [x] T PHC-10.0.2.2 — StatsService: добавить recent_failures и агрегаты неудач в ответ slots
+      [x] T PHC-10.0.2.3 — Stats API: расширить ответ /api/stats/slots, увеличить max window_minutes до 4320
+      [x] T PHC-10.0.2.4 — Тесты API/сервисов: unit на recent_failures и агрегаты по окну
+  [x] FEAT PHC-10.1 — UI статистики
+    [x] US PHC-10.1.1 — UI: таблица «Последние 20 ошибок» на /ui/stats
+      [x] T PHC-10.1.1.1 — Проинспектировать текущую разметку /ui/stats и точки вставки таблицы (без изменения структуры)
+      [x] T PHC-10.1.1.2 — Определить контракт данных для таблицы (поля, формат времени, пустое состояние) и зафиксировать в JS
+      [x] T PHC-10.1.1.3 — Разметка таблицы (заголовки/колонки/контейнер) с минимальными правками CSS
+      [x] T PHC-10.1.1.4 — Рендер recent_failures: безопасная обработка отсутствующих полей и сортировка в UI не требуется
+      [x] T PHC-10.1.1.5 — Добавить отображение failure_reason и вычисленного HTTP-кода, без локализации/перевода
+      [x] T PHC-10.1.1.6 — Пустое состояние: текст «нет ошибок за окно» и скрытие таблицы при отсутствии данных
+      [x] T PHC-10.1.1.7 — Ручная проверка: загрузка страницы, обновление окна, отсутствие regressions по существующим блокам
+    [x] US PHC-10.1.2 — Тесты UI
+      [x] T PHC-10.1.2.1 — Обновить e2e/smoke для /ui/stats (наличие таблицы и данных)
+
 
 
 ## GOV Template (reference)

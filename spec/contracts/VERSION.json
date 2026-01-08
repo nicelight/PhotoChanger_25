@@ -1,8 +1,8 @@
 {
-  "version": "0.10.1",
+  "version": "0.11.0",
   "released_at": "2026-01-09",
   "stage": "draft",
-  "summary": "Gemini NO_IMAGE ретраи с переводом в 504 provider_timeout после 5 попыток.",
+  "summary": "Расширена статистика: окно до 72 часов и таблица recent_failures.",
   "changes": [
     {
       "type": "init",
@@ -186,9 +186,23 @@
         "spec/contracts/ingest-errors.md",
         "docs/runbooks/test_playbook.md"
       ]
+    },
+    {
+      "type": "feature",
+      "description": "Добавлены recent_failures (20 последних ошибок провайдера) и увеличено окно статистики до 72 часов; UI статистики обновлён.",
+      "artifacts": [
+        "spec/contracts/openapi.yaml",
+        "spec/contracts/ingest-errors.md",
+        "src/app/stats/stats_repository.py",
+        "src/app/stats/stats_service.py",
+        "frontend/stats/index.html",
+        "frontend/stats/assets/stats.js",
+        "tests/unit/stats/test_stats_service.py",
+        "tests/e2e/test_ui_stats.py"
+      ]
     }
   ],
   "deprecated": [],
-  "breaking": true,
-  "notes": "Template media bindings now carry required role field; admin slot save/test-run expect role and merge overrides without wiping existing bindings."
+  "breaking": false,
+  "notes": "Окно статистики расширено до 72 часов; добавлена таблица recent_failures."
 }

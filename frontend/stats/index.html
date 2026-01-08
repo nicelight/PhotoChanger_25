@@ -31,14 +31,14 @@
                   id="window-minutes"
                   type="number"
                   min="5"
-                  max="240"
+                  max="4320"
                   step="5"
                   value="60"
                   aria-label="Окно статистики в минутах"
                 />
                 <button id="refresh-button" type="button" class="btn">Обновить</button>
               </div>
-              <p class="muted-hint">Допустимый диапазон: 5–240 минут.</p>
+              <p class="muted-hint">Допустимый диапазон: 5–4320 минут.</p>
             </div>
           </header>
 
@@ -129,6 +129,32 @@
             <ul id="slots-chart" class="chart-list">
               <li class="muted-hint">Недостаточно данных для построения графика.</li>
             </ul>
+          </section>
+
+          <section class="card stats-table" aria-labelledby="failures-title">
+            <header class="stats-table__header">
+              <div>
+                <p class="muted-hint">Последние ошибки провайдера</p>
+                <h2 id="failures-title">Последние 20 неудач</h2>
+              </div>
+            </header>
+            <div class="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Время</th>
+                    <th scope="col">Слот</th>
+                    <th scope="col">HTTP</th>
+                    <th scope="col">Причина</th>
+                  </tr>
+                </thead>
+                <tbody id="failures-table-body">
+                  <tr>
+                    <td colspan="4" class="muted-hint">Нет ошибок за выбранное окно.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </section>
         </div>
       </main>
