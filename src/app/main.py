@@ -1,5 +1,7 @@
 """FastAPI application entry point."""
 
+import logging
+
 from fastapi import FastAPI
 
 from .config import AppConfig, load_config
@@ -13,6 +15,9 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     cfg = config or load_config()
     app = FastAPI(title="PhotoChanger")
     include_routers(app, cfg)
+    logger = logging.getLogger(__name__)
+    dashboard_url = "http://127.0.0.1:8000/ui/static/admin/dashboard.html"
+    logger.info("admin.dashboard_url=%s", dashboard_url)
     return app
 
 

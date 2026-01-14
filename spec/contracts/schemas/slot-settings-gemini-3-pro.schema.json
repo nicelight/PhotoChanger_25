@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Gemini 3 Pro Image Preview Slot Settings",
+  "type": "object",
+  "required": ["model", "prompt"],
+  "additionalProperties": false,
+  "properties": {
+    "model": {
+      "type": "string",
+      "description": "Gemini model identifier",
+      "default": "gemini-3-pro-image-preview"
+    },
+    "prompt": {
+      "type": "string",
+      "description": "Text instruction passed to Gemini"
+    },
+    "output": {
+      "type": "object",
+      "description": "Controls response format",
+      "additionalProperties": false,
+      "properties": {
+        "mime_type": {
+          "type": "string",
+          "enum": ["image/png", "image/jpeg", "image/webp"],
+          "default": "image/png"
+        }
+      }
+    },
+    "image_config": {
+      "type": "object",
+      "description": "ImageConfig controls for Gemini 3 Pro (aspect ratio and resolution)",
+      "additionalProperties": false,
+      "properties": {
+        "aspect_ratio": {
+          "type": "string",
+          "enum": ["1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"]
+        },
+        "image_size": {
+          "type": "string",
+          "enum": ["1K", "2K", "4K"]
+        }
+      }
+    },
+    "retry_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_attempts": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3,
+          "default": 1
+        },
+        "backoff_seconds": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "default": 2.0
+        }
+      }
+    },
+    "template_media": {
+      "type": "array",
+      "description": "Optional list of reference images to include in generateContent",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role"],
+        "properties": {
+          "role": {
+            "type": "string",
+            "description": "Human readable name used in driver logs/prompts"
+          },
+          "media_kind": {
+            "type": "string",
+            "description": "Slot template media kind to resolve media_object_id dynamically"
+          },
+          "media_object_id": {
+            "type": "string",
+            "description": "Explicit media object identifier"
+          },
+          "optional": {
+            "type": "boolean",
+            "default": false,
+            "description": "Allow driver to continue if the reference is missing"
+          }
+        },
+        "anyOf": [
+          { "required": ["media_kind"] },
+          { "required": ["media_object_id"] }
+        ]
+      }
+    }
+  }
+}

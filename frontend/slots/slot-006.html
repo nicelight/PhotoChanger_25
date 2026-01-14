@@ -73,6 +73,37 @@
             <p class="muted-hint">Опишите желаемую обработку. Если операция использует шаблонное изображение, называйте его как «Изображение №2».</p>
           </div>
 
+
+          <div class="card" id="image-config-card">
+            <div class="grid-2">
+              <div>
+                <label class="title" for="aspect-ratio">Aspect ratio</label>
+                <select id="aspect-ratio" name="aspect_ratio">
+                  <option value="" selected>? ?? ?????? ?</option>
+                  <option value="1:1">1:1</option>
+                  <option value="2:3">2:3</option>
+                  <option value="3:2">3:2</option>
+                  <option value="3:4">3:4</option>
+                  <option value="4:3">4:3</option>
+                  <option value="4:5">4:5</option>
+                  <option value="5:4">5:4</option>
+                  <option value="9:16">9:16</option>
+                  <option value="16:9">16:9</option>
+                  <option value="21:9">21:9</option>
+                </select>
+              </div>
+              <div>
+                <label class="title" for="resolution">Resolution</label>
+                <select id="resolution" name="resolution">
+                  <option value="" selected>? ?? ?????? ?</option>
+                  <option value="1K">1K</option>
+                  <option value="2K">2K</option>
+                  <option value="4K">4K</option>
+                </select>
+              </div>
+            </div>
+            <p class="muted-hint">???????? ??? ???????????, ?????????????? ????????? ??????? ???????????.</p>
+          </div>
           <div class="card" data-block="second-wrap-card">
             <div class="switch-row">
               <input id="toggle-second" class="switch" type="checkbox" />

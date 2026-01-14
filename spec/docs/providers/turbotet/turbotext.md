@@ -267,6 +267,9 @@ queueid:{QUEUEID}
 1. [Основы работы с API Turbotext — Фото методы](https://www.turbotext.ru/photo_ai/docs/info)
 
 ## Деградации и ретраи
+> Ретраи выполняются на уровне драйвера; ingest не повторяет вызовы.
+> Для единообразия действует общий лимит: `retry_policy.max_attempts` ≤ 3 и `backoff_seconds` default 2s для transient ошибок.
+> Для Turbotext ретраи относятся к `create_queue`; polling `get_result` считается частью одного вызова драйвера.
 
 ### Очередь зависла (`action="reconnect"` > `T_sync_response`)
 - Если при polling значение `action="reconnect"` повторяется, но окно SLA ещё не истекло, продолжайте опрос каждые 2–3 с.
@@ -285,3 +288,8 @@ queueid:{QUEUEID}
 ### Потеря результата
 - Если `uploaded_image` возвращает 404/410 при скачивании, пробуйте ещё раз, пока SLA позволяет (обычно результат доступен повторно 1–2 раза).
 - При повторных 404 итоговый статус — `provider_error`, адаптер логирует предупреждение и отправляет админам уведомление, что провайдер потерял файл.
+
+## Логирование (KISS)
+- Драйвер пишет подробные логи провайдера, ingest — итоговый статус (success/timeout/provider_error).
+- Минимальные поля: `slot_id`, `job_id`, `provider`, `model`, `http_status`, `error_message` (усечённая до 300 символов).
+- Запрещено логировать payload и большие response body.

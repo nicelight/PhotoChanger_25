@@ -1,10 +1,10 @@
 # Машиночитаемый индекс актуальности артефактов
-updated: 2026-01-09
+updated: 2026-01-14
 
 spec/contracts:
-  version: "0.11.0"
-  released_at: "2026-01-09"
-  notes: "Окно статистики расширено до 72 часов; добавлена таблица recent_failures."
+  version: "0.12.0"
+  released_at: "2026-01-14"
+  notes: "Добавлены драйверы Gemini 3 Pro/GPT Image 1.5, схемы настроек и UI-поля размера."
 
 spec/adr:
   count: 1
@@ -14,8 +14,8 @@ spec/adr:
     ADR-0001: "Монолит FastAPI + cron, без очередей"
 
 spec/docs:
-  updated: "2025-12-02"
-  baseline: "PHC-4 — ops/наблюдаемость: метрики, алерты, ops плейбук, релизный чеклист."
+  updated: "2026-01-14"
+  baseline: "PHC-12 — провайдеры Gemini 3 Pro/GPT Image 1.5, base64 и UI параметров размера."
 
 runbooks:
   cron_cleanup: "docs/runbooks/cron_cleanup.md (2025-11-06)"
@@ -25,9 +25,9 @@ runbooks:
 memory:
   mission: 2025-10-31
   context: 2025-10-31
-  tasks: 2026-01-09
-  asks: 2026-01-09
+  tasks: 2026-01-14
+  asks: 2026-01-14
   usecases: 2025-11-10
-  progress: 2026-01-09
-  worklog: 2026-01-09
+  progress: 2026-01-14
+  worklog: 2026-01-14
   reports: "deprecated 2025-10-31 (REPORT.json/REPORT_SCHEMA.json removed)"

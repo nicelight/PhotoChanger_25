@@ -1,8 +1,8 @@
 {
-  "version": "0.11.0",
-  "released_at": "2026-01-09",
+  "version": "0.12.0",
+  "released_at": "2026-01-14",
   "stage": "draft",
-  "summary": "Расширена статистика: окно до 72 часов и таблица recent_failures.",
+  "summary": "Добавлены драйверы Gemini 3 Pro и GPT Image 1.5, схемы slot.settings и UI-настройки размера.",
   "changes": [
     {
       "type": "init",
@@ -200,9 +200,77 @@
         "tests/unit/stats/test_stats_service.py",
         "tests/e2e/test_ui_stats.py"
       ]
+    },
+    {
+      "type": "docs",
+      "description": "Добавлены схемы slot.settings для Gemini 3.0 Flash и GPT‑5, уточнены правила ретраев и логирования провайдеров.",
+      "artifacts": [
+        "spec/contracts/schemas/slot-settings-gemini-3-flash.schema.json",
+        "spec/contracts/schemas/slot-settings-gpt5.schema.json",
+        "spec/docs/providers/driver-checklist.md",
+        "spec/docs/providers/gemini.md",
+        "spec/docs/providers/turbotext.md"
+      ]
+    },
+    {
+      "type": "feature",
+      "description": "Добавлены драйверы gemini-3-pro-image-preview и gpt-image-1.5-2025-12-16 (base64 inline_data/b64_json), обновлена фабрика провайдеров и UI слотов для выбора aspect_ratio/resolution.",
+      "artifacts": [
+        "src/app/providers/providers_gemini_3_pro.py",
+        "src/app/providers/providers_gpt_image_1_5.py",
+        "src/app/providers/providers_factory.py",
+        "frontend/slots/template.html",
+        "frontend/slots/slot-001.html",
+        "frontend/slots/slot-002.html",
+        "frontend/slots/slot-003.html",
+        "frontend/slots/slot-004.html",
+        "frontend/slots/slot-005.html",
+        "frontend/slots/slot-006.html",
+        "frontend/slots/slot-007.html",
+        "frontend/slots/slot-008.html",
+        "frontend/slots/slot-009.html",
+        "frontend/slots/slot-010.html",
+        "frontend/slots/slot-011.html",
+        "frontend/slots/slot-012.html",
+        "frontend/slots/slot-013.html",
+        "frontend/slots/slot-014.html",
+        "frontend/slots/slot-015.html",
+        "frontend/slots/assets/slot-config.js",
+        "frontend/slots/assets/slot-main.js",
+        "frontend/slots/assets/slot-api.js",
+        "frontend/slots/assets/slot.css"
+      ]
+    },
+    {
+      "type": "docs",
+      "description": "Добавлены спецификации и справки по Gemini 3 Pro Image Preview и GPT Image 1.5 (base64, imageConfig/size, логирование, ретраи).",
+      "artifacts": [
+        "spec/docs/providers/gemini-3-pro/README.md",
+        "spec/docs/providers/gemini-3-pro/base64-inline-data.md",
+        "spec/docs/providers/gemini-3-pro/image-config.md",
+        "spec/docs/providers/GPT-image-1.5/README.md",
+        "spec/docs/providers/GPT-image-1.5/image-api-edits.md",
+        "spec/docs/providers/GPT-image-1.5/image-output-options.md"
+      ]
+    },
+    {
+      "type": "docs",
+      "description": "Добавлены схемы slot.settings для Gemini 3 Pro и GPT Image 1.5.",
+      "artifacts": [
+        "spec/contracts/schemas/slot-settings-gemini-3-pro.schema.json",
+        "spec/contracts/schemas/slot-settings-gpt-image-1.5.schema.json"
+      ]
+    },
+    {
+      "type": "test",
+      "description": "Добавлены unit-тесты драйверов Gemini 3 Pro и GPT Image 1.5.",
+      "artifacts": [
+        "tests/unit/providers/test_gemini3_pro_driver.py",
+        "tests/unit/providers/test_gpt_image_1_5_driver.py"
+      ]
     }
   ],
   "deprecated": [],
   "breaking": false,
-  "notes": "Окно статистики расширено до 72 часов; добавлена таблица recent_failures."
+  "notes": "Добавлены драйверы Gemini 3 Pro/GPT Image 1.5, схемы настроек и UI выбора размера."
 }
