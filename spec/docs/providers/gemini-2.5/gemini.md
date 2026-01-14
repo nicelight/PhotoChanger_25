@@ -198,6 +198,16 @@ Gemini API использует стандартные коды Google RPC:
 - **output.mime_type** — целевой формат ответа.
 - **retry_policy** и `safety_settings` (не показаны выше) позволяют тонко настроить поведение при ошибках и фильтрах Gemini.
 
+## Ретраи (driver-level)
+- Ретраи выполняет драйвер провайдера; ingest только ограничивает общий таймаут `T_sync_response`.
+- `retry_policy.max_attempts` ≤ 3, `backoff_seconds` по умолчанию 2s (применяется к transient ошибкам, например `RESOURCE_EXHAUSTED`/`DEADLINE_EXCEEDED`).
+- Если Gemini вернул `finishReason=NO_IMAGE`, выполняются до 5 попыток с паузой 3s, только если это укладывается в дедлайн `T_sync_response`; иначе фиксируется `provider_timeout`.
+
+## Логирование (KISS)
+- Драйвер пишет подробные логи провайдера, ingest — итоговый статус (success/timeout/provider_error).
+- Минимальные поля: `slot_id`, `job_id`, `provider`, `model`, `http_status`, `error_message` (усечённая до 300 символов).
+- Запрещено логировать payload и большие response body.
+
 ## Рекомендации для PhotoChanger
 
 - Перед формированием `prompt` явно указывайте, что лица людей должны сохраниться («keep all faces intact», «preserve original pose and expressions»).

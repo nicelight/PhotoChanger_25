@@ -54,6 +54,8 @@
                 <select id="provider" name="provider" aria-label="Выбор AI-провайдера">
                   <option value="" selected disabled>— выберите —</option>
                   <option value="gemini">Gemini</option>
+                  <option value="gemini-3-pro">Gemini 3 Pro</option>
+                  <option value="gpt-image-1.5">GPT Image 1.5</option>
                   <option value="turbotext">Turbotext</option>
                 </select>
               </div>
@@ -71,6 +73,37 @@
             <label class="title" for="long">Промпт</label>
             <textarea id="long" name="long" rows="6" placeholder="Промпт к ИИ…"></textarea>
             <p class="muted-hint">Опишите желаемую обработку. Если операция использует шаблонное изображение, называйте его как «Изображение №2».</p>
+          </div>
+
+          <div class="card" id="image-config-card">
+            <div class="grid-2">
+              <div>
+                <label class="title" for="aspect-ratio">Aspect ratio</label>
+                <select id="aspect-ratio" name="aspect_ratio">
+                  <option value="" selected>— не задано —</option>
+                  <option value="1:1">1:1</option>
+                  <option value="2:3">2:3</option>
+                  <option value="3:2">3:2</option>
+                  <option value="3:4">3:4</option>
+                  <option value="4:3">4:3</option>
+                  <option value="4:5">4:5</option>
+                  <option value="5:4">5:4</option>
+                  <option value="9:16">9:16</option>
+                  <option value="16:9">16:9</option>
+                  <option value="21:9">21:9</option>
+                </select>
+              </div>
+              <div>
+                <label class="title" for="resolution">Resolution</label>
+                <select id="resolution" name="resolution">
+                  <option value="" selected>— не задано —</option>
+                  <option value="1K">1K</option>
+                  <option value="2K">2K</option>
+                  <option value="4K">4K</option>
+                </select>
+              </div>
+            </div>
+            <p class="muted-hint">Доступно для провайдеров, поддерживающих настройку размера изображения.</p>
           </div>
 
           <div class="card" data-block="second-wrap-card">

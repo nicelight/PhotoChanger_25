@@ -1,6 +1,6 @@
 ﻿---
 id: progress
-updated: 2026-01-09
+updated: 2026-01-14
 ---
 
 # Progress (changelog — одна строка на событие)
@@ -27,3 +27,5 @@ updated: 2026-01-09
 - 2026-01-08: PHC-9 — GeminiDriver теперь запрашивает responseModalities=IMAGE для image-модели; добавлены команды диагностики в test_playbook.
 - 2026-01-09: Gemini NO_IMAGE — добавлены ретраи (5 попыток, 3с) и маппинг в 504 provider_timeout, обновлены тесты и runbook; contracts bump до 0.10.1.
 - 2026-01-09: PHC-10 — статистика неудач: окно до 72 часов, recent_failures в /api/stats/slots, UI таблица последних 20 ошибок; contracts bump до 0.11.0.
+- 2026-01-09: Старт разработки версии 2 — зафиксирован переход к V2 (KISS-эволюция провайдеров и specs).
+- 2026-01-14: EP PHC-12 — добавлены драйверы Gemini 3 Pro и GPT Image 1.5, UI выбора aspect_ratio/resolution, схемы slot.settings и unit‑тесты; contracts bump до 0.12.0.

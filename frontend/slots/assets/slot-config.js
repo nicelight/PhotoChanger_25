@@ -9,6 +9,18 @@
         image_edit: { label: "Image Edit", needs: { prompt: true, second: false, first: true } },
       },
     },
+    "gemini-3-pro": {
+      label: "Gemini 3 Pro",
+      operations: {
+        image_edit: { label: "Image Edit", needs: { prompt: true, second: false, first: true } },
+      },
+    },
+    "gpt-image-1.5": {
+      label: "GPT Image 1.5",
+      operations: {
+        image_edit: { label: "Image Edit", needs: { prompt: true, second: false, first: true } },
+      },
+    },
     turbotext: {
       label: "TurboText",
       operations: {
@@ -78,6 +90,9 @@
     galleryLink: $("gallery-link"),
     toast: $("toast"),
     serverResponse: $("server-response"),
+    imageConfigCard: $("image-config-card"),
+    aspectRatioSelect: $("aspect-ratio"),
+    resolutionSelect: $("resolution"),
   };
 
   if (elements.slotIdValue) {

@@ -174,6 +174,7 @@
     elements.providerSelect.addEventListener("change", () => {
       const prov = elements.providerSelect.value;
       resetOperation();
+      updateImageConfigVisibility(prov);
       const config = providers[prov];
       if (!prov || !config) {
         state.slotMeta.provider = "";
@@ -445,11 +446,26 @@
     bindTestButton();
     bindRecentResults();
     hydrateFromDataset();
+    updateImageConfigVisibility(state.slotMeta.provider);
     if (typeof api.bootstrapSlotFromServer === "function") {
       api.bootstrapSlotFromServer().catch((err) => {
         console.warn("[SlotPage] Unable to bootstrap slot", err);
         dom.toast("Не удалось загрузить данные слота", "error");
       });
+    }
+  }
+
+  function updateImageConfigVisibility(provider) {
+    if (!elements.imageConfigCard) return;
+    const visible =
+      provider === "gemini-3-pro" ||
+      provider === "gpt-image-1.5";
+    if (visible) {
+      dom.show(elements.imageConfigCard);
+    } else {
+      dom.hide(elements.imageConfigCard);
+      if (elements.aspectRatioSelect) elements.aspectRatioSelect.value = "";
+      if (elements.resolutionSelect) elements.resolutionSelect.value = "";
     }
   }
 
