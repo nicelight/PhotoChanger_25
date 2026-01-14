@@ -289,6 +289,35 @@ updated: 2026-01-09
     [x] US PHC-10.1.2 — Тесты UI
       [x] T PHC-10.1.2.1 — Обновить e2e/smoke для /ui/stats (наличие таблицы и данных)
 
+## TODO
+- [ ] EP PHC-11 — KISS-расширяемость провайдеров
+  [ ] US PHC-11.GOV — Governance & Discovery
+    [x] T PHC-11.GOV.1 — CONSULT — подтвердить минимальные правила (driver checklist, порядок частей, output mime strict, error context)
+    [x] T PHC-11.GOV.2 — REFLECT — зафиксировать текущую логику ретраев (Gemini/ingest) и ответственность за ретраи
+    [x] T PHC-11.GOV.3 — CONSULT — подтвердить изменение template_media (только media_kind) vs текущий обязательный role (breaking)
+  [ ] FEAT PHC-11.1 — Внутренний стандарт драйвера и settings-схемы
+    [ ] T PHC-11.1.1 — Внутренний чек‑лист драйвера (input: ingest+prompt, template_media опционально; order: ingest→templates→prompt; output mime strict)
+    [ ] T PHC-11.1.1a — Подготовить пример (псевдокод) сборки parts: ingest → templates → prompt
+    [ ] T PHC-11.1.2 — Добавить JSON‑схемы `slot.settings` для Gemini 3.0 Flash и GPT‑5 (минимальный набор полей)
+    [ ] T PHC-11.1.2b — Схема Gemini 3.0 Flash: model/prompt/output/template_media (минимум)
+    [ ] T PHC-11.1.2c — Схема GPT‑5: model/prompt/output/template_media (минимум)
+    [ ] T PHC-11.1.2a — Проверить совместимость со слотами без output/template (минимум model/prompt)
+    [ ] T PHC-11.1.3 — Зафиксировать в схемах template_media с обязательным `role` (без breaking)
+    [ ] T PHC-11.1.4 — Зафиксировать в спеках единое требование по ретраям (как в GeminiDriver)
+    [ ] T PHC-11.1.4b — Обновить spec/docs/providers: единый раздел “Retries” для всех драйверов
+    [ ] T PHC-11.1.4a — Описать текущие пределы Gemini: retry_policy max_attempts<=3/backoff default 2s + NO_IMAGE 5x/3s с учётом дедлайна
+  [ ] FEAT PHC-11.2 — Логирование (KISS, без проброса контекста)
+    [ ] T PHC-11.2.1 — Зафиксировать в спеках распределение логов: драйверы — подробности, ingest — итоговый статус
+    [ ] T PHC-11.2.2 — Обновить provider docs: минимальные поля логов и запрет payload/body
+    [ ] T PHC-11.2.3 — Проверить, что текущие логи ingest не дублируют драйверские детали
+  [ ] FEAT PHC-11.3 — Тесты драйверов
+    [ ] T PHC-11.3.1 — Unit‑тесты: success/timeout/provider_error/invalid_response
+    [ ] T PHC-11.3.1b — Unit‑тесты GeminiDriver: базовые сценарии
+    [ ] T PHC-11.3.1c — Unit‑тесты TurbotextDriver: базовые сценарии (пока драйвер не удалён)
+    [ ] T PHC-11.3.1a — Добавить фикстуры ответов провайдера (минимальные JSON)
+    [ ] T PHC-11.3.2 — Unit‑тесты: логирование error context и усечение message
+    [ ] T PHC-11.3.2a — Негативный тест: отсутствует image → ретрай/timeout (по правилу Gemini)
+
 
 
 ## GOV Template (reference)
