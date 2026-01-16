@@ -119,6 +119,7 @@ def job_context(tmp_path: Path) -> JobContext:
         "model": "gemini-2.5-flash-image",
         "prompt": "Keep faces, replace background",
         "output": {"mime_type": "image/png"},
+        "image_config": {"aspect_ratio": "3:2"},
         "template_media": [{"role": "style", "media_kind": "style"}],
         "retry_policy": {"max_attempts": 2, "backoff_seconds": 0},
     }
@@ -177,6 +178,9 @@ async def test_process_success(
     assert client.requests[0]["json"]["generationConfig"]["responseModalities"] == [
         "IMAGE"
     ]
+    assert client.requests[0]["json"]["generationConfig"]["imageConfig"] == {
+        "aspectRatio": "3:2"
+    }
 
 
 @pytest.mark.asyncio

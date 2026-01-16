@@ -458,6 +458,7 @@
   function updateImageConfigVisibility(provider) {
     if (!elements.imageConfigCard) return;
     const visible =
+      provider === "gemini" ||
       provider === "gemini-3-pro" ||
       provider === "gpt-image-1.5";
     if (visible) {
@@ -466,6 +467,12 @@
       dom.hide(elements.imageConfigCard);
       if (elements.aspectRatioSelect) elements.aspectRatioSelect.value = "";
       if (elements.resolutionSelect) elements.resolutionSelect.value = "";
+    }
+    if (elements.resolutionSelect) {
+      elements.resolutionSelect.disabled = provider === "gemini";
+      if (provider === "gemini") {
+        elements.resolutionSelect.value = "";
+      }
     }
   }
 

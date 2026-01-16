@@ -1,8 +1,8 @@
 {
-  "version": "0.12.0",
+  "version": "0.13.1",
   "released_at": "2026-01-14",
   "stage": "draft",
-  "summary": "Добавлены драйверы Gemini 3 Pro и GPT Image 1.5, схемы slot.settings и UI-настройки размера.",
+  "summary": "Gemini 2.5: aspect_ratio поддерживается, image_size отключён.",
   "changes": [
     {
       "type": "init",
@@ -268,9 +268,45 @@
         "tests/unit/providers/test_gemini3_pro_driver.py",
         "tests/unit/providers/test_gpt_image_1_5_driver.py"
       ]
+    },
+    {
+      "type": "feature",
+      "description": "Gemini 2.5: добавлена поддержка imageConfig (aspect_ratio/imageSize) в драйвере и UI, расширена schema slot.settings.",
+      "artifacts": [
+        "src/app/providers/providers_gemini.py",
+        "spec/contracts/schemas/slot-settings-gemini.schema.json",
+        "frontend/slots/assets/slot-api.js",
+        "frontend/slots/assets/slot-main.js"
+      ]
+    },
+    {
+      "type": "docs",
+      "description": "Обновлена справка Gemini 2.5 с параметрами imageConfig (aspect_ratio/resolution).",
+      "artifacts": [
+        "spec/docs/providers/gemini-2.5/gemini.md"
+      ]
+    },
+    {
+      "type": "test",
+      "description": "Дополнены unit-тесты GeminiDriver проверкой imageConfig.",
+      "artifacts": [
+        "tests/unit/providers/test_gemini_driver.py"
+      ]
+    },
+    {
+      "type": "fix",
+      "description": "Gemini 2.5: imageConfig ограничен только aspect_ratio, image_size больше не отправляется; UI и схема обновлены.",
+      "artifacts": [
+        "src/app/providers/providers_gemini.py",
+        "frontend/slots/assets/slot-api.js",
+        "frontend/slots/assets/slot-main.js",
+        "spec/contracts/schemas/slot-settings-gemini.schema.json",
+        "spec/docs/providers/gemini-2.5/gemini.md",
+        "tests/unit/providers/test_gemini_driver.py"
+      ]
     }
   ],
   "deprecated": [],
   "breaking": false,
-  "notes": "Добавлены драйверы Gemini 3 Pro/GPT Image 1.5, схемы настроек и UI выбора размера."
+  "notes": "Gemini 2.5: поддерживается только aspect_ratio; image_size отключён."
 }

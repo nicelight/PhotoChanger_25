@@ -27,6 +27,8 @@ from .template_media_resolver import (
 logger = logging.getLogger(__name__)
 NO_IMAGE_MAX_ATTEMPTS = 5
 NO_IMAGE_BACKOFF_SECONDS = 3.0
+IMAGE_CONFIG_ASPECT_ONLY_MODELS = {"gemini-2.5-flash-image"}
+IMAGE_CONFIG_FULL_MODELS = {"gemini-3-pro-image-preview"}
 
 
 @dataclass(slots=True)
@@ -56,6 +58,7 @@ class GeminiDriver(ProviderDriver):
         backoff_seconds = float(retry_cfg.get("backoff_seconds", 2.0))
         safety_settings = settings.get("safety_settings")
         template_bindings = settings.get("template_media") or []
+        image_config = settings.get("image_config") or {}
 
         payload_path = job.temp_payload_path
         if payload_path is None or not payload_path.exists():
@@ -124,6 +127,9 @@ class GeminiDriver(ProviderDriver):
             generation_config["responseMimeType"] = output
         else:
             generation_config["responseModalities"] = ["IMAGE"]
+        image_config_payload = _build_image_config(model, image_config)
+        if image_config_payload:
+            generation_config["imageConfig"] = image_config_payload
         if generation_config:
             body["generationConfig"] = generation_config
         if safety_settings:
@@ -146,6 +152,7 @@ class GeminiDriver(ProviderDriver):
                 backoff_seconds=backoff_seconds,
                 slot_id=job.slot_id,
                 job_id=job.job_id,
+                model=model,
             )
 
             data = response.json()
@@ -228,6 +235,7 @@ class GeminiDriver(ProviderDriver):
         backoff_seconds: float,
         slot_id: str,
         job_id: str | None,
+        model: str,
     ) -> httpx.Response:
         for attempt in range(1, max_attempts + 1):
             try:
@@ -243,6 +251,7 @@ class GeminiDriver(ProviderDriver):
 
             if not self._should_retry(response) or attempt >= max_attempts:
                 error_detail = _extract_error(response)
+                trimmed_detail = _truncate_message(error_detail, 300)
                 body_preview = response.text[:500]
                 self.log.error(
                     "gemini.response.error status=%s detail=%s body_preview=%s",
@@ -252,9 +261,10 @@ class GeminiDriver(ProviderDriver):
                     extra={
                         "slot_id": slot_id,
                         "job_id": job_id,
-                        "status_code": response.status_code,
-                        "error_detail": error_detail,
-                        "body_preview": body_preview,
+                        "provider": "gemini",
+                        "model": model,
+                        "http_status": response.status_code,
+                        "provider_error_message": trimmed_detail,
                     },
                 )
                 raise ProviderExecutionError(
@@ -311,6 +321,31 @@ def _extract_error(response: httpx.Response) -> str:
         status = (error.get("status") or "").strip()
         return " ".join(part for part in (status, message) if part)
     return str(data)
+
+
+def _build_image_config(model: str, settings: dict[str, Any]) -> dict[str, str]:
+    config: dict[str, str] = {}
+    aspect_ratio = settings.get("aspect_ratio")
+    image_size = settings.get("image_size")
+    if model in IMAGE_CONFIG_ASPECT_ONLY_MODELS:
+        if isinstance(aspect_ratio, str) and aspect_ratio:
+            config["aspectRatio"] = aspect_ratio
+        return config
+    if model in IMAGE_CONFIG_FULL_MODELS:
+        if isinstance(aspect_ratio, str) and aspect_ratio:
+            config["aspectRatio"] = aspect_ratio
+        if isinstance(image_size, str) and image_size:
+            config["imageSize"] = image_size
+        if "aspectRatio" in config and "imageSize" in config:
+            return config
+        return {}
+    return {}
+
+
+def _truncate_message(value: str, limit: int) -> str:
+    if len(value) <= limit:
+        return value
+    return value[:limit]
 
 
 def _guess_mime(path: Path) -> str:

@@ -103,19 +103,19 @@ updated: 2026-01-14
       [x] T PHC-12.4.2b — GPT Image 1.5: size (если используем) [M]
 
 ## TODO
-- [ ] EP PHC-13 — Gemini 1.5: поддержка aspect_ratio/resolution [M]
-  [ ] FEAT PHC-13.0 — Контекст и спеки [M]
-    [ ] T PHC-13.0.1 — CONSULT — подтвердить точный model_id Gemini 1.5 и поддержку aspect_ratio/resolution в API [M]
-    [ ] T PHC-13.0.2 — Зафиксировать официальные лимиты и список допустимых aspect_ratio/resolution [M]
-    [ ] T PHC-13.0.3 — Подготовить минимальные примеры success/error для Gemini 1.5 (base64 inline_data) [M]
-  [ ] FEAT PHC-13.1 — Настройки и драйвер [H]
-    [ ] T PHC-13.1.1 — Обновить/добавить schema slot.settings для Gemini 1.5 (image_config) [M]
-    [ ] T PHC-13.1.2 — Встроить поддержку imageConfig в драйвер Gemini 1.5 (aspect_ratio/imageSize) [H]
-    [ ] T PHC-13.1.3 — Обновить логи драйвера (provider/model/http_status/provider_error_message) [M]
-  [ ] FEAT PHC-13.2 — UI и тесты [M]
-    [ ] T PHC-13.2.1 — UI: поддержать aspect_ratio/resolution для Gemini 1.5 (маппинг в settings) [M]
-    [ ] T PHC-13.2.2 — Unit‑тесты Gemini 1.5 (aspect_ratio/resolution + base64) [H]
-    [ ] T PHC-13.2.3 — Обновить provider docs и VERSION/INDEX при необходимости [M]
+- [~] EP PHC-13 — Gemini 2.5: поддержка aspect_ratio/resolution [M]
+  [~] FEAT PHC-13.0 — Контекст и спеки [M]
+    [x] T PHC-13.0.1 — CONSULT — подтвердить точный model_id Gemini 2.5 и поддержку aspect_ratio/resolution в API [M]
+    [x] T PHC-13.0.2 — Зафиксировать официальные лимиты и список допустимых aspect_ratio/resolution [M]
+    [ ] T PHC-13.0.3 — Подготовить минимальные примеры success/error для Gemini 2.5 (base64 inline_data) [M]
+  [x] FEAT PHC-13.1 — Настройки и драйвер [H]
+    [x] T PHC-13.1.1 — Обновить/добавить schema slot.settings для Gemini 2.5 (image_config) [M]
+    [x] T PHC-13.1.2 — Встроить поддержку imageConfig в драйвер Gemini 2.5 (aspect_ratio/imageSize) [H]
+    [x] T PHC-13.1.3 — Обновить логи драйвера (provider/model/http_status/provider_error_message) [M]
+  [x] FEAT PHC-13.2 — UI и тесты [M]
+    [x] T PHC-13.2.1 — UI: поддержать aspect_ratio/resolution для Gemini 2.5 (маппинг в settings) [M]
+    [x] T PHC-13.2.2 — Unit‑тесты Gemini 2.5 (aspect_ratio/resolution + base64) [H]
+    [x] T PHC-13.2.3 — Обновить provider docs и VERSION/INDEX при необходимости [M]
 
 
 

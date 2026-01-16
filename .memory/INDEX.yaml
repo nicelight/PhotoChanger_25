@@ -2,9 +2,9 @@
 updated: 2026-01-14
 
 spec/contracts:
-  version: "0.12.0"
+  version: "0.13.1"
   released_at: "2026-01-14"
-  notes: "Добавлены драйверы Gemini 3 Pro/GPT Image 1.5, схемы настроек и UI-поля размера."
+  notes: "Gemini 2.5: поддерживается только aspect_ratio; image_size отключён."
 
 spec/adr:
   count: 1
@@ -15,7 +15,7 @@ spec/adr:
 
 spec/docs:
   updated: "2026-01-14"
-  baseline: "PHC-12 — провайдеры Gemini 3 Pro/GPT Image 1.5, base64 и UI параметров размера."
+  baseline: "PHC-13 — Gemini 2.5: aspect_ratio без image_size; обновление справки и схем."
 
 runbooks:
   cron_cleanup: "docs/runbooks/cron_cleanup.md (2025-11-06)"

@@ -54,6 +54,8 @@
                 <select id="provider" name="provider" aria-label="Выбор AI-провайдера">
                   <option value="" selected disabled>— выберите —</option>
                   <option value="gemini">Gemini</option>
+                  <option value="gemini-3-pro">Gemini 3 Pro</option>
+                  <option value="gpt-image-1.5">GPT Image 1.5</option>
                   <option value="turbotext">Turbotext</option>
                 </select>
               </div>
@@ -79,7 +81,7 @@
               <div>
                 <label class="title" for="aspect-ratio">Aspect ratio</label>
                 <select id="aspect-ratio" name="aspect_ratio">
-                  <option value="" selected>? ?? ?????? ?</option>
+                  <option value="" selected>— не задано —</option>
                   <option value="1:1">1:1</option>
                   <option value="2:3">2:3</option>
                   <option value="3:2">3:2</option>
@@ -95,14 +97,14 @@
               <div>
                 <label class="title" for="resolution">Resolution</label>
                 <select id="resolution" name="resolution">
-                  <option value="" selected>? ?? ?????? ?</option>
+                  <option value="" selected>— не задано —</option>
                   <option value="1K">1K</option>
                   <option value="2K">2K</option>
                   <option value="4K">4K</option>
                 </select>
               </div>
             </div>
-            <p class="muted-hint">???????? ??? ???????????, ?????????????? ????????? ??????? ???????????.</p>
+            <p class="muted-hint">Доступно для провайдеров, поддерживающих настройку размера изображения.</p>
           </div>
           <div class="card" data-block="second-wrap-card">
             <div class="switch-row">

@@ -26,6 +26,17 @@
         }
       }
     },
+    "image_config": {
+      "type": "object",
+      "description": "ImageConfig controls for Gemini 2.5 (aspect ratio only)",
+      "additionalProperties": false,
+      "properties": {
+        "aspect_ratio": {
+          "type": "string",
+          "enum": ["1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"]
+        }
+      }
+    },
     "retry_policy": {
       "type": "object",
       "additionalProperties": false,

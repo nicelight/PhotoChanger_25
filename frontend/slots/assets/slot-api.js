@@ -128,10 +128,14 @@
     const settings = { prompt: getPromptValue() };
     if (provider === "gemini") {
       settings.output = { mime_type: "image/png" };
+      const imageConfig = collectImageConfig(provider);
+      if (Object.keys(imageConfig).length) {
+        settings.image_config = imageConfig;
+      }
     }
     if (provider === "gemini-3-pro") {
       settings.output = { mime_type: "image/png" };
-      const imageConfig = collectImageConfig();
+      const imageConfig = collectImageConfig(provider);
       if (Object.keys(imageConfig).length) {
         settings.image_config = imageConfig;
       }
@@ -241,12 +245,18 @@
     }
   }
 
-  function collectImageConfig() {
+  function collectImageConfig(provider) {
     const config = {};
     const aspectRatio = (elements.aspectRatioSelect?.value || "").trim();
     const resolution = (elements.resolutionSelect?.value || "").trim();
-    if (aspectRatio) config.aspect_ratio = aspectRatio;
-    if (resolution) config.image_size = resolution;
+    if (provider === "gemini") {
+      if (aspectRatio) config.aspect_ratio = aspectRatio;
+      return config;
+    }
+    if (aspectRatio && resolution) {
+      config.aspect_ratio = aspectRatio;
+      config.image_size = resolution;
+    }
     return config;
   }
 
@@ -261,12 +271,14 @@
 
   function hydrateImageConfig(slot) {
     if (!slot || !slot.settings) return;
-    if (slot.provider === "gemini-3-pro") {
+    if (slot.provider === "gemini" || slot.provider === "gemini-3-pro") {
       const cfg = slot.settings.image_config || {};
       if (elements.aspectRatioSelect && cfg.aspect_ratio) {
         elements.aspectRatioSelect.value = cfg.aspect_ratio;
       }
-      if (elements.resolutionSelect && cfg.image_size) {
+      if (slot.provider === "gemini") {
+        if (elements.resolutionSelect) elements.resolutionSelect.value = "";
+      } else if (elements.resolutionSelect && cfg.image_size) {
         elements.resolutionSelect.value = cfg.image_size;
       }
       return;

@@ -166,7 +166,7 @@ Gemini API использует стандартные коды Google RPC:
 
 - Маски (инпейтинг/аутпейтинг) и другие операции, требующие пиксельных масок, не реализованы.
 - Нет прямого скачивания файлов через Files API — можно только получать метаданные.
-- Генерация возвращает PNG; управление размером/соотношением сторон ограничено подсказками, явных параметров ширины/высоты нет.
+- Модель `gemini-2.5-flash-image` генерирует изображения фиксированного размера 1024px; поддерживается только `imageConfig.aspectRatio`, `imageConfig.imageSize` не поддерживается.
 
 ## Настройки слота PhotoChanger (Gemini)
 
@@ -177,6 +177,7 @@ Gemini API использует стандартные коды Google RPC:
   "model": "gemini-2.5-flash-image",
   "prompt": "Describe desired result, e.g. keep faces, replace background with studio lights",
   "output": { "mime_type": "image/png" },
+  "image_config": { "aspect_ratio": "3:2" },
   "template_media": [
     {
       "role": "reference_background",
