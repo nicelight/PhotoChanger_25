@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
@@ -27,8 +28,8 @@ class SettingsService:
         """Return current snapshot merged with defaults and apply runtime settings."""
         store = self.repo.read_all()
         self._cache = store
-        snapshot, legacy_hash = self._hydrate(store)
-        self._apply_runtime(snapshot, legacy_hash)
+        snapshot, legacy_hash, provider_values = self._hydrate(store)
+        self._apply_runtime(snapshot, legacy_hash, provider_values)
         self._snapshot = snapshot
         return snapshot
 
@@ -69,12 +70,14 @@ class SettingsService:
 
         merged = self.repo.read_all()
         self._cache = merged
-        snapshot, legacy_hash = self._hydrate(merged)
-        self._apply_runtime(snapshot, legacy_hash)
+        snapshot, legacy_hash, provider_values = self._hydrate(merged)
+        self._apply_runtime(snapshot, legacy_hash, provider_values)
         self._snapshot = snapshot
         return snapshot
 
-    def _hydrate(self, store: dict[str, str]) -> tuple[dict[str, Any], str | None]:
+    def _hydrate(
+        self, store: dict[str, str]
+    ) -> tuple[dict[str, Any], str | None, dict[str, str]]:
         def int_or_default(key: str, default: int) -> int:
             try:
                 value = store.get(key)
@@ -105,9 +108,13 @@ class SettingsService:
             provider_store = {}
 
         provider_statuses: dict[str, dict[str, Any]] = {}
+        provider_values: dict[str, str] = {}
         for name, data in provider_store.items():
+            value = data.get("value")
+            if isinstance(value, str) and value:
+                provider_values[name] = value
             provider_statuses[name] = {
-                "configured": bool(data.get("value")),
+                "configured": bool(value),
                 "updated_at": _parse_datetime(data.get("updated_at")),
             }
 
@@ -123,11 +130,15 @@ class SettingsService:
                 "provider_keys": provider_statuses,
             },
             ingest_password_hash,
+            provider_values,
         )
 
 
     def _apply_runtime(
-        self, snapshot: dict[str, Any], legacy_ingest_password_hash: str | None
+        self,
+        snapshot: dict[str, Any],
+        legacy_ingest_password_hash: str | None,
+        provider_values: dict[str, str],
     ) -> None:
         """Propagate stored values to services/config so API reflects real state."""
         self.ingest_service.sync_response_seconds = snapshot["sync_response_seconds"]
@@ -139,6 +150,17 @@ class SettingsService:
         self.config.sync_response_seconds = snapshot["sync_response_seconds"]
         self.config.result_ttl_hours = snapshot["result_ttl_hours"]
         self.config.ingest_password = snapshot["ingest_password"]
+
+        env_map = {
+            "gemini": "GEMINI_API_KEY",
+            "gemini-3-pro": "GEMINI_API_KEY",
+            "gpt-image-1.5": "OPENAI_API_KEY",
+            "turbotext": "TURBOTEXT_API_KEY",
+        }
+        for provider, value in provider_values.items():
+            env_key = env_map.get(provider)
+            if env_key and value:
+                os.environ[env_key] = value
 
 
 def _parse_datetime(value: str | None) -> datetime | None:

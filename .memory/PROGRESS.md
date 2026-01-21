@@ -31,3 +31,4 @@ updated: 2026-01-14
 - 2026-01-14: EP PHC-12 — добавлены драйверы Gemini 3 Pro и GPT Image 1.5, UI выбора aspect_ratio/resolution, схемы slot.settings и unit‑тесты; contracts bump до 0.12.0.
 - 2026-01-14: EP PHC-13 — Gemini 2.5 поддерживает imageConfig (aspect_ratio/resolution) в драйвере, UI и settings-схеме; contracts bump до 0.13.0.
 - 2026-01-14: FIX — Gemini 2.5 поддерживает только aspect_ratio, image_size отключён; contracts bump до 0.13.1.
+- 2026-01-14: FIX — provider_keys из settings применяются к runtime ключам провайдеров; contracts bump до 0.13.2.

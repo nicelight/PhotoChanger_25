@@ -198,7 +198,7 @@
           ? state.slotMeta.modelName
           : config.label || prov;
 
-      if (prov === "gemini") {
+      if (prov !== "turbotext") {
         const defaultOp =
           (ops && state.slotMeta.operation && ops[state.slotMeta.operation] && state.slotMeta.operation) ||
           ops[constants.GEMINI_DEFAULT_OPERATION]
@@ -208,9 +208,7 @@
         setOperationValue(prov, defaultOp);
       } else {
         if (elements.operationSelectWrap) elements.operationSelectWrap.style.display = "";
-        if (prov === "turbotext") {
-          setOperationValue(prov, constants.TURBOTEXT_DEFAULT_OPERATION);
-        }
+        setOperationValue(prov, constants.TURBOTEXT_DEFAULT_OPERATION);
       }
 
       api.updateSlotHeader(prov);
@@ -279,8 +277,8 @@
     if (state.slotMeta.provider && elements.providerSelect) {
       elements.providerSelect.value = state.slotMeta.provider;
       elements.providerSelect.dispatchEvent(new Event("change"));
-      if (state.slotMeta.provider === "gemini" && state.slotMeta.operation) {
-        setOperationValue("gemini", state.slotMeta.operation);
+      if (state.slotMeta.provider !== "turbotext" && state.slotMeta.operation) {
+        setOperationValue(state.slotMeta.provider, state.slotMeta.operation);
       }
       if (state.slotMeta.provider === "turbotext" && state.slotMeta.operation) {
         elements.operationSelect.value = state.slotMeta.operation;
@@ -457,6 +455,9 @@
 
   function updateImageConfigVisibility(provider) {
     if (!elements.imageConfigCard) return;
+    const resolutionWrap = elements.resolutionSelect
+      ? elements.resolutionSelect.closest("div")
+      : null;
     const visible =
       provider === "gemini" ||
       provider === "gemini-3-pro" ||
@@ -473,6 +474,9 @@
       if (provider === "gemini") {
         elements.resolutionSelect.value = "";
       }
+    }
+    if (resolutionWrap) {
+      resolutionWrap.style.display = provider === "gemini" ? "none" : "";
     }
   }
 

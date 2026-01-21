@@ -1,8 +1,8 @@
 {
-  "version": "0.13.1",
+  "version": "0.13.2",
   "released_at": "2026-01-14",
   "stage": "draft",
-  "summary": "Gemini 2.5: aspect_ratio поддерживается, image_size отключён.",
+  "summary": "Settings: provider_keys применяются к runtime ключам провайдеров.",
   "changes": [
     {
       "type": "init",
@@ -304,9 +304,17 @@
         "spec/docs/providers/gemini-2.5/gemini.md",
         "tests/unit/providers/test_gemini_driver.py"
       ]
+    },
+    {
+      "type": "fix",
+      "description": "Settings: provider_keys из /api/settings применяются к runtime ключам (GEMINI/OPENAI/TURBOTEXT).",
+      "artifacts": [
+        "src/app/settings/settings_service.py",
+        "tests/unit/settings/test_settings_service_ingest_upgrade.py"
+      ]
     }
   ],
   "deprecated": [],
   "breaking": false,
-  "notes": "Gemini 2.5: поддерживается только aspect_ratio; image_size отключён."
+  "notes": "provider_keys теперь применяются к runtime ключам провайдеров."
 }

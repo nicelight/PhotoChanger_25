@@ -2,9 +2,9 @@
 updated: 2026-01-14
 
 spec/contracts:
-  version: "0.13.1"
+  version: "0.13.2"
   released_at: "2026-01-14"
-  notes: "Gemini 2.5: поддерживается только aspect_ratio; image_size отключён."
+  notes: "Settings: provider_keys применяются к runtime ключам провайдеров."
 
 spec/adr:
   count: 1
