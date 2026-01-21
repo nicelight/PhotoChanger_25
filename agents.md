@@ -1,7 +1,7 @@
 # Codex — Operating Guide (Core)
 
 > Ядро правил.  Подробные плейбуки и команды — в `.memory/CONTEXT.md`.
-> Миссия/контекст/таски/прогресс — в `.memory/*`. Контракты — в `spec/contracts/*`. ADR — в `spec/adr/*` (индекс — `.memory/DECISIONS.md`). Спецификации и SDD — в `spec/docs/*`.
+> Миссия/контекст/таски/прогресс — в `.memory/*`. Контракты — в `spec/contracts/*`. ADR — в `spec/adr/*` (индекс — `.memory/DECISIONS.md`). Спецификации и SDD — в `spec/docs/*`. Карта и стабильные точки входа — `spec/CODEMAP.md`.
 
 ---
 
@@ -27,14 +27,15 @@
 ## 1) Must-Read перед задачей
 Прочти файлы из мемори банка `.memory/`
 Последовательность чтения:
-1) `.memory/MISSION.md` → зачем/ценность/scope.
-2) `.memory/CONTEXT.md` → окружения, стек, команды, quality policy, Deprecation.
-3) `.memory/TASKS.md` → активные задачи (запомни id/owner).
-4) `.memory/ASKS.md` → история пользовательских запросов.
-5) `.memory/DECISIONS.md` → индекс ADR (учти `status/supersedes`) + соответствующие файлы в `spec/adr/`.
-6) `spec/contracts/*` + `spec/contracts/VERSION.json` → версия API и изменения.
-7) `.memory/USECASES.md` → сценарии + acceptance criteria.
-8) `.memory/INDEX.yaml` → быстрый контроль актуальности артефактов.
+1) `spec/CODEMAP.md` → карта артефактов и стабильные точки входа.
+2) `.memory/MISSION.md` → зачем/ценность/scope.
+3) `.memory/CONTEXT.md` → окружения, стек, команды, quality policy, Deprecation.
+4) `.memory/TASKS.md` → активные задачи (запомни id/owner).
+5) `.memory/ASKS.md` → история пользовательских запросов.
+6) `.memory/DECISIONS.md` → индекс ADR (учти `status/supersedes`) + соответствующие файлы в `spec/adr/`.
+7) `spec/contracts/*` + `spec/contracts/VERSION.json` → версия API и изменения.
+8) `.memory/USECASES.md` → сценарии + acceptance criteria.
+9) `.memory/INDEX.yaml` → быстрый контроль актуальности артефактов.
 
 
 ## 2) Рабочий журнал

@@ -2,9 +2,14 @@
 updated: 2026-01-21
 
 spec/contracts:
-  version: "0.13.3"
+  version: "0.13.4"
   released_at: "2026-01-21"
-  notes: "UI ??????: ????????? ???????? JS ? ?????????? ???????????."
+  notes: "Patch: default модели GPT Image 1.5 обновлён на поддерживаемый ID."
+
+spec/codemap:
+  path: "spec/CODEMAP.md"
+  updated: "2026-01-21"
+  notes: "Карта стабильных точек входа (backend/frontend/contracts/tests)."
 
 spec/adr:
   count: 1
@@ -15,7 +20,7 @@ spec/adr:
 
 spec/docs:
   updated: "2026-01-21"
-  baseline: "PHC-14 — UI слотов: модульная разбивка JS."
+  baseline: "Глоссарий/нейминг обновлены; PHC-14 — UI слотов: модульная разбивка JS; patch GPT Image default."
 
 runbooks:
   cron_cleanup: "docs/runbooks/cron_cleanup.md (2025-11-06)"
@@ -30,4 +35,5 @@ memory:
   usecases: 2025-11-10
   progress: 2026-01-21
   worklog: 2026-01-21
+  glossary: 2026-01-21
   reports: "deprecated 2025-10-31 (REPORT.json/REPORT_SCHEMA.json removed)"

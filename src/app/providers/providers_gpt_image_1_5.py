@@ -45,7 +45,7 @@ class GptImage15Driver(ProviderDriver):
                 "GPT Image prompt is required in slot settings"
             )
 
-        model = settings.get("model", "gpt-image-1.5-2025-12-16")
+        model = settings.get("model", "gpt-image-1.5")
         output = settings.get("output") or {}
         output_format = output.get("format", "png")
         output_compression = output.get("compression")

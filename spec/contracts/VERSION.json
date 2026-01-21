@@ -1,8 +1,8 @@
 {
-  "version": "0.13.3",
+  "version": "0.13.4",
   "released_at": "2026-01-21",
   "stage": "draft",
-  "summary": "UI ??????: ????????? ???????? JS ? ?????????? ???????????.",
+  "summary": "Patch: корректен default модели GPT Image 1.5.",
   "changes": [
     {
       "type": "init",
@@ -341,6 +341,16 @@
         "frontend/slots/slot-014.html",
         "frontend/slots/slot-015.html",
         "spec/docs/ui/frontend-examples/slot-page.html"
+      ]
+    },
+    {
+      "type": "fix",
+      "description": "GPT Image: default модель обновлена на поддерживаемую `gpt-image-1.5` (вместо устаревшей `gpt-image-1.5-2025-12-16`); схема, драйвер и тесты синхронизированы.",
+      "artifacts": [
+        "spec/contracts/schemas/slot-settings-gpt-image-1.5.schema.json",
+        "src/app/providers/providers_gpt_image_1_5.py",
+        "tests/unit/providers/test_gpt_image_1_5_driver.py",
+        "spec/docs/glossary.md"
       ]
     }
   ],

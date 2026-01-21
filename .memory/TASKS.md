@@ -127,6 +127,7 @@ updated: 2026-01-21
   [x] FEAT PHC-14.1 — Модульная нарезка slot UI
     [x] T PHC-14.1.1 — Разнести код по файлам и обновить HTML подключения
     [x] T PHC-14.1.2 — Обновить spec/docs ui пример
+
 ## GOV Template (reference)
 - [ ] EP XXX — Название эпика  
   [ ] US XXX.GOV — Governance & Discovery  
