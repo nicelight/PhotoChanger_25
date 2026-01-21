@@ -1,6 +1,6 @@
 ﻿---
 id: tasks
-updated: 2026-01-14
+updated: 2026-01-21
 ---
 
 # Tasks (канбан)
@@ -119,6 +119,14 @@ updated: 2026-01-14
 
 
 
+## TODO
+- [x] EP PHC-14 — Рефакторинг UI слотов
+  [x] US PHC-14.GOV — Governance & Discovery
+    [x] T PHC-14.GOV.1 — CONSULT — подтвердить разбиение UI модулей (slot-state/slot-ui/slot-mapping/slot-events/slot-index)
+    [x] T PHC-14.GOV.2 — REFLECT — проверить риски регрессий UI (Gemini/Turbotext, image_config, операции)
+  [x] FEAT PHC-14.1 — Модульная нарезка slot UI
+    [x] T PHC-14.1.1 — Разнести код по файлам и обновить HTML подключения
+    [x] T PHC-14.1.2 — Обновить spec/docs ui пример
 ## GOV Template (reference)
 - [ ] EP XXX — Название эпика  
   [ ] US XXX.GOV — Governance & Discovery  

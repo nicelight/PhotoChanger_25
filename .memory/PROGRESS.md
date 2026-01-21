@@ -1,6 +1,6 @@
 ﻿---
 id: progress
-updated: 2026-01-14
+updated: 2026-01-21
 ---
 
 # Progress (changelog — одна строка на событие)
@@ -32,3 +32,5 @@ updated: 2026-01-14
 - 2026-01-14: EP PHC-13 — Gemini 2.5 поддерживает imageConfig (aspect_ratio/resolution) в драйвере, UI и settings-схеме; contracts bump до 0.13.0.
 - 2026-01-14: FIX — Gemini 2.5 поддерживает только aspect_ratio, image_size отключён; contracts bump до 0.13.1.
 - 2026-01-14: FIX — provider_keys из settings применяются к runtime ключам провайдеров; contracts bump до 0.13.2.
+- 2026-01-21: UI слотов разрезан на модульные файлы (slot-state/slot-ui/slot-mapping/slot-events/slot-index), подключения обновлены.
+- 2026-01-21: ????????? ????????? ?? 0.13.3 (UI ??????: ????????? ???????? JS).

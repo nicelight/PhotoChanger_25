@@ -1,10 +1,10 @@
 # Машиночитаемый индекс актуальности артефактов
-updated: 2026-01-14
+updated: 2026-01-21
 
 spec/contracts:
-  version: "0.13.2"
-  released_at: "2026-01-14"
-  notes: "Settings: provider_keys применяются к runtime ключам провайдеров."
+  version: "0.13.3"
+  released_at: "2026-01-21"
+  notes: "UI ??????: ????????? ???????? JS ? ?????????? ???????????."
 
 spec/adr:
   count: 1
@@ -14,8 +14,8 @@ spec/adr:
     ADR-0001: "Монолит FastAPI + cron, без очередей"
 
 spec/docs:
-  updated: "2026-01-14"
-  baseline: "PHC-13 — Gemini 2.5: aspect_ratio без image_size; обновление справки и схем."
+  updated: "2026-01-21"
+  baseline: "PHC-14 — UI слотов: модульная разбивка JS."
 
 runbooks:
   cron_cleanup: "docs/runbooks/cron_cleanup.md (2025-11-06)"
@@ -25,9 +25,9 @@ runbooks:
 memory:
   mission: 2025-10-31
   context: 2025-10-31
-  tasks: 2026-01-14
-  asks: 2026-01-14
+  tasks: 2026-01-21
+  asks: 2026-01-21
   usecases: 2025-11-10
-  progress: 2026-01-14
-  worklog: 2026-01-14
+  progress: 2026-01-21
+  worklog: 2026-01-21
   reports: "deprecated 2025-10-31 (REPORT.json/REPORT_SCHEMA.json removed)"
