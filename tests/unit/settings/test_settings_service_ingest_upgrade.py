@@ -51,7 +51,7 @@ def test_load_propagates_legacy_ingest_password_hash() -> None:
 
 def test_load_applies_provider_keys_to_env(monkeypatch) -> None:
     provider_keys = {
-        "gemini": {"value": "gemini-key", "updated_at": "2026-01-14T20:50:00"},
+        "gemini": {"value": "", "updated_at": "2026-01-14T20:50:00"},
         "gpt-image-1.5": {"value": "openai-key", "updated_at": "2026-01-14T20:50:00"},
         "turbotext": {"value": "", "updated_at": "2026-01-14T20:50:00"},
     }
@@ -67,7 +67,7 @@ def test_load_applies_provider_keys_to_env(monkeypatch) -> None:
         sync_response_seconds=48, result_ttl_hours=72, ingest_password=""
     )
 
-    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.setenv("GEMINI_API_KEY", "stale-key")
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("TURBOTEXT_API_KEY", raising=False)
 
@@ -76,6 +76,6 @@ def test_load_applies_provider_keys_to_env(monkeypatch) -> None:
     )
     service.load()
 
-    assert os.getenv("GEMINI_API_KEY") == "gemini-key"
+    assert os.getenv("GEMINI_API_KEY") is None
     assert os.getenv("OPENAI_API_KEY") == "openai-key"
     assert os.getenv("TURBOTEXT_API_KEY") in {None, ""}

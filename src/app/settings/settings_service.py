@@ -28,8 +28,10 @@ class SettingsService:
         """Return current snapshot merged with defaults and apply runtime settings."""
         store = self.repo.read_all()
         self._cache = store
-        snapshot, legacy_hash, provider_values = self._hydrate(store)
-        self._apply_runtime(snapshot, legacy_hash, provider_values)
+        snapshot, legacy_hash, provider_values, provider_presence = self._hydrate(
+            store
+        )
+        self._apply_runtime(snapshot, legacy_hash, provider_values, provider_presence)
         self._snapshot = snapshot
         return snapshot
 
@@ -70,14 +72,16 @@ class SettingsService:
 
         merged = self.repo.read_all()
         self._cache = merged
-        snapshot, legacy_hash, provider_values = self._hydrate(merged)
-        self._apply_runtime(snapshot, legacy_hash, provider_values)
+        snapshot, legacy_hash, provider_values, provider_presence = self._hydrate(
+            merged
+        )
+        self._apply_runtime(snapshot, legacy_hash, provider_values, provider_presence)
         self._snapshot = snapshot
         return snapshot
 
     def _hydrate(
         self, store: dict[str, str]
-    ) -> tuple[dict[str, Any], str | None, dict[str, str]]:
+    ) -> tuple[dict[str, Any], str | None, dict[str, str], set[str]]:
         def int_or_default(key: str, default: int) -> int:
             try:
                 value = store.get(key)
@@ -109,6 +113,7 @@ class SettingsService:
 
         provider_statuses: dict[str, dict[str, Any]] = {}
         provider_values: dict[str, str] = {}
+        provider_presence = set(provider_store.keys())
         for name, data in provider_store.items():
             value = data.get("value")
             if isinstance(value, str) and value:
@@ -131,6 +136,7 @@ class SettingsService:
             },
             ingest_password_hash,
             provider_values,
+            provider_presence,
         )
 
 
@@ -139,6 +145,7 @@ class SettingsService:
         snapshot: dict[str, Any],
         legacy_ingest_password_hash: str | None,
         provider_values: dict[str, str],
+        provider_presence: set[str],
     ) -> None:
         """Propagate stored values to services/config so API reflects real state."""
         self.ingest_service.sync_response_seconds = snapshot["sync_response_seconds"]
@@ -157,10 +164,12 @@ class SettingsService:
             "gpt-image-1.5": "OPENAI_API_KEY",
             "turbotext": "TURBOTEXT_API_KEY",
         }
-        for provider, value in provider_values.items():
-            env_key = env_map.get(provider)
-            if env_key and value:
+        for provider, env_key in env_map.items():
+            value = provider_values.get(provider)
+            if value:
                 os.environ[env_key] = value
+            elif provider in provider_presence:
+                os.environ.pop(env_key, None)
 
 
 def _parse_datetime(value: str | None) -> datetime | None:

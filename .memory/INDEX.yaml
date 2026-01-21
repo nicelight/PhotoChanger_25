@@ -2,9 +2,9 @@
 updated: 2026-01-14
 
 spec/contracts:
-  version: "0.13.2"
+  version: "0.13.3"
   released_at: "2026-01-14"
-  notes: "Settings: provider_keys применяются к runtime ключам провайдеров."
+  notes: "Settings: пустые provider_keys очищают runtime ключи провайдеров."
 
 spec/adr:
   count: 1

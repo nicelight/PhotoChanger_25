@@ -17,8 +17,9 @@ updated: 2026-01-14
 - `US` — User Story (поведение пользователя)  
 - `T` — Task (конкретное действие)
 
+# TODO
 
-## TODO
+# DONE
 - [x] EP PHC-11 — KISS-расширяемость провайдеров
   [ ] US PHC-11.GOV — Governance & Discovery
     [x] T PHC-11.GOV.1 — CONSULT — подтвердить минимальные правила (driver checklist, порядок частей, output mime strict, error context)
@@ -46,8 +47,6 @@ updated: 2026-01-14
     [x] T PHC-11.3.1a — Добавить фикстуры ответов провайдера (минимальные JSON)
     [x] T PHC-11.3.2 — Unit‑тесты: NO_IMAGE ретраи и итоговый timeout
     [x] T PHC-11.3.2a — Негативный тест: отсутствует image → ретрай/timeout (по правилу Gemini)
-
-## TODO
 - [x] EP PHC-12 — V2: драйверы gemini-3-pro-image-preview и gpt-image-1.5-2025-12-16 [M]
   [x] FEAT PHC-12.0 — Контекст и спецификации [M]
     [x] T PHC-12.0.1 — Собрать/проверить документацию по base64 inline_data (input/output) для Gemini 3 Pro [L]
@@ -101,8 +100,6 @@ updated: 2026-01-14
     [x] T PHC-12.4.2 — Маппинг UI → provider settings и валидация на клиенте [M]
       [x] T PHC-12.4.2a — Gemini 3 Pro: aspect_ratio + imageSize [M]
       [x] T PHC-12.4.2b — GPT Image 1.5: size (если используем) [M]
-
-## TODO
 - [~] EP PHC-13 — Gemini 2.5: поддержка aspect_ratio/resolution [M]
   [~] FEAT PHC-13.0 — Контекст и спеки [M]
     [x] T PHC-13.0.1 — CONSULT — подтвердить точный model_id Gemini 2.5 и поддержку aspect_ratio/resolution в API [M]

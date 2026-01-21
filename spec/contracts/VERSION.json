@@ -1,8 +1,8 @@
 {
-  "version": "0.13.2",
+  "version": "0.13.3",
   "released_at": "2026-01-14",
   "stage": "draft",
-  "summary": "Settings: provider_keys применяются к runtime ключам провайдеров.",
+  "summary": "Settings: удаление provider_keys очищает runtime ключи провайдеров.",
   "changes": [
     {
       "type": "init",
@@ -312,9 +312,17 @@
         "src/app/settings/settings_service.py",
         "tests/unit/settings/test_settings_service_ingest_upgrade.py"
       ]
+    },
+    {
+      "type": "fix",
+      "description": "Settings: пустой provider_keys очищает соответствующую переменную окружения, чтобы не оставлять устаревший ключ.",
+      "artifacts": [
+        "src/app/settings/settings_service.py",
+        "tests/unit/settings/test_settings_service_ingest_upgrade.py"
+      ]
     }
   ],
   "deprecated": [],
   "breaking": false,
-  "notes": "provider_keys теперь применяются к runtime ключам провайдеров."
+  "notes": "пустые provider_keys очищают runtime ключи провайдеров."
 }
