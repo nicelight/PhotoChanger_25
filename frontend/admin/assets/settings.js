@@ -8,7 +8,11 @@
   const dashboardHref = dataset.dashboardHref || "/ui/static/admin/dashboard.html";
   const galleryHref = dataset.galleryHref || "/ui/static/admin/gallery.html";
   const defaultProviders =
-    dataset.providers?.split(",").map((item) => item.trim()).filter(Boolean) || ["gemini", "turbotext"];
+    dataset.providers?.split(",").map((item) => item.trim()).filter(Boolean) || [
+      "gemini",
+      "turbotext",
+      "gpt-image-1.5",
+    ];
 
   const form = document.getElementById("settings-form");
   const statusEl = document.getElementById("settings-status");
