@@ -4,12 +4,12 @@ updated: 2026-01-21
 spec/contracts:
   version: "0.13.4"
   released_at: "2026-01-21"
-  notes: "Patch: default модели GPT Image 1.5 обновлён на поддерживаемый ID."
+  notes: "UI ??????: gpt-image-1.5 aspect_ratio 1:1/2:3/3:2, resolution ?????."
 
 spec/codemap:
   path: "spec/CODEMAP.md"
   updated: "2026-01-21"
-  notes: "Карта стабильных точек входа (backend/frontend/contracts/tests)."
+  notes: "UI ??????: gpt-image-1.5 aspect_ratio 1:1/2:3/3:2, resolution ?????."
 
 spec/adr:
   count: 1

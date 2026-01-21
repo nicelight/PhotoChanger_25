@@ -213,6 +213,8 @@
   function updateImageConfigVisibility(provider) {
     if (!elements.imageConfigCard) return;
     const resolutionWrap = elements.resolutionSelect ? elements.resolutionSelect.closest("div") : null;
+    const aspectSelect = elements.aspectRatioSelect;
+    const previousAspect = aspectSelect ? aspectSelect.value : "";
     const visible =
       provider === "gemini" ||
       provider === "gemini-3-pro" ||
@@ -221,17 +223,46 @@
       show(elements.imageConfigCard);
     } else {
       hide(elements.imageConfigCard);
-      if (elements.aspectRatioSelect) elements.aspectRatioSelect.value = "";
+      if (aspectSelect) aspectSelect.value = "";
       if (elements.resolutionSelect) elements.resolutionSelect.value = "";
     }
+    updateAspectRatioOptions(provider, previousAspect);
     if (elements.resolutionSelect) {
-      elements.resolutionSelect.disabled = provider === "gemini";
-      if (provider === "gemini") {
+      const hideResolution = provider === "gemini" || provider === "gpt-image-1.5";
+      elements.resolutionSelect.disabled = hideResolution;
+      if (hideResolution) {
         elements.resolutionSelect.value = "";
       }
     }
     if (resolutionWrap) {
-      resolutionWrap.style.display = provider === "gemini" ? "none" : "";
+      const hideResolution = provider === "gemini" || provider === "gpt-image-1.5";
+      resolutionWrap.style.display = hideResolution ? "none" : "";
+    }
+  }
+
+  const ALL_ASPECT_RATIOS = ["1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"];
+  const GPT_ASPECT_RATIOS = ["1:1", "2:3", "3:2"];
+
+  function updateAspectRatioOptions(provider, keepValue) {
+    const select = elements.aspectRatioSelect;
+    if (!select) return;
+    const allowed = provider === "gpt-image-1.5" ? GPT_ASPECT_RATIOS : ALL_ASPECT_RATIOS;
+    select.innerHTML = "";
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "— не задано —";
+    placeholder.selected = true;
+    select.appendChild(placeholder);
+    allowed.forEach((value) => {
+      const opt = document.createElement("option");
+      opt.value = value;
+      opt.textContent = value;
+      select.appendChild(opt);
+    });
+    if (keepValue && allowed.includes(keepValue)) {
+      select.value = keepValue;
+    } else {
+      select.value = "";
     }
   }
 

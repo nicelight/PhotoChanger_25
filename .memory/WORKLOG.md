@@ -9,8 +9,15 @@ updated: 2026-01-21
 - 2026-01-21 21:15 — Обновил `spec/docs/glossary.md`: добавлены TTL термины, provider_keys, уточнён список драйверов и введены соглашения по именованию (slot IDs, провайдеры, медиа пути, slot JS модули).
 - 2026-01-21 21:18 — Перевёл `.memory/GLOSSARY.md` в ссылку на каноничный глоссарий и синхронизировал `.memory/INDEX.yaml`.
 
+## BUGFIX — GPT Image model id (2026-01-21)
+- 2026-01-21 21:35 — Обновил default модели GPT Image на `gpt-image-1.5` (драйвер, schema, tests, glossary), добавлен patch в VERSION 0.13.4.
+
 ## Observability — ротация логов (2026-01-21)
 - 2026-01-21 20:33 — Перечитал обязательные артефакты (MISSION/CONTEXT/TASKS/ASKS/DECISIONS/USECASES/INDEX), выполнил поиск по репозиторию (`rg` по logrotate/ротац/logs) для проверки наличия политики ротации логов; спец. настроек ротации не найдено, используем stdout/syslog согласно PRD.
+
+## PHC-16 ? GOV: UI gpt-image-1.5 aspect_ratio/resolution (2026-01-21)
+- 2026-01-21 20:25 ? ?????????? CONSULT/REFLECT: ????? ??????????? UX-??????????? (aspect_ratio 1:1/2:3/3:2, ?????? resolution) ? ????????? ????? ??? payload/????????.
+- 2026-01-21 20:35 ? ?????????? ??????????? gpt-image-1.5 ? slot-ui/slot-mapping (aspect_ratio 1:1/2:3/3:2, resolution ?????), ??????? ????????? ?? 0.13.4.
 
 ## PHC-14 — Рефакторинг UI слотов (2026-01-21)
 - 2026-01-21 20:01 — Разбил slot-api.js/slot-main.js на модули (slot-state/slot-ui/slot-mapping/slot-events/slot-index), сохранив логику и правила Gemini/Turbotext.

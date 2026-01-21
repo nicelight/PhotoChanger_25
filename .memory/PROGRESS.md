@@ -33,4 +33,6 @@ updated: 2026-01-21
 - 2026-01-14: FIX — Gemini 2.5 поддерживает только aspect_ratio, image_size отключён; contracts bump до 0.13.1.
 - 2026-01-14: FIX — provider_keys из settings применяются к runtime ключам провайдеров; contracts bump до 0.13.2.
 - 2026-01-21: UI слотов разрезан на модульные файлы (slot-state/slot-ui/slot-mapping/slot-events/slot-index), подключения обновлены.
-- 2026-01-21: ????????? ????????? ?? 0.13.3 (UI ??????: ????????? ???????? JS).
+- 2026-01-21: Contracts 0.13.3 — UI слотов: модульная разбивка JS.
+- 2026-01-21: Contracts 0.13.4 — фикс default модели GPT Image 1.5 (драйвер/schema/tests).
+- 2026-01-21: UI gpt-image-1.5 ????????? aspect_ratio (1:1/2:3/3:2), resolution ?????; contracts bump 0.13.4.
