@@ -1,8 +1,8 @@
 {
-  "version": "0.13.2",
-  "released_at": "2026-01-14",
+  "version": "0.13.4",
+  "released_at": "2026-01-21",
   "stage": "draft",
-  "summary": "Settings: provider_keys применяются к runtime ключам провайдеров.",
+  "summary": "UI ??????: ??????????? aspect_ratio ??? gpt-image-1.5 ? ??????? resolution.",
   "changes": [
     {
       "type": "init",
@@ -312,9 +312,57 @@
         "src/app/settings/settings_service.py",
         "tests/unit/settings/test_settings_service_ingest_upgrade.py"
       ]
+    },
+    {
+      "type": "docs",
+      "description": "UI ?????? ???????? ?? ????????? JS-?????, ??????????? ?????????.",
+      "artifacts": [
+        "frontend/slots/assets/slot-state.js",
+        "frontend/slots/assets/slot-ui.js",
+        "frontend/slots/assets/slot-mapping.js",
+        "frontend/slots/assets/slot-api.js",
+        "frontend/slots/assets/slot-events.js",
+        "frontend/slots/assets/slot-index.js",
+        "frontend/slots/assets/slot-main.js",
+        "frontend/slots/template.html",
+        "frontend/slots/slot-001.html",
+        "frontend/slots/slot-002.html",
+        "frontend/slots/slot-003.html",
+        "frontend/slots/slot-004.html",
+        "frontend/slots/slot-005.html",
+        "frontend/slots/slot-006.html",
+        "frontend/slots/slot-007.html",
+        "frontend/slots/slot-008.html",
+        "frontend/slots/slot-009.html",
+        "frontend/slots/slot-010.html",
+        "frontend/slots/slot-011.html",
+        "frontend/slots/slot-012.html",
+        "frontend/slots/slot-013.html",
+        "frontend/slots/slot-014.html",
+        "frontend/slots/slot-015.html",
+        "spec/docs/ui/frontend-examples/slot-page.html"
+      ]
+    },
+    {
+      "type": "fix",
+      "description": "GPT Image: default модель обновлена на поддерживаемую `gpt-image-1.5` (вместо устаревшей `gpt-image-1.5-2025-12-16`); схема, драйвер и тесты синхронизированы.",
+      "artifacts": [
+        "spec/contracts/schemas/slot-settings-gpt-image-1.5.schema.json",
+        "src/app/providers/providers_gpt_image_1_5.py",
+        "tests/unit/providers/test_gpt_image_1_5_driver.py",
+        "spec/docs/glossary.md"
+      ]
+    },
+    {
+      "type": "fix",
+      "description": "gpt-image-1.5: ????????? aspect_ratio (1:1/2:3/3:2), resolution ?????, ?????? ?????? ?? ?????????? ???????.",
+      "artifacts": [
+        "frontend/slots/assets/slot-ui.js",
+        "frontend/slots/assets/slot-mapping.js"
+      ]
     }
   ],
   "deprecated": [],
   "breaking": false,
-  "notes": "provider_keys теперь применяются к runtime ключам провайдеров."
+  "notes": "gpt-image-1.5 ? UI: ?????? 1:1/2:3/3:2, ??? ?????? resolution."
 }

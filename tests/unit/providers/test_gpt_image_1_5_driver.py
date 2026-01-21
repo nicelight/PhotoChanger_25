@@ -86,7 +86,7 @@ def job_context(tmp_path: Path) -> JobContext:
         filename="ingest.png",
     )
     job.slot_settings = {
-        "model": "gpt-image-1.5-2025-12-16",
+        "model": "gpt-image-1.5",
         "prompt": "Create a stylized portrait",
         "output": {"format": "png", "size": "1024x1024"},
     }
@@ -109,7 +109,7 @@ async def test_process_success(monkeypatch, job_context, media_repo):
     assert result.content_type == "image/png"
     assert result.payload == b"result-bytes"
     assert client.requests[0]["headers"]["Authorization"] == "Bearer test-key"
-    assert client.requests[0]["data"]["model"] == "gpt-image-1.5-2025-12-16"
+    assert client.requests[0]["data"]["model"] == "gpt-image-1.5"
     assert client.requests[0]["data"]["size"] == "1024x1024"
     assert client.requests[0]["files"][0][0] == "image[]"
 

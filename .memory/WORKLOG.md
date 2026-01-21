@@ -1,7 +1,28 @@
 ﻿---
 id: worklog
-updated: 2026-01-14
+updated: 2026-01-21
 ---
+
+## Документация — CODEMAP и глоссарий (2026-01-21)
+- 2026-01-21 21:10 — Добавил `spec/CODEMAP.md` как стабильную карту проекта (backend/frontend/contracts/tests, ops/скрипты).
+- 2026-01-21 21:12 — Включил ссылку на CODEMAP в `AGENTS.md` и Must-Read порядок.
+- 2026-01-21 21:15 — Обновил `spec/docs/glossary.md`: добавлены TTL термины, provider_keys, уточнён список драйверов и введены соглашения по именованию (slot IDs, провайдеры, медиа пути, slot JS модули).
+- 2026-01-21 21:18 — Перевёл `.memory/GLOSSARY.md` в ссылку на каноничный глоссарий и синхронизировал `.memory/INDEX.yaml`.
+
+## BUGFIX — GPT Image model id (2026-01-21)
+- 2026-01-21 21:35 — Обновил default модели GPT Image на `gpt-image-1.5` (драйвер, schema, tests, glossary), добавлен patch в VERSION 0.13.4.
+
+## Observability — ротация логов (2026-01-21)
+- 2026-01-21 20:33 — Перечитал обязательные артефакты (MISSION/CONTEXT/TASKS/ASKS/DECISIONS/USECASES/INDEX), выполнил поиск по репозиторию (`rg` по logrotate/ротац/logs) для проверки наличия политики ротации логов; спец. настроек ротации не найдено, используем stdout/syslog согласно PRD.
+
+## PHC-16 ? GOV: UI gpt-image-1.5 aspect_ratio/resolution (2026-01-21)
+- 2026-01-21 20:25 ? ?????????? CONSULT/REFLECT: ????? ??????????? UX-??????????? (aspect_ratio 1:1/2:3/3:2, ?????? resolution) ? ????????? ????? ??? payload/????????.
+- 2026-01-21 20:35 ? ?????????? ??????????? gpt-image-1.5 ? slot-ui/slot-mapping (aspect_ratio 1:1/2:3/3:2, resolution ?????), ??????? ????????? ?? 0.13.4.
+
+## PHC-14 — Рефакторинг UI слотов (2026-01-21)
+- 2026-01-21 20:01 — Разбил slot-api.js/slot-main.js на модули (slot-state/slot-ui/slot-mapping/slot-events/slot-index), сохранив логику и правила Gemini/Turbotext.
+- 2026-01-21 20:01 — Обновил подключения скриптов в slot-страницах и шаблоне, добавил пометку в spec/docs/ui/frontend-examples/slot-page.html.
+- 2026-01-21 20:10 ? ??????? spec/contracts/VERSION.json (0.13.3) ? INDEX.yaml ??? ????????? ???????? UI.
 
 ## PHC-10 — GOV: статистика неудач (2026-01-09)
 - 2026-01-09 02:10 — Зафиксировал решение тимлида: вариант A1 (recent_failures в /api/stats/slots), без кэша и без job_id; приоритет — ошибки провайдера (provider_error/timeout), окно 1–72 часа (max 4320 минут). Готов к реализации в порядке spec → code → UI → tests.
@@ -319,7 +340,7 @@ updated: 2026-01-14
 
 ---
 id: worklog
-updated: 2025-11-02
+updated: 2026-01-21
 ---
 
 # Черновой журнал до checkpoint
@@ -552,7 +573,8 @@ updated: 2025-11-02
 - 2025-11-04 19:28 — Для image_edit: нужны текстовый промпт, optional 
 egative_prompt, guidance_scale (0..10), опциональная маска (media_kind="mask").
 - 2025-11-04 19:32 — Для style_transfer: обязательны связи с шаблоном стиля (media_kind="style"), опциональный промпт, коэффициент style_strength (0..1) и флаг preserve_colors.
-- 2025-11-04 19:36 — Для identity_transfer: требуются template_media с ролями ase (тело) и ace (замещаемое лицо), параметры lend_ratio (0..1) и lignment_mode (enum uto|strict).
+- 2025-11-04 19:36 — Для identity_transfer: требуются template_media с ролями ase (тело) и 
+ace (замещаемое лицо), параметры lend_ratio (0..1) и lignment_mode (enum uto|strict).
 - 2025-11-04 19:40 — Предложил унифицированную структуру slot.settings: верхний уровень включает model, 
 etry_policy, output, safety, а все параметры операции помещаются в operation_config (схемы различаются). operation_config.template_bindings хранит связи ролей с media_kind или прямыми media_object_id.
 - 2025-11-04 19:44 — Зависимости: нужно оформить JSON Schema в spec/contracts/schemas/slot-settings/gemini-*.schema.json, обновить PRD и providers/gemini.md, а также UI подсказки.
