@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request, status
@@ -82,9 +83,7 @@ def _build_recent(job_repo: JobHistoryRepository, slot_id: str, limit: int = 10)
     records = job_repo.list_recent_by_slot(slot_id, limit=limit)
     results: list[dict[str, Any]] = []
     for rec in records:
-        if rec.status != "done":
-            continue
-        if not rec.result_path:
+        if not _is_result_available(rec):
             continue
         result = _record_to_result(rec)
         results.append(result)
@@ -96,9 +95,15 @@ def _build_latest(job_repo: JobHistoryRepository, slot_id: str) -> dict[str, Any
     if not records:
         return None
     rec = records[0]
-    if rec.status != "done" or not rec.result_path:
+    if not _is_result_available(rec):
         return None
     return _record_to_result(rec)
+
+
+def _is_result_available(record: JobHistoryRecord) -> bool:
+    if record.status != "done" or not record.result_path:
+        return False
+    return Path(record.result_path).exists()
 
 
 def _record_to_result(record: JobHistoryRecord) -> dict[str, Any]:

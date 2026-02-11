@@ -20,7 +20,7 @@ uvicorn src.app.main:app --reload --host 0.0.0.0 --port 8000
 ## Конфигурация (env)
 - `DATABASE_URL` — PostgreSQL
 - `MEDIA_ROOT` — каталог медиа, по умолчанию `./media`
-- `RESULT_TTL_HOURS` (72), `TEMP_TTL_SECONDS` (`T_sync_response`)
+- `RESULT_TTL_HOURS` (168), `TEMP_TTL_SECONDS` (`T_sync_response`)
 - `JWT_SIGNING_KEY`, `ADMIN_CREDENTIALS_PATH` (см. `secrets/runtime_credentials.json`)
 - `PUBLIC_MEDIA_BASE_URL` — обязателен для Turbotext (HTTP/HTTPS внешний базовый URL)
 - Провайдеры: `GEMINI_API_KEY`, `TURBOTEXT_API_KEY`

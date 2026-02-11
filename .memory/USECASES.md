@@ -1,6 +1,6 @@
 ---
 id: usecases
-updated: 2025-11-10
+updated: 2026-02-11
 ---
 
 # Ключевые сценарии
@@ -25,7 +25,7 @@ updated: 2025-11-10
 ## UC2. Ingest с успешной обработкой
 - **Акторы:** DSLR Remote Pro, Ingest API, Provider Driver, Media Store, PostgreSQL.
 - **Основной поток:** `POST /api/ingest/{slot_id}` (multipart), валидация и запись `job_history(status=pending)`, сохранение temp файла, `asyncio.wait_for(driver.process, timeout=T_sync_response)`, получение результата, сохранение `media/results/{job_id}`, обновление статуса `done`, ответ `200` с `/public/results/{job_id}` и inline превью (опционально).
-- **Критерии успеха:** Ответ ≤ `T_sync_response`, результат доступен 72 ч, логи содержат `job_id` и тайминги.
+- **Критерии успеха:** Ответ ≤ `T_sync_response`, результат доступен 168 ч, логи содержат `job_id` и тайминги.
 - **Ошибки:** `401` (неверный пароль), `413/415` (размер/MIME), `404` (слот выключен), `502` (ошибка провайдера).
 
 ## UC3. Ingest с таймаутом 504

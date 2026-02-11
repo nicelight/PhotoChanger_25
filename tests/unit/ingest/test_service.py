@@ -84,7 +84,7 @@ def build_service(
         media_repo=media_repo,
         result_store=result_store,
         temp_store=temp_store,
-        result_ttl_hours=72,
+        result_ttl_hours=168,
         sync_response_seconds=sync_response_seconds,
         **service_kwargs,
     )

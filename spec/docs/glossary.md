@@ -8,10 +8,10 @@
 | T_sync_response | Конфигурируемое окно синхронного ответа ingest (10–60 с, по умолчанию 48 с); по превышению возвращается 504 и статус `timeout`. | `.memory/MISSION.md`, `docs/PRD.md` §1 |
 | T_ingest_ttl | TTL исходных ingest-файлов во временном хранилище (`MEDIA_ROOT/temp`), совпадает с `T_sync_response`. | `docs/ARCHITECTURE.md` §4 |
 | T_public_link_ttl | TTL временных публичных ссылок `media_object` для провайдеров; равен `T_sync_response`, по истечении возвращается `410 Gone`. | `.memory/USECASES.md` UC4 |
-| T_result_retention | TTL итоговых файлов и публичных ссылок `/public/results/{job_id}` — 72 ч; по истечении файл удаляется, endpoint отвечает `410 Gone`. | `.memory/MISSION.md`, `docs/PRD.md` §5 |
+| T_result_retention | TTL итоговых файлов и публичных ссылок `/public/results/{job_id}` — 168 ч; по истечении файл удаляется, endpoint отвечает `410 Gone`. | `.memory/MISSION.md`, `docs/PRD.md` §5 |
 | MediaObject | Запись о медиафайле с путём к результату (`media/results/{slot_id}/{job_id}/payload.{ext}`), ссылкой на превью и TTL; используется для публикации `/public/results/{job_id}`. | `spec/docs/domain-model.md`, `docs/ARCHITECTURE.md` §4 |
 | TempMediaStore | Подсистема временного хранения ingest-файлов в `MEDIA_ROOT/temp` с TTL = `T_ingest_ttl`. | `docs/ARCHITECTURE.md` §4 |
-| ResultStore | Подсистема хранения итоговых файлов (`media/results/{slot_id}/{job_id}/payload.{ext}`) и превью (`preview.webp`) с TTL 72 ч (`T_result_retention`). | `docs/ARCHITECTURE.md` §4 |
+| ResultStore | Подсистема хранения итоговых файлов (`media/results/{slot_id}/{job_id}/payload.{ext}`) и превью (`preview.webp`) с TTL 168 ч (`T_result_retention`). | `docs/ARCHITECTURE.md` §4 |
 | TemplateMedia | Статические шаблонные изображения, привязанные к слотам; проходят валидацию MIME/размера, включают обязательное поле `role` в API. | `docs/PRD.md` §5, `spec/contracts/openapi.yaml` |
 | ProviderDriver | Абстракция драйвера AI-провайдера с методом `process(job_ctx) -> ProviderResult`. Реализации: `GeminiDriver`, `Gemini3ProDriver`, `GptImage15Driver`, `TurbotextDriver`. | `docs/ARCHITECTURE.md` §5 |
 | JobContext | Структура, собираемая `IngestService`: `job_id`, слот, дедлайн `sync_deadline = now + T_sync_response`, каталог результата, параметры провайдера. | `docs/ARCHITECTURE.md` §3 |
@@ -22,7 +22,7 @@
 | Provider keys | Поставляемые админом ключи провайдеров (`provider_keys.*`) в `/api/settings`; применяются к runtime конфигурации драйверов. | `spec/contracts/openapi.yaml`, `docs/PRD.md` §4 |
 | StatsService | Модуль статистики SLA; агрегирует counters (jobs, timeouts, provider_errors, storage) и публикует `/api/stats`. | `docs/ARCHITECTURE.md` §6 |
 | Cleanup cron | Сценарий `scripts/cleanup_media.py`, запускаемый каждые 15 мин для удаления просроченных медиа и обновления `media_object.cleaned_at`. | `docs/PRD.md` §10 |
-| Public Result Link | Временный URL `/public/results/{job_id}` с TTL 72 ч; после истечения возвращает `410 Gone`. | `.memory/USECASES.md` UC4 |
+| Public Result Link | Временный URL `/public/results/{job_id}` с TTL 168 ч; после истечения возвращает `410 Gone`. | `.memory/USECASES.md` UC4 |
 
 ## Соглашения по именованию
 - Slot IDs: `slot-001`…`slot-015`, три цифры с ведущими нулями; HTML страницам соответствуют те же суффиксы.

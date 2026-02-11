@@ -6,7 +6,7 @@
 Быстрый, воспроизводимый прогон тестов перед релизом/демо. Основан на  `spec/docs/test-plan.md`(контекст и стратегия тестирования), покрывает API, UI и cron.
 
 ## Подготовка (Local/Staging)
-- Переменные: `DATABASE_URL`, `MEDIA_ROOT`, `JWT_SIGNING_KEY`, `GEMINI_API_KEY`, `TURBOTEXT_API_KEY`, `RESULT_TTL_HOURS` (72), `TEMP_TTL_SECONDS` (10–60).
+- Переменные: `DATABASE_URL`, `MEDIA_ROOT`, `JWT_SIGNING_KEY`, `GEMINI_API_KEY`, `TURBOTEXT_API_KEY`, `RESULT_TTL_HOURS` (168), `TEMP_TTL_SECONDS` (10–60).
 - Запусти БД (docker-compose или целевая инстанция), очисти/инициализируй таблицы при необходимости.
 - Подними приложение: `uvicorn src.app.main:app --reload` (или gunicorn/uvicorn на staging).
 - Убедись, что `media/results` и `media/temp` доступны на запись.

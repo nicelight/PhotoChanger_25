@@ -1,7 +1,19 @@
 ﻿---
 id: worklog
-updated: 2026-01-21
+updated: 2026-02-11
 ---
+
+## Public results/gallery — file-presence gating (2026-02-11)
+- 2026-02-11 19:40 — По запросу тимлида убрал проверку `result_expires_at` в `PublicResultService`: `/public/results/{job_id}` теперь отдает файл, пока он существует на диске.
+- 2026-02-11 19:45 — Обновил `public_gallery_router`: в `latest_result`/`recent_results` попадают только записи `done` с существующим `result_path`.
+- 2026-02-11 19:50 — Синхронизировал контракты (`spec/contracts/openapi.yaml`, `spec/contracts/VERSION.json` -> 0.13.5) и индекс `.memory/INDEX.yaml`.
+- 2026-02-11 19:55 — Обновил/добавил тесты: `tests/unit/public/test_public_results_router.py`, `tests/contract/test_public_results_ttl.py`, `tests/unit/public/test_public_gallery_router.py`.
+
+## Result TTL 168h (2026-02-11)
+- 2026-02-11 20:10 — Изменил default `RESULT_TTL_HOURS` в конфигурации приложения с 72 на 168 (`src/app/config.py`), обновил `.env.local`.
+- 2026-02-11 20:20 — Синхронизировал retention-документацию и runbook: PRD/ARCHITECTURE/BRIEF, `spec/docs/*`, `frontend/admin/gallery.html`, `README.md`.
+- 2026-02-11 20:25 — Обновил тестовые фикстуры/ожидания `result_ttl_hours` в unit-тестах ingest/slots/settings.
+- 2026-02-11 20:30 — Обновил контрактную версию до 0.13.6 (`spec/contracts/VERSION.json`) и `.memory/INDEX.yaml`.
 
 ## Документация — CODEMAP и глоссарий (2026-01-21)
 - 2026-01-21 21:10 — Добавил `spec/CODEMAP.md` как стабильную карту проекта (backend/frontend/contracts/tests, ops/скрипты).

@@ -13,7 +13,7 @@ class DummySettingsService:
         now = datetime(2025, 11, 9, 10, 0, 0)
         self.snapshot: dict[str, Any] = {
             "sync_response_seconds": 48,
-            "result_ttl_hours": 72,
+            "result_ttl_hours": 168,
             "ingest_password": "secret123",
             "ingest_password_rotated_at": now,
             "ingest_password_rotated_by": "serg",

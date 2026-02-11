@@ -21,7 +21,7 @@
 ## 3. Инварианты
 - `JobHistory.status` переходит только вперёд: `pending` → `done|timeout|failed`; повторный переход запрещён.
 - `MediaObject.expires_at` для `scope=provider` ≤ `JobHistory.started_at + T_sync_response`.
-- `MediaObject.scope=result` имеет `expires_at = JobHistory.started_at + 72 ч`. `cleaned_at` обязателен при фактическом удалении файла.
+- `MediaObject.scope=result` имеет `expires_at = JobHistory.started_at + 168 ч`. `cleaned_at` обязателен при фактическом удалении файла.
 - `Slot.is_active = false` запрещает запуск ingest; попытки → `404`.
 - Обновление ingest-пароля требует синхронизации `Settings` (hash) и журналирование в `JobHistory` не выполняется.
 - `TemplateMedia` допустимо использовать только в слотах, к которым они привязаны.

@@ -141,7 +141,7 @@ graph TD
 ### 2.2 media
 - **Хранилища.** `ResultStore` работает поверх локальной файловой системы и организует для каждого `job_id` каталог `media/results/{slot_id}/{job_id}/` с файлами `payload.{ext}` и `preview.webp`. Потоковое буферизование реализуется через in-memory upload buffer (spooled файлы), но на диске остаются только результаты.
 - **Жизненный цикл файлов.** Для каждого файла в таблицу `media_object` заносится `expires_at`. Сервисы проверяют TTL при чтении и удаляют просроченные файлы «лениво»: если `expires_at` в прошлом, файл удаляется сразу после обращения, запись помечается очищенной.
-  `sync_deadline` вычисляется при создании `JobContext` как `started_at + T_sync_response` и не пересчитывается далее; `result_expires_at = started_at + T_result_retention (72 ч)`.
+  `sync_deadline` вычисляется при создании `JobContext` как `started_at + T_sync_response` и не пересчитывается далее; `result_expires_at = started_at + T_result_retention (168 ч)`.
 - **Фоновая очистка.** Вместо встроенного планировщика используется внешний cron-скрипт (`scripts/cleanup_media.py`). Он запускается системно раз в 15 минут, читает просроченные записи из БД и удаляет соответствующие файлы. FastAPI-процесс не содержит бесконечных циклов очистки.
 
 ### 2.3 slots
@@ -162,7 +162,7 @@ graph TD
 3. Сервис выбирает нужный `ProviderDriver` и вызывает его через `await asyncio.wait_for(driver.process(job_ctx), timeout=T_sync_response)`.
 4. **Успешный сценарий:**
    - Драйвер возвращает `ProviderResult` до истечения таймаута.
-   - Сервис сохраняет результат в `ResultStore`, обновляет `job_history` (`status='done'`, `result_path`, `result_expires_at = now + 72h`).
+   - Сервис сохраняет результат в `ResultStore`, обновляет `job_history` (`status='done'`, `result_path`, `result_expires_at = now + 168h`).
    - Возвращается 200 с ссылкой вида `/public/results/{job_id}`.
 5. **Таймаут:**
    - `asyncio.TimeoutError` фиксируется как `status='timeout'` и `failure_reason='provider_timeout'`.
@@ -178,7 +178,7 @@ graph TD
   - `media_object` — учёт файлов (тип, путь, `expires_at`, признак очистки).
   - `settings` — глобальные параметры (без секретов) с версиями.
 - **Файловая система:**
-- `media/results/{slot_id}/{job_id}/payload.{ext}` — готовые результаты, срок жизни = 72 часа.
+- `media/results/{slot_id}/{job_id}/payload.{ext}` — готовые результаты, срок жизни = 168 часов.
 - `media/results/{slot_id}/{job_id}/preview.webp` — превью для UI, синхронизировано по TTL с результатом.
 - **Очистка:**
   - Сервисы проверяют TTL при каждом доступе и удаляют просроченные файлы на лету.

@@ -18,7 +18,7 @@ class DummyIngestService:
     def __init__(self) -> None:
         self.calls: list[dict[str, Any]] = []
         self.sync_response_seconds = 48
-        self.result_ttl_hours = 72
+        self.result_ttl_hours = 168
         self._pending_overrides: dict[str, dict[str, Any]] = {}
         self._pending_filenames: dict[str, str] = {}
         self._lock = None
@@ -157,7 +157,7 @@ class DummyJobRepo:
                 status="done",
                 failure_reason=None,
                 result_path="media/results/slot-001/job-1/payload.png",
-                result_expires_at=base + timedelta(hours=72),
+                result_expires_at=base + timedelta(hours=168),
                 completed_at=base,
                 started_at=base - timedelta(seconds=30),
             )
@@ -165,7 +165,7 @@ class DummyJobRepo:
 
 
 class DummySettingsService:
-    def __init__(self, sync_seconds: int = 48, ttl_hours: int = 72) -> None:
+    def __init__(self, sync_seconds: int = 48, ttl_hours: int = 168) -> None:
         self._snapshot = {
             "sync_response_seconds": sync_seconds,
             "result_ttl_hours": ttl_hours,

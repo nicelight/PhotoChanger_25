@@ -16,8 +16,9 @@ paths:
       description: >
         Processes the supplied image via the configured provider. The server waits up to
         `T_sync_response` (10–60 seconds, default 48 s). Successful jobs return the processed
-        binary body immediately; results remain accessible via `/public/results/{job_id}` for
-        72 hours (`T_result_retention`). Timeouts (504) indicate that the provider exceeded the
+        binary body immediately; results remain accessible via `/public/results/{job_id}` while
+        the payload file exists on disk. Cleanup still uses retention settings (`T_result_retention`)
+        to remove old files. Timeouts (504) indicate that the provider exceeded the
         synchronous window and the request can be retried. Одновременно обрабатывается только
         один запрос на слот; параллельные обращения получат 429 с `retry_after`.
       operationId: ingest_submit
@@ -91,8 +92,8 @@ paths:
     get:
       summary: Download a processed result by job identifier.
       description: >
-        Returns the processed media file associated with `job_id`. Files are available for
-        72 hours (`T_result_retention`) after the ingest job succeeds, after which the link
+        Returns the processed media file associated with `job_id`. The endpoint serves the file
+        as long as payload exists on disk. If cleanup already removed the file, the endpoint
         responds with `410 Gone`.
       tags:
         - public-results
@@ -137,7 +138,7 @@ paths:
                     status: error
                     failure_reason: result_not_found
         '410':
-          description: Result expired and is no longer available for download.
+          description: Result file is no longer present on disk (usually after cleanup).
           content:
             application/json:
               schema:
@@ -848,7 +849,7 @@ components:
           example: 48
         result_ttl_hours:
           type: integer
-          example: 72
+          example: 168
         ingest_password:
           type: string
           example: "dslr-secret"

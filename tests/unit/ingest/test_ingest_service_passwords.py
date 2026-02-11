@@ -12,7 +12,7 @@ def build_service(**overrides: Any) -> IngestService:
         "media_repo": cast(Any, object()),
         "result_store": cast(Any, object()),
         "temp_store": cast(Any, object()),
-        "result_ttl_hours": 72,
+        "result_ttl_hours": 168,
         "sync_response_seconds": 48,
         "ingest_password": "",
     }

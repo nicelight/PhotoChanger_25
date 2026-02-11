@@ -1,10 +1,10 @@
 # Машиночитаемый индекс актуальности артефактов
-updated: 2026-01-21
+updated: 2026-02-11
 
 spec/contracts:
-  version: "0.13.4"
-  released_at: "2026-01-21"
-  notes: "UI ??????: gpt-image-1.5 aspect_ratio 1:1/2:3/3:2, resolution ?????."
+  version: "0.13.6"
+  released_at: "2026-02-11"
+  notes: "Result retention TTL increased to 168h (config/docs/contracts/tests synchronized)."
 
 spec/codemap:
   path: "spec/CODEMAP.md"
@@ -19,8 +19,8 @@ spec/adr:
     ADR-0001: "Монолит FastAPI + cron, без очередей"
 
 spec/docs:
-  updated: "2026-01-21"
-  baseline: "Глоссарий/нейминг обновлены; PHC-14 — UI слотов: модульная разбивка JS; patch GPT Image default."
+  updated: "2026-02-11"
+  baseline: "Result retention TTL обновлён до 168h в SDD/PRD/runbooks, контракты и тесты синхронизированы."
 
 runbooks:
   cron_cleanup: "docs/runbooks/cron_cleanup.md (2025-11-06)"
@@ -28,12 +28,12 @@ runbooks:
   test_playbook: "docs/runbooks/test_playbook.md (2026-01-08)"
 
 memory:
-  mission: 2025-10-31
-  context: 2025-10-31
+  mission: 2026-02-11
+  context: 2026-02-11
   tasks: 2026-01-21
-  asks: 2026-01-21
-  usecases: 2025-11-10
-  progress: 2026-01-21
-  worklog: 2026-01-21
+  asks: 2026-02-11
+  usecases: 2026-02-11
+  progress: 2026-02-11
+  worklog: 2026-02-11
   glossary: 2026-01-21
   reports: "deprecated 2025-10-31 (REPORT.json/REPORT_SCHEMA.json removed)"

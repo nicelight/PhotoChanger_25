@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
 from pathlib import Path
 
 from fastapi import status
@@ -49,17 +48,6 @@ class PublicResultService:
                 },
             )
             return self._error(status.HTTP_404_NOT_FOUND, "result_not_found")
-
-        if job.result_expires_at and job.result_expires_at <= datetime.utcnow():
-            self.log.info(
-                "public.result.expired",
-                extra={
-                    "job_id": job.job_id,
-                    "slot_id": job.slot_id,
-                    "result_expires_at": job.result_expires_at.isoformat(),
-                },
-            )
-            return self._error(status.HTTP_410_GONE, "result_expired")
 
         result_path = Path(job.result_path)
         if not result_path.exists():

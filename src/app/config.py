@@ -84,7 +84,7 @@ def load_config() -> AppConfig:
         bind=engine, expire_on_commit=False
     )
 
-    result_ttl_hours = int(os.getenv("RESULT_TTL_HOURS", 72))
+    result_ttl_hours = int(os.getenv("RESULT_TTL_HOURS", 168))
     sync_response_seconds = int(os.getenv("T_SYNC_RESPONSE_SECONDS", 48))
     temp_ttl_seconds = int(os.getenv("TEMP_TTL_SECONDS", sync_response_seconds))
     ingest_password = os.getenv("INGEST_PASSWORD", "")

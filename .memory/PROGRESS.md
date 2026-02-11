@@ -1,6 +1,6 @@
 ﻿---
 id: progress
-updated: 2026-01-21
+updated: 2026-02-11
 ---
 
 # Progress (changelog — одна строка на событие)
@@ -36,3 +36,5 @@ updated: 2026-01-21
 - 2026-01-21: Contracts 0.13.3 — UI слотов: модульная разбивка JS.
 - 2026-01-21: Contracts 0.13.4 — фикс default модели GPT Image 1.5 (драйвер/schema/tests).
 - 2026-01-21: UI gpt-image-1.5 ????????? aspect_ratio (1:1/2:3/3:2), resolution ?????; contracts bump 0.13.4.
+- 2026-02-11: Public results/gallery: `/public/results/{job_id}` больше не блокируется по `result_expires_at`; галерея скрывает записи с отсутствующими файлами; contracts bump 0.13.5.
+- 2026-02-11: Result retention: TTL итоговых файлов и связанных артефактов увеличен с 72ч до 168ч; обновлены config/docs/runbooks/tests, contracts bump 0.13.6.

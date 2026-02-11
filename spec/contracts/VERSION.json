@@ -1,8 +1,8 @@
 {
-  "version": "0.13.4",
-  "released_at": "2026-01-21",
+  "version": "0.13.6",
+  "released_at": "2026-02-11",
   "stage": "draft",
-  "summary": "UI ??????: ??????????? aspect_ratio ??? gpt-image-1.5 ? ??????? resolution.",
+  "summary": "Result retention TTL increased from 72h to 168h (MEDIA_ROOT/results and related docs/contracts).",
   "changes": [
     {
       "type": "init",
@@ -360,9 +360,52 @@
         "frontend/slots/assets/slot-ui.js",
         "frontend/slots/assets/slot-mapping.js"
       ]
+    },
+    {
+      "type": "fix",
+      "description": "Public results no longer use result_expires_at gate: `/public/results/{job_id}` serves file while it exists on disk; public gallery excludes entries with missing files.",
+      "artifacts": [
+        "src/app/media/public_result_service.py",
+        "src/app/public/public_gallery_router.py",
+        "tests/unit/public/test_public_results_router.py",
+        "tests/contract/test_public_results_ttl.py",
+        "tests/unit/public/test_public_gallery_router.py",
+        "spec/contracts/openapi.yaml"
+      ]
+    },
+    {
+      "type": "fix",
+      "description": "Result retention updated to 168 hours (instead of 72): default `RESULT_TTL_HOURS`, documentation, OpenAPI examples, and related tests synchronized.",
+      "artifacts": [
+        "src/app/config.py",
+        ".env.local",
+        "spec/contracts/openapi.yaml",
+        "docs/PRD.md",
+        "docs/ARCHITECTURE.md",
+        "docs/BRIEF.md",
+        "docs/runbooks/cron_cleanup.md",
+        "docs/runbooks/test_playbook.md",
+        "spec/docs/vision.md",
+        "spec/docs/nfr.md",
+        "spec/docs/use-cases.md",
+        "spec/docs/glossary.md",
+        "spec/docs/context.md",
+        "spec/docs/constraints-risks.md",
+        "spec/docs/acceptance-criteria.md",
+        "spec/docs/test-plan.md",
+        "spec/docs/domain-model.md",
+        "spec/docs/ui/frontend-examples/slot-page.html",
+        "frontend/admin/gallery.html",
+        "tests/unit/ingest/test_service.py",
+        "tests/unit/ingest/test_ingest_api_full.py",
+        "tests/unit/ingest/test_ingest_service_passwords.py",
+        "tests/unit/slots/test_slots_api.py",
+        "tests/unit/settings/test_settings_api.py",
+        "tests/unit/settings/test_settings_service_ingest_upgrade.py"
+      ]
     }
   ],
   "deprecated": [],
   "breaking": false,
-  "notes": "gpt-image-1.5 ? UI: ?????? 1:1/2:3/3:2, ??? ?????? resolution."
+  "notes": "Default result retention is now 168 hours; public result visibility depends on physical file presence in MEDIA_ROOT/results."
 }

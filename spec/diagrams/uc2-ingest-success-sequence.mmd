@@ -13,5 +13,5 @@ sequenceDiagram
     Driver-->>Media: Запрос временных ссылок/Files API
     Driver-->>API: Обработанный файл
     API->>Media: Сохранить результат (media/results/{job}.ext)
-    API->>DB: Обновить job_history (status=done, result_expires_at = now + 72h)
+    API->>DB: Обновить job_history (status=done, result_expires_at = now + 168h)
     API-->>DSLR: HTTP 200 + бинарный результат

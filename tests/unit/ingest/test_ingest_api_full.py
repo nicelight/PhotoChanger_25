@@ -17,7 +17,7 @@ class StubIngestService:
     def __init__(self, *, raise_error: Exception | None = None) -> None:
         self.ingest_password = "secret"
         self.sync_response_seconds = 48
-        self.result_ttl_hours = 72
+        self.result_ttl_hours = 168
         self._lock = asyncio.Lock()
         self.raise_error = raise_error
         self.last_job: JobContext | None = None

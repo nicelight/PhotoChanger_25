@@ -48,7 +48,9 @@ def test_public_results_router_success(tmp_path: Path) -> None:
     assert response.content == b"jpeg-bytes"
 
 
-def test_public_results_router_expired(tmp_path: Path) -> None:
+def test_public_results_router_expired_timestamp_still_serves_existing_file(
+    tmp_path: Path,
+) -> None:
     result_file = tmp_path / "res" / "slot" / "job123" / "payload.png"
     result_file.parent.mkdir(parents=True, exist_ok=True)
     result_file.write_bytes(b"png-bytes")
@@ -65,8 +67,8 @@ def test_public_results_router_expired(tmp_path: Path) -> None:
 
     response = client.get("/public/results/job123")
 
-    assert response.status_code == 410
-    assert response.json() == {"status": "error", "failure_reason": "result_expired"}
+    assert response.status_code == 200
+    assert response.content == b"png-bytes"
 
 
 def test_public_results_router_not_found(tmp_path: Path) -> None:

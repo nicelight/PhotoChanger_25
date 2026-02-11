@@ -174,11 +174,6 @@
       job.textContent = "Job ID: " + item.job_id;
       meta.appendChild(job);
     }
-    if (item.result_expires_at || item.expires_at) {
-      const expires = document.createElement("span");
-      expires.textContent = "Активно до " + formatDate(item.result_expires_at || item.expires_at);
-      meta.appendChild(expires);
-    }
     if (item.mime) {
       const mime = document.createElement("span");
       mime.textContent = "Формат: " + item.mime;

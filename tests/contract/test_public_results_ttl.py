@@ -49,7 +49,9 @@ def test_public_results_contract_success(tmp_path: Path) -> None:
     assert response.content == b"jpeg-bytes"
 
 
-def test_public_results_contract_expired(tmp_path: Path) -> None:
+def test_public_results_contract_expired_timestamp_still_serves_existing_file(
+    tmp_path: Path,
+) -> None:
     payload = tmp_path / "results" / "slot01" / "job999" / "payload.png"
     payload.parent.mkdir(parents=True, exist_ok=True)
     payload.write_bytes(b"png-bytes")
@@ -66,5 +68,6 @@ def test_public_results_contract_expired(tmp_path: Path) -> None:
 
     response = client.get("/public/results/job999")
 
-    assert response.status_code == 410
-    assert response.json() == {"status": "error", "failure_reason": "result_expired"}
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "image/png"
+    assert response.content == b"png-bytes"

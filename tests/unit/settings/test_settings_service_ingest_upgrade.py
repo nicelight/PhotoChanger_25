@@ -30,13 +30,13 @@ def test_load_propagates_legacy_ingest_password_hash() -> None:
     repo = DummySettingsRepository(
         {
             "sync_response_seconds": "48",
-            "result_ttl_hours": "72",
+            "result_ttl_hours": "168",
             "ingest_password_hash": legacy_hash,
         }
     )
     ingest_service = DummyIngestService()
     config = SimpleNamespace(
-        sync_response_seconds=48, result_ttl_hours=72, ingest_password=""
+        sync_response_seconds=48, result_ttl_hours=168, ingest_password=""
     )
 
     service = SettingsService(
@@ -58,13 +58,13 @@ def test_load_applies_provider_keys_to_env(monkeypatch) -> None:
     repo = DummySettingsRepository(
         {
             "sync_response_seconds": "48",
-            "result_ttl_hours": "72",
+            "result_ttl_hours": "168",
             "provider_keys": json.dumps(provider_keys),
         }
     )
     ingest_service = DummyIngestService()
     config = SimpleNamespace(
-        sync_response_seconds=48, result_ttl_hours=72, ingest_password=""
+        sync_response_seconds=48, result_ttl_hours=168, ingest_password=""
     )
 
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
