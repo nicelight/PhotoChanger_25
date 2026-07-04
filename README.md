@@ -38,9 +38,4 @@ uvicorn src.app.main:app --reload --host 0.0.0.0 --port 8000
 - **Runbooks:** `docs/runbooks/init_deploy.md`, `docs/runbooks/cron_cleanup.md`, `docs/runbooks/stats_ui_local.md`
 - **UI макеты:** `frontend/admin`, `frontend/slots`, `frontend/stats`, публичная галерея `frontend/public`
 
-
-
-## Особенности и ограничения
-- Это KISS монолит без очередей и фоновых воркеров; долгие задачи >60 с не поддерживаются (ADR-0001).
-- Временный доступ к публичной галерее хранится в памяти процесса — при рестарте нужно включать заново.
 - Публичные результаты очищаются cron-скриптом и лениво при запросах.
